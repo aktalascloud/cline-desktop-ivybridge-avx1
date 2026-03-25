@@ -2,6 +2,10 @@ import { createSlackAdapter, type SlackAdapter } from "@chat-adapter/slack";
 import type { RpcChatStartSessionRequest } from "@clinebot/core";
 import { createUserInstructionConfigWatcher } from "@clinebot/core/node";
 import { RpcSessionClient, registerRpcClient } from "@clinebot/rpc";
+import type {
+	ConnectSlackOptions,
+	SlackConnectorState,
+} from "@clinebot/shared";
 import {
 	type Adapter,
 	Chat,
@@ -54,55 +58,21 @@ import type {
 	ConnectIo,
 	ConnectStopResult,
 } from "../types";
+import {
+	getConnectorFirstContactMessage,
+	getConnectorSystemPrompt,
+	getConnectorSystemRules,
+} from "./prompts";
 
-const SLACK_SYSTEM_RULES = [
-	"You are a helpful coding assistant that works in a VM while intergrated with Slack.",
+const SLACK_SYSTEM_RULES = getConnectorSystemRules(
+	"Slack",
 	"You can respond to user messages in threads and DMs, and you can use tools according to user's requests and your capabilities.",
-	"Keep answers compact and optimized for Slack unless the user asks for detail.",
-	"Use short paragraphs and concise lists that read cleanly in channel threads and DMs.",
-].join("\n");
+);
 
-const SLACK_FIRST_CONTACT_MESSAGE = [
-	"Connected.",
-	"Your chat history is isolated to your Slack account.",
-	"Use /new to start a fresh session or /whereami for thread details.",
-].join("\n");
+const SLACK_FIRST_CONTACT_MESSAGE = getConnectorFirstContactMessage();
 
 type SlackThreadState = ConnectorThreadState & {
 	teamId?: string;
-};
-
-type ConnectSlackOptions = {
-	userName: string;
-	botToken?: string;
-	signingSecret?: string;
-	clientId?: string;
-	clientSecret?: string;
-	encryptionKey?: string;
-	installationKeyPrefix?: string;
-	cwd: string;
-	model?: string;
-	provider?: string;
-	apiKey?: string;
-	systemPrompt?: string;
-	mode: "act" | "plan";
-	interactive: boolean;
-	maxIterations?: number;
-	enableTools: boolean;
-	rpcAddress: string;
-	hookCommand?: string;
-	port: number;
-	host: string;
-	baseUrl: string;
-};
-
-type SlackConnectorState = {
-	userName: string;
-	pid: number;
-	rpcAddress: string;
-	port: number;
-	baseUrl: string;
-	startedAt: string;
 };
 
 function truncateText(value: string, maxLength = 160): string {
@@ -663,7 +633,8 @@ class SlackConnector extends ConnectorBase<
 						client,
 						pendingApprovals,
 						baseStartRequest: startRequest,
-						explicitSystemPrompt: options.systemPrompt?.trim() || undefined,
+						explicitSystemPrompt:
+							options.systemPrompt?.trim() || getConnectorSystemPrompt("slack"),
 						clientId,
 						logger: loggerAdapter,
 						transport: "slack",
