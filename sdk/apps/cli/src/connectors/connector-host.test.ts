@@ -408,7 +408,7 @@ describe("handleConnectorUserTurn", () => {
 			workspaceRoot: "/tmp/work",
 		});
 		const runtime = createRuntimeClient(
-			"Here is dangling markdown: **repo `sdk-wip",
+			"Here is dangling markdown: **repo `sdk",
 		);
 
 		await handleConnectorUserTurn({
@@ -458,7 +458,7 @@ describe("handleConnectorUserTurn", () => {
 			{ timeoutMs: null },
 		);
 		expect(posts.at(-1)).toEqual({
-			raw: "Here is dangling markdown: **repo `sdk-wip",
+			raw: "Here is dangling markdown: **repo `sdk",
 		});
 	});
 

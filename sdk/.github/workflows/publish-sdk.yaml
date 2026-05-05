@@ -33,7 +33,7 @@ jobs:
   publish-sdk:
     needs: test
     name: Publish SDK Packages
-    if: github.repository == 'cline/sdk-wip' && github.ref == 'refs/heads/main'
+    if: github.repository == 'cline/sdk' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:

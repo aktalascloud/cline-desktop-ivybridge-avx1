@@ -79,7 +79,7 @@ If you're using `bun run dev`, you don't need to rebuild after every SDK change 
 ## Monorepo Structure
 
 ```
-cline-sdk-wip/
+cline-sdk/
   packages/           # SDK packages (published to npm)
     shared/           # Contracts, schemas, path helpers, runtime utilities
     llms/             # Provider settings, model catalogs, AI SDK handlers

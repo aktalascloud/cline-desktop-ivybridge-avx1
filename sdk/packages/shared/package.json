@@ -4,7 +4,7 @@
 	"description": "Shared utilities, types, and schemas for Cline packages",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/cline/sdk-wip",
+		"url": "https://github.com/cline/sdk",
 		"directory": "packages/shared"
 	},
 	"type": "module",

@@ -9,7 +9,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/cline/sdk-wip.git",
+		"url": "git+https://github.com/cline/sdk.git",
 		"directory": "apps/cli"
 	},
 	"bin": {
