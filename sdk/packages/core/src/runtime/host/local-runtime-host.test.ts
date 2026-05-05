@@ -2278,6 +2278,88 @@ describe("LocalRuntimeHost", () => {
 		expect(sessionService.persistSessionMessages).toHaveBeenCalledTimes(2);
 	});
 
+	it("keeps an interactive session reusable when abort makes the run reject", async () => {
+		const sessionId = "sess-interactive-abort-reject";
+		const manifest = createManifest(sessionId);
+		const sessionService = {
+			ensureSessionsDir: vi.fn().mockReturnValue("/tmp/sessions"),
+			createRootSessionWithArtifacts: vi.fn().mockResolvedValue({
+				manifestPath: "/tmp/manifest-abort-reject.json",
+				messagesPath: "/tmp/messages-abort-reject.json",
+				manifest,
+			}),
+			persistSessionMessages: vi.fn(),
+			updateSessionStatus: vi.fn().mockResolvedValue({ updated: true }),
+			updateSession: vi.fn().mockResolvedValue({ updated: true }),
+			writeSessionManifest: vi.fn(),
+			listSessions: vi.fn().mockResolvedValue([]),
+			deleteSession: vi.fn().mockResolvedValue({ deleted: true }),
+		};
+		const runtimeBuilder = {
+			build: vi.fn().mockReturnValue({
+				tools: [],
+				shutdown: vi.fn(),
+			}),
+		};
+		let rejectRun: ((error: Error) => void) | undefined;
+		let markRunStarted: (() => void) | undefined;
+		const runStarted = new Promise<void>((resolve) => {
+			markRunStarted = resolve;
+		});
+		const run = vi
+			.fn()
+			.mockImplementationOnce(
+				() =>
+					new Promise<AgentResult>((_resolve, reject) => {
+						rejectRun = reject;
+						markRunStarted?.();
+					}),
+			)
+			.mockResolvedValueOnce(createResult({ text: "second" }));
+		const agent = {
+			run,
+			continue: vi.fn(),
+			abort: vi.fn(() => {
+				rejectRun?.(new Error("user cancelled"));
+			}),
+			subscribeEvents: vi.fn().mockReturnValue(() => {}),
+			canStartRun: vi.fn().mockReturnValue(true),
+			getAgentId: vi.fn().mockReturnValue("agent-root-1"),
+			getConversationId: vi.fn().mockReturnValue("conv-root-1"),
+			shutdown: vi.fn().mockResolvedValue(undefined),
+			getMessages: vi.fn().mockReturnValue([]),
+			messages: [],
+		};
+		const manager = new RuntimeHostUnderTest({
+			distinctId,
+			sessionService: sessionService as never,
+			runtimeBuilder,
+			createAgent: () => agent as never,
+		});
+
+		await manager.startSession(
+			normalizeStartInput({
+				config: createConfig({ sessionId }),
+				interactive: true,
+			}),
+		);
+		const firstTurn = manager.runTurn({ sessionId, prompt: "slow" });
+		await runStarted;
+		await manager.abort(sessionId, new Error("user cancelled"));
+
+		await expect(firstTurn).resolves.toMatchObject({
+			finishReason: "aborted",
+		});
+		await expect(
+			manager.runTurn({ sessionId, prompt: "again" }),
+		).resolves.toMatchObject({
+			text: "second",
+			finishReason: "completed",
+		});
+		expect(run).toHaveBeenCalledTimes(2);
+		expect(agent.shutdown).not.toHaveBeenCalled();
+	});
+
 	it("tracks accumulated usage per session across turns", async () => {
 		const sessionId = "sess-usage";
 		const manifest = createManifest(sessionId);

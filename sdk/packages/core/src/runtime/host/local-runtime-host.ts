@@ -506,8 +506,12 @@ export class LocalRuntimeHost implements RuntimeHost {
 				}
 			}
 		} catch (error) {
-			await this.failSession(active);
-			throw error;
+			if (active.interactive && active.aborting) {
+				result = await this.completeAbortedInteractiveTurn(active);
+			} else {
+				await this.failSession(active);
+				throw error;
+			}
 		}
 
 		return {
@@ -586,6 +590,9 @@ export class LocalRuntimeHost implements RuntimeHost {
 			});
 			return result;
 		} catch (error) {
+			if (session.interactive && session.aborting) {
+				return await this.completeAbortedInteractiveTurn(session);
+			}
 			await this.failSession(session);
 			throw error;
 		}
@@ -831,6 +838,31 @@ export class LocalRuntimeHost implements RuntimeHost {
 			},
 		});
 		session.aborting = false;
+	}
+
+	private async completeAbortedInteractiveTurn(
+		session: ActiveSession,
+	): Promise<AgentResult> {
+		const endedAt = new Date();
+		const messages = session.agent.getMessages();
+		session.persistedMessages = messages;
+		session.started = session.started || messages.length > 0;
+		await this.completeInteractiveTurn(session, "aborted");
+		return {
+			text: "",
+			usage: createInitialAccumulatedUsage(),
+			messages,
+			toolCalls: [],
+			iterations: 0,
+			finishReason: "aborted",
+			model: {
+				id: session.config.modelId,
+				provider: session.config.providerId,
+			},
+			startedAt: endedAt,
+			endedAt,
+			durationMs: 0,
+		};
 	}
 
 	private async executeAgentTurn(

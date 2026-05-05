@@ -19,6 +19,7 @@ export type {
 	AgentResult,
 	AgentRunResult,
 	AgentRunStatus,
+	AgentTool,
 	AgentToolContext,
 	AutomationEventEnvelope,
 	BasicLogger,
