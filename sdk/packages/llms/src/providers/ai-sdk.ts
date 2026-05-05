@@ -865,18 +865,16 @@ function createAiSdkProvider(kind: ProviderModuleKind): GatewayProviderFactory {
 				const tools = providerDisablesExternalToolExecution(context)
 					? undefined
 					: toAiSdkTools(request);
+				const systemPrompt = resolveAiSdkSystemPrompt(request);
+				const useSystemOption =
+					typeof systemPrompt === "string" && systemPrompt.trim().length > 0;
+				const messagesSystemPrompt = useSystemOption ? undefined : systemPrompt;
 				stream = streamText({
 					model: provider.model(context.model.id) as never,
 					messages: (shouldUseAnthropicPromptCache(request, context)
-						? buildCachedAiSdkMessages(
-								request,
-								context,
-								resolveAiSdkSystemPrompt(request),
-							)
-						: toAiSdkMessages(
-								request.messages,
-								resolveAiSdkSystemPrompt(request),
-							)) as never,
+						? buildCachedAiSdkMessages(request, context, messagesSystemPrompt)
+						: toAiSdkMessages(request.messages, messagesSystemPrompt)) as never,
+					...(useSystemOption ? { system: systemPrompt } : {}),
 					tools: tools as never,
 					temperature: request.temperature,
 					maxOutputTokens: request.maxTokens,
