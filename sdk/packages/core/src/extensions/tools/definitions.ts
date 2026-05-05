@@ -731,12 +731,16 @@ export function createDefaultTools(
 		tools.push(createSkillsTool(executors.skills, config));
 	}
 
+	const submitExecutor = enableSubmitAndExit ? executors.submit : undefined;
+
 	// Add ask_question tool if enabled and executor provided
-	if (enableAskQuestion && executors.askQuestion) {
+	if (enableAskQuestion && executors.askQuestion && !submitExecutor) {
 		tools.push(createAskQuestionTool(executors.askQuestion));
-	} else if (enableSubmitAndExit && executors.submit) {
-		// Add submit_and_exit tool if enabled and executor provided
-		tools.push(createSubmitAndExitTool(executors.submit, config));
+	}
+
+	// Add submit_and_exit tool if enabled and executor provided
+	if (submitExecutor) {
+		tools.push(createSubmitAndExitTool(submitExecutor, config));
 	}
 
 	return tools as unknown as AgentTool[];

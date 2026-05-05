@@ -279,6 +279,21 @@ describe("default submit_and_exit tool", () => {
 		);
 	});
 
+	it("excludes ask_question when submit_and_exit is included", () => {
+		const tools = createDefaultTools({
+			executors: {
+				askQuestion: async () => "answer",
+				submit: async () => "submitted",
+			},
+			enableAskQuestion: true,
+			enableSubmitAndExit: true,
+		});
+
+		const toolNames = tools.map((tool) => tool.name);
+		expect(toolNames).toContain("submit_and_exit");
+		expect(toolNames).not.toContain("ask_question");
+	});
+
 	it("validates and executes submit_and_exit input", async () => {
 		const execute = vi.fn(async () => "submitted");
 		const tools = createDefaultTools({

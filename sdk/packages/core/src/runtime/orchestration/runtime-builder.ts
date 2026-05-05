@@ -18,6 +18,7 @@ import {
 import {
 	createBuiltinTools,
 	DEFAULT_MODEL_TOOL_ROUTING_RULES,
+	DefaultToolNames,
 	resolveToolPresetName,
 	resolveToolRoutingConfig,
 	type SkillsExecutorWithMetadata,
@@ -542,6 +543,11 @@ export class DefaultRuntimeBuilder implements RuntimeBuilder {
 		}
 
 		const finalTools = filterAvailableTools(tools, config.toolPolicies);
+		const requiresCompletionTool = finalTools.some(
+			(tool) =>
+				tool.name === DefaultToolNames.SUBMIT_AND_EXIT &&
+				tool.lifecycle?.completesRun === true,
+		);
 		const teamCompletionGuard = normalized.enableAgentTeams
 			? (): string | undefined => {
 					const rt = this.teamRuntimeEntries.get(registryKey)?.runtime;
@@ -574,17 +580,16 @@ export class DefaultRuntimeBuilder implements RuntimeBuilder {
 					return undefined;
 				}
 			: undefined;
-		const completionPolicy =
-			normalized.mode === "yolo" && normalized.enableTools
-				? {
-						requireCompletionTool: true,
-						...(teamCompletionGuard
-							? { completionGuard: teamCompletionGuard }
-							: {}),
-					}
-				: teamCompletionGuard
-					? { completionGuard: teamCompletionGuard }
-					: undefined;
+		const completionPolicy = requiresCompletionTool
+			? {
+					requireCompletionTool: true,
+					...(teamCompletionGuard
+						? { completionGuard: teamCompletionGuard }
+						: {}),
+				}
+			: teamCompletionGuard
+				? { completionGuard: teamCompletionGuard }
+				: undefined;
 
 		return {
 			tools: finalTools,

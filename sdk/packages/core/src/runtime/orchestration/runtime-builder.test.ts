@@ -123,6 +123,37 @@ describe("DefaultRuntimeBuilder", () => {
 		});
 	});
 
+	it("requires completion only when submit_and_exit is available", async () => {
+		const runtime = await new DefaultRuntimeBuilder().build({
+			config: makeBaseConfig({
+				mode: "yolo",
+			}),
+		});
+
+		const names = runtime.tools.map((tool) => tool.name);
+		expect(names).not.toContain("submit_and_exit");
+		expect(runtime.completionPolicy).toBeUndefined();
+	});
+
+	it("keeps ask_question available in non-yolo modes", async () => {
+		for (const mode of ["act", "plan"] as const) {
+			const runtime = await new DefaultRuntimeBuilder().build({
+				config: makeBaseConfig({
+					mode,
+				}),
+				toolExecutors: {
+					submit: async () => "submitted",
+					askQuestion: async () => "question",
+				},
+			});
+
+			const names = runtime.tools.map((tool) => tool.name);
+			expect(names).toContain("ask_question");
+			expect(names).not.toContain("submit_and_exit");
+			expect(runtime.completionPolicy).toBeUndefined();
+		}
+	});
+
 	it("does not infer yolo preset from auto-approval alone", async () => {
 		const runtime = await new DefaultRuntimeBuilder().build({
 			config: makeBaseConfig({
