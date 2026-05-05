@@ -9,8 +9,13 @@
  * Per-instance caches make this host state.
  */
 
-import type * as LlmsProviders from "@clinebot/llms";
-import { normalizeUserInput } from "@clinebot/shared";
+import {
+	type ContentBlock,
+	type Message,
+	normalizeUserInput,
+	type TextContent,
+	type ToolResultContent,
+} from "@clinebot/shared";
 
 const DEFAULT_MAX_TOOL_RESULT_CHARS = 50_000;
 const DEFAULT_MAX_TOTAL_TEXT_BYTES = 6_000_000;
@@ -25,6 +30,8 @@ const TARGET_TOOL_NAMES = new Set([
 ]);
 const READ_TOOL_NAMES = new Set(["read", "read_files"]);
 const OUTDATED_FILE_CONTENT = "[outdated - see the latest file content]";
+const MISSING_TOOL_RESULT_TEXT =
+	"Tool execution was interrupted before a result was produced.";
 const TRUNCATE_MARKER_DEFAULT = (n: number) =>
 	`\n\n...[truncated ${n} chars]...\n\n`;
 const TRUNCATE_MARKER_BUDGET = (n: number) =>
@@ -47,7 +54,7 @@ interface TruncationCandidate {
  */
 export class MessageBuilder {
 	private indexedMessageCount = 0;
-	private indexedTailRef: LlmsProviders.Message | undefined;
+	private indexedTailRef: Message | undefined;
 	private readonly toolNameByIdCache = new Map<string, string>();
 	private readonly readLocatorsByToolUseIdCache = new Map<
 		string,
@@ -66,10 +73,11 @@ export class MessageBuilder {
 		private readonly maxTotalTextBytes = DEFAULT_MAX_TOTAL_TEXT_BYTES,
 	) {}
 
-	buildForApi(messages: LlmsProviders.Message[]): LlmsProviders.Message[] {
+	buildForApi(messages: Message[]): Message[] {
 		this.reindex(messages);
+		const repairedMessages = this.addMissingToolResults(messages);
 
-		const prepared = messages.map((message) => {
+		const prepared = repairedMessages.map((message) => {
 			if (!Array.isArray(message.content)) {
 				if (message.role === "user" && typeof message.content === "string") {
 					const normalized = normalizeUserInput(message.content);
@@ -96,9 +104,9 @@ export class MessageBuilder {
 	}
 
 	private transformBlock(
-		block: LlmsProviders.ContentBlock,
-		role: LlmsProviders.Message["role"],
-	): LlmsProviders.ContentBlock {
+		block: ContentBlock,
+		role: Message["role"],
+	): ContentBlock {
 		if (
 			role === "user" &&
 			block.type === "text" &&
@@ -125,7 +133,7 @@ export class MessageBuilder {
 		const toolName = this.toolNameByIdCache.get(block.tool_use_id);
 		let nextContent = block.content;
 
-		if (this.isReadTool(toolName)) {
+		if (this.isReadTool(toolName) && block.is_error !== true) {
 			const locators = this.getReadLocators(block);
 			if (locators.length > 0) {
 				const outdated = locators.filter((locator) =>
@@ -146,7 +154,7 @@ export class MessageBuilder {
 			: { ...block, content: nextContent };
 	}
 
-	private reindex(messages: LlmsProviders.Message[]): void {
+	private reindex(messages: Message[]): void {
 		const tailUnchanged =
 			this.indexedMessageCount === 0 ||
 			(messages.length >= this.indexedMessageCount &&
@@ -179,7 +187,7 @@ export class MessageBuilder {
 					}
 				} else if (block.type === "tool_result") {
 					const toolName = this.toolNameByIdCache.get(block.tool_use_id);
-					if (!this.isReadTool(toolName)) {
+					if (!this.isReadTool(toolName) || block.is_error === true) {
 						continue;
 					}
 					const locators = this.getReadLocators(block);
@@ -203,6 +211,216 @@ export class MessageBuilder {
 			messages.length > 0 ? messages[messages.length - 1] : undefined;
 	}
 
+	private addMissingToolResults(messages: Message[]): Message[] {
+		const existingToolResultIds = this.collectToolResultIds(messages);
+		const repaired: Message[] = [];
+		const pendingMissingToolCalls = new Map<string, string>();
+		let changed = false;
+
+		const flushMissing = () => {
+			if (pendingMissingToolCalls.size === 0) {
+				return;
+			}
+			pushRepairedMessage(
+				this.createMissingToolResultMessage(pendingMissingToolCalls),
+			);
+			pendingMissingToolCalls.clear();
+			changed = true;
+		};
+
+		const pushRepairedMessage = (message: Message) => {
+			const previous = repaired.at(-1);
+			if (this.shouldMergeUserAfterToolResults(previous, message)) {
+				repaired[repaired.length - 1] = {
+					...previous,
+					content: [
+						...previous.content,
+						...this.contentBlocksForUserMerge(message.content),
+					],
+				};
+				changed = true;
+				return;
+			}
+			repaired.push(message);
+		};
+
+		for (const message of messages) {
+			if (this.isToolResultOnlyMessage(message)) {
+				pushRepairedMessage(
+					this.appendMissingToolResults(message, pendingMissingToolCalls),
+				);
+				if (pendingMissingToolCalls.size > 0) {
+					pendingMissingToolCalls.clear();
+					changed = true;
+				}
+				continue;
+			}
+
+			if (Array.isArray(message.content)) {
+				const toolResults = message.content.filter(
+					(block): block is ToolResultContent => block.type === "tool_result",
+				);
+				const otherBlocks = message.content.filter(
+					(block) => block.type !== "tool_result",
+				);
+
+				if (toolResults.length > 0) {
+					const toolResultMessage = this.appendMissingToolResults(
+						{
+							...message,
+							role: "user",
+							content: toolResults,
+						},
+						pendingMissingToolCalls,
+					);
+					pushRepairedMessage(toolResultMessage);
+					if (pendingMissingToolCalls.size > 0) {
+						pendingMissingToolCalls.clear();
+					}
+					changed = true;
+				}
+
+				if (otherBlocks.length > 0 || toolResults.length === 0) {
+					if (toolResults.length === 0) {
+						flushMissing();
+					}
+					const nextMessage =
+						toolResults.length > 0
+							? {
+									...message,
+									content: otherBlocks,
+								}
+							: message;
+					pushRepairedMessage(nextMessage);
+					if (nextMessage.role === "assistant") {
+						this.trackMissingToolCalls(
+							nextMessage,
+							existingToolResultIds,
+							pendingMissingToolCalls,
+						);
+					}
+				}
+				continue;
+			}
+
+			flushMissing();
+			pushRepairedMessage(message);
+		}
+
+		flushMissing();
+		return changed ? repaired : messages;
+	}
+
+	private appendMissingToolResults(
+		message: Message,
+		pendingMissingToolCalls: ReadonlyMap<string, string>,
+	): Message {
+		if (pendingMissingToolCalls.size === 0 || !Array.isArray(message.content)) {
+			return message;
+		}
+		return {
+			...message,
+			role: "user",
+			content: [
+				...message.content,
+				...this.createMissingToolResultBlocks(pendingMissingToolCalls),
+			],
+		};
+	}
+
+	private shouldMergeUserAfterToolResults(
+		previous: Message | undefined,
+		next: Message,
+	): previous is Message & { content: ToolResultContent[] } {
+		return (
+			previous?.role === "user" &&
+			next.role === "user" &&
+			this.isToolResultOnlyMessage(previous) &&
+			this.contentBlocksForUserMerge(next.content).length > 0
+		);
+	}
+
+	private contentBlocksForUserMerge(
+		content: Message["content"],
+	): ContentBlock[] {
+		return typeof content === "string"
+			? content.length > 0
+				? [{ type: "text", text: content } satisfies TextContent]
+				: []
+			: content;
+	}
+
+	private collectToolResultIds(messages: Message[]): Set<string> {
+		const ids = new Set<string>();
+		for (const message of messages) {
+			if (!Array.isArray(message.content)) {
+				continue;
+			}
+			for (const block of message.content) {
+				if (block.type === "tool_result") {
+					ids.add(block.tool_use_id);
+				}
+			}
+		}
+		return ids;
+	}
+
+	private isToolResultOnlyMessage(message: Message): boolean {
+		return (
+			message.role === "user" &&
+			Array.isArray(message.content) &&
+			message.content.length > 0 &&
+			message.content.every((block) => block.type === "tool_result")
+		);
+	}
+
+	private trackMissingToolCalls(
+		message: Message,
+		existingToolResultIds: Set<string>,
+		pendingMissingToolCalls: Map<string, string>,
+	): void {
+		if (!Array.isArray(message.content)) {
+			return;
+		}
+		for (const block of message.content) {
+			if (block.type !== "tool_use" || existingToolResultIds.has(block.id)) {
+				continue;
+			}
+			pendingMissingToolCalls.set(block.id, block.name);
+		}
+	}
+
+	private createMissingToolResultMessage(
+		toolCalls: ReadonlyMap<string, string>,
+	): Message {
+		return {
+			role: "user",
+			content: this.createMissingToolResultBlocks(toolCalls),
+		};
+	}
+
+	private createMissingToolResultBlocks(
+		toolCalls: ReadonlyMap<string, string>,
+	): ToolResultContent[] {
+		return Array.from(toolCalls, ([toolUseId, toolName]) => ({
+			type: "tool_result",
+			tool_use_id: toolUseId,
+			content: [
+				{
+					type: "text",
+					text: this.formatMissingToolResultText(toolName),
+				},
+			],
+			is_error: true,
+		}));
+	}
+
+	private formatMissingToolResultText(toolName: string): string {
+		return toolName
+			? `${MISSING_TOOL_RESULT_TEXT} Tool: ${toolName}.`
+			: MISSING_TOOL_RESULT_TEXT;
+	}
+
 	private resetIndexes(): void {
 		this.indexedMessageCount = 0;
 		this.indexedTailRef = undefined;
@@ -213,9 +431,7 @@ export class MessageBuilder {
 		this.readResultLocatorCache = new WeakMap<object, ReadLocator[]>();
 	}
 
-	private getReadLocators(
-		block: LlmsProviders.ToolResultContent,
-	): ReadLocator[] {
+	private getReadLocators(block: ToolResultContent): ReadLocator[] {
 		const blockRef = block as unknown as object;
 		let parsed = this.readResultLocatorCache.get(blockRef);
 		if (parsed === undefined) {
@@ -261,7 +477,7 @@ export class MessageBuilder {
 	}
 
 	private extractReadLocatorsFromToolResultContent(
-		content: LlmsProviders.ToolResultContent["content"],
+		content: ToolResultContent["content"],
 	): ReadLocator[] {
 		if (typeof content === "string") {
 			return this.tryParseReadLocators(content);
@@ -401,9 +617,9 @@ export class MessageBuilder {
 	}
 
 	private replaceOutdatedReadContent(
-		content: LlmsProviders.ToolResultContent["content"],
+		content: ToolResultContent["content"],
 		outdated: ReadLocator[],
-	): LlmsProviders.ToolResultContent["content"] {
+	): ToolResultContent["content"] {
 		const outdatedKeys = new Set(outdated.map((l) => this.toReadLocatorKey(l)));
 		const outdatedPaths = new Set(outdated.map((l) => l.path));
 
@@ -442,7 +658,7 @@ export class MessageBuilder {
 				return {
 					type: "text",
 					text: OUTDATED_FILE_CONTENT,
-				} satisfies LlmsProviders.TextContent;
+				} satisfies TextContent;
 			}
 			if (entry.type !== "text") {
 				return entry;
@@ -538,8 +754,8 @@ export class MessageBuilder {
 	}
 
 	private truncateToolResultContent(
-		content: LlmsProviders.ToolResultContent["content"],
-	): LlmsProviders.ToolResultContent["content"] {
+		content: ToolResultContent["content"],
+	): ToolResultContent["content"] {
 		if (typeof content === "string") {
 			return this.truncateMiddle(content);
 		}
@@ -564,9 +780,7 @@ export class MessageBuilder {
 		);
 	}
 
-	private truncateToTotalTextBudget(
-		messages: LlmsProviders.Message[],
-	): LlmsProviders.Message[] {
+	private truncateToTotalTextBudget(messages: Message[]): Message[] {
 		if (this.maxTotalTextBytes <= 0) {
 			return messages;
 		}
@@ -614,7 +828,7 @@ export class MessageBuilder {
 		return next;
 	}
 
-	private countMessageTextBytes(messages: LlmsProviders.Message[]): number {
+	private countMessageTextBytes(messages: Message[]): number {
 		let total = 0;
 		for (const message of messages) {
 			if (typeof message.content === "string") {
@@ -647,7 +861,7 @@ export class MessageBuilder {
 	}
 
 	private collectTruncationCandidates(
-		messages: LlmsProviders.Message[],
+		messages: Message[],
 	): TruncationCandidate[] {
 		const candidates: TruncationCandidate[] = [];
 		for (const message of messages) {
@@ -750,9 +964,7 @@ function truncateMiddleToBytes(
 	return best;
 }
 
-function cloneContentBlockForMutation(
-	block: LlmsProviders.ContentBlock,
-): LlmsProviders.ContentBlock {
+function cloneContentBlockForMutation(block: ContentBlock): ContentBlock {
 	if (block.type !== "tool_result" || typeof block.content === "string") {
 		return { ...block };
 	}
