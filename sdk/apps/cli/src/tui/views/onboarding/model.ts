@@ -93,6 +93,11 @@ export interface ProviderModelItem {
 	supportsReasoning?: boolean;
 }
 
+export interface KnownModelInfo {
+	name?: string;
+	capabilities?: string[];
+}
+
 export function toProviderEntry(provider: ProviderCatalogItem): ProviderEntry {
 	return {
 		id: provider.id,
@@ -111,6 +116,19 @@ export function toModelEntry(model: ProviderModelItem): ModelEntry {
 		name: model.name || model.id,
 		supportsReasoning: model.supportsReasoning === true,
 	};
+}
+
+export function toModelEntriesFromKnownModels(
+	knownModels: Record<string, KnownModelInfo> | undefined,
+): ModelEntry[] {
+	if (!knownModels) return [];
+	return Object.entries(knownModels)
+		.map(([id, info]) => ({
+			id,
+			name: info.name || id,
+			supportsReasoning: info.capabilities?.includes("reasoning") ?? false,
+		}))
+		.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function getOAuthProviderLabel(providerId: string): string {

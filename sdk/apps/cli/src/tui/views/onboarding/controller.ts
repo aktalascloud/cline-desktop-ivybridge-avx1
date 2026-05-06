@@ -37,6 +37,7 @@ import {
 	type ProviderEntry,
 	type ReasoningEffort,
 	type ThinkingLevel,
+	toModelEntriesFromKnownModels,
 	toModelEntry,
 	toProviderEntry,
 } from "./model";
@@ -186,15 +187,37 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 		(providerId: string) => {
 			setModelsLoading(true);
 			setModelEntries([]);
-			const providerConfig = providerSettingsManager.getProviderConfig(
-				providerId,
-				{ includeKnownModels: false },
-			);
 			refreshProviderModelsFromSource(providerSettingsManager, providerId)
 				.catch(() => {})
-				.then(() => getLocalProviderModels(providerId, providerConfig))
-				.then(({ models }) => {
-					setModelEntries(models.map(toModelEntry));
+				.then(async () => {
+					const providerConfig = providerSettingsManager.getProviderConfig(
+						providerId,
+						{ includeKnownModels: false },
+					);
+					const resolved = await resolveProviderConfig(
+						providerId,
+						{
+							loadLatestOnInit: true,
+							loadPrivateOnAuth: true,
+							failOnError: false,
+						},
+						providerConfig,
+					);
+					const resolvedModels = toModelEntriesFromKnownModels(
+						resolved?.knownModels,
+					);
+					if (resolvedModels.length > 0) {
+						setModelsDefaultId(resolved?.modelId ?? "");
+						return resolvedModels;
+					}
+					const { models } = await getLocalProviderModels(
+						providerId,
+						providerConfig,
+					);
+					return models.map(toModelEntry);
+				})
+				.then((models) => {
+					setModelEntries(models);
 				})
 				.catch(() => {})
 				.finally(() => setModelsLoading(false));

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getOAuthProviderLabel, toModelEntry, toProviderEntry } from "./model";
+import {
+	getOAuthProviderLabel,
+	toModelEntriesFromKnownModels,
+	toModelEntry,
+	toProviderEntry,
+} from "./model";
 
 describe("onboarding model helpers", () => {
 	it("maps provider catalog entries into onboarding provider entries", () => {
@@ -61,6 +66,32 @@ describe("onboarding model helpers", () => {
 			name: "GPT-5.3 Codex",
 			supportsReasoning: true,
 		});
+	});
+
+	it("maps resolved known models into sorted onboarding model entries", () => {
+		expect(
+			toModelEntriesFromKnownModels({
+				"gpt-5.2": {
+					name: "GPT-5.2",
+					capabilities: ["tools"],
+				},
+				"gpt-5.3-codex": {
+					name: "GPT-5.3 Codex",
+					capabilities: ["tools", "reasoning"],
+				},
+			}),
+		).toEqual([
+			{
+				id: "gpt-5.2",
+				name: "GPT-5.2",
+				supportsReasoning: false,
+			},
+			{
+				id: "gpt-5.3-codex",
+				name: "GPT-5.3 Codex",
+				supportsReasoning: true,
+			},
+		]);
 	});
 
 	it("formats OAuth provider labels for onboarding status views", () => {
