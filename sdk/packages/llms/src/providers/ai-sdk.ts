@@ -22,7 +22,10 @@ import {
 	resolveModelFamily,
 	shouldUseAnthropicPromptCache,
 } from "./routing/anthropic-compatible";
-import { composeAiSdkProviderOptions } from "./routing/provider-options";
+import {
+	type AiSdkProviderOptionsTarget,
+	composeAiSdkProviderOptions,
+} from "./routing/provider-options";
 import type {
 	AiSdkStreamPart,
 	AiSdkStreamResult,
@@ -38,18 +41,7 @@ interface GatewayNormalizedUsage {
 	cacheWriteTokens: number;
 	totalCost?: number;
 }
-type ProviderModuleKind =
-	| "openai"
-	| "openai-compatible"
-	| "anthropic"
-	| "google"
-	| "vertex"
-	| "bedrock"
-	| "mistral"
-	| "claude-code"
-	| "openai-codex"
-	| "opencode"
-	| "dify";
+type ProviderModuleKind = AiSdkProviderOptionsTarget;
 
 function buildCachedAiSdkMessages(
 	request: GatewayStreamRequest,
@@ -885,6 +877,7 @@ function createAiSdkProvider(kind: ProviderModuleKind): GatewayProviderFactory {
 					providerOptions: composeAiSdkProviderOptions(
 						request,
 						context,
+						kind,
 					) as never,
 					onError: ({ error: streamError }) => {
 						const msg = extractErrorMessage(streamError);

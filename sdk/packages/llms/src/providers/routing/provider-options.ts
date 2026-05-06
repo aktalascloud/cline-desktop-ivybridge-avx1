@@ -23,6 +23,19 @@ import {
 
 export type { ProviderOptionsPatch } from "./utils";
 
+export type AiSdkProviderOptionsTarget =
+	| "openai"
+	| "openai-compatible"
+	| "anthropic"
+	| "google"
+	| "vertex"
+	| "bedrock"
+	| "mistral"
+	| "claude-code"
+	| "openai-codex"
+	| "opencode"
+	| "dify";
+
 /** Merge patches in order. Later patches override earlier ones per bucket key. */
 export function mergeProviderOptionPatches(
 	patches: ReadonlyArray<ProviderOptionsPatch | undefined>,
@@ -56,6 +69,36 @@ function buildProviderAndAliasPatch(options: {
 function isMoonshotKimiModel(modelId: string): boolean {
 	const normalized = modelId.toLowerCase();
 	return normalized.includes("moonshotai/kimi-");
+}
+
+function inferProviderOptionsTarget(
+	providerId: string,
+): AiSdkProviderOptionsTarget {
+	switch (providerId) {
+		case "openai-native":
+			return "openai";
+		case "anthropic":
+			return "anthropic";
+		case "google":
+		case "gemini":
+			return "google";
+		case "vertex":
+			return "vertex";
+		case "bedrock":
+			return "bedrock";
+		case "mistral":
+			return "mistral";
+		case "claude-code":
+			return "claude-code";
+		case "openai-codex":
+			return "openai-codex";
+		case "opencode":
+			return "opencode";
+		case "dify":
+			return "dify";
+		default:
+			return "openai-compatible";
+	}
 }
 
 function buildDeepSeekThinkingPatch(options: {
@@ -156,13 +199,15 @@ function buildCompatibleProviderOptions(options: {
 	request: GatewayStreamRequest;
 	context: GatewayProviderContext;
 	isAnthropicCompatibleModelId: boolean;
+	target: AiSdkProviderOptionsTarget;
 }): Record<string, unknown> {
-	const { request, context, isAnthropicCompatibleModelId } = options;
+	const { request, context, isAnthropicCompatibleModelId, target } = options;
 	const anthropicReasoningPolicy = isAnthropicCompatibleModelId
 		? resolveAnthropicReasoningRequestPolicy(request, context)
 		: undefined;
 
 	return {
+		...(target === "openai-compatible" ? { strictJsonSchema: false } : {}),
 		...buildCompatibleThinkingOptions(request, context),
 		...buildCompatibleEffortOptions({
 			reasoning: request.reasoning,
@@ -172,6 +217,22 @@ function buildCompatibleProviderOptions(options: {
 		...buildAnthropicCompatibleProviderOptions(request, context),
 		...buildPromptCacheProviderOptions(request, context),
 		...buildOpenAINativeProviderOptions(request),
+	};
+}
+
+function buildOpenAIProviderOptionsPatch(
+	request: GatewayStreamRequest,
+	target: AiSdkProviderOptionsTarget,
+): ProviderOptionsPatch | undefined {
+	if (target !== "openai") {
+		return undefined;
+	}
+
+	return {
+		openai: {
+			strictJsonSchema: false,
+			...buildOpenAINativeProviderOptions(request),
+		},
 	};
 }
 
@@ -198,6 +259,7 @@ function buildOpenAICodexProviderOptionsPatch(
 		...compatibleOptions,
 		instructions: request.systemPrompt,
 		store: false,
+		strictJsonSchema: false,
 		systemMessageMode: "remove" as const,
 	};
 
@@ -216,7 +278,11 @@ function buildProviderFanoutPatch(
 	context: GatewayProviderContext,
 	providerOptionsKey: string,
 	compatibleOptions: Record<string, unknown>,
+	target: AiSdkProviderOptionsTarget,
 ): ProviderOptionsPatch | undefined {
+	if (target === "openai") {
+		return undefined;
+	}
 	if (
 		request.providerId === "anthropic" ||
 		request.providerId === "openai-codex" ||
@@ -293,17 +359,21 @@ function buildMoonshotKimiDisablePatch(options: {
  * Compose AI SDK `providerOptions` from a small set of ordered patches.
  *
  * Precedence (low -> high):
- *  1. base/openai-compatible buckets
- *  2. codex provider-specific override
- *  3. provider-id + alias fanout
- *  4. gemini-specific google bucket
- *  5. DeepSeek thinking type patch
- *  6. Moonshot Kimi disable patch
- *  7. GLM/Z.AI overlay
+ *  1. base shared buckets
+ *  2. OpenAI adapter bucket
+ *  3. codex provider-specific override
+ *  4. provider-id + alias fanout
+ *  5. gemini-specific google bucket
+ *  6. DeepSeek thinking type patch
+ *  7. Moonshot Kimi disable patch
+ *  8. GLM/Z.AI overlay
  */
 export function composeAiSdkProviderOptions(
 	request: GatewayStreamRequest,
 	context: GatewayProviderContext,
+	target: AiSdkProviderOptionsTarget = inferProviderOptionsTarget(
+		request.providerId,
+	),
 ): Record<string, unknown> {
 	const providerOptionsKey = toProviderOptionsKey(request.providerId);
 	const isAnthropicCompatibleModelId = isAnthropicCompatibleModel({
@@ -314,11 +384,13 @@ export function composeAiSdkProviderOptions(
 		request,
 		context,
 		isAnthropicCompatibleModelId,
+		target,
 	});
 	const anthropicOptions = buildAnthropicProviderOptions(request, context);
 
 	return mergeProviderOptionPatches([
 		buildBaseProviderOptionsPatch(compatibleOptions, anthropicOptions),
+		buildOpenAIProviderOptionsPatch(request, target),
 		buildOpenAICodexProviderOptionsPatch(
 			request,
 			providerOptionsKey,
@@ -329,6 +401,7 @@ export function composeAiSdkProviderOptions(
 			context,
 			providerOptionsKey,
 			compatibleOptions,
+			target,
 		),
 		buildGeminiProviderOptionsPatch(request),
 		buildDeepSeekThinkingPatch({ request, providerOptionsKey }),

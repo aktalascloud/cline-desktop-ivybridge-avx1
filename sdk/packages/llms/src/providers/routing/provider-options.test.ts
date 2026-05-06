@@ -113,6 +113,7 @@ describe("composeAiSdkProviderOptions precedence", () => {
 				effort: "high",
 				reasoningEffort: "high",
 				reasoningSummary: "auto",
+				strictJsonSchema: false,
 			}),
 		);
 		// The camelCase alias is also populated as a separate bucket.
@@ -121,8 +122,54 @@ describe("composeAiSdkProviderOptions precedence", () => {
 				effort: "high",
 				reasoningEffort: "high",
 				reasoningSummary: "auto",
+				strictJsonSchema: false,
 			}),
 		);
+		expect(result.openaiCompatible).toEqual(
+			expect.objectContaining({ strictJsonSchema: false }),
+		);
+	});
+
+	it("disables strict JSON schema for the OpenAI adapter bucket", () => {
+		const result = composeAiSdkProviderOptions(
+			makeRequest({ providerId: "openai-native", modelId: "gpt-5.4" }),
+			makeContext({ providerId: "openai-native", modelId: "gpt-5.4" }),
+		);
+
+		expect(result.openai).toEqual(
+			expect.objectContaining({
+				strictJsonSchema: false,
+				truncation: "auto",
+			}),
+		);
+		expect(result).not.toHaveProperty("openai-native");
+		expect(result).not.toHaveProperty("openaiNative");
+		expect(result.openaiCompatible).not.toHaveProperty("strictJsonSchema");
+	});
+
+	it("uses the OpenAI adapter bucket for OpenAI Responses compatible providers", () => {
+		const result = composeAiSdkProviderOptions(
+			makeRequest({ providerId: "v0", modelId: "v0-1.5-md" }),
+			makeContext({ providerId: "v0", modelId: "v0-1.5-md" }),
+			"openai",
+		);
+
+		expect(result.openai).toEqual(
+			expect.objectContaining({ strictJsonSchema: false }),
+		);
+		expect(result.openai).not.toHaveProperty("truncation");
+		expect(result).not.toHaveProperty("v0");
+		expect(result.openaiCompatible).not.toHaveProperty("strictJsonSchema");
+	});
+
+	it("does not fan OpenAI-compatible strict schema defaults into native adapter buckets", () => {
+		const result = composeAiSdkProviderOptions(
+			makeRequest({ providerId: "bedrock", modelId: "anthropic.claude-3-5" }),
+			makeContext({ providerId: "bedrock", modelId: "anthropic.claude-3-5" }),
+		);
+
+		expect(result.bedrock).not.toHaveProperty("strictJsonSchema");
+		expect(result.openaiCompatible).not.toHaveProperty("strictJsonSchema");
 	});
 
 	it("does not emit a separate alias bucket when the alias equals the provider id", () => {
