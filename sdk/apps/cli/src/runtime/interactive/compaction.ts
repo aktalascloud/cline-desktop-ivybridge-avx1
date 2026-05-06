@@ -3,7 +3,6 @@ import type { Message } from "@clinebot/shared";
 import type { Config } from "../../utils/types";
 
 const FALLBACK_MANUAL_COMPACTION_CONTEXT_WINDOW_TOKENS = 64_000;
-const MANUAL_COMPACTION_THRESHOLD_RATIO = 0.5;
 
 export async function compactInteractiveMessages(input: {
 	config: Config;
@@ -15,26 +14,19 @@ export async function compactInteractiveMessages(input: {
 		input.config.compaction?.contextWindowTokens ??
 		modelInfo?.contextWindow ??
 		FALLBACK_MANUAL_COMPACTION_CONTEXT_WINDOW_TOKENS;
-	const compact = createContextCompactionPrepareTurn({
-		providerConfig: undefined,
-		providerId: input.config.providerId,
-		modelId: input.config.modelId,
-		compaction: {
-			enabled: true,
-			strategy: input.config.compaction?.strategy ?? "basic",
-			...(typeof input.config.compaction?.contextWindowTokens === "number"
-				? { contextWindowTokens: input.config.compaction.contextWindowTokens }
-				: {}),
-			thresholdRatio: Math.max(
-				input.config.compaction?.thresholdRatio ??
-					MANUAL_COMPACTION_THRESHOLD_RATIO,
-				0.25,
-			),
+	const compact = createContextCompactionPrepareTurn(
+		{
+			providerConfig: input.config.providerConfig,
+			providerId: input.config.providerId,
+			modelId: input.config.modelId,
+			compaction: {
+				...input.config.compaction,
+				enabled: true,
+			},
+			logger: input.config.logger,
 		},
-	});
-	if (!compact) {
-		return { compacted: false, messages: input.messages };
-	}
+		{ mode: "manual" },
+	)!;
 	const result = await compact({
 		agentId: "cli",
 		conversationId: input.sessionId,

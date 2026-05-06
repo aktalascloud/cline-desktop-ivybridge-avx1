@@ -43,6 +43,7 @@ type BuiltinCompactionStrategyOptions = {
 	context: CoreCompactionContext;
 	providerConfig: ProviderConfig;
 	compaction: CoreCompactionConfig | undefined;
+	mode: ContextCompactionMode;
 	estimateMessageTokens: EstimateMessageTokens;
 	logger: Pick<CoreSessionConfig, "logger">["logger"];
 };
@@ -53,6 +54,13 @@ type BuiltinCompactionStrategyRunner = (
 	| Promise<CoreCompactionResult | undefined>
 	| CoreCompactionResult
 	| undefined;
+
+export type ContextCompactionMode = "auto" | "manual";
+
+export interface ContextCompactionPrepareTurnOptions {
+	mode?: ContextCompactionMode;
+	manualTargetRatio?: number;
+}
 
 const BUILTIN_COMPACTION_STRATEGIES = {
 	basic: ({ context, estimateMessageTokens, logger }) =>
@@ -65,6 +73,7 @@ const BUILTIN_COMPACTION_STRATEGIES = {
 		context,
 		providerConfig,
 		compaction,
+		mode,
 		estimateMessageTokens,
 		logger,
 	}) =>
@@ -73,7 +82,14 @@ const BUILTIN_COMPACTION_STRATEGIES = {
 			providerConfig,
 			summarizer: compaction?.summarizer,
 			preserveRecentTokens:
-				compaction?.preserveRecentTokens ?? DEFAULT_PRESERVE_RECENT_TOKENS,
+				mode === "manual"
+					? Math.min(
+							compaction?.preserveRecentTokens ??
+								DEFAULT_PRESERVE_RECENT_TOKENS,
+							context.triggerTokens,
+						)
+					: (compaction?.preserveRecentTokens ??
+						DEFAULT_PRESERVE_RECENT_TOKENS),
 			estimateMessageTokens,
 			logger,
 		}),
@@ -109,11 +125,41 @@ function resolveTriggerState(input: {
 	};
 }
 
+function resolveManualTargetState(input: {
+	inputTokens: number;
+	contextWindowTokens: number;
+	autoTriggerTokens: number;
+	manualTargetRatio: number | undefined;
+}): { triggerTokens: number; thresholdRatio: number } {
+	const ratio =
+		typeof input.manualTargetRatio === "number" &&
+		Number.isFinite(input.manualTargetRatio)
+			? input.manualTargetRatio
+			: 0.5;
+	const targetRatio = Math.min(0.95, Math.max(0.05, ratio));
+	// Keep manual compaction at least as aggressive as the configured auto
+	// threshold; very low thresholdRatio values intentionally dominate here.
+	const targetTokens = Math.max(
+		1,
+		Math.floor(
+			Math.min(input.autoTriggerTokens, input.inputTokens * targetRatio),
+		),
+	);
+	return {
+		triggerTokens: targetTokens,
+		thresholdRatio:
+			input.contextWindowTokens > 0
+				? targetTokens / input.contextWindowTokens
+				: 0,
+	};
+}
+
 export function createContextCompactionPrepareTurn(
 	config: Pick<
 		CoreSessionConfig,
 		"providerConfig" | "providerId" | "modelId" | "compaction" | "logger"
 	>,
+	options: ContextCompactionPrepareTurnOptions = {},
 ):
 	| ((
 			context: ContextPipelinePrepareTurnInput,
@@ -133,6 +179,7 @@ export function createContextCompactionPrepareTurn(
 	const estimateMessageTokens = createTokenEstimator();
 	const strategy = userCompaction?.strategy ?? "basic";
 	const runBuiltinStrategy = BUILTIN_COMPACTION_STRATEGIES[strategy];
+	const mode = options.mode ?? "auto";
 
 	return async (context) => {
 		const inputTokens = context.apiMessages.reduce(
@@ -159,9 +206,18 @@ export function createContextCompactionPrepareTurn(
 				thresholdRatio: userCompaction?.thresholdRatio,
 			},
 		});
-		if (!triggerState.shouldCompact) {
+		if (mode === "auto" && !triggerState.shouldCompact) {
 			return undefined;
 		}
+		const targetState =
+			mode === "manual"
+				? resolveManualTargetState({
+						inputTokens,
+						contextWindowTokens,
+						autoTriggerTokens: triggerState.triggerTokens,
+						manualTargetRatio: options.manualTargetRatio,
+					})
+				: triggerState;
 
 		const compactionContext = {
 			agentId: context.agentId,
@@ -171,19 +227,24 @@ export function createContextCompactionPrepareTurn(
 			messages: context.messages,
 			model: context.model,
 			contextWindowTokens,
-			triggerTokens: triggerState.triggerTokens,
-			thresholdRatio: triggerState.thresholdRatio,
+			triggerTokens: targetState.triggerTokens,
+			thresholdRatio: targetState.thresholdRatio,
 			utilizationRatio:
 				contextWindowTokens > 0 ? inputTokens / contextWindowTokens : 0,
 		};
 
-		context.emitStatusNotice?.("auto-compacting", {
-			kind: "auto_compaction",
-			reason: "auto_compaction",
-			iteration: context.iteration,
-			triggerTokens: triggerState.triggerTokens,
-			contextWindowTokens,
-		});
+		const statusReason =
+			mode === "manual" ? "manual_compaction" : "auto_compaction";
+		context.emitStatusNotice?.(
+			mode === "manual" ? "compacting" : "auto-compacting",
+			{
+				kind: statusReason,
+				reason: statusReason,
+				iteration: context.iteration,
+				triggerTokens: targetState.triggerTokens,
+				contextWindowTokens,
+			},
+		);
 
 		const beforeMessageCount = context.messages.length;
 
@@ -196,6 +257,7 @@ export function createContextCompactionPrepareTurn(
 						abortSignal: context.abortSignal,
 					},
 					compaction: userCompaction,
+					mode,
 					estimateMessageTokens,
 					logger: config.logger,
 				});
@@ -214,7 +276,7 @@ export function createContextCompactionPrepareTurn(
 				tokensSaved: inputTokens - afterTokens,
 				utilizationBefore: `${((inputTokens / contextWindowTokens) * 100).toFixed(1)}%`,
 				utilizationAfter: `${((afterTokens / contextWindowTokens) * 100).toFixed(1)}%`,
-				thresholdTrigger: `${(triggerState.thresholdRatio * 100).toFixed(1)}%`,
+				thresholdTrigger: `${(targetState.thresholdRatio * 100).toFixed(1)}%`,
 				messagesBefore: beforeMessageCount,
 				messagesAfter: result.messages.length,
 				messagesRemoved: beforeMessageCount - result.messages.length,

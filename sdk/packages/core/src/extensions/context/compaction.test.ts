@@ -1,5 +1,6 @@
 import type * as LlmsProviders from "@clinebot/llms";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CoreCompactionContext } from "../../types/config";
 import { runBasicCompaction } from "./basic-compaction";
 import { createContextCompactionPrepareTurn } from "./compaction";
 import { createTokenEstimator } from "./compaction-shared";
@@ -420,6 +421,128 @@ describe("createContextCompactionPrepareTurn", () => {
 
 		expect(createHandlerMock).not.toHaveBeenCalled();
 		expect(result).toBeUndefined();
+	});
+
+	it("manual mode forces compaction below the auto threshold", async () => {
+		const compact = vi.fn((context: CoreCompactionContext) => ({
+			messages: [{ role: "user" as const, content: "Compacted manually" }],
+		}));
+		const prepareTurn = createContextCompactionPrepareTurn(
+			{
+				providerId: "anthropic",
+				modelId: "mock-model",
+				providerConfig: {
+					providerId: "anthropic",
+					modelId: "mock-model",
+				} as LlmsProviders.ProviderConfig,
+				compaction: {
+					enabled: true,
+					thresholdRatio: 0.95,
+					compact,
+				},
+				logger: undefined,
+			},
+			{ mode: "manual" },
+		);
+
+		const result = await prepareTurn?.({
+			agentId: "agent-1",
+			conversationId: "conv-1",
+			parentAgentId: null,
+			iteration: 1,
+			abortSignal: new AbortController().signal,
+			systemPrompt: "You are helpful.",
+			tools: [],
+			messages: [
+				{ role: "user", content: "Short request" },
+				{ role: "assistant", content: "Short reply" },
+			],
+			apiMessages: [
+				{ role: "user", content: "Short request" },
+				{ role: "assistant", content: "Short reply" },
+			],
+			model: {
+				id: "mock-model",
+				provider: "anthropic",
+				info: { id: "mock-model", contextWindow: 100 },
+			},
+		});
+
+		expect(compact).toHaveBeenCalledTimes(1);
+		const context = compact.mock.calls[0]?.[0];
+		expect(context?.contextWindowTokens).toBe(100);
+		expect(context?.triggerTokens).toBeLessThan(95);
+		expect(result?.messages).toEqual([
+			{ role: "user", content: "Compacted manually" },
+		]);
+	});
+
+	it("manual mode lowers the agentic preserve budget below the default floor", async () => {
+		createHandlerMock.mockReturnValue({
+			createMessage: vi.fn(() =>
+				streamChunks([
+					{
+						type: "text",
+						id: "summary-manual",
+						text: "## Goal\nManual compact\n\n## Next\nContinue",
+					},
+					{ type: "done", id: "summary-manual", success: true },
+				]),
+			),
+		});
+		const repeatedText = "manual compact content ".repeat(100);
+		const prepareTurn = createContextCompactionPrepareTurn(
+			{
+				providerId: "anthropic",
+				modelId: "mock-model",
+				providerConfig: {
+					providerId: "anthropic",
+					modelId: "mock-model",
+				} as LlmsProviders.ProviderConfig,
+				compaction: {
+					enabled: true,
+					strategy: "agentic",
+				},
+				logger: undefined,
+			},
+			{ mode: "manual" },
+		);
+
+		const result = await prepareTurn?.({
+			agentId: "agent-1",
+			conversationId: "conv-1",
+			parentAgentId: null,
+			iteration: 1,
+			abortSignal: new AbortController().signal,
+			systemPrompt: "You are helpful.",
+			tools: [],
+			messages: [
+				{ role: "user", content: `Old request ${repeatedText}` },
+				{ role: "assistant", content: `Old reply ${repeatedText}` },
+				{ role: "user", content: `Latest request ${repeatedText}` },
+				{ role: "assistant", content: `Latest reply ${repeatedText}` },
+			],
+			apiMessages: [
+				{ role: "user", content: `Old request ${repeatedText}` },
+				{ role: "assistant", content: `Old reply ${repeatedText}` },
+				{ role: "user", content: `Latest request ${repeatedText}` },
+				{ role: "assistant", content: `Latest reply ${repeatedText}` },
+			],
+			model: {
+				id: "mock-model",
+				provider: "anthropic",
+				info: { id: "mock-model", contextWindow: 10_000 },
+			},
+		});
+
+		expect(createHandlerMock).toHaveBeenCalledTimes(1);
+		expect(result?.messages[0]).toMatchObject({
+			role: "user",
+			metadata: expect.objectContaining({
+				kind: "compaction_summary",
+			}),
+		});
+		expect(result?.messages.length).toBeLessThan(4);
 	});
 
 	it("preserves user image blocks during basic compaction sanitization", () => {
