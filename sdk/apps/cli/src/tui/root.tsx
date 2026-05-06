@@ -23,6 +23,11 @@ import {
 	type CheckpointPickerItem,
 	type CheckpointPickerResult,
 } from "./components/dialogs/checkpoint-picker";
+import {
+	SKILLS_MARKETPLACE_ACTION,
+	SKILLS_MARKETPLACE_URL,
+	SkillsPickerContent,
+} from "./components/dialogs/skills-picker";
 import { Toast, type ToastState, type ToastVariant } from "./components/toast";
 import { EventBridgeProvider } from "./contexts/event-bridge-context";
 import { SessionProvider, useSession } from "./contexts/session-context";
@@ -76,6 +81,7 @@ function App(props: TuiProps) {
 		registry: slashCommandRegistry,
 		systemCommands,
 		skillCommands,
+		invokableSkillCommands,
 	} = useSlashCommands({
 		workflowSlashCommands: props.workflowSlashCommands,
 		loadAdditionalSlashCommands: props.loadAdditionalSlashCommands,
@@ -339,6 +345,27 @@ function App(props: TuiProps) {
 		session.requestExit();
 	}, [session]);
 
+	const openSkills = useCallback(async () => {
+		const selected = await dialog.choice<string>({
+			style: { maxHeight: termHeight - 2 },
+			content: (ctx: ChoiceContext<string>) => (
+				<SkillsPickerContent {...ctx} commands={invokableSkillCommands} />
+			),
+		});
+		if (selected === SKILLS_MARKETPLACE_ACTION) {
+			await import("open")
+				.then(({ default: open }) => open(SKILLS_MARKETPLACE_URL))
+				.catch(() => {
+					showToast(`Visit ${SKILLS_MARKETPLACE_URL}`, "info");
+				});
+			refocusTextareaRef.current();
+		} else if (selected) {
+			populateInputRef.current(`/${selected} `);
+		} else {
+			refocusTextareaRef.current();
+		}
+	}, [dialog, invokableSkillCommands, showToast, termHeight]);
+
 	useEffect(() => {
 		const { handleSelection, dispose } = createSelectionCopyHandler({
 			copyToClipboardOSC52: (text) => renderer.copyToClipboardOSC52(text),
@@ -432,6 +459,7 @@ function App(props: TuiProps) {
 		openConfig,
 		openMcpManager,
 		openModelSelector,
+		openSkills,
 		refocusTextarea: () => refocusTextareaRef.current(),
 		setAppView,
 		onClearConversation: clearConversation,
@@ -467,8 +495,7 @@ function App(props: TuiProps) {
 	});
 	refocusTextareaRef.current = promptInput.refocusTextarea;
 	populateInputRef.current = (value: string) => {
-		promptInput.setInputValue(value);
-		promptInput.setInputKey((k) => k + 1);
+		promptInput.populateInput(value);
 	};
 	const initialPromptSubmittedRef = useRef(false);
 

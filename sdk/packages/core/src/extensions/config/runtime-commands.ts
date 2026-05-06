@@ -19,6 +19,19 @@ type CommandRecord = {
 	item: SkillConfig | WorkflowConfig;
 };
 
+function resolveCommandDescription(
+	item: SkillConfig | WorkflowConfig,
+	kind: RuntimeCommandKind,
+): string | undefined {
+	if (item.description?.trim()) {
+		return truncateSplit(item.description, ".");
+	}
+	if (kind === "workflow") {
+		return undefined;
+	}
+	return truncateSplit(item.instructions, ".");
+}
+
 function isCommandEnabled(command: SkillConfig | WorkflowConfig): boolean {
 	return command.disabled !== true;
 }
@@ -34,10 +47,7 @@ function listCommandsForKind(
 			id,
 			name: record.item.name,
 			instructions: record.item.instructions,
-			description: truncateSplit(
-				record.item.description ?? record.item.instructions,
-				".",
-			),
+			description: resolveCommandDescription(record.item, kind),
 			kind,
 		}))
 		.sort((a, b) => a.name.localeCompare(b.name));

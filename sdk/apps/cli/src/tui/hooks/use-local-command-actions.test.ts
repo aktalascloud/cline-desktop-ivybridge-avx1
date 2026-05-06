@@ -13,6 +13,7 @@ function makeActions(
 		openConfig: vi.fn(),
 		openMcpManager: vi.fn(async () => false),
 		openModelSelector: vi.fn(),
+		openSkills: vi.fn(),
 		runCompact: vi.fn(),
 		runFork: vi.fn(),
 		runUndo: vi.fn(async () => {}),
@@ -25,6 +26,19 @@ function makeActions(
 }
 
 describe("runLocalSlashCommandAction", () => {
+	it("opens the skills picker with skills", () => {
+		const openSkills = vi.fn();
+		const actions = makeActions({ openSkills });
+
+		const handled = runLocalSlashCommandAction({
+			name: "skills",
+			...actions,
+		});
+
+		expect(handled).toBe(true);
+		expect(openSkills).toHaveBeenCalledOnce();
+	});
+
 	it("waits for clear to reset the runtime session", async () => {
 		let resolveClear: (() => void) | undefined;
 		const clearConversation = vi.fn(

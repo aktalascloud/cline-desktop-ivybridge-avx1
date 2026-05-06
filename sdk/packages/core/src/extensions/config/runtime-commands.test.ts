@@ -54,7 +54,7 @@ Run the release workflow.`,
 				{
 					id: "release",
 					name: "release",
-					description: "Run the release workflow.",
+					description: undefined,
 					instructions: "Run the release workflow.",
 					kind: "workflow",
 				},
@@ -111,6 +111,42 @@ Do not run this workflow.`,
 			expect(
 				resolveRuntimeSlashCommandFromWatcher("please run /ship", watcher),
 			).toBe("please run /ship");
+		} finally {
+			watcher.stop();
+		}
+	});
+
+	it("leaves workflow display description blank when no description is set", async () => {
+		const tempRoot = await mkdtemp(join(tmpdir(), "core-runtime-commands-"));
+		tempRoots.push(tempRoot);
+		const workflowsDir = join(tempRoot, "workflows");
+		await mkdir(workflowsDir, { recursive: true });
+		await writeFile(
+			join(workflowsDir, "review.md"),
+			`# Review Current Branch
+
+Review the current branch and summarize findings.
+`,
+		);
+
+		const watcher = createUserInstructionConfigWatcher({
+			skills: { directories: [] },
+			rules: { directories: [] },
+			workflows: { directories: [workflowsDir] },
+		});
+
+		try {
+			await watcher.start();
+			expect(listAvailableRuntimeCommandsFromWatcher(watcher)).toEqual([
+				{
+					id: "review",
+					name: "review",
+					description: undefined,
+					instructions:
+						"# Review Current Branch\n\nReview the current branch and summarize findings.",
+					kind: "workflow",
+				},
+			]);
 		} finally {
 			watcher.stop();
 		}

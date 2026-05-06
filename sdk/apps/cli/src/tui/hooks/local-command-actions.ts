@@ -4,6 +4,7 @@ export interface LocalSlashCommandActionInput {
 	openConfig: () => void;
 	openMcpManager: () => Promise<boolean>;
 	openModelSelector: () => void;
+	openSkills: () => void;
 	runCompact: () => void;
 	runFork: () => void;
 	runUndo: () => Promise<void>;
@@ -19,6 +20,10 @@ export function runLocalSlashCommandAction(
 	const normalized = input.name;
 	if (normalized === "config" || normalized === "settings") {
 		input.openConfig();
+		return true;
+	}
+	if (normalized === "skills") {
+		input.openSkills();
 		return true;
 	}
 	if (normalized === "mcp") {

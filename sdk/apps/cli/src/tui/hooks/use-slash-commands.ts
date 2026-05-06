@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
 	buildSlashCommandRegistry,
+	getInvokableUserSlashCommands,
 	getVisibleSystemSlashCommands,
 	getVisibleUserSlashCommands,
 } from "../commands/slash-command-registry";
@@ -54,6 +55,10 @@ export function useSlashCommands(input: {
 		() => getVisibleUserSlashCommands(registry),
 		[registry],
 	);
+	const invokableSkillCommands = useMemo(
+		() => getInvokableUserSlashCommands(registry),
+		[registry],
+	);
 
-	return { registry, systemCommands, skillCommands };
+	return { registry, systemCommands, skillCommands, invokableSkillCommands };
 }

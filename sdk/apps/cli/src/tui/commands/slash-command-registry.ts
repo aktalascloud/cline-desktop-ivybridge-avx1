@@ -17,6 +17,7 @@ export type LocalSlashCommandName =
 	| "account"
 	| "model"
 	| "compact"
+	| "skills"
 	| "fork"
 	| "undo"
 	| "clear"
@@ -71,6 +72,10 @@ const TUI_LOCAL_COMMANDS: Array<{
 		description: "Compact context",
 	},
 	{
+		name: "skills",
+		description: "Browse skills and workflows",
+	},
+	{
 		name: "fork",
 		description: "Create a named fork of the current session",
 	},
@@ -102,6 +107,7 @@ const SYSTEM_COMMAND_ORDER = [
 	"account",
 	"mcp",
 	"compact",
+	"skills",
 	"fork",
 	"undo",
 	"clear",
@@ -150,6 +156,7 @@ function entryFromRuntimeCommand(
 		command.kind === "skill" || command.kind === "workflow"
 			? "user-command"
 			: "runtime";
+	const visible = execution !== "user-command";
 	return {
 		name,
 		description: command.description ?? "",
@@ -157,8 +164,8 @@ function entryFromRuntimeCommand(
 		source,
 		kind: command.kind,
 		execution,
-		visible: true,
-		selectable: true,
+		visible,
+		selectable: visible,
 	};
 }
 
@@ -283,4 +290,10 @@ export function getVisibleUserSlashCommands(
 	return registry.entries.filter(
 		(entry) => entry.visible && entry.execution === "user-command",
 	);
+}
+
+export function getInvokableUserSlashCommands(
+	registry: SlashCommandRegistry,
+): SlashCommandRegistryEntry[] {
+	return registry.entries.filter((entry) => entry.execution === "user-command");
 }

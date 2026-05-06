@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { SlashCommandRegistry } from "../commands/slash-command-registry";
 import {
 	expandUserCommandPrompt,
@@ -46,6 +46,9 @@ export function usePromptInputController(input: {
 	const session = useSession();
 	const [inputKey, setInputKey] = useState(0);
 	const [inputValue, setInputValue] = useState(initialPrompt ?? "");
+	const [pendingCursorOffset, setPendingCursorOffset] = useState<number | null>(
+		null,
+	);
 	const textareaRef = useRef<TextareaHandle | null>(null);
 	const inputValueRef = useRef("");
 	const pastedImagesRef = useRef<PastedImage[]>([]);
@@ -61,6 +64,22 @@ export function usePromptInputController(input: {
 
 	const refocusTextarea = useCallback(() => {
 		setInputKey((k) => k + 1);
+	}, []);
+
+	useLayoutEffect(() => {
+		if (pendingCursorOffset === null) return;
+		const textarea = textareaRef.current;
+		if (!textarea) return;
+		textarea.cursorOffset = pendingCursorOffset;
+		textarea.focus();
+		setPendingCursorOffset(null);
+	}, [pendingCursorOffset]);
+
+	const populateInput = useCallback((value: string) => {
+		inputValueRef.current = value;
+		setInputValue(value);
+		setInputKey((k) => k + 1);
+		setPendingCursorOffset(value.length);
 	}, []);
 
 	const clearPastedImages = useCallback(() => {
@@ -380,6 +399,7 @@ export function usePromptInputController(input: {
 		submitRef,
 		setInputKey,
 		setInputValue,
+		populateInput,
 		focusTextarea,
 		refocusTextarea,
 		submitInitialPrompt,

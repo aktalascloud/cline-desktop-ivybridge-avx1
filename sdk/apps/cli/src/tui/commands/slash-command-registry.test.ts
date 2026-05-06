@@ -3,6 +3,7 @@ import {
 	buildSlashCommandRegistry,
 	expandUserCommandPrompt,
 	formatSlashCommandAutocompleteValue,
+	getInvokableUserSlashCommands,
 	getVisibleSystemSlashCommands,
 	getVisibleUserSlashCommands,
 	resolveSlashCommand,
@@ -73,7 +74,7 @@ describe("slash command registry", () => {
 		);
 	});
 
-	it("surfaces skills and workflows as user command blocks", () => {
+	it("keeps skills and workflows activatable without showing them in autocomplete", () => {
 		const registry = buildSlashCommandRegistry({
 			workflowSlashCommands: [
 				{
@@ -94,8 +95,21 @@ describe("slash command registry", () => {
 		expect(
 			getVisibleSystemSlashCommands(registry).map((cmd) => cmd.name),
 		).toEqual(
-			expect.arrayContaining(["settings", "mcp", "account", "model", "quit"]),
+			expect.arrayContaining([
+				"settings",
+				"mcp",
+				"account",
+				"model",
+				"skills",
+				"quit",
+			]),
 		);
+		expect(resolveSlashCommand(registry, "skills")).toMatchObject({
+			source: "tui",
+			execution: "local",
+			description: "Browse skills and workflows",
+			visible: true,
+		});
 		expect(resolveSlashCommand(registry, "quit")).toMatchObject({
 			source: "tui",
 			execution: "local",
@@ -104,11 +118,23 @@ describe("slash command registry", () => {
 		});
 		expect(
 			getVisibleUserSlashCommands(registry).map((cmd) => cmd.name),
+		).toEqual([]);
+		expect(
+			getInvokableUserSlashCommands(registry).map((cmd) => cmd.name),
 		).toEqual(["review", "release"]);
 		const review = resolveSlashCommand(registry, "review");
-		expect(review ? formatSlashCommandAutocompleteValue(review) : "").toBe(
-			"/review ",
-		);
+		expect(review).toMatchObject({
+			source: "skill",
+			execution: "user-command",
+			visible: false,
+			selectable: false,
+		});
+		expect(resolveSlashCommand(registry, "release")).toMatchObject({
+			source: "workflow",
+			execution: "user-command",
+			visible: false,
+			selectable: false,
+		});
 	});
 
 	it("expands user command tokens and manually typed user commands before submission", () => {
@@ -159,6 +185,21 @@ describe("slash command registry", () => {
 				(command) => command.name,
 			),
 		).toContain("fork");
+	});
+
+	it("keeps skills visible even when no invokable skills are installed", () => {
+		const emptyRegistry = buildSlashCommandRegistry({});
+
+		expect(resolveSlashCommand(emptyRegistry, "skills")).toMatchObject({
+			execution: "local",
+			visible: true,
+			selectable: true,
+		});
+		expect(
+			getVisibleSystemSlashCommands(emptyRegistry).map(
+				(command) => command.name,
+			),
+		).toContain("skills");
 	});
 
 	it("keeps config as a hidden alias for settings", () => {
