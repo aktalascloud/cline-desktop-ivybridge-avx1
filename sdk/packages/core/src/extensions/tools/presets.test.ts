@@ -22,6 +22,11 @@ describe("default tool presets", () => {
 		expect(ToolPresets.yolo.enableSubmitAndExit).toBe(true);
 	});
 
+	it("disables search and web fetch in yolo mode", () => {
+		expect(ToolPresets.yolo.enableSearch).toBe(false);
+		expect(ToolPresets.yolo.enableWebFetch).toBe(false);
+	});
+
 	it("yolo preset excludes ask_question even when its executor exists", () => {
 		const tools = createDefaultToolsWithPreset("yolo", {
 			executors: {
@@ -38,11 +43,8 @@ describe("default tool presets", () => {
 
 		expect(tools.map((tool) => tool.name)).toEqual([
 			"read_files",
-			"search_codebase",
 			"run_commands",
-			"fetch_web_content",
 			"editor",
-			"skills",
 		]);
 	});
 });

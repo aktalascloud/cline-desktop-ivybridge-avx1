@@ -95,12 +95,12 @@ export const ToolPresets = {
 	 */
 	yolo: {
 		enableReadFiles: true,
-		enableSearch: true,
+		enableSearch: false,
 		enableBash: true,
-		enableWebFetch: true,
+		enableWebFetch: false,
 		enableApplyPatch: false,
 		enableEditor: true,
-		enableSkills: true,
+		enableSkills: false,
 		enableAskQuestion: false,
 		enableSubmitAndExit: true,
 		enableSpawnAgent: false,
