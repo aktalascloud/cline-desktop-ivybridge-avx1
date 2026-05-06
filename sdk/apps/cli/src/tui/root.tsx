@@ -14,6 +14,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RepoStatus } from "../utils/repo-status";
 import { readRepoStatus } from "../utils/repo-status";
+import type { TranscriptScrollHandle } from "./components/chat-message-list";
 import {
 	CheckpointConfirmContent,
 	type CheckpointRestoreMode,
@@ -109,6 +110,7 @@ function App(props: TuiProps) {
 	const removeLocalCommandInvocationRef = useRef<
 		(invocation: LocalSlashCommandInvocation) => void
 	>(() => {});
+	const transcriptScrollRef = useRef<TranscriptScrollHandle | null>(null);
 
 	const clearToastTimeout = useCallback(() => {
 		if (toastTimeoutRef.current) {
@@ -544,6 +546,7 @@ function App(props: TuiProps) {
 		appView,
 		autocomplete,
 		inputHistory: promptInput.inputHistory,
+		transcriptScrollRef,
 		inputValueRef: promptInput.inputValueRef,
 		selectRef: promptInput.selectRef,
 		submitRef: promptInput.submitRef,
@@ -588,6 +591,7 @@ function App(props: TuiProps) {
 		onLargeTextPaste: promptInput.handleLargeTextPaste,
 		repoStatus,
 		textareaRef: promptInput.textareaRef,
+		transcriptScrollRef,
 		queuedPrompts,
 		onToggleMode: toggleMode,
 		autocomplete: {

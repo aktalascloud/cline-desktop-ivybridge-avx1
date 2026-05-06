@@ -1,20 +1,70 @@
 import "opentui-spinner/react";
 import type { AgentMode } from "@clinebot/core";
 import type { ScrollBoxRenderable } from "@opentui/core";
-import { useEffect, useRef } from "react";
+import {
+	forwardRef,
+	useCallback,
+	useEffect,
+	useImperativeHandle,
+	useRef,
+} from "react";
+import type { TranscriptCommand } from "../hooks/transcript-keybinds";
 import { getModeAccent } from "../palette";
 import type { ChatEntry } from "../types";
 import { ChatEntryView } from "./chat-entry";
 
-export function ChatMessageList(props: {
+export interface TranscriptScrollHandle {
+	runTranscriptCommand: (command: TranscriptCommand) => void;
+}
+
+interface ChatMessageListProps {
 	entries: ChatEntry[];
 	isStreaming?: boolean;
 	uiMode?: AgentMode;
-}) {
+}
+
+export const ChatMessageList = forwardRef<
+	TranscriptScrollHandle,
+	ChatMessageListProps
+>(function ChatMessageList(props, ref) {
 	const scrollboxRef = useRef<ScrollBoxRenderable | null>(null);
 	const lastEntry = props.entries.at(-1);
 	const userSubmissionScrollKey =
 		lastEntry?.kind === "user_submitted" ? props.entries.length : 0;
+
+	const runTranscriptCommand = useCallback((command: TranscriptCommand) => {
+		const scrollbox = scrollboxRef.current;
+		if (!scrollbox) return;
+
+		switch (command) {
+			case "messages_page_up":
+				scrollbox.scrollBy(-scrollbox.height / 2);
+				return;
+			case "messages_page_down":
+				scrollbox.scrollBy(scrollbox.height / 2);
+				return;
+			case "messages_half_page_up":
+				scrollbox.scrollBy(-scrollbox.height / 4);
+				return;
+			case "messages_half_page_down":
+				scrollbox.scrollBy(scrollbox.height / 4);
+				return;
+			case "messages_first":
+				scrollbox.scrollTo(0);
+				return;
+			case "messages_last":
+				scrollbox.scrollTo(scrollbox.scrollHeight);
+				return;
+		}
+	}, []);
+
+	useImperativeHandle(
+		ref,
+		() => ({
+			runTranscriptCommand,
+		}),
+		[runTranscriptCommand],
+	);
 
 	useEffect(() => {
 		if (!userSubmissionScrollKey) return;
@@ -59,4 +109,4 @@ export function ChatMessageList(props: {
 			</box>
 		</scrollbox>
 	);
-}
+});

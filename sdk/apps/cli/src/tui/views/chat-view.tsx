@@ -2,7 +2,10 @@ import {
 	AutocompleteDropdown,
 	type AutocompleteDropdownProps,
 } from "../components/autocomplete-dropdown";
-import { ChatMessageList } from "../components/chat-message-list";
+import {
+	ChatMessageList,
+	type TranscriptScrollHandle,
+} from "../components/chat-message-list";
 import { InputBar, type TextareaHandle } from "../components/input-bar";
 import { QueuedPrompts } from "../components/queued-prompts";
 import {
@@ -37,6 +40,7 @@ export function ChatView(props: {
 		} | null;
 	};
 	textareaRef?: React.MutableRefObject<TextareaHandle | null>;
+	transcriptScrollRef?: React.Ref<TranscriptScrollHandle>;
 	autocomplete?: AutocompleteDropdownProps;
 	queuedPrompts?: QueuedPromptItem[];
 	onToggleMode: () => void;
@@ -65,6 +69,7 @@ export function ChatView(props: {
 	return (
 		<box flexDirection="column" width="100%" height="100%">
 			<ChatMessageList
+				ref={props.transcriptScrollRef}
 				entries={session.entries}
 				isStreaming={session.isStreaming}
 				uiMode={session.uiMode}

@@ -75,6 +75,30 @@ const HELP_ROWS: HelpRow[] = [
 		key: "Up/Down",
 		desc: "Navigate autocomplete or input history",
 	},
+	{
+		kind: "entry",
+		id: "k-page-scroll",
+		key: "PgUp/PgDn",
+		desc: "Scroll transcript by page",
+	},
+	{
+		kind: "entry",
+		id: "k-page-scroll-alt",
+		key: "Ctrl+Alt+B/F",
+		desc: "Scroll transcript by page",
+	},
+	{
+		kind: "entry",
+		id: "k-half-page-scroll",
+		key: "Ctrl+Alt+U/D",
+		desc: "Scroll transcript by half page",
+	},
+	{
+		kind: "entry",
+		id: "k-transcript-bounds",
+		key: "Ctrl+G/Ctrl+Alt+G",
+		desc: "Jump to first or last message",
+	},
 
 	{ kind: "spacer", id: "s1" },
 	{ kind: "heading", id: "h-slash", text: "Slash Commands" },
@@ -202,7 +226,7 @@ const HELP_ROWS: HelpRow[] = [
 	},
 ];
 
-const KEY_WIDTH = 16;
+const KEY_WIDTH = 20;
 
 export function HelpDialogContent(props: ChoiceContext<void>) {
 	const { dismiss, dialogId } = props;

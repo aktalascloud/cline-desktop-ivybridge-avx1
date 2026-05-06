@@ -1,16 +1,39 @@
 import { useKeyboard } from "@opentui/react";
 import type { Dispatch, SetStateAction } from "react";
 import { useRef } from "react";
+import type { TranscriptScrollHandle } from "../components/chat-message-list";
 import { useSession } from "../contexts/session-context";
 import type { AppView } from "../types";
+import { matchTranscriptKeybind } from "./transcript-keybinds";
 import type { AutocompleteOption, useAutocomplete } from "./use-autocomplete";
 import type { useInputHistory } from "./use-input-history";
+
+type TranscriptKey = {
+	name: string;
+	ctrl: boolean;
+	meta: boolean;
+	shift: boolean;
+	preventDefault: () => void;
+};
+
+export function handleTranscriptKeybind(
+	key: TranscriptKey,
+	transcriptScroll: TranscriptScrollHandle | null | undefined,
+): boolean {
+	const command = matchTranscriptKeybind(key);
+	if (!command || !transcriptScroll) return false;
+
+	key.preventDefault();
+	transcriptScroll.runTranscriptCommand(command);
+	return true;
+}
 
 export function useRootKeyboard(input: {
 	isDialogOpen: boolean;
 	appView: AppView;
 	autocomplete: ReturnType<typeof useAutocomplete>;
 	inputHistory: ReturnType<typeof useInputHistory>;
+	transcriptScrollRef: { current: TranscriptScrollHandle | null };
 	inputValueRef: { current: string };
 	selectRef: { current: (option: AutocompleteOption) => void };
 	submitRef: { current: (delivery?: "queue" | "steer") => void };
@@ -58,6 +81,13 @@ export function useRootKeyboard(input: {
 
 		if (input.isDialogOpen) return;
 		if (input.appView === "onboarding") return;
+
+		if (handleTranscriptKeybind(key, input.transcriptScrollRef.current)) {
+			if (input.autocomplete.mode) {
+				input.autocomplete.close();
+			}
+			return;
+		}
 
 		if (input.autocomplete.mode) {
 			const opts = input.autocomplete.getFilteredOptions();
