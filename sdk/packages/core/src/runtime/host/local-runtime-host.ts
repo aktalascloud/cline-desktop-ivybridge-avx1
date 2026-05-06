@@ -378,8 +378,12 @@ export class LocalRuntimeHost implements RuntimeHost {
 			onConsecutiveMistakeLimitReached:
 				configWithProvider.onConsecutiveMistakeLimitReached,
 			completionPolicy: runtime.completionPolicy,
-			consumePendingUserMessage: () =>
-				this.pendingPromptsController.consumeSteer(sessionId),
+			consumePendingUserMessage: () => {
+				const prompt = this.pendingPromptsController.consumeSteer(sessionId);
+				return prompt
+					? formatModePrompt(prompt, configWithProvider.mode)
+					: prompt;
+			},
 			logger: runtime.logger ?? configWithProvider.logger,
 			extensionContext: configWithProvider.extensionContext,
 			onEvent: (event: AgentEvent) =>
@@ -584,6 +588,12 @@ export class LocalRuntimeHost implements RuntimeHost {
 				await this.finalizeSingleRun(session, result.finishReason);
 			} else {
 				await this.completeInteractiveTurn(session, result.finishReason);
+			}
+			if (
+				result.finishReason === "error" ||
+				result.finishReason === "aborted"
+			) {
+				return result;
 			}
 			queueMicrotask(() => {
 				void this.pendingPromptsController.drain(input.sessionId);

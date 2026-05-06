@@ -458,6 +458,13 @@ export interface AgentRuntimeConfig {
 		| Promise<AgentRuntimePrepareTurnResult | undefined>
 		| AgentRuntimePrepareTurnResult
 		| undefined;
+	// Optional host callback used by interactive sessions to inject a queued
+	// user steering message between agent loop iterations, before the next
+	// model request.
+	consumePendingUserMessage?: () =>
+		| string
+		| undefined
+		| Promise<string | undefined>;
 }
 
 // =============================================================================

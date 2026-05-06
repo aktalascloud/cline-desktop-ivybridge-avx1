@@ -103,6 +103,7 @@ export function createAgentRuntimeConfig(
 		tools: input.tools,
 		hooks,
 		prepareTurn: input.prepareTurn,
+		consumePendingUserMessage: agentConfig.consumePendingUserMessage,
 		plugins: input.plugins,
 		logger: input.logger ?? agentConfig.logger,
 		telemetry: input.telemetry ?? mapTelemetry(agentConfig.telemetry),

@@ -175,6 +175,7 @@ describe("createAgentRuntimeConfig", () => {
 			completionPolicy: { requireCompletionTool: true },
 			toolPolicies: { "*": { autoApprove: false } },
 			requestToolApproval: async () => ({ approved: true }),
+			consumePendingUserMessage: () => "steer",
 		});
 		const tools: AgentTool[] = [
 			{
@@ -219,6 +220,9 @@ describe("createAgentRuntimeConfig", () => {
 		});
 		expect(runtimeConfig.requestToolApproval).toBe(
 			agentConfig.requestToolApproval,
+		);
+		expect(runtimeConfig.consumePendingUserMessage).toBe(
+			agentConfig.consumePendingUserMessage,
 		);
 	});
 

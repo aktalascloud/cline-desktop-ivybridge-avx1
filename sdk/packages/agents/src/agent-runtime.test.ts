@@ -98,6 +98,127 @@ describe("AgentRuntime", () => {
 		expect(result.outputText).toBe("done");
 	});
 
+	it("injects a pending user message after tool results and before the next model request", async () => {
+		const consumePendingUserMessage = vi.fn(() => "steer now");
+		const model = new ScriptedModel([
+			() => [
+				{
+					type: "tool-call-delta",
+					toolCallId: "call_1",
+					toolName: "echo",
+					inputText: '{"text":"hi"}',
+				},
+				{ type: "finish", reason: "tool-calls" },
+			],
+			(request) => {
+				const assistantMessage = request.messages.at(-3);
+				const toolMessage = request.messages.at(-2);
+				const steerMessage = request.messages.at(-1);
+				expect(assistantMessage?.role).toBe("assistant");
+				expect(
+					assistantMessage?.content.some((part) => part.type === "tool-call"),
+				).toBe(true);
+				expect(toolMessage?.role).toBe("tool");
+				expect(toolMessage?.content).toEqual([
+					expect.objectContaining({
+						type: "tool-result",
+						toolCallId: "call_1",
+					}),
+				]);
+				expect(steerMessage).toMatchObject({
+					role: "user",
+					content: [{ type: "text", text: "steer now" }],
+				});
+				return [
+					{ type: "text-delta", text: "steered done" },
+					{ type: "finish", reason: "stop" },
+				];
+			},
+		]);
+		const addedMessages: AgentMessage[] = [];
+		const runtime = new AgentRuntime({
+			model,
+			tools: [createEchoTool()],
+			consumePendingUserMessage,
+		});
+		runtime.subscribe((event) => {
+			if (event.type === "message-added") {
+				addedMessages.push(event.message);
+			}
+		});
+
+		const result = await runtime.run("Start");
+
+		expect(consumePendingUserMessage).toHaveBeenCalledTimes(1);
+		expect(model.requests).toHaveLength(2);
+		expect(result.status).toBe("completed");
+		expect(result.messages.map((message) => message.role)).toEqual([
+			"user",
+			"assistant",
+			"tool",
+			"user",
+			"assistant",
+		]);
+		expect(
+			addedMessages.some(
+				(message) =>
+					message.role === "user" &&
+					message.content.some(
+						(part) => part.type === "text" && part.text === "steer now",
+					),
+			),
+		).toBe(true);
+	});
+
+	it("injects pending user messages after prepareTurn rewrites the transcript", async () => {
+		const consumePendingUserMessage = vi.fn(() => "steer after prepare");
+		const prepareTurn = vi.fn(
+			(context: { messages: readonly AgentMessage[] }) => ({
+				messages: context.messages.slice(),
+			}),
+		);
+		const model = new ScriptedModel([
+			() => [
+				{
+					type: "tool-call-delta",
+					toolCallId: "call_1",
+					toolName: "echo",
+					inputText: '{"text":"hi"}',
+				},
+				{ type: "finish", reason: "tool-calls" },
+			],
+			(request) => {
+				expect(request.messages.at(-1)).toMatchObject({
+					role: "user",
+					content: [{ type: "text", text: "steer after prepare" }],
+				});
+				return [
+					{ type: "text-delta", text: "done" },
+					{ type: "finish", reason: "stop" },
+				];
+			},
+		]);
+		const runtime = new AgentRuntime({
+			model,
+			tools: [createEchoTool()],
+			prepareTurn,
+			consumePendingUserMessage,
+		});
+
+		const result = await runtime.run("Start");
+
+		expect(result.status).toBe("completed");
+		expect(prepareTurn).toHaveBeenCalledTimes(2);
+		expect(consumePendingUserMessage).toHaveBeenCalledTimes(1);
+		expect(result.messages.map((message) => message.role)).toEqual([
+			"user",
+			"assistant",
+			"tool",
+			"user",
+			"assistant",
+		]);
+	});
+
 	it("continues when completionGuard rejects a no-tool response", async () => {
 		const submitTool: AgentTool<{ summary: string }, string> = {
 			name: "submit",

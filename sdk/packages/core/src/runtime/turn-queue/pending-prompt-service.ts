@@ -307,7 +307,11 @@ export class PendingPromptsController {
 			}
 		} finally {
 			session.drainingPendingPrompts = false;
-			if (session.pendingPrompts.length > 0) {
+			if (
+				session.pendingPrompts.length > 0 &&
+				session.status !== "failed" &&
+				session.status !== "cancelled"
+			) {
 				queueMicrotask(() => {
 					void this.drain(sessionId);
 				});

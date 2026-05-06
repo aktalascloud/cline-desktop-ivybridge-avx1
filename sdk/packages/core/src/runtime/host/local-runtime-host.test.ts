@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { MessageWithMetadata } from "@clinebot/llms";
 import type {
+	AgentConfig,
 	AgentExtensionAutomationContext,
 	AgentResult,
 	AgentRuntimeEvent,
@@ -1856,6 +1857,71 @@ describe("LocalRuntimeHost", () => {
 			{ prompt: "queued first", delivery: "steer" },
 			{ prompt: "queued second", delivery: "queue" },
 		]);
+	});
+
+	it("wraps consumed steer prompts as mode-scoped user input", async () => {
+		const sessionId = "sess-steer-format";
+		const manifest = createManifest(sessionId);
+		const sessionService = {
+			ensureSessionsDir: vi.fn().mockReturnValue("/tmp/sessions"),
+			createRootSessionWithArtifacts: vi.fn().mockResolvedValue({
+				manifestPath: "/tmp/manifest.json",
+				messagesPath: "/tmp/messages.json",
+				manifest,
+			}),
+			persistSessionMessages: vi.fn(),
+			updateSessionStatus: vi.fn().mockResolvedValue({
+				updated: true,
+				endedAt: "2026-01-01T00:00:05.000Z",
+			}),
+			writeSessionManifest: vi.fn(),
+			listSessions: vi.fn().mockResolvedValue([]),
+			deleteSession: vi.fn().mockResolvedValue({ deleted: true }),
+		};
+		const runtimeBuilder = {
+			build: vi.fn().mockReturnValue({
+				tools: [],
+				shutdown: vi.fn(),
+			}),
+		};
+		let agentConfig: AgentConfig | undefined;
+		const agent = {
+			run: vi.fn().mockResolvedValue(createResult()),
+			continue: vi.fn().mockResolvedValue(createResult()),
+			abort: vi.fn(),
+			subscribeEvents: vi.fn().mockReturnValue(() => {}),
+			canStartRun: vi.fn().mockReturnValue(false),
+			getAgentId: vi.fn().mockReturnValue("agent-root-1"),
+			getConversationId: vi.fn().mockReturnValue("conv-root-1"),
+			restore: vi.fn(),
+			shutdown: vi.fn().mockResolvedValue(undefined),
+			getMessages: vi.fn().mockReturnValue([]),
+			messages: [],
+		};
+		const manager = new RuntimeHostUnderTest({
+			distinctId,
+			sessionService: sessionService as never,
+			runtimeBuilder,
+			createAgent: (config) => {
+				agentConfig = config;
+				return agent as never;
+			},
+		});
+
+		await manager.startSession(
+			normalizeStartInput({
+				config: createConfig({ sessionId, mode: "plan" }),
+				interactive: true,
+			}),
+		);
+		await expect(
+			manager.runTurn({ sessionId, prompt: "steer this", delivery: "steer" }),
+		).resolves.toBeUndefined();
+
+		const consumed = await Promise.resolve(
+			agentConfig?.consumePendingUserMessage?.(),
+		);
+		expect(consumed).toBe('<user_input mode="plan">steer this</user_input>');
 	});
 
 	it("drops and ignores queued prompts once a session is aborting", async () => {

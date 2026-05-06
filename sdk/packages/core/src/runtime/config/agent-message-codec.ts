@@ -18,33 +18,60 @@ export function messageToAgentMessages(
 	message: MessageWithMetadata,
 ): AgentMessage[] {
 	const blocks = normalizeContentBlocks(message.content);
-	const toolResults = blocks.filter(
-		(block): block is ToolResultContent => block.type === "tool_result",
-	);
-	const nonToolResults = blocks.filter((block) => block.type !== "tool_result");
 	const out: AgentMessage[] = [];
+	const baseId = message.id ?? generateMessageId();
+	let nonToolSegmentCount = 0;
+	let nonToolBlocks: Exclude<ContentBlock, ToolResultContent>[] = [];
 
-	if (nonToolResults.length > 0 || toolResults.length === 0) {
+	const flushNonToolBlocks = () => {
+		if (nonToolBlocks.length === 0) {
+			return;
+		}
+		const id =
+			nonToolSegmentCount === 0
+				? baseId
+				: `${baseId}_part_${nonToolSegmentCount}`;
+		nonToolSegmentCount += 1;
 		out.push({
-			id: message.id ?? generateMessageId(),
+			id,
 			role: message.role,
-			content: nonToolResults.map(contentBlockToAgentPart),
+			content: nonToolBlocks.map(contentBlockToAgentPart),
 			createdAt: message.ts ?? Date.now(),
 			metadata: message.metadata,
 			modelInfo: message.modelInfo,
 			metrics: metricsToAgentMetrics(message.metrics),
 		});
+		nonToolBlocks = [];
+	};
+
+	if (blocks.length === 0) {
+		out.push({
+			id: baseId,
+			role: message.role,
+			content: [],
+			createdAt: message.ts ?? Date.now(),
+			metadata: message.metadata,
+			modelInfo: message.modelInfo,
+			metrics: metricsToAgentMetrics(message.metrics),
+		});
+		return out;
 	}
 
-	for (const toolResult of toolResults) {
+	for (const block of blocks) {
+		if (block.type !== "tool_result") {
+			nonToolBlocks.push(block);
+			continue;
+		}
+		flushNonToolBlocks();
 		out.push({
-			id: `${message.id ?? generateMessageId()}_tool_${toolResult.tool_use_id}`,
+			id: `${baseId}_tool_${block.tool_use_id}`,
 			role: "tool",
-			content: [toolResultContentToAgentPart(toolResult)],
+			content: [toolResultContentToAgentPart(block)],
 			createdAt: message.ts ?? Date.now(),
 			metadata: message.metadata,
 		});
 	}
+	flushNonToolBlocks();
 
 	return out;
 }
