@@ -1,5 +1,18 @@
 # Cline CLI Changelog
 
+## 0.0.11 (2026-05-06)
+
+- Add `/skills` slash command for browsing and toggling available skills interactively
+- System prompts from AI SDK are now passed via the dedicated `system` option instead of being embedded in message history
+- Context compaction can now be triggered manually and runs more reliably
+- Disable the search tool in yolo mode so the model uses bash for searching instead
+- Fix `submit_and_exit` completion policy not being wired through to the runtime
+- Fix resumed sessions losing tool results when an abort interrupted tool execution mid-turn
+- Fix interactive sessions becoming unusable after aborting a running turn
+- Fix strict JSON schema mode rejecting valid tool schemas with unions, optional fields, and nullable types
+- Fix stray log output appearing over the TUI when the log file fallback wrote directly to the stderr file descriptor, bypassing the TUI's stdio capture
+- Refresh the built-in model catalog with the latest available models and pricing
+
 ## 0.0.10 (2026-05-04)
 
 - Improve local provider onboarding: setting up Ollama, LM Studio, or other local providers now prompts for the endpoint URL directly, supports typing a model ID manually when the provider returns no models, and correctly discovers models from your saved endpoint
