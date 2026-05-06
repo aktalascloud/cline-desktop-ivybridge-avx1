@@ -150,7 +150,9 @@ export async function runAgent(
 	}
 
 	const startTime = performance.now();
-	void prewarmFileIndex(config.cwd);
+	void prewarmFileIndex(config.cwd).catch((error: unknown) => {
+		logCliError(config.logger, "File index prewarm failed", { error });
+	});
 
 	const isYoloMode = config.mode === "yolo";
 	const toolExecutors = {

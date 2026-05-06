@@ -234,12 +234,12 @@ class FileIndexWorkerClient {
 		});
 	}
 
-	requestIndex(cwd: string): Promise<string[]> {
+	requestIndex(cwd: string): Promise<string[] | null> {
 		const requestId = ++this.nextRequestId;
-		const result = new Promise<string[]>((resolve, reject) => {
+		const result = new Promise<string[] | null>((resolve, reject) => {
 			const timeout = setTimeout(() => {
 				this.pending.delete(requestId);
-				reject(new Error("Timed out waiting for file index worker response"));
+				resolve(null);
 			}, WORKER_INDEX_REQUEST_TIMEOUT_MS);
 			timeout.unref();
 			this.pending.set(requestId, {
@@ -293,6 +293,9 @@ async function buildIndexInBackground(cwd: string): Promise<Set<string>> {
 
 	try {
 		const files = await workerClient.requestIndex(cwd);
+		if (files === null) {
+			return buildIndex(cwd);
+		}
 		return new Set(files);
 	} catch {
 		return buildIndex(cwd);
