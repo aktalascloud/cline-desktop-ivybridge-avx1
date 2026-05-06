@@ -164,10 +164,14 @@ function createWritableDestination(
 function createFallbackDestination(
 	runtime: "cli" | "rpc-runtime",
 ): DestinationStream {
-	return pino.destination({
-		dest: 2,
-		sync: runtime === "cli",
-	});
+	if (runtime === "cli") {
+		return {
+			write: (msg) => {
+				process.stderr.write(msg);
+			},
+		};
+	}
+	return pino.destination({ dest: 2, sync: false });
 }
 
 function cleanupStaleLogFile(destination: string): void {

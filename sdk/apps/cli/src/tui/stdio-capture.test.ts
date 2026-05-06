@@ -28,7 +28,7 @@ describe("installTuiStdioCapture", () => {
 		consoleErrorSpy.mockRestore();
 	});
 
-	it("routes stdout and stderr writes into console capture", () => {
+	it("suppresses stdout and stderr writes while capture is active", () => {
 		restoreCapture = installTuiStdioCapture();
 
 		process.stdout.write("\x1b[2m[hub] server restarted\x1b[0m\n");
@@ -36,37 +36,49 @@ describe("installTuiStdioCapture", () => {
 
 		expect(stdoutWriteSpy).not.toHaveBeenCalled();
 		expect(stderrWriteSpy).not.toHaveBeenCalled();
-		expect(consoleLogSpy).toHaveBeenCalledWith("[hub] server restarted");
-		expect(consoleErrorSpy).toHaveBeenCalledWith("startup failed");
+		expect(consoleLogSpy).not.toHaveBeenCalled();
+		expect(consoleErrorSpy).not.toHaveBeenCalled();
 	});
 
-	it("buffers partial lines until newline or restore", () => {
+	it("does not replay partial lines on restore", () => {
 		restoreCapture = installTuiStdioCapture();
 
 		process.stdout.write("hello ");
 		expect(consoleLogSpy).not.toHaveBeenCalled();
 
 		process.stdout.write("world\nnext");
-		expect(consoleLogSpy).toHaveBeenCalledWith("hello world");
+		expect(consoleLogSpy).not.toHaveBeenCalledWith("hello world");
 		expect(consoleLogSpy).not.toHaveBeenCalledWith("next");
 
 		restoreCapture();
 		restoreCapture = undefined;
 
-		expect(consoleLogSpy).toHaveBeenCalledWith("next");
+		expect(consoleLogSpy).not.toHaveBeenCalledWith("next");
 	});
 
-	it("strips OSC sequences from captured output", () => {
+	it("suppresses OSC sequences", () => {
 		restoreCapture = installTuiStdioCapture();
 
 		process.stdout.write("\x1b]52;c;SGVsbG8=\x1b\\visible text\n");
 		process.stdout.write("\x1b]0;window title\x07only this\n");
 
-		expect(consoleLogSpy).toHaveBeenCalledWith("visible text");
-		expect(consoleLogSpy).toHaveBeenCalledWith("only this");
+		expect(consoleLogSpy).not.toHaveBeenCalled();
 	});
 
-	it("does not recurse when console methods trigger stdout writes", () => {
+	it("preserves write callbacks", async () => {
+		restoreCapture = installTuiStdioCapture();
+
+		await new Promise<void>((resolve) => {
+			process.stdout.write("callback test\n", () => {
+				resolve();
+			});
+		});
+
+		expect(stdoutWriteSpy).not.toHaveBeenCalled();
+		expect(consoleLogSpy).not.toHaveBeenCalled();
+	});
+
+	it("does not route captured writes through console methods", () => {
 		restoreCapture = installTuiStdioCapture();
 
 		consoleLogSpy.mockImplementation((text: string) => {
@@ -75,8 +87,7 @@ describe("installTuiStdioCapture", () => {
 
 		process.stdout.write("hello\n");
 
-		expect(consoleLogSpy).toHaveBeenCalledTimes(1);
-		expect(consoleLogSpy).toHaveBeenCalledWith("hello");
+		expect(consoleLogSpy).not.toHaveBeenCalled();
 	});
 
 	it("restores the original stream writers", () => {

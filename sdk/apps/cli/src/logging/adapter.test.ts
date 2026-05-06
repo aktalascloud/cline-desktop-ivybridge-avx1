@@ -175,17 +175,21 @@ describe("createCliLoggerAdapter", () => {
 		delete process.env.CLINE_LOG_NAME;
 		delete process.env.CLINE_LOG_ENABLED;
 
+		const stderrWriteSpy = vi
+			.spyOn(process.stderr, "write")
+			.mockImplementation(() => true);
 		try {
 			expect(() => {
 				const adapter = createCliLoggerAdapter({ runtime: "cli" });
 				adapter.core.log("fallback path test");
 			}).not.toThrow();
 		} finally {
+			stderrWriteSpy.mockRestore();
 			restoreEnv(snapshot);
 		}
 	});
 
-	it("uses a sync stderr fallback for cli runtime", () => {
+	it("uses process stderr fallback for cli runtime", () => {
 		const snapshot = withEnvSnapshot();
 		const unwritablePath = mkdtempSync(
 			join(tmpdir(), `${commandName}-log-dir-as-file-`),
@@ -197,15 +201,21 @@ describe("createCliLoggerAdapter", () => {
 		delete process.env.CLINE_LOG_ENABLED;
 
 		const destinationSpy = vi.spyOn(pino, "destination");
+		const stderrWriteSpy = vi
+			.spyOn(process.stderr, "write")
+			.mockImplementation(() => true);
 		try {
-			createCliLoggerAdapter({ runtime: "cli" });
-			expect(destinationSpy.mock.calls).toContainEqual([
-				expect.objectContaining({
-					dest: 2,
-					sync: true,
-				}),
-			]);
+			const adapter = createCliLoggerAdapter({ runtime: "cli" });
+			adapter.core.log("fallback process stderr");
+
+			expect(destinationSpy).not.toHaveBeenCalledWith(
+				expect.objectContaining({ dest: 2 }),
+			);
+			expect(stderrWriteSpy).toHaveBeenCalledWith(
+				expect.stringContaining("fallback process stderr"),
+			);
 		} finally {
+			stderrWriteSpy.mockRestore();
 			restoreEnv(snapshot);
 		}
 	});
