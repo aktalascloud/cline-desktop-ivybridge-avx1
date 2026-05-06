@@ -3,6 +3,8 @@ import {
 	formatCreditBalance,
 	installStreamErrorGuards,
 	normalizeCreditBalance,
+	prepareTerminalForPostTuiOutput,
+	setCurrentOutputMode,
 } from "./output";
 
 describe("installStreamErrorGuards", () => {
@@ -50,5 +52,61 @@ describe("credit balance formatting", () => {
 		expect(formatCreditBalance(normalizeCreditBalance(5_000_000))).toBe(
 			"$5.00",
 		);
+	});
+});
+
+describe("prepareTerminalForPostTuiOutput", () => {
+	const originalStdoutIsTTY = process.stdout.isTTY;
+
+	afterEach(() => {
+		setCurrentOutputMode("text");
+		Object.defineProperty(process.stdout, "isTTY", {
+			configurable: true,
+			value: originalStdoutIsTTY,
+		});
+		vi.restoreAllMocks();
+	});
+
+	it("clears from the restored cursor before printing post-TUI text", () => {
+		const writeSpy = vi
+			.spyOn(process.stdout, "write")
+			.mockImplementation(() => true);
+		Object.defineProperty(process.stdout, "isTTY", {
+			configurable: true,
+			value: true,
+		});
+
+		prepareTerminalForPostTuiOutput();
+
+		expect(writeSpy).toHaveBeenCalledWith("\r\x1b[J");
+	});
+
+	it("does not write terminal control codes for non-TTY output", () => {
+		const writeSpy = vi
+			.spyOn(process.stdout, "write")
+			.mockImplementation(() => true);
+		Object.defineProperty(process.stdout, "isTTY", {
+			configurable: true,
+			value: false,
+		});
+
+		prepareTerminalForPostTuiOutput();
+
+		expect(writeSpy).not.toHaveBeenCalled();
+	});
+
+	it("does not write terminal control codes in JSON output mode", () => {
+		const writeSpy = vi
+			.spyOn(process.stdout, "write")
+			.mockImplementation(() => true);
+		Object.defineProperty(process.stdout, "isTTY", {
+			configurable: true,
+			value: true,
+		});
+		setCurrentOutputMode("json");
+
+		prepareTerminalForPostTuiOutput();
+
+		expect(writeSpy).not.toHaveBeenCalled();
 	});
 });

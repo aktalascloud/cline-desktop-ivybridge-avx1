@@ -167,6 +167,13 @@ export function writeln(text = ""): void {
 	write(`${text}\n`);
 }
 
+export function prepareTerminalForPostTuiOutput(): void {
+	if (currentOutputMode === "json" || !process.stdout.isTTY) {
+		return;
+	}
+	write("\r\x1b[J");
+}
+
 export function writeErr(text: string): void {
 	if (currentOutputMode === "json") {
 		emitJsonLine("stderr", { type: "error", message: text });

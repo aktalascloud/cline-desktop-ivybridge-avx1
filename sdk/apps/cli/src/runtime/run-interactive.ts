@@ -18,7 +18,11 @@ import {
 } from "../tui/interactive-welcome";
 import { disableOpenTuiGraphicsProbe } from "../tui/opentui-env";
 import { type ChatCommandState, chatCommandHost } from "../utils/chat-commands";
-import { writeErr, writeln } from "../utils/output";
+import {
+	prepareTerminalForPostTuiOutput,
+	writeErr,
+	writeln,
+} from "../utils/output";
 import { createWorkspaceChatCommandHost } from "../utils/plugin-chat-commands";
 import { readRepoStatus } from "../utils/repo-status";
 import type { Config } from "../utils/types";
@@ -526,6 +530,7 @@ export async function runInteractive(
 		exitSummary = await cleanupRuntime();
 	}
 	if (exitSummary) {
+		prepareTerminalForPostTuiOutput();
 		writeln(formatInteractiveExitSummary(exitSummary));
 	}
 }
