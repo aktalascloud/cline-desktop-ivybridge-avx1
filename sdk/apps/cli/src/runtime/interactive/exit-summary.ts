@@ -1,6 +1,7 @@
 import type { SessionAccumulatedUsage, SessionRecord } from "@clinebot/core";
 import type { Message } from "@clinebot/shared";
 import { c, formatUsd } from "../../utils/output";
+import { shouldShowCliUsageCost } from "../../utils/usage-cost-display";
 
 export interface InteractiveExitSummary {
 	sessionId: string;
@@ -77,6 +78,9 @@ export function formatInteractiveExitSummary(
 	summary: InteractiveExitSummary,
 ): string {
 	const model = providerModel(summary);
+	const showUsageCost = summary.provider
+		? shouldShowCliUsageCost(summary.provider)
+		: true;
 	const lines = [
 		"",
 		"Session Summary",
@@ -85,7 +89,7 @@ export function formatInteractiveExitSummary(
 		model ? `  Model     ${model}` : undefined,
 		summary.cwd ? `  CWD       ${summary.cwd}` : undefined,
 		`  Messages  ${summary.messageCount.toLocaleString()}`,
-		typeof summary.totalCost === "number"
+		showUsageCost && typeof summary.totalCost === "number"
 			? `  Cost      ${formatUsd(summary.totalCost)}`
 			: undefined,
 		`  Continue  ${c.cyan}clite --id ${summary.sessionId}${c.reset}`,

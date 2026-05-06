@@ -31,9 +31,11 @@ export type GatewayModelCapability =
 	| "structured-output";
 
 export type GatewayPromptCacheStrategy = "anthropic-automatic";
+export type GatewayUsageCostDisplay = "show" | "hide";
 
 export interface GatewayProviderMetadata {
 	promptCacheStrategy?: GatewayPromptCacheStrategy;
+	usageCostDisplay?: GatewayUsageCostDisplay;
 	[key: string]: JsonValue | undefined;
 }
 

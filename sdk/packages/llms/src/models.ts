@@ -19,6 +19,7 @@ export {
 	getModelsForProvider,
 	getProvider,
 	getProviderCollection,
+	getProviderCollectionSync,
 	getProviderIds,
 	hasProvider,
 	MODEL_COLLECTIONS_BY_PROVIDER_ID,

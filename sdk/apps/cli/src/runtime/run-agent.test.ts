@@ -692,4 +692,74 @@ describe("runAgent", () => {
 
 		expect(process.exitCode).toBe(1);
 	});
+
+	it("omits verbose estimated cost for subscription-backed providers", async () => {
+		const startedAt = new Date("2026-03-22T00:00:00.000Z");
+		const endedAt = new Date("2026-03-22T00:00:01.000Z");
+		sessionManagerMocks.start.mockResolvedValue({
+			sessionId: "session-1",
+			manifestPath: "/tmp/manifest.json",
+			messagesPath: "/tmp/messages.json",
+			manifest: {
+				session_id: "session-1",
+			},
+			result: {
+				text: "completed text",
+				usage: {
+					inputTokens: 1,
+					outputTokens: 1,
+					cacheReadTokens: 0,
+					cacheWriteTokens: 0,
+					totalCost: 0.25,
+				},
+				messages: [],
+				toolCalls: [],
+				iterations: 1,
+				finishReason: "completed",
+				model: {
+					id: "gpt-5.4",
+					provider: "openai-codex",
+					info: {},
+				},
+				startedAt,
+				endedAt,
+				durationMs: 1000,
+			},
+		});
+		sessionManagerMocks.getAccumulatedUsage.mockResolvedValue({
+			inputTokens: 1,
+			outputTokens: 1,
+			cacheReadTokens: 0,
+			cacheWriteTokens: 0,
+			totalCost: 0.25,
+		});
+
+		const { runAgent } = await import("./run-agent");
+
+		await expect(
+			runAgent("test prompt", {
+				cwd: process.cwd(),
+				enableAgentTeams: false,
+				enableSpawnAgent: false,
+				enableTools: [],
+				execution: {
+					maxConsecutiveMistakes: 3,
+				},
+				logger: undefined,
+				mode: "yolo",
+				modelId: "gpt-5.4",
+				outputMode: "text",
+				providerId: "openai-codex",
+				systemPrompt: "system",
+				thinking: false,
+				toolPolicies: { "*": { autoApprove: true } },
+				verbose: true,
+				workspaceRoot: process.cwd(),
+			} as never),
+		).resolves.toBeUndefined();
+
+		expect(outputMocks.writeln).not.toHaveBeenCalledWith(
+			expect.stringContaining("est. cost"),
+		);
+	});
 });

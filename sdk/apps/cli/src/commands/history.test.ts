@@ -147,6 +147,22 @@ describe("formatHistoryListLine", () => {
 
 		expect(line).not.toContain("checkpoints:");
 	});
+
+	it("omits cost for subscription-backed providers", () => {
+		const line = formatHistoryListLine(
+			createHistoryRow({
+				provider: "openai-codex",
+				model: "gpt-5.4",
+				metadata: {
+					title: "hello world",
+					totalCost: 0.25,
+				},
+			}),
+		);
+
+		expect(line).toContain("openai-codex:gpt-5.4 | hello world");
+		expect(line).not.toContain("$0.25");
+	});
 });
 
 describe("runHistoryList", () => {

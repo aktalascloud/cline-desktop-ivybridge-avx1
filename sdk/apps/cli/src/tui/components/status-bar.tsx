@@ -1,5 +1,6 @@
 import type { AgentMode } from "@clinebot/core";
 import { useTerminalDimensions } from "@opentui/react";
+import { shouldShowCliUsageCost } from "../../utils/usage-cost-display";
 import { useTerminalBackground } from "../hooks/use-terminal-background";
 import { getDefaultForeground, palette } from "../palette";
 import { HOME_VIEW_MAX_WIDTH } from "../types";
@@ -36,6 +37,16 @@ export function resolveContextBarFilledForeground(
 function formatCost(cost: number): string {
 	if (cost < 0.01) return `$${cost.toFixed(4)}`;
 	return `$${cost.toFixed(2)}`;
+}
+
+export function formatStatusBarUsageText(input: {
+	totalTokens: number;
+	totalCost: number;
+	showCost: boolean;
+}): string {
+	const tokens = `(${input.totalTokens.toLocaleString()})`;
+	if (!input.showCost) return tokens;
+	return `${tokens} ${formatCost(input.totalCost)}`;
 }
 
 // knownModels keys are bare IDs ("claude-sonnet-4-6") but config.modelId
@@ -130,6 +141,7 @@ export function StatusBar(props: StatusBarProps) {
 	const bar = hasContextWindow
 		? createContextBar(totalTokens, contextWindow)
 		: undefined;
+	const showUsageCost = shouldShowCliUsageCost(props.providerId);
 
 	// Available content width after accounting for padding.
 	// Home view: parent box is capped at 60 wide, status bar adds paddingX=1 (-2).
@@ -143,7 +155,11 @@ export function StatusBar(props: StatusBarProps) {
 	// When the full row doesn't fit, context info drops to its own row 2.
 	// Model ID truncates with "..." before wrapping; toggle stays right-aligned.
 	const toggleWidth = 20;
-	const usageText = `(${totalTokens.toLocaleString()}) ${formatCost(totalCost)}`;
+	const usageText = formatStatusBarUsageText({
+		totalTokens,
+		totalCost,
+		showCost: showUsageCost,
+	});
 	const contextText = bar
 		? ` ${bar.filled}${bar.empty} ${usageText}`
 		: ` ${usageText}`;

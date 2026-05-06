@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 
-// ModelInfo and dependencies — canonical home is @clinebot/shared
+// ModelInfo and dependencies have their canonical home in @clinebot/shared
 export {
 	ApiFormat,
 	ApiFormatSchema,
@@ -82,6 +82,7 @@ export const ProviderInfoSchema = z.object({
 	env: z.array(z.string()).optional(),
 	client: ProviderClientSchema,
 	source: ProviderSourceSchema.default("system"),
+	metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ProviderInfo = z.infer<typeof ProviderInfoSchema>;

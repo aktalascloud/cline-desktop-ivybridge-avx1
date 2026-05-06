@@ -28,6 +28,7 @@ import {
 	writeln,
 } from "../utils/output";
 import type { Config } from "../utils/types";
+import { shouldShowCliUsageCost } from "../utils/usage-cost-display";
 import { setActiveRuntimeAbort } from "./active-runtime";
 import {
 	CLI_DEFAULT_CHECKPOINT_CONFIG,
@@ -106,7 +107,10 @@ function printRunStats(
 			tokenParts.push(`${usage.cacheWriteTokens} cache write`);
 		}
 		parts.push(tokenParts.join(", "));
-		if (typeof usage.totalCost === "number") {
+		if (
+			shouldShowCliUsageCost(config.providerId) &&
+			typeof usage.totalCost === "number"
+		) {
 			parts.push(`${formatUsd(usage.totalCost)} est. cost`);
 		}
 		if (result.iterations > 1) {

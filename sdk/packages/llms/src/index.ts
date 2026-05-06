@@ -15,6 +15,7 @@ export {
 	getModelsForProvider,
 	getProvider,
 	getProviderCollection,
+	getProviderCollectionSync,
 	getProviderIds,
 	hasProvider,
 	MODEL_COLLECTIONS_BY_PROVIDER_ID,
@@ -57,6 +58,11 @@ export {
 	registerAsyncHandler,
 	registerHandler,
 } from "./providers";
+export {
+	type ProviderUsageCostDisplay,
+	resolveProviderUsageCostDisplay,
+	shouldShowProviderUsageCost,
+} from "./providers/billing";
 export type * from "./providers/gateway";
 export { createGateway, DefaultGateway } from "./providers/gateway";
 export { resolveProviderModelCatalogKeys } from "./providers/provider-keys";

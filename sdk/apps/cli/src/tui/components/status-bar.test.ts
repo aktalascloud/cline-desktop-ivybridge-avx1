@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
 	createContextBar,
+	formatStatusBarUsageText,
 	resolveContextBarFilledForeground,
 } from "./status-bar";
 
@@ -45,5 +46,27 @@ describe("createContextBar", () => {
 	it("uses explicit white when terminal foreground would inherit gray", () => {
 		expect(resolveContextBarFilledForeground(undefined)).toBe("#ffffff");
 		expect(resolveContextBarFilledForeground("#1a1a1a")).toBe("#1a1a1a");
+	});
+});
+
+describe("formatStatusBarUsageText", () => {
+	it("includes cost when usage cost is visible", () => {
+		expect(
+			formatStatusBarUsageText({
+				totalTokens: 12_345,
+				totalCost: 0.123,
+				showCost: true,
+			}),
+		).toBe("(12,345) $0.12");
+	});
+
+	it("omits cost when usage cost is hidden", () => {
+		expect(
+			formatStatusBarUsageText({
+				totalTokens: 12_345,
+				totalCost: 0.123,
+				showCost: false,
+			}),
+		).toBe("(12,345)");
 	});
 });

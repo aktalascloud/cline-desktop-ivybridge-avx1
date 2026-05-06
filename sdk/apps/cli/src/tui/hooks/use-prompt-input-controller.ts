@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { shouldShowCliUsageCost } from "../../utils/usage-cost-display";
 import type { SlashCommandRegistry } from "../commands/slash-command-registry";
 import {
 	expandUserCommandPrompt,
@@ -27,6 +28,7 @@ export function usePromptInputController(input: {
 	handleSlashCommand: (command: string) => boolean | Promise<boolean>;
 	onSubmit: TuiProps["onSubmit"];
 	initialPrompt?: string;
+	providerId: string;
 	configVerbose: boolean;
 	refreshRepoStatus: () => void;
 	setAppView: (view: AppView) => void;
@@ -38,6 +40,7 @@ export function usePromptInputController(input: {
 		handleSlashCommand,
 		onSubmit,
 		initialPrompt,
+		providerId,
 		configVerbose,
 		refreshRepoStatus,
 		setAppView,
@@ -277,11 +280,12 @@ export function usePromptInputController(input: {
 				}
 				if (!result.commandOutput && configVerbose) {
 					const elapsed = ((performance.now() - startedAt) / 1000).toFixed(2);
+					const showUsageCost = shouldShowCliUsageCost(providerId);
 					session.appendEntry({
 						kind: "done",
 						tokens: result.currentContextSize ?? session.lastTotalTokens,
 						cost:
-							typeof result.usage.totalCost === "number"
+							showUsageCost && typeof result.usage.totalCost === "number"
 								? result.usage.totalCost
 								: 0,
 						elapsed,
@@ -309,6 +313,7 @@ export function usePromptInputController(input: {
 			configVerbose,
 			inputHistory,
 			onSubmit,
+			providerId,
 			refreshRepoStatus,
 			runSlashCommand,
 			session,

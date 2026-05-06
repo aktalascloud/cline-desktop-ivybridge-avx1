@@ -11,6 +11,7 @@ export {
 	getModelsForProvider,
 	getProvider,
 	getProviderCollection,
+	getProviderCollectionSync,
 	getProviderIds,
 	hasProvider,
 	MODEL_COLLECTIONS_BY_PROVIDER_ID,
@@ -19,6 +20,11 @@ export {
 	resetRegistry,
 	unregisterProvider,
 } from "./models";
+export {
+	type ProviderUsageCostDisplay,
+	resolveProviderUsageCostDisplay,
+	shouldShowProviderUsageCost,
+} from "./providers/billing";
 export type {
 	ProviderCapability,
 	ProviderId,

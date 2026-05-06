@@ -23,6 +23,14 @@ export default defineConfig({
 				replacement: resolve(rootDir, "../../packages/core/src/$1"),
 			},
 			{
+				find: /^@clinebot\/llms$/,
+				replacement: resolve(rootDir, "../../packages/llms/src/index.ts"),
+			},
+			{
+				find: /^@clinebot\/llms\/(.+)$/,
+				replacement: resolve(rootDir, "../../packages/llms/src/$1"),
+			},
+			{
 				find: /^@clinebot\/shared\/(.+)$/,
 				replacement: resolve(rootDir, "../../packages/shared/src/$1"),
 			},

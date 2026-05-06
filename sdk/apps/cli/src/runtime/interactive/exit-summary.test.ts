@@ -101,4 +101,18 @@ describe("interactive exit summary", () => {
 		expect(output).toContain("  Duration  0s");
 		expect(output).not.toContain("NaN");
 	});
+
+	it("omits cost for subscription-backed providers", () => {
+		const output = formatInteractiveExitSummary({
+			sessionId: "sess_123",
+			startedAt: "2026-04-29T10:00:00.000Z",
+			provider: "openai-codex",
+			model: "gpt-5.4",
+			messageCount: 2,
+			totalCost: 0.25,
+		});
+
+		expect(output).not.toContain("  Cost");
+		expect(output).not.toContain("$0.250000");
+	});
 });

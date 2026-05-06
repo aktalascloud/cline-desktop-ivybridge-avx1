@@ -581,6 +581,7 @@ export const BUILTIN_SPECS: BuiltinSpec[] = [
 		defaultModelId: "gpt-5.4",
 		modelsProviderId: "openai",
 		defaults: { baseUrl: "https://chatgpt.com/backend-api/codex" },
+		metadata: { usageCostDisplay: "hide" },
 	},
 	{
 		id: "openai-codex-cli",
@@ -591,6 +592,7 @@ export const BUILTIN_SPECS: BuiltinSpec[] = [
 		defaultModelId: "gpt-5.3-codex",
 		modelsProviderId: "openai",
 		defaults: { baseUrl: "https://chatgpt.com/backend-api/codex" },
+		metadata: { usageCostDisplay: "hide" },
 	},
 	{
 		id: "anthropic",
@@ -742,6 +744,7 @@ function toModelCollection(spec: BuiltinSpec): ModelCollection {
 			env: spec.apiKeyEnv ? [...spec.apiKeyEnv] : undefined,
 			client: spec.client ?? inferClient(spec),
 			source: "system",
+			metadata: spec.metadata,
 		},
 		models,
 	};

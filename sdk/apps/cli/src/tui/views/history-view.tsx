@@ -12,6 +12,7 @@ import { useDialogKeyboard } from "@opentui-ui/dialog/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listSessions } from "../../session/session";
 import { formatUsd } from "../../utils/output";
+import { shouldShowCliUsageCost } from "../../utils/usage-cost-display";
 import { palette } from "../palette";
 
 function hasForkMetadata(row: SessionHistoryRecord): boolean {
@@ -265,6 +266,7 @@ function HistoryListContent({
 					const absIdx = window.startIndex + i;
 					const isSel = absIdx === safeSelected;
 					const cost = row.metadata?.totalCost;
+					const showCost = shouldShowCliUsageCost(row.provider);
 					const title = formatTitle(row, titleMaxLen);
 					const date = formatRelativeDate(row.startedAt);
 
@@ -290,7 +292,7 @@ function HistoryListContent({
 							>
 								{title}
 							</text>
-							{cost != null && cost > 0 && (
+							{showCost && cost != null && cost > 0 && (
 								<text
 									fg={isSel ? palette.textOnSelection : "gray"}
 									flexShrink={0}

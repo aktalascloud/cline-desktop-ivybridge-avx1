@@ -488,6 +488,7 @@ function App(props: TuiProps) {
 		handleSlashCommand,
 		onSubmit: props.onSubmit,
 		initialPrompt: props.initialPrompt,
+		providerId: props.config.providerId,
 		configVerbose: props.config.verbose ?? false,
 		refreshRepoStatus,
 		setAppView,

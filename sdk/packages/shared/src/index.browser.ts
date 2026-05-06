@@ -320,5 +320,5 @@ export {
 	isOAuthProviderId,
 	OAUTH_PROVIDER_IDS,
 } from "./types/auth";
-// VCR is Node-only (uses node:fs, node:path) — excluded from browser build
+// VCR is Node-only (uses node:fs, node:path), excluded from browser build
 export type { VcrRecording } from "./types/vcr";

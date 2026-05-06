@@ -1,6 +1,7 @@
 import type { SessionHistoryRecord } from "@clinebot/core";
 import { formatDisplayUserInput, truncateStr } from "@clinebot/shared";
 import { formatUsd } from "./output";
+import { shouldShowCliUsageCost } from "./usage-cost-display";
 
 function formatHistoryTitle(
 	title: string | undefined,
@@ -60,7 +61,9 @@ function formatUtcDate(date: Date): string {
 export function formatHistoryListLine(row: SessionHistoryRecord): string {
 	const title = formatHistoryTitle(row.metadata?.title, row.prompt);
 	if (!title) return "";
-	const cost = formatUsd(row.metadata?.totalCost ?? 0, 2);
+	const cost = shouldShowCliUsageCost(row.provider)
+		? formatUsd(row.metadata?.totalCost ?? 0, 2)
+		: undefined;
 	const provider = truncateStr(row.provider?.trim() || "unknown", 20);
 	const model = truncateStr(row.model?.trim() || "", 28);
 
@@ -71,5 +74,6 @@ export function formatHistoryListLine(row: SessionHistoryRecord): string {
 			? checkpointCreatedAt
 			: new Date(row.startedAt).getTime();
 	const date = formatUtcDate(new Date(timestamp));
-	return `${date} ${provider}:${model} | ${cost} | ${title}`;
+	const costSegment = cost ? ` | ${cost}` : "";
+	return `${date} ${provider}:${model}${costSegment} | ${title}`;
 }
