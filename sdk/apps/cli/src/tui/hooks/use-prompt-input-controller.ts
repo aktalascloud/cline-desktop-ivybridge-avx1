@@ -13,6 +13,11 @@ import {
 	expandPastedTextSnippets,
 	type PastedTextSnippet,
 } from "../utils/pasted-snippets";
+import {
+	insertSelectedSkillCommand,
+	type LocalSlashCommandInvocation,
+	removeLocalSlashCommandInvocation,
+} from "../utils/skill-command-input";
 import type { AutocompleteOption, useAutocomplete } from "./use-autocomplete";
 import { extractSlashQuery } from "./use-autocomplete";
 import { useInputHistory } from "./use-input-history";
@@ -25,7 +30,10 @@ interface PastedImage {
 export function usePromptInputController(input: {
 	autocomplete: ReturnType<typeof useAutocomplete>;
 	slashCommandRegistry: SlashCommandRegistry;
-	handleSlashCommand: (command: string) => boolean | Promise<boolean>;
+	handleSlashCommand: (
+		command: string,
+		invocation?: LocalSlashCommandInvocation,
+	) => boolean | Promise<boolean>;
 	onSubmit: TuiProps["onSubmit"];
 	initialPrompt?: string;
 	providerId: string;
@@ -85,6 +93,42 @@ export function usePromptInputController(input: {
 		setPendingCursorOffset(value.length);
 	}, []);
 
+	const applyInputText = useCallback((value: string, cursorOffset: number) => {
+		inputValueRef.current = value;
+		setInputValue(value);
+		setInputKey((k) => k + 1);
+		setPendingCursorOffset(cursorOffset);
+	}, []);
+
+	const insertSkillCommand = useCallback(
+		(commandName: string, invocation?: LocalSlashCommandInvocation) => {
+			const text =
+				invocation?.text ??
+				textareaRef.current?.plainText ??
+				inputValueRef.current;
+			const cursorOffset =
+				invocation?.cursorOffset ??
+				textareaRef.current?.cursorOffset ??
+				text.length;
+			const next = insertSelectedSkillCommand({
+				text,
+				cursorOffset,
+				commandName,
+				replaceRange: invocation?.replaceRange,
+			});
+			applyInputText(next.text, next.cursorOffset);
+		},
+		[applyInputText],
+	);
+
+	const removeLocalCommandInvocation = useCallback(
+		(invocation: LocalSlashCommandInvocation) => {
+			const next = removeLocalSlashCommandInvocation(invocation);
+			applyInputText(next.text, next.cursorOffset);
+		},
+		[applyInputText],
+	);
+
 	const clearPastedImages = useCallback(() => {
 		pastedImagesRef.current = [];
 	}, []);
@@ -123,11 +167,14 @@ export function usePromptInputController(input: {
 	}, []);
 
 	const runSlashCommand = useCallback(
-		async (cmd: string): Promise<boolean> => {
+		async (
+			cmd: string,
+			invocation?: LocalSlashCommandInvocation,
+		): Promise<boolean> => {
 			if (localCommandInFlightRef.current) return false;
 			localCommandInFlightRef.current = true;
 			try {
-				return await Promise.resolve(handleSlashCommand(cmd));
+				return await Promise.resolve(handleSlashCommand(cmd, invocation));
 			} finally {
 				localCommandInFlightRef.current = false;
 			}
@@ -152,20 +199,29 @@ export function usePromptInputController(input: {
 
 			if (autocomplete.mode === "/") {
 				const cmd = option.commandName ?? option.display.slice(1);
-				if (option.commandExecution === "local") {
-					ta.setText("");
-					ta.cursorOffset = 0;
-					setInputValue("");
-					clearPasteAttachments();
-				}
-				if (await runSlashCommand(cmd)) {
-					autocomplete.close();
-					return;
-				}
 				const text = inputValueRef.current;
 				const offset = ta.cursorOffset;
 				const before = text.slice(0, offset);
 				const slash = extractSlashQuery(before);
+				if (option.commandExecution === "local") {
+					const invocation: LocalSlashCommandInvocation = {
+						text,
+						cursorOffset: offset,
+						replaceRange: slash.inSlashMode
+							? { start: slash.slashIndex, end: offset }
+							: undefined,
+					};
+					if (!option.commandPreserveInput) {
+						ta.setText("");
+						ta.cursorOffset = 0;
+						setInputValue("");
+						clearPasteAttachments();
+					}
+					if (await runSlashCommand(cmd, invocation)) {
+						autocomplete.close();
+						return;
+					}
+				}
 				if (slash.inSlashMode) {
 					const newText =
 						text.slice(0, slash.slashIndex) + option.value + text.slice(offset);
@@ -211,12 +267,27 @@ export function usePromptInputController(input: {
 				const parts = prompt.split(/\s+/);
 				const cmd = (parts[0] ?? "").slice(1);
 				const command = resolveSlashCommand(slashCommandRegistry, cmd);
+				let invocation: LocalSlashCommandInvocation | undefined;
 				if (command?.execution === "local") {
-					setInputKey((k) => k + 1);
-					setInputValue("");
-					clearPasteAttachments();
+					const text = inputValueRef.current;
+					const commandToken = parts[0] ?? "";
+					const tokenStart = text.length - text.trimStart().length;
+					const tokenEnd = tokenStart + commandToken.length;
+					invocation = {
+						text,
+						cursorOffset: textareaRef.current?.cursorOffset ?? tokenEnd,
+						replaceRange:
+							text.slice(tokenStart, tokenEnd) === commandToken
+								? { start: tokenStart, end: tokenEnd }
+								: undefined,
+					};
+					if (!command.preserveInput) {
+						setInputKey((k) => k + 1);
+						setInputValue("");
+						clearPasteAttachments();
+					}
 				}
-				if (await runSlashCommand(cmd)) {
+				if (await runSlashCommand(cmd, invocation)) {
 					return;
 				}
 			}
@@ -405,6 +476,8 @@ export function usePromptInputController(input: {
 		setInputKey,
 		setInputValue,
 		populateInput,
+		insertSkillCommand,
+		removeLocalCommandInvocation,
 		focusTextarea,
 		refocusTextarea,
 		submitInitialPrompt,

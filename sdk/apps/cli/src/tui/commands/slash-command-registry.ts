@@ -34,6 +34,7 @@ export interface SlashCommandRegistryEntry {
 	execution: SlashCommandExecution;
 	visible: boolean;
 	selectable: boolean;
+	preserveInput?: boolean;
 }
 
 export interface SlashCommandRegistry {
@@ -45,6 +46,7 @@ const TUI_LOCAL_COMMANDS: Array<{
 	name: LocalSlashCommandName;
 	description: string;
 	visible?: boolean;
+	preserveInput?: boolean;
 }> = [
 	{
 		name: "settings",
@@ -74,6 +76,7 @@ const TUI_LOCAL_COMMANDS: Array<{
 	{
 		name: "skills",
 		description: "Browse skills and workflows",
+		preserveInput: true,
 	},
 	{
 		name: "fork",
@@ -188,6 +191,7 @@ export function buildSlashCommandRegistry(input: {
 			execution: "local",
 			visible,
 			selectable: visible,
+			preserveInput: command.preserveInput,
 		});
 	}
 

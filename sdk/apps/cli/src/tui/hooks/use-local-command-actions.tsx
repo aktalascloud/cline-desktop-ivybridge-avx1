@@ -10,6 +10,7 @@ import { useSession } from "../contexts/session-context";
 import type { AppView, TuiProps } from "../types";
 import { formatCompactionStatus } from "../utils/compaction-status";
 import { hydrateSessionMessages } from "../utils/hydrate-messages";
+import type { LocalSlashCommandInvocation } from "../utils/skill-command-input";
 import { HistoryDialogContent } from "../views/history-view";
 import { runLocalSlashCommandAction } from "./local-command-actions";
 
@@ -20,7 +21,7 @@ export function useLocalCommandActions(input: {
 	openConfig: () => void;
 	openMcpManager: () => Promise<boolean>;
 	openModelSelector: () => void;
-	openSkills: () => void;
+	openSkills: (invocation?: LocalSlashCommandInvocation) => void;
 	refocusTextarea: () => void;
 	setAppView: (view: AppView) => void;
 	onClearConversation: () => Promise<void>;
@@ -168,13 +169,14 @@ export function useLocalCommandActions(input: {
 	}, [canForkSession, dialog, onFork, refocusTextarea, session]);
 
 	const handleSlashCommand = useCallback(
-		(command: string) => {
+		(command: string, invocation?: LocalSlashCommandInvocation) => {
 			const resolved = resolveSlashCommand(slashCommandRegistry, command);
 			if (!resolved || resolved.execution !== "local") {
 				return false;
 			}
 			return runLocalSlashCommandAction({
 				name: resolved.name,
+				invocation,
 				openAccount,
 				openConfig,
 				openMcpManager,

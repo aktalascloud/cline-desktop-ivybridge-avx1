@@ -48,6 +48,7 @@ import type { AppView, TuiProps } from "./types";
 import { hydrateSessionMessages } from "./utils/hydrate-messages";
 import { isProviderConfigured } from "./utils/provider-configured";
 import { createSelectionCopyHandler } from "./utils/selection-copy";
+import type { LocalSlashCommandInvocation } from "./utils/skill-command-input";
 import { ChatView } from "./views/chat-view";
 import { HomeView } from "./views/home-view";
 import { type OnboardingResult, OnboardingView } from "./views/onboarding";
@@ -102,6 +103,12 @@ function App(props: TuiProps) {
 
 	const refocusTextareaRef = useRef<() => void>(() => {});
 	const populateInputRef = useRef<(value: string) => void>(() => {});
+	const insertSkillCommandRef = useRef<
+		(command: string, invocation?: LocalSlashCommandInvocation) => void
+	>(() => {});
+	const removeLocalCommandInvocationRef = useRef<
+		(invocation: LocalSlashCommandInvocation) => void
+	>(() => {});
 
 	const clearToastTimeout = useCallback(() => {
 		if (toastTimeoutRef.current) {
@@ -345,26 +352,35 @@ function App(props: TuiProps) {
 		session.requestExit();
 	}, [session]);
 
-	const openSkills = useCallback(async () => {
-		const selected = await dialog.choice<string>({
-			style: { maxHeight: termHeight - 2 },
-			content: (ctx: ChoiceContext<string>) => (
-				<SkillsPickerContent {...ctx} commands={invokableSkillCommands} />
-			),
-		});
-		if (selected === SKILLS_MARKETPLACE_ACTION) {
-			await import("open")
-				.then(({ default: open }) => open(SKILLS_MARKETPLACE_URL))
-				.catch(() => {
-					showToast(`Visit ${SKILLS_MARKETPLACE_URL}`, "info");
-				});
-			refocusTextareaRef.current();
-		} else if (selected) {
-			populateInputRef.current(`/${selected} `);
-		} else {
-			refocusTextareaRef.current();
-		}
-	}, [dialog, invokableSkillCommands, showToast, termHeight]);
+	const openSkills = useCallback(
+		async (invocation?: LocalSlashCommandInvocation) => {
+			const selected = await dialog.choice<string>({
+				style: { maxHeight: termHeight - 2 },
+				content: (ctx: ChoiceContext<string>) => (
+					<SkillsPickerContent {...ctx} commands={invokableSkillCommands} />
+				),
+			});
+			if (selected === SKILLS_MARKETPLACE_ACTION) {
+				await import("open")
+					.then(({ default: open }) => open(SKILLS_MARKETPLACE_URL))
+					.catch(() => {
+						showToast(`Visit ${SKILLS_MARKETPLACE_URL}`, "info");
+					});
+				if (invocation) {
+					removeLocalCommandInvocationRef.current(invocation);
+				} else {
+					refocusTextareaRef.current();
+				}
+			} else if (selected) {
+				insertSkillCommandRef.current(selected, invocation);
+			} else if (invocation) {
+				removeLocalCommandInvocationRef.current(invocation);
+			} else {
+				refocusTextareaRef.current();
+			}
+		},
+		[dialog, invokableSkillCommands, showToast, termHeight],
+	);
 
 	useEffect(() => {
 		const { handleSelection, dispose } = createSelectionCopyHandler({
@@ -497,6 +513,12 @@ function App(props: TuiProps) {
 	refocusTextareaRef.current = promptInput.refocusTextarea;
 	populateInputRef.current = (value: string) => {
 		promptInput.populateInput(value);
+	};
+	insertSkillCommandRef.current = (command, invocation) => {
+		promptInput.insertSkillCommand(command, invocation);
+	};
+	removeLocalCommandInvocationRef.current = (invocation) => {
+		promptInput.removeLocalCommandInvocation(invocation);
 	};
 	const initialPromptSubmittedRef = useRef(false);
 

@@ -103,6 +103,7 @@ export interface AutocompleteOption {
 	commandName?: string;
 	commandExecution?: SlashCommandRegistryEntry["execution"];
 	commandSource?: SlashCommandRegistryEntry["source"];
+	commandPreserveInput?: SlashCommandRegistryEntry["preserveInput"];
 }
 
 export interface AutocompleteState {
@@ -142,6 +143,7 @@ export function useAutocomplete(opts: {
 		commandName: cmd.name,
 		commandExecution: cmd.execution,
 		commandSource: cmd.source,
+		commandPreserveInput: cmd.preserveInput,
 	}));
 
 	const skillOptions: AutocompleteOption[] = skillCommands.map((cmd) => ({
@@ -151,6 +153,7 @@ export function useAutocomplete(opts: {
 		commandName: cmd.name,
 		commandExecution: cmd.execution,
 		commandSource: cmd.source,
+		commandPreserveInput: cmd.preserveInput,
 	}));
 
 	const getFilteredSlashOptions = useCallback(

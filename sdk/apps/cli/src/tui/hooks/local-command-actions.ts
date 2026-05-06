@@ -1,10 +1,13 @@
+import type { LocalSlashCommandInvocation } from "../utils/skill-command-input";
+
 export interface LocalSlashCommandActionInput {
 	name: string;
 	openAccount: () => void;
 	openConfig: () => void;
 	openMcpManager: () => Promise<boolean>;
 	openModelSelector: () => void;
-	openSkills: () => void;
+	openSkills: (invocation?: LocalSlashCommandInvocation) => void;
+	invocation?: LocalSlashCommandInvocation;
 	runCompact: () => void;
 	runFork: () => void;
 	runUndo: () => Promise<void>;
@@ -23,7 +26,7 @@ export function runLocalSlashCommandAction(
 		return true;
 	}
 	if (normalized === "skills") {
-		input.openSkills();
+		input.openSkills(input.invocation);
 		return true;
 	}
 	if (normalized === "mcp") {

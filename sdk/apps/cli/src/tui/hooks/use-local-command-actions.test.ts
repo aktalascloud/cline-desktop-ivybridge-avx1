@@ -29,14 +29,20 @@ describe("runLocalSlashCommandAction", () => {
 	it("opens the skills picker with skills", () => {
 		const openSkills = vi.fn();
 		const actions = makeActions({ openSkills });
+		const invocation = {
+			text: "please /skills",
+			cursorOffset: "please /skills".length,
+			replaceRange: { start: "please ".length, end: "please /skills".length },
+		};
 
 		const handled = runLocalSlashCommandAction({
 			name: "skills",
+			invocation,
 			...actions,
 		});
 
 		expect(handled).toBe(true);
-		expect(openSkills).toHaveBeenCalledOnce();
+		expect(openSkills).toHaveBeenCalledWith(invocation);
 	});
 
 	it("waits for clear to reset the runtime session", async () => {
