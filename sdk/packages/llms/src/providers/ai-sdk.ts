@@ -74,7 +74,7 @@ async function ensureGatewayLangfuseTelemetry(
 	providerId: string,
 ): Promise<boolean> {
 	try {
-		const runtime = await import("../runtime/langfuse-telemetry");
+		const runtime = await import("../services/langfuse-telemetry");
 		return runtime.ensureLangfuseTelemetry(providerId);
 	} catch {
 		return false;

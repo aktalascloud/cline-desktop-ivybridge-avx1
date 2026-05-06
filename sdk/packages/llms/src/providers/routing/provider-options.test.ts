@@ -9,12 +9,19 @@ import {
 	type ProviderOptionsPatch,
 } from "./provider-options";
 
-function makeContext(options?: {
+type RequestOverrides = Partial<GatewayStreamRequest> & {
+	providerId: string;
+	modelId: string;
+};
+
+type ContextOverrides = {
 	providerId?: string;
 	modelId?: string;
 	family?: string;
 	capabilities?: GatewayProviderContext["model"]["capabilities"];
-}): GatewayProviderContext {
+};
+
+function makeContext(options?: ContextOverrides): GatewayProviderContext {
 	const providerId = options?.providerId ?? "test-provider";
 	const modelId = options?.modelId ?? "model-id";
 	return {
@@ -37,17 +44,17 @@ function makeContext(options?: {
 	};
 }
 
-function makeRequest(
-	overrides: Partial<GatewayStreamRequest> & {
-		providerId: string;
-		modelId: string;
-	},
-): GatewayStreamRequest {
+function makeRequest(overrides: RequestOverrides): GatewayStreamRequest {
 	return {
 		providerId: overrides.providerId,
 		modelId: overrides.modelId,
 		messages: overrides.messages ?? [
-			{ role: "user", content: [{ type: "text", text: "hi" }] },
+			{
+				id: "msg-1",
+				role: "user",
+				content: [{ type: "text", text: "hi" }],
+				createdAt: 0,
+			},
 		],
 		systemPrompt: overrides.systemPrompt,
 		temperature: overrides.temperature,
@@ -56,6 +63,51 @@ function makeRequest(
 		signal: overrides.signal,
 		tools: overrides.tools,
 	};
+}
+
+/**
+ * One row asserts: build a request+context, call composeAiSdkProviderOptions,
+ * then for each `expect` entry check that the named bucket either contains or
+ * lacks the specified shape. `has` runs through `objectContaining`; `lacks` is
+ * a list of property names that must NOT exist in the bucket.
+ */
+type BucketExpectation = {
+	bucket: string;
+	has?: Record<string, unknown>;
+	lacks?: string[];
+};
+
+type Case = {
+	name: string;
+	request: RequestOverrides;
+	context?: ContextOverrides;
+	expect: BucketExpectation[];
+};
+
+function runCases(cases: ReadonlyArray<Case>) {
+	it.each(cases)("$name", ({ request, context, expect: expectations }) => {
+		const result = composeAiSdkProviderOptions(
+			makeRequest(request),
+			makeContext({
+				providerId: request.providerId,
+				modelId: request.modelId,
+				...context,
+			}),
+		);
+
+		for (const e of expectations) {
+			const bucket = result[e.bucket];
+			if (e.has) {
+				expect(bucket).toEqual(expect.objectContaining(e.has));
+			}
+			if (e.lacks?.length) {
+				expect(bucket).toBeDefined();
+			}
+			for (const key of e.lacks ?? []) {
+				expect(bucket).not.toHaveProperty(key);
+			}
+		}
+	});
 }
 
 describe("mergeProviderOptionPatches", () => {
@@ -96,8 +148,8 @@ describe("mergeProviderOptionPatches", () => {
 	});
 });
 
-describe("composeAiSdkProviderOptions precedence", () => {
-	it("emits a concrete `[providerId]` bucket and a distinct camelCase alias bucket", () => {
+describe("composeAiSdkProviderOptions: alias bucket emission", () => {
+	it("emits a concrete provider-id bucket and a distinct camelCase alias bucket", () => {
 		const result = composeAiSdkProviderOptions(
 			makeRequest({
 				providerId: "vercel-ai-gateway",
@@ -107,21 +159,20 @@ describe("composeAiSdkProviderOptions precedence", () => {
 			makeContext({ providerId: "vercel-ai-gateway", modelId: "gpt-5.4" }),
 		);
 
-		// The concrete provider id wins for its own bucket.
+		const expected = {
+			effort: "high",
+			reasoningEffort: "high",
+			reasoningSummary: "auto",
+		};
 		expect(result["vercel-ai-gateway"]).toEqual(
 			expect.objectContaining({
-				effort: "high",
-				reasoningEffort: "high",
-				reasoningSummary: "auto",
+				...expected,
 				strictJsonSchema: false,
 			}),
 		);
-		// The camelCase alias is also populated as a separate bucket.
 		expect(result.vercelAiGateway).toEqual(
 			expect.objectContaining({
-				effort: "high",
-				reasoningEffort: "high",
-				reasoningSummary: "auto",
+				...expected,
 				strictJsonSchema: false,
 			}),
 		);
@@ -179,498 +230,569 @@ describe("composeAiSdkProviderOptions precedence", () => {
 		);
 
 		expect(result).toHaveProperty("openai");
-		// `toProviderOptionsKey("openai") === "openai"`, so no separate alias bucket.
 		expect(Object.keys(result).filter((k) => k === "openai")).toHaveLength(1);
 	});
+});
 
-	it("uses thinking.type=enabled for Sonnet 4.5 which does not support adaptive thinking", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+describe("composeAiSdkProviderOptions: Anthropic thinking precedence", () => {
+	const MANUAL_THINKING = { type: "enabled", budgetTokens: 1024 };
+	const ADAPTIVE_THINKING = { type: "adaptive" };
+
+	runCases([
+		{
+			name: "Sonnet 4.5 -> manual thinking (no adaptive support), no effort",
+			request: {
 				providerId: "anthropic",
 				modelId: "claude-sonnet-4-5",
 				reasoning: { enabled: true, effort: "high" },
-			}),
-			makeContext({
+			},
+			context: { family: "claude-sonnet" },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: MANUAL_THINKING },
+					lacks: ["effort"],
+				},
+			],
+		},
+		{
+			name: "Opus 4.6 -> adaptive thinking with effort",
+			request: {
 				providerId: "anthropic",
-				modelId: "claude-sonnet-4-5",
-				family: "claude-sonnet",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "enabled", budgetTokens: 1024 },
-			}),
-		);
-		expect(result.anthropic.effort).toBeUndefined();
-	});
-
-	it.each([
-		"claude-opus-4-6",
-		"claude-opus-4-7",
-	])("uses thinking.type=adaptive for %s", (modelId) => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
-				providerId: "anthropic",
-				modelId,
+				modelId: "claude-opus-4-6",
 				reasoning: { enabled: true, effort: "high" },
-			}),
-			makeContext({
+			},
+			context: { family: "claude-opus" },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: ADAPTIVE_THINKING, effort: "high" },
+				},
+			],
+		},
+		{
+			name: "Opus 4.7 -> adaptive thinking with effort",
+			request: {
 				providerId: "anthropic",
-				modelId,
-				family: "claude-opus",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "adaptive" },
-				effort: "high",
-			}),
-		);
-	});
-
-	it("uses manual thinking for Opus before 4.6", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+				modelId: "claude-opus-4-7",
+				reasoning: { enabled: true, effort: "high" },
+			},
+			context: { family: "claude-opus" },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: ADAPTIVE_THINKING, effort: "high" },
+				},
+			],
+		},
+		{
+			name: "Opus before 4.6 -> manual thinking, no effort",
+			request: {
 				providerId: "anthropic",
 				modelId: "claude-opus-4-5",
 				reasoning: { enabled: true, effort: "high" },
-			}),
-			makeContext({
-				providerId: "anthropic",
-				modelId: "claude-opus-4-5",
-				family: "claude-opus",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "enabled", budgetTokens: 1024 },
-			}),
-		);
-		expect(result.anthropic).not.toHaveProperty("effort");
-	});
-
-	it("uses thinking.type=adaptive for Sonnet 4.6", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			context: { family: "claude-opus" },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: MANUAL_THINKING },
+					lacks: ["effort"],
+				},
+			],
+		},
+		{
+			name: "Sonnet 4.6 -> adaptive thinking with effort",
+			request: {
 				providerId: "anthropic",
 				modelId: "claude-sonnet-4-6",
 				reasoning: { enabled: true, effort: "high" },
-			}),
-			makeContext({
-				providerId: "anthropic",
-				modelId: "claude-sonnet-4-6",
-				family: "claude-sonnet",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "adaptive" },
-				effort: "high",
-			}),
-		);
-	});
-
-	it("defaults future Claude major versions to adaptive thinking", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			context: { family: "claude-sonnet" },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: ADAPTIVE_THINKING, effort: "high" },
+				},
+			],
+		},
+		{
+			name: "future Claude major (Sonnet 5.0) -> adaptive thinking",
+			request: {
 				providerId: "anthropic",
 				modelId: "claude-sonnet-5-0",
 				reasoning: { enabled: true, effort: "high" },
-			}),
-			makeContext({
-				providerId: "anthropic",
-				modelId: "claude-sonnet-5-0",
-				family: "claude-sonnet",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "adaptive" },
-				effort: "high",
-			}),
-		);
-	});
-
-	it("does not mistake Claude date suffixes for adaptive version numbers", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			context: { family: "claude-sonnet" },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: ADAPTIVE_THINKING, effort: "high" },
+				},
+			],
+		},
+		{
+			name: "Claude date suffixes are not mistaken for adaptive version numbers",
+			request: {
 				providerId: "anthropic",
 				modelId: "claude-opus-4-20250514",
 				reasoning: { enabled: true, effort: "high" },
-			}),
-			makeContext({
-				providerId: "anthropic",
-				modelId: "claude-opus-4-20250514",
-				family: "claude-opus",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "enabled", budgetTokens: 1024 },
-			}),
-		);
-		expect(result.anthropic).not.toHaveProperty("effort");
-	});
-
-	it("uses thinking.type=enabled for Haiku 4.5", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			context: { family: "claude-opus" },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: MANUAL_THINKING },
+					lacks: ["effort"],
+				},
+			],
+		},
+		{
+			name: "Haiku 4.5 -> manual thinking, no effort",
+			request: {
 				providerId: "anthropic",
 				modelId: "claude-haiku-4-5",
 				reasoning: { enabled: true, effort: "high" },
-			}),
-			makeContext({
-				providerId: "anthropic",
-				modelId: "claude-haiku-4-5",
-				family: "claude-haiku",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "enabled", budgetTokens: 1024 },
-			}),
-		);
-		expect(result.anthropic.effort).toBeUndefined();
-	});
-
-	it("defaults manual thinking budget when only reasoning.enabled is set", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			context: { family: "claude-haiku" },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: MANUAL_THINKING },
+					lacks: ["effort"],
+				},
+			],
+		},
+		{
+			name: "manual thinking budget defaults when only reasoning.enabled is set",
+			request: {
 				providerId: "anthropic",
 				modelId: "claude-sonnet-4-5",
 				reasoning: { enabled: true },
-			}),
-			makeContext({
-				providerId: "anthropic",
-				modelId: "claude-sonnet-4-5",
-				family: "claude-sonnet",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "enabled", budgetTokens: 1024 },
-			}),
-		);
-	});
-
-	it("defaults manual thinking budget when maxTokens is too small", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			context: { family: "claude-sonnet" },
+			expect: [{ bucket: "anthropic", has: { thinking: MANUAL_THINKING } }],
+		},
+		{
+			name: "manual thinking budget defaults when maxTokens is too small",
+			request: {
 				providerId: "anthropic",
 				modelId: "claude-sonnet-4-5",
 				maxTokens: 512,
 				reasoning: { enabled: true, effort: "low" },
-			}),
-			makeContext({
+			},
+			context: { family: "claude-sonnet" },
+			expect: [{ bucket: "anthropic", has: { thinking: MANUAL_THINKING } }],
+		},
+		{
+			name: "manual thinking budget defaults for unknown effort values",
+			request: {
 				providerId: "anthropic",
 				modelId: "claude-sonnet-4-5",
-				family: "claude-sonnet",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "enabled", budgetTokens: 1024 },
-			}),
-		);
-	});
-
-	it("defaults manual thinking budget for unknown effort values", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+				reasoning: { enabled: true, effort: "minimal" as "low" },
+			},
+			context: { family: "claude-sonnet" },
+			expect: [{ bucket: "anthropic", has: { thinking: MANUAL_THINKING } }],
+		},
+		{
+			name: "lower reasoning model (Sonnet 4.0) -> manual thinking, no effort",
+			request: {
 				providerId: "anthropic",
-				modelId: "claude-sonnet-4-5",
-				reasoning: { enabled: true, effort: "minimal" },
-			}),
-			makeContext({
-				providerId: "anthropic",
-				modelId: "claude-sonnet-4-5",
-				family: "claude-sonnet",
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "enabled", budgetTokens: 1024 },
-			}),
-		);
-	});
-
-	it.each([
-		["claude-sonnet-4-0", "claude-sonnet"],
-		["claude-3-7-sonnet-20250219", "claude-sonnet"],
-	])("uses manual thinking for lower reasoning model %s", (modelId, family) => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
-				providerId: "anthropic",
-				modelId,
+				modelId: "claude-sonnet-4-0",
 				reasoning: { enabled: true, effort: "medium" },
-			}),
-			makeContext({
+			},
+			context: { family: "claude-sonnet", capabilities: ["reasoning"] },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: MANUAL_THINKING },
+					lacks: ["effort"],
+				},
+			],
+		},
+		{
+			name: "lower reasoning model (Sonnet 3.7) -> manual thinking, no effort",
+			request: {
 				providerId: "anthropic",
-				modelId,
-				family,
-				capabilities: ["reasoning"],
-			}),
-		);
-
-		expect(result.anthropic).toEqual(
-			expect.objectContaining({
-				thinking: { type: "enabled", budgetTokens: 1024 },
-			}),
-		);
-		expect(result.anthropic).not.toHaveProperty("effort");
-	});
-
-	it.each([
-		["claude-3-5-sonnet-20241022", "claude-sonnet"],
-		["claude-3-haiku-20240307", "claude-haiku"],
-	])("does not emit thinking for lower non-reasoning model %s", (modelId, family) => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+				modelId: "claude-3-7-sonnet-20250219",
+				reasoning: { enabled: true, effort: "medium" },
+			},
+			context: { family: "claude-sonnet", capabilities: ["reasoning"] },
+			expect: [
+				{
+					bucket: "anthropic",
+					has: { thinking: MANUAL_THINKING },
+					lacks: ["effort"],
+				},
+			],
+		},
+		{
+			name: "lower non-reasoning Sonnet 3.5 -> no thinking on either bucket",
+			request: {
 				providerId: "anthropic",
-				modelId,
+				modelId: "claude-3-5-sonnet-20241022",
 				reasoning: { enabled: true, effort: "low" },
-			}),
-			makeContext({
+			},
+			context: { family: "claude-sonnet", capabilities: ["text"] },
+			expect: [
+				{ bucket: "anthropic", lacks: ["thinking", "effort"] },
+				{
+					bucket: "openaiCompatible",
+					lacks: ["thinking", "effort", "reasoning"],
+				},
+			],
+		},
+		{
+			name: "lower non-reasoning Haiku 3 -> no thinking on either bucket",
+			request: {
 				providerId: "anthropic",
-				modelId,
-				family,
-				capabilities: ["text"],
-			}),
-		);
-
-		expect(result.anthropic).not.toHaveProperty("thinking");
-		expect(result.anthropic).not.toHaveProperty("effort");
-		expect(result.openaiCompatible).not.toHaveProperty("thinking");
-		expect(result.openaiCompatible).not.toHaveProperty("effort");
-		expect(result.openaiCompatible).not.toHaveProperty("reasoning");
-	});
-
-	it("routes Cline Sonnet 4.5 reasoning without adaptive thinking or effort", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+				modelId: "claude-3-haiku-20240307",
+				reasoning: { enabled: true, effort: "low" },
+			},
+			context: { family: "claude-haiku", capabilities: ["text"] },
+			expect: [
+				{ bucket: "anthropic", lacks: ["thinking", "effort"] },
+				{
+					bucket: "openaiCompatible",
+					lacks: ["thinking", "effort", "reasoning"],
+				},
+			],
+		},
+		{
+			name: "Cline-routed Sonnet 4.5 -> gateway reasoning, no thinking, no effort",
+			request: {
 				providerId: "cline",
 				modelId: "anthropic/claude-sonnet-4-5",
 				reasoning: { enabled: true, effort: "low" },
-			}),
-			makeContext({
-				providerId: "cline",
-				modelId: "anthropic/claude-sonnet-4-5",
-				family: "claude-sonnet",
-			}),
-		);
-
-		expect(result.cline).toEqual(
-			expect.objectContaining({
-				reasoning: { enabled: true, max_tokens: 1024 },
-			}),
-		);
-		expect(result.cline).not.toHaveProperty("thinking");
-		expect(result.cline.reasoning).not.toHaveProperty("effort");
-	});
+			},
+			context: { family: "claude-sonnet" },
+			expect: [
+				{
+					bucket: "cline",
+					has: { reasoning: { enabled: true, max_tokens: 1024 } },
+					lacks: ["thinking"],
+				},
+			],
+		},
+	]);
 });
 
-describe("composeAiSdkProviderOptions provider-specific overlays", () => {
-	it("routes routed-GLM thinking-enabled without leaking adaptive thinking into shared compatible buckets", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+describe("composeAiSdkProviderOptions: family/provider thinking patches", () => {
+	runCases([
+		// GLM/Z.AI routed reasoning — enabled
+		{
+			name: "openrouter GLM thinking-enabled -> routed reasoning, no thinking leak",
+			request: {
 				providerId: "openrouter",
 				modelId: "z-ai/glm-4.7",
 				reasoning: { enabled: true },
-			}),
-			makeContext({ providerId: "openrouter", modelId: "z-ai/glm-4.7" }),
-		);
-
-		expect(result.openrouter).toEqual(
-			expect.objectContaining({ reasoning: { enabled: true } }),
-		);
-		expect(result.openrouter).not.toHaveProperty("thinking");
-		expect(result.openaiCompatible).toEqual(
-			expect.objectContaining({ reasoning: { enabled: true } }),
-		);
-		expect(result.openaiCompatible).not.toHaveProperty("thinking");
-	});
-
-	it("routes routed-GLM thinking-enabled into both provider-id and alias buckets without adaptive thinking", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			expect: [
+				{
+					bucket: "openrouter",
+					has: { reasoning: { enabled: true } },
+					lacks: ["thinking"],
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { reasoning: { enabled: true } },
+					lacks: ["thinking"],
+				},
+			],
+		},
+		{
+			name: "vercel-ai-gateway GLM thinking-enabled -> provider+alias buckets, no thinking leak",
+			request: {
 				providerId: "vercel-ai-gateway",
 				modelId: "z-ai/glm-4.7",
 				reasoning: { enabled: true },
-			}),
-			makeContext({ providerId: "vercel-ai-gateway", modelId: "z-ai/glm-4.7" }),
-		);
-
-		expect(result["vercel-ai-gateway"]).toEqual(
-			expect.objectContaining({ reasoning: { enabled: true } }),
-		);
-		expect(result["vercel-ai-gateway"]).not.toHaveProperty("thinking");
-		expect(result.vercelAiGateway).toEqual(
-			expect.objectContaining({ reasoning: { enabled: true } }),
-		);
-		expect(result.vercelAiGateway).not.toHaveProperty("thinking");
-		expect(result.openaiCompatible).not.toHaveProperty("thinking");
-	});
-
-	it("routes routed-GLM thinking-disabled into the provider-id and shared compatible buckets", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			expect: [
+				{
+					bucket: "vercel-ai-gateway",
+					has: { reasoning: { enabled: true } },
+					lacks: ["thinking"],
+				},
+				{
+					bucket: "vercelAiGateway",
+					has: { reasoning: { enabled: true } },
+					lacks: ["thinking"],
+				},
+				{ bucket: "openaiCompatible", lacks: ["thinking"] },
+			],
+		},
+		// GLM/Z.AI routed reasoning — disabled
+		{
+			name: "openrouter GLM thinking-disabled -> reasoning.exclude in provider+compatible",
+			request: {
 				providerId: "openrouter",
 				modelId: "z-ai/glm-4.7",
 				reasoning: { enabled: false },
-			}),
-			makeContext({ providerId: "openrouter", modelId: "z-ai/glm-4.7" }),
-		);
-
-		// GLM disable overlay wins inside the provider-id bucket. (`openrouter`
-		// has no hyphen so the alias bucket is the same key.)
-		expect(result.openrouter).toEqual(
-			expect.objectContaining({ reasoning: { exclude: true } }),
-		);
-		// And it also shows up in the shared compatible bucket.
-		expect(result.openaiCompatible).toEqual(
-			expect.objectContaining({ reasoning: { exclude: true } }),
-		);
-	});
-
-	it("routes routed-GLM thinking-disabled into both provider-id and the camelCase alias bucket", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			expect: [
+				{ bucket: "openrouter", has: { reasoning: { exclude: true } } },
+				{ bucket: "openaiCompatible", has: { reasoning: { exclude: true } } },
+			],
+		},
+		{
+			name: "vercel-ai-gateway GLM thinking-disabled -> reasoning.exclude in provider+alias",
+			request: {
 				providerId: "vercel-ai-gateway",
 				modelId: "z-ai/glm-4.7",
 				reasoning: { enabled: false },
-			}),
-			makeContext({ providerId: "vercel-ai-gateway", modelId: "z-ai/glm-4.7" }),
-		);
-
-		expect(result["vercel-ai-gateway"]).toEqual(
-			expect.objectContaining({ reasoning: { exclude: true } }),
-		);
-		expect(result.vercelAiGateway).toEqual(
-			expect.objectContaining({ reasoning: { exclude: true } }),
-		);
-	});
-
-	it("routes cline kimi disable into thinking.type=disabled", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
-				providerId: "cline",
-				modelId: "moonshotai/kimi-k2.6",
-				reasoning: { enabled: false },
-			}),
-			makeContext({ providerId: "cline", modelId: "moonshotai/kimi-k2.6" }),
-		);
-
-		expect(result.cline).toEqual(
-			expect.objectContaining({ thinking: { type: "disabled" } }),
-		);
-		expect(result.openaiCompatible).toEqual(
-			expect.objectContaining({ thinking: { type: "disabled" } }),
-		);
-	});
-
-	it("routes openrouter kimi disable into thinking.type=disabled", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
-				providerId: "openrouter",
-				modelId: "moonshotai/kimi-k2.6",
-				reasoning: { enabled: false },
-			}),
-			makeContext({
-				providerId: "openrouter",
-				modelId: "moonshotai/kimi-k2.6",
-			}),
-		);
-
-		expect(result.openrouter).toEqual(
-			expect.objectContaining({ thinking: { type: "disabled" } }),
-		);
-		expect(result.openaiCompatible).toEqual(
-			expect.objectContaining({ thinking: { type: "disabled" } }),
-		);
-	});
-
-	it("preserves reasoning.enabled=false on the cline gateway bucket", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
-				providerId: "cline",
-				modelId: "moonshotai/kimi-k2.6",
-				reasoning: { enabled: false },
-			}),
-			makeContext({ providerId: "cline", modelId: "moonshotai/kimi-k2.6" }),
-		);
-
-		expect(result.cline).toEqual(
-			expect.objectContaining({ reasoning: { enabled: false } }),
-		);
-	});
-
-	it("routes direct deepseek reasoning disable to thinking.type=disabled", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
-				providerId: "deepseek",
-				modelId: "deepseek-v4-pro",
-				reasoning: { enabled: false },
-			}),
-			makeContext({ providerId: "deepseek", modelId: "deepseek-v4-pro" }),
-		);
-
-		expect(result.deepseek).toEqual(
-			expect.objectContaining({ thinking: { type: "disabled" } }),
-		);
-		expect(result.openaiCompatible).toEqual(
-			expect.objectContaining({ thinking: { type: "disabled" } }),
-		);
-	});
-
-	it("routes direct deepseek reasoning enable to thinking.type=enabled", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
-				providerId: "deepseek",
-				modelId: "deepseek-v4-pro",
-				reasoning: { enabled: true },
-			}),
-			makeContext({ providerId: "deepseek", modelId: "deepseek-v4-pro" }),
-		);
-
-		expect(result.deepseek).toEqual(
-			expect.objectContaining({ thinking: { type: "enabled" } }),
-		);
-		expect(result.openaiCompatible).toEqual(
-			expect.objectContaining({ thinking: { type: "enabled" } }),
-		);
-	});
-
-	it("uses native Z.AI thinking shape on the provider-id bucket without the routed reasoning shape", () => {
-		const result = composeAiSdkProviderOptions(
-			makeRequest({
+			},
+			expect: [
+				{ bucket: "vercel-ai-gateway", has: { reasoning: { exclude: true } } },
+				{ bucket: "vercelAiGateway", has: { reasoning: { exclude: true } } },
+			],
+		},
+		// Native Z.AI uses a real thinking shape, not the routed reasoning shape
+		{
+			name: "native zai thinking -> thinking.type=enabled, no routed reasoning",
+			request: {
 				providerId: "zai",
 				modelId: "glm-4.7",
 				reasoning: { enabled: true },
-			}),
-			makeContext({ providerId: "zai", modelId: "glm-4.7" }),
-		);
+			},
+			expect: [
+				{ bucket: "zai", has: { thinking: { type: "enabled" } } },
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "enabled" } },
+					lacks: ["reasoning"],
+				},
+			],
+		},
+		// Kimi K2.6 family: explicit enabled/disabled and unset defaults to enabled
+		{
+			name: "cline Kimi K2.6 family reasoning.enabled=false -> thinking.type=disabled",
+			request: {
+				providerId: "cline",
+				modelId: "moonshotai/kimi-k2.6",
+				reasoning: { enabled: false },
+			},
+			context: { family: "kimi-k2.6" },
+			expect: [
+				{ bucket: "cline", has: { thinking: { type: "disabled" } } },
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "disabled" } },
+				},
+			],
+		},
+		{
+			name: "cline Kimi K2.6 family reasoning.enabled=true -> thinking.type=enabled",
+			request: {
+				providerId: "cline",
+				modelId: "moonshotai/kimi-k2.6",
+				reasoning: { enabled: true },
+			},
+			context: { family: "kimi-k2.6" },
+			expect: [
+				{ bucket: "cline", has: { thinking: { type: "enabled" } } },
+				{ bucket: "openaiCompatible", has: { thinking: { type: "enabled" } } },
+			],
+		},
+		{
+			name: "openrouter Kimi K2.6 family reasoning.enabled=false -> thinking.type=disabled",
+			request: {
+				providerId: "openrouter",
+				modelId: "moonshotai/kimi-k2.6",
+				reasoning: { enabled: false },
+			},
+			context: { family: "kimi-k2.6" },
+			expect: [
+				{ bucket: "openrouter", has: { thinking: { type: "disabled" } } },
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "disabled" } },
+				},
+			],
+		},
+		{
+			name: "openai-compatible Kimi K2.6 family unset reasoning -> thinking.type=enabled",
+			request: { providerId: "openai-compatible", modelId: "kimi-k2.6" },
+			context: { family: "kimi-k2.6" },
+			expect: [
+				{
+					bucket: "openai-compatible",
+					has: { thinking: { type: "enabled" } },
+				},
+				{ bucket: "openaiCompatible", has: { thinking: { type: "enabled" } } },
+			],
+		},
+		{
+			name: "openai-compatible Kimi K2.6 family reasoning.enabled=false -> thinking.type=disabled",
+			request: {
+				providerId: "openai-compatible",
+				modelId: "kimi-k2.6",
+				reasoning: { enabled: false },
+			},
+			context: { family: "kimi-k2.6" },
+			expect: [
+				{
+					bucket: "openai-compatible",
+					has: { thinking: { type: "disabled" } },
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "disabled" } },
+				},
+			],
+		},
+		{
+			name: "openai-compatible Kimi K2.6 family empty reasoning -> thinking.type=enabled",
+			request: {
+				providerId: "openai-compatible",
+				modelId: "kimi-k2.6",
+				reasoning: {},
+			},
+			context: { family: "kimi-k2.6" },
+			expect: [
+				{ bucket: "openaiCompatible", has: { thinking: { type: "enabled" } } },
+			],
+		},
+		{
+			name: "cline Kimi K2.6 family reasoning.enabled=false also keeps gateway reasoning shape",
+			request: {
+				providerId: "cline",
+				modelId: "moonshotai/kimi-k2.6",
+				reasoning: { enabled: false },
+			},
+			context: { family: "kimi-k2.6" },
+			expect: [{ bucket: "cline", has: { reasoning: { enabled: false } } }],
+		},
+		// Non-K2.6 Moonshot still routes through the disable patch
+		{
+			name: "non-K2.6 Moonshot Kimi reasoning.enabled=false -> thinking.type=disabled",
+			request: {
+				providerId: "openrouter",
+				modelId: "moonshotai/kimi-k2.5",
+				reasoning: { enabled: false },
+			},
+			expect: [
+				{ bucket: "openrouter", has: { thinking: { type: "disabled" } } },
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "disabled" } },
+				},
+			],
+		},
+		// DeepSeek family — direct provider id and openai-compatible via family
+		{
+			name: "direct deepseek reasoning disable -> thinking.type=disabled",
+			request: {
+				providerId: "deepseek",
+				modelId: "deepseek-v4-pro",
+				reasoning: { enabled: false },
+			},
+			expect: [
+				{ bucket: "deepseek", has: { thinking: { type: "disabled" } } },
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "disabled" } },
+				},
+			],
+		},
+		{
+			name: "direct deepseek reasoning enable -> thinking.type=enabled",
+			request: {
+				providerId: "deepseek",
+				modelId: "deepseek-v4-pro",
+				reasoning: { enabled: true },
+			},
+			expect: [
+				{ bucket: "deepseek", has: { thinking: { type: "enabled" } } },
+				{ bucket: "openaiCompatible", has: { thinking: { type: "enabled" } } },
+			],
+		},
+		{
+			name: "openai-compatible deepseek family reasoning.enabled=false -> thinking.type=disabled",
+			request: {
+				providerId: "openai-compatible",
+				modelId: "deepseek-v4-pro",
+				reasoning: { enabled: false },
+			},
+			context: { family: "deepseek" },
+			expect: [
+				{
+					bucket: "openai-compatible",
+					has: { thinking: { type: "disabled" } },
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "disabled" } },
+				},
+			],
+		},
+		{
+			name: "openai-compatible deepseek-thinking family reasoning.enabled=false -> thinking.type=disabled",
+			request: {
+				providerId: "openai-compatible",
+				modelId: "deepseek-v4-pro",
+				reasoning: { enabled: false },
+			},
+			context: { family: "deepseek-thinking" },
+			expect: [
+				{
+					bucket: "openai-compatible",
+					has: { thinking: { type: "disabled" } },
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "disabled" } },
+				},
+			],
+		},
+		{
+			name: "openai-compatible deepseek-flash family reasoning.enabled=false -> thinking.type=disabled",
+			request: {
+				providerId: "openai-compatible",
+				modelId: "deepseek-v4-pro",
+				reasoning: { enabled: false },
+			},
+			context: { family: "deepseek-flash" },
+			expect: [
+				{
+					bucket: "openai-compatible",
+					has: { thinking: { type: "disabled" } },
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "disabled" } },
+				},
+			],
+		},
+		{
+			name: "openai-compatible deepseek family reasoning.enabled=true -> thinking.type=enabled",
+			request: {
+				providerId: "openai-compatible",
+				modelId: "deepseek-v4-pro",
+				reasoning: { enabled: true },
+			},
+			context: { family: "deepseek-thinking" },
+			expect: [
+				{
+					bucket: "openai-compatible",
+					has: { thinking: { type: "enabled" } },
+				},
+				{ bucket: "openaiCompatible", has: { thinking: { type: "enabled" } } },
+			],
+		},
+		{
+			name: "openai-compatible deepseek family with unset reasoning -> no thinking emitted",
+			request: { providerId: "openai-compatible", modelId: "deepseek-v4-pro" },
+			context: { family: "deepseek" },
+			expect: [
+				{ bucket: "openai-compatible", lacks: ["thinking"] },
+				{ bucket: "openaiCompatible", lacks: ["thinking"] },
+			],
+		},
+	]);
+});
 
-		expect(result.zai).toEqual(
-			expect.objectContaining({ thinking: { type: "enabled" } }),
-		);
-		expect(result.openaiCompatible).toEqual(
-			expect.objectContaining({ thinking: { type: "enabled" } }),
-		);
-		// Native Z.AI does not emit the routed `reasoning` shape.
-		expect(result.openaiCompatible).not.toHaveProperty("reasoning");
-	});
-
-	it("emits the openai-codex `openai` bucket alongside the provider-id and alias buckets", () => {
+describe("composeAiSdkProviderOptions: provider-specific overlays", () => {
+	it("emits the openai-codex `openai` bucket alongside provider-id and alias buckets", () => {
 		const result = composeAiSdkProviderOptions(
 			makeRequest({
 				providerId: "openai-codex",

@@ -216,6 +216,8 @@ describe("sdk-gateway", () => {
 			"minimax",
 			"oca",
 			"openrouter",
+			"qwen",
+			"qwen-code",
 			"sapaicore",
 			"vercel-ai-gateway",
 			"vertex",

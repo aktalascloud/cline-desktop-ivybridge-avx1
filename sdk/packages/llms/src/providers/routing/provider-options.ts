@@ -36,6 +36,20 @@ export type AiSdkProviderOptionsTarget =
 	| "opencode"
 	| "dify";
 
+/**
+ * Providers that own their full provider-options shape and skip the generic
+ * fanout (because another patch — anthropic base, codex override, gemini —
+ * fills their bucket).
+ */
+const PROVIDERS_SKIPPING_GENERIC_FANOUT = new Set([
+	"anthropic",
+	"openai-codex",
+	"google",
+]);
+
+/** Providers that participate in the Moonshot Kimi disable patch. */
+const MOONSHOT_KIMI_DISABLE_PROVIDERS = new Set(["cline", "openrouter"]);
+
 /** Merge patches in order. Later patches override earlier ones per bucket key. */
 export function mergeProviderOptionPatches(
 	patches: ReadonlyArray<ProviderOptionsPatch | undefined>,
@@ -52,23 +66,23 @@ export function mergeProviderOptionPatches(
 	return result;
 }
 
+/**
+ * Build a patch that targets the concrete provider id and, when distinct, its
+ * camelCase alias (e.g. `vercel-ai-gateway` + `vercelAiGateway`). The alias
+ * is omitted when it would collapse to the provider id or to "anthropic".
+ */
 function buildProviderAndAliasPatch(options: {
 	providerId: string;
 	providerOptionsKey: string;
 	bucketOptions: Record<string, unknown>;
 }): ProviderOptionsPatch {
+	const { providerId, providerOptionsKey, bucketOptions } = options;
+	const needsAlias =
+		providerOptionsKey !== providerId && providerOptionsKey !== "anthropic";
 	return {
-		[options.providerId]: options.bucketOptions,
-		...(options.providerOptionsKey !== options.providerId &&
-		options.providerOptionsKey !== "anthropic"
-			? { [options.providerOptionsKey]: options.bucketOptions }
-			: {}),
+		[providerId]: bucketOptions,
+		...(needsAlias ? { [providerOptionsKey]: bucketOptions } : {}),
 	};
-}
-
-function isMoonshotKimiModel(modelId: string): boolean {
-	const normalized = modelId.toLowerCase();
-	return normalized.includes("moonshotai/kimi-");
 }
 
 function inferProviderOptionsTarget(
@@ -101,40 +115,105 @@ function inferProviderOptionsTarget(
 	}
 }
 
-function buildDeepSeekThinkingPatch(options: {
-	request: GatewayStreamRequest;
+/**
+ * Many overlays emit the same `thinking: { type: ... }` shape across the
+ * provider-id bucket, the camelCase alias, and the shared `openaiCompatible`
+ * bucket. This is the shared shape.
+ */
+function buildThinkingPatch(options: {
+	providerId: string;
 	providerOptionsKey: string;
-}): ProviderOptionsPatch | undefined {
-	const { request, providerOptionsKey } = options;
-	if (request.providerId !== "deepseek") {
-		return undefined;
-	}
-	if (request.reasoning?.enabled === undefined) {
-		return undefined;
-	}
-
-	const bucketOptions = {
-		thinking: {
-			type: request.reasoning.enabled
-				? ("enabled" as const)
-				: ("disabled" as const),
-		},
-	};
-
+	thinkingType: "enabled" | "disabled";
+}): ProviderOptionsPatch {
+	const bucketOptions = { thinking: { type: options.thinkingType } };
 	return {
 		...buildProviderAndAliasPatch({
-			providerId: request.providerId,
-			providerOptionsKey,
+			providerId: options.providerId,
+			providerOptionsKey: options.providerOptionsKey,
 			bucketOptions,
 		}),
 		openaiCompatible: bucketOptions,
 	};
 }
 
+function isMoonshotKimiModel(modelId: string): boolean {
+	return modelId.toLowerCase().includes("moonshotai/kimi-");
+}
+
+function isKimiK26Family(context: GatewayProviderContext): boolean {
+	return resolveModelFamily(context)?.trim().toLowerCase() === "kimi-k2.6";
+}
+
+function isDeepSeekFamily(context: GatewayProviderContext): boolean {
+	return (
+		resolveModelFamily(context)?.trim().toLowerCase().includes("deepseek") ===
+		true
+	);
+}
+
+/**
+ * Family-gated thinking rules. Each rule decides which models match (by
+ * family/provider id/model id) and what `thinking.type` to emit when
+ * `reasoning.enabled` is unset. Explicit `enabled`/`disabled` always wins.
+ */
+type FamilyThinkingRule = {
+	matches: (
+		request: GatewayStreamRequest,
+		context: GatewayProviderContext,
+	) => boolean;
+	defaultWhenUnset: "enabled" | "disabled" | undefined;
+};
+
+const FAMILY_THINKING_RULES: ReadonlyArray<FamilyThinkingRule> = [
+	{
+		matches: (_request, context) => isKimiK26Family(context),
+		defaultWhenUnset: "enabled",
+	},
+	{
+		matches: (request, context) =>
+			isDeepSeekFamily(context) || request.providerId === "deepseek",
+		defaultWhenUnset: undefined,
+	},
+];
+
+function hasFamilyThinkingRule(
+	request: GatewayStreamRequest,
+	context: GatewayProviderContext,
+): boolean {
+	return FAMILY_THINKING_RULES.some((r) => r.matches(request, context));
+}
+
+function resolveFamilyThinkingType(
+	request: GatewayStreamRequest,
+	context: GatewayProviderContext,
+): "enabled" | "disabled" | undefined {
+	const rule = FAMILY_THINKING_RULES.find((r) => r.matches(request, context));
+	if (!rule) {
+		return undefined;
+	}
+	const enabled = request.reasoning?.enabled;
+	if (enabled === true) {
+		return "enabled";
+	}
+	if (enabled === false) {
+		return "disabled";
+	}
+	return rule.defaultWhenUnset;
+}
+
 function buildCompatibleThinkingOptions(
 	request: GatewayStreamRequest,
 	context: GatewayProviderContext,
 ): Record<string, unknown> {
+	if (
+		shouldSuppressGenericCompatibleThinking(request, context) ||
+		hasFamilyThinkingRule(request, context)
+	) {
+		return {};
+	}
+	if (request.reasoning?.enabled !== true) {
+		return {};
+	}
 	const isAnthropicCompatible = isAnthropicCompatibleModel({
 		modelId: request.modelId,
 		family: resolveModelFamily(context),
@@ -142,13 +221,10 @@ function buildCompatibleThinkingOptions(
 	const anthropicPolicy = isAnthropicCompatible
 		? resolveAnthropicReasoningRequestPolicy(request, context)
 		: undefined;
-	return {
-		...(!shouldSuppressGenericCompatibleThinking(request, context) &&
-		request.reasoning?.enabled === true &&
-		(!anthropicPolicy || anthropicPolicy.kind === "anthropic-adaptive")
-			? { thinking: { type: "adaptive" } }
-			: {}),
-	};
+	if (anthropicPolicy && anthropicPolicy.kind !== "anthropic-adaptive") {
+		return {};
+	}
+	return { thinking: { type: "adaptive" } };
 }
 
 function buildCompatibleEffortOptions(options: {
@@ -159,40 +235,33 @@ function buildCompatibleEffortOptions(options: {
 	>["kind"];
 }): Record<string, unknown> {
 	const effort = options.reasoning?.effort;
-	const shouldEmitEffort =
-		Boolean(effort) &&
-		(!options.isAnthropicCompatibleModelId ||
-			options.anthropicReasoningPolicyKind === "anthropic-adaptive");
+	if (!effort) {
+		return {};
+	}
+	const allowEffort =
+		!options.isAnthropicCompatibleModelId ||
+		options.anthropicReasoningPolicyKind === "anthropic-adaptive";
+	if (!allowEffort) {
+		return {};
+	}
 	return {
-		...(shouldEmitEffort ? { effort } : {}),
-		...(shouldEmitEffort ? { reasoningEffort: effort } : {}),
-		...(shouldEmitEffort && !options.isAnthropicCompatibleModelId
-			? { reasoningSummary: "auto" }
-			: {}),
+		effort,
+		reasoningEffort: effort,
+		...(options.isAnthropicCompatibleModelId
+			? {}
+			: { reasoningSummary: "auto" }),
 	};
-}
-
-function buildAnthropicCompatibleProviderOptions(
-	request: GatewayStreamRequest,
-	context: GatewayProviderContext,
-): Record<string, unknown> {
-	const reasoning = buildAnthropicCompatibleReasoningOptions(request, context);
-	return reasoning ? { reasoning } : {};
-}
-
-function buildPromptCacheProviderOptions(
-	request: GatewayStreamRequest,
-	context: GatewayProviderContext,
-): Record<string, unknown> {
-	return shouldUseAnthropicPromptCache(request, context)
-		? createEphemeralCacheControl()
-		: {};
 }
 
 function buildOpenAINativeProviderOptions(
 	request: GatewayStreamRequest,
 ): Record<string, unknown> {
-	return request.providerId === "openai-native" ? { truncation: "auto" } : {};
+	const isNativeOpenAIClient = [
+		"openai-native",
+		"openai",
+		"openai-codex",
+	].includes(request.providerId);
+	return isNativeOpenAIClient ? { truncation: "auto" } : {};
 }
 
 function buildCompatibleProviderOptions(options: {
@@ -205,6 +274,10 @@ function buildCompatibleProviderOptions(options: {
 	const anthropicReasoningPolicy = isAnthropicCompatibleModelId
 		? resolveAnthropicReasoningRequestPolicy(request, context)
 		: undefined;
+	const reasoning = buildAnthropicCompatibleReasoningOptions(request, context);
+	const promptCache = shouldUseAnthropicPromptCache(request, context)
+		? createEphemeralCacheControl()
+		: {};
 
 	return {
 		...(target === "openai-compatible" ? { strictJsonSchema: false } : {}),
@@ -214,8 +287,8 @@ function buildCompatibleProviderOptions(options: {
 			isAnthropicCompatibleModelId,
 			anthropicReasoningPolicyKind: anthropicReasoningPolicy?.kind,
 		}),
-		...buildAnthropicCompatibleProviderOptions(request, context),
-		...buildPromptCacheProviderOptions(request, context),
+		...(reasoning ? { reasoning } : {}),
+		...promptCache,
 		...buildOpenAINativeProviderOptions(request),
 	};
 }
@@ -283,36 +356,31 @@ function buildProviderFanoutPatch(
 	if (target === "openai") {
 		return undefined;
 	}
-	if (
-		request.providerId === "anthropic" ||
-		request.providerId === "openai-codex" ||
-		request.providerId === "google"
-	) {
+	if (PROVIDERS_SKIPPING_GENERIC_FANOUT.has(request.providerId)) {
 		return undefined;
 	}
 
-	const gatewayReasoning = buildGatewayReasoningOptions(request, context);
-	const providerOptions = {
-		...compatibleOptions,
-		...(request.providerId === "cline" && gatewayReasoning
-			? { reasoning: gatewayReasoning }
-			: {}),
-	};
+	const gatewayReasoning =
+		request.providerId === "cline"
+			? buildGatewayReasoningOptions(request, context)
+			: undefined;
 
 	return buildProviderAndAliasPatch({
 		providerId: request.providerId,
 		providerOptionsKey,
-		bucketOptions: providerOptions,
+		bucketOptions: {
+			...compatibleOptions,
+			...(gatewayReasoning ? { reasoning: gatewayReasoning } : {}),
+		},
 	});
 }
 
 function buildGeminiProviderOptionsPatch(
 	request: GatewayStreamRequest,
 ): ProviderOptionsPatch | undefined {
-	if (request.providerId !== "google" && request.providerId !== "gemini") {
-		return undefined;
-	}
-	if (!request.reasoning?.effort) {
+	const isGemini =
+		request.providerId === "google" || request.providerId === "gemini";
+	if (!isGemini || !request.reasoning?.effort) {
 		return undefined;
 	}
 
@@ -328,44 +396,59 @@ function buildGeminiProviderOptionsPatch(
 
 function buildMoonshotKimiDisablePatch(options: {
 	request: GatewayStreamRequest;
+	context: GatewayProviderContext;
 	providerOptionsKey: string;
 }): ProviderOptionsPatch | undefined {
-	const { request, providerOptionsKey } = options;
+	const { request, context, providerOptionsKey } = options;
 	if (request.reasoning?.enabled !== false) {
 		return undefined;
 	}
 	if (!isMoonshotKimiModel(request.modelId)) {
 		return undefined;
 	}
-	if (request.providerId !== "cline" && request.providerId !== "openrouter") {
+	if (isKimiK26Family(context)) {
+		return undefined;
+	}
+	if (!MOONSHOT_KIMI_DISABLE_PROVIDERS.has(request.providerId)) {
 		return undefined;
 	}
 
-	const bucketOptions = {
-		thinking: { type: "disabled" as const },
-	};
+	return buildThinkingPatch({
+		providerId: request.providerId,
+		providerOptionsKey,
+		thinkingType: "disabled",
+	});
+}
 
-	return {
-		...buildProviderAndAliasPatch({
-			providerId: request.providerId,
-			providerOptionsKey,
-			bucketOptions,
-		}),
-		openaiCompatible: bucketOptions,
-	};
+function buildFamilyThinkingPatch(options: {
+	request: GatewayStreamRequest;
+	context: GatewayProviderContext;
+	providerOptionsKey: string;
+}): ProviderOptionsPatch | undefined {
+	const { request, context, providerOptionsKey } = options;
+	const thinkingType = resolveFamilyThinkingType(request, context);
+	if (!thinkingType) {
+		return undefined;
+	}
+
+	return buildThinkingPatch({
+		providerId: request.providerId,
+		providerOptionsKey,
+		thinkingType,
+	});
 }
 
 /**
  * Compose AI SDK `providerOptions` from a small set of ordered patches.
  *
  * Precedence (low -> high):
- *  1. base shared buckets
+ *  1. base/openai-compatible buckets
  *  2. OpenAI adapter bucket
  *  3. codex provider-specific override
  *  4. provider-id + alias fanout
  *  5. gemini-specific google bucket
- *  6. DeepSeek thinking type patch
- *  7. Moonshot Kimi disable patch
+ *  6. Moonshot Kimi disable patch
+ *  7. Family-gated thinking patch (Kimi K2.6, DeepSeek)
  *  8. GLM/Z.AI overlay
  */
 export function composeAiSdkProviderOptions(
@@ -388,7 +471,7 @@ export function composeAiSdkProviderOptions(
 	});
 	const anthropicOptions = buildAnthropicProviderOptions(request, context);
 
-	return mergeProviderOptionPatches([
+	const patches: Array<ProviderOptionsPatch | undefined> = [
 		buildBaseProviderOptionsPatch(compatibleOptions, anthropicOptions),
 		buildOpenAIProviderOptionsPatch(request, target),
 		buildOpenAICodexProviderOptionsPatch(
@@ -404,8 +487,10 @@ export function composeAiSdkProviderOptions(
 			target,
 		),
 		buildGeminiProviderOptionsPatch(request),
-		buildDeepSeekThinkingPatch({ request, providerOptionsKey }),
-		buildMoonshotKimiDisablePatch({ request, providerOptionsKey }),
+		buildMoonshotKimiDisablePatch({ request, context, providerOptionsKey }),
+		buildFamilyThinkingPatch({ request, context, providerOptionsKey }),
 		buildGlmThinkingProviderOptionsPatch(request, context, providerOptionsKey),
-	]);
+	];
+
+	return mergeProviderOptionPatches(patches);
 }

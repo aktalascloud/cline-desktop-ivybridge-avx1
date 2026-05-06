@@ -57,20 +57,11 @@ export function isAnthropicCompatibleModelId(
 	}
 
 	const normalized = modelId.toLowerCase();
-	const hasAnthropicVendor =
-		normalized.startsWith("anthropic/") ||
-		normalized.startsWith("anthropic.") ||
-		normalized.startsWith("anthropic--") ||
-		normalized.includes("/anthropic/") ||
-		normalized.includes(".anthropic.") ||
-		normalized.includes("--anthropic--");
-	const hasClaudeLineage =
-		normalized.startsWith("claude-") ||
-		normalized.includes("/claude-") ||
-		normalized.includes(".claude-") ||
-		normalized.includes("--claude-");
+	const hasAnthropicVendor = normalized.includes("anthropic");
+	const hasClaudeLineage = normalized.includes("claude");
+	const hasQwenLineage = normalized.includes("qwen");
 
-	return hasAnthropicVendor || hasClaudeLineage;
+	return hasAnthropicVendor || hasClaudeLineage || hasQwenLineage;
 }
 
 export function createPromptCacheProviderOptions(
@@ -164,26 +155,24 @@ function resolveClaudeLine(
 	family: string | undefined,
 ) {
 	const normalizedFamily = family?.toLowerCase() ?? "";
-	if (normalizedFamily.includes("claude-opus")) {
+	const normalizedModelId = modelId?.toLowerCase() ?? "";
+
+	if (normalizedFamily.includes("opus") || normalizedModelId.includes("opus")) {
 		return "opus" as const;
 	}
-	if (normalizedFamily.includes("claude-sonnet")) {
+	if (
+		normalizedFamily.includes("sonnet") ||
+		normalizedModelId.includes("sonnet")
+	) {
 		return "sonnet" as const;
 	}
-	if (normalizedFamily.includes("claude-haiku")) {
+	if (
+		normalizedFamily.includes("haiku") ||
+		normalizedModelId.includes("haiku")
+	) {
 		return "haiku" as const;
 	}
 
-	const normalizedModelId = modelId?.toLowerCase() ?? "";
-	if (normalizedModelId.includes("opus")) {
-		return "opus" as const;
-	}
-	if (normalizedModelId.includes("sonnet")) {
-		return "sonnet" as const;
-	}
-	if (normalizedModelId.includes("haiku")) {
-		return "haiku" as const;
-	}
 	return undefined;
 }
 
