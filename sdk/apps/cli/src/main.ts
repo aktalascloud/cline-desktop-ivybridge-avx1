@@ -717,8 +717,9 @@ export async function runCli(): Promise<void> {
 					: persistedReasoning?.enabled === true
 						? "medium"
 						: "none";
-		const effectiveReasoningEffort =
-			args.reasoningEffort ?? reasoningEffortFromSettings;
+		const effectiveReasoningEffort = args.thinkingExplicitlySet
+			? (args.reasoningEffort ?? "none")
+			: (args.reasoningEffort ?? reasoningEffortFromSettings);
 		const { createCliLoggerAdapter } = await import("./logging/adapter");
 		const loggerAdapter = createCliLoggerAdapter({
 			runtime: "cli",

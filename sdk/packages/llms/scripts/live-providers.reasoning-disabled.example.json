@@ -281,6 +281,35 @@
 				"requireNoReasoningChunk": true
 			}
 		},
+		"deepseek-v4-flash-thinking-off": {
+			"settings": {
+				"provider": "deepseek",
+				"model": "deepseek-v4-flash",
+				"reasoning": {
+					"enabled": false
+				}
+			},
+			"prompt": "Answer with only the number: what is 47*83?",
+			"expectations": {
+				"requireUsage": true,
+				"requireNoReasoningChunk": true
+			}
+		},
+		"deepseek-v4-flash-thinking-off-with-effort": {
+			"settings": {
+				"provider": "deepseek",
+				"model": "deepseek-v4-flash",
+				"reasoning": {
+					"enabled": false,
+					"effort": "xhigh"
+				}
+			},
+			"prompt": "Answer with only the number: what is 47*83?",
+			"expectations": {
+				"requireUsage": true,
+				"requireNoReasoningChunk": true
+			}
+		},
 		"cline-deepseek-v3.2-thinking-off": {
 			"settings": {
 				"provider": "cline",

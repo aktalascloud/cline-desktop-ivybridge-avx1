@@ -73,6 +73,8 @@ export interface ParsedArgs {
 	timeoutSeconds?: number;
 	invalidTimeoutSeconds?: string;
 	thinking: boolean;
+	/** Whether --thinking was explicitly provided on the command line */
+	thinkingExplicitlySet?: boolean;
 	reasoningEffort?: CliReasoningEffort;
 	invalidThinkingLevel?: string;
 	invalidAutoApprove?: string;

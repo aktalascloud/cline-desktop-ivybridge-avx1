@@ -173,6 +173,7 @@ export function commanderToParsedArgs(program: Command): ParsedArgs {
 			effort === "high" ||
 			effort === "xhigh"
 		) {
+			result.thinkingExplicitlySet = true;
 			if (effort === "none") {
 				result.thinking = false;
 				result.reasoningEffort = undefined;

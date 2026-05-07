@@ -235,7 +235,11 @@ function buildCompatibleEffortOptions(options: {
 	>["kind"];
 }): Record<string, unknown> {
 	const effort = options.reasoning?.effort;
-	if (!effort) {
+	// Don't emit effort when reasoning is explicitly disabled — doing so can
+	// conflict with a thinking.type=disabled patch (e.g. DeepSeek) and cause
+	// provider errors like "thinking options type cannot be disabled when
+	// reasoning_effort is set".
+	if (!effort || options.reasoning?.enabled === false) {
 		return {};
 	}
 	const allowEffort =
