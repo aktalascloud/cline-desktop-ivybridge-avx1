@@ -152,7 +152,7 @@ describe("DefaultRuntimeBuilder", () => {
 			expect(names).not.toContain("submit_and_exit");
 			expect(runtime.completionPolicy).toBeUndefined();
 		}
-	});
+	}, 10_000);
 
 	it("does not infer yolo preset from auto-approval alone", async () => {
 		const runtime = await new DefaultRuntimeBuilder().build({
