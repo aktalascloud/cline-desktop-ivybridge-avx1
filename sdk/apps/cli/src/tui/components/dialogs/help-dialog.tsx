@@ -59,6 +59,18 @@ const HELP_ROWS: HelpRow[] = [
 	},
 	{
 		kind: "entry",
+		id: "k-ctrl-p",
+		key: "Ctrl+P",
+		desc: "Open command palette",
+	},
+	{
+		kind: "entry",
+		id: "k-opt-help",
+		key: "Opt+K",
+		desc: "Show this help",
+	},
+	{
+		kind: "entry",
 		id: "k-escape",
 		key: "Escape",
 		desc: "Close menu / Abort running agent",

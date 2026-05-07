@@ -1,3 +1,4 @@
+import type { KeyEvent } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import type { Dispatch, SetStateAction } from "react";
 import { useRef } from "react";
@@ -46,12 +47,15 @@ export function useRootKeyboard(input: {
 	onToggleMode: () => void;
 	onClearConversation: () => Promise<void>;
 	onRestoreCheckpoint: () => Promise<void>;
+	onOpenCommandPalette: () => Promise<void>;
+	onCommandPaletteShortcut: (key: KeyEvent) => boolean;
 }) {
 	const session = useSession();
 	const lastEscapeRef = useRef(0);
 
 	useKeyboard((key) => {
 		if (session.isExitRequested) return;
+
 		const hasInputText = input.getCurrentInputText().trim().length > 0;
 
 		const mayEditTextarea =
@@ -122,6 +126,15 @@ export function useRootKeyboard(input: {
 				}
 				return;
 			}
+			return;
+		}
+
+		if (!session.isRunning && input.onCommandPaletteShortcut(key)) {
+			return;
+		}
+
+		if (key.ctrl && key.name === "p" && !session.isRunning) {
+			void input.onOpenCommandPalette();
 			return;
 		}
 

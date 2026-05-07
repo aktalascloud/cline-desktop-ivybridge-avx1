@@ -102,7 +102,9 @@ export function HomeView(props: {
 			</box>
 			<box marginBottom={1} flexShrink={0}>
 				<text fg="gray">
-					<em>Use / for slash commands and @ for file mentions</em>
+					<em>
+						Use / for slash commands, @ for file mentions, Ctrl+P for menu
+					</em>
 				</text>
 			</box>
 

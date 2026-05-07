@@ -25,6 +25,16 @@ test.describe("cline interactive basics", () => {
 			timeout: 10_000,
 		});
 	});
+
+	test("opens the command palette with Ctrl+P", async ({ terminal }) => {
+		await waitForChatReady(terminal);
+		terminal.write("\x10");
+		await expectVisible(terminal, [
+			"Command Palette",
+			"Change Model",
+			"Manage MCP Servers",
+		]);
+	});
 });
 
 test.describe("cline interactive provider flag", () => {

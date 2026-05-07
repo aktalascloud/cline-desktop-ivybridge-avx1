@@ -1,6 +1,7 @@
 import { getCurrentContextSize, summarizeUsageFromMessages } from "@cline/core";
 import type { Message } from "@cline/shared";
 import { formatDisplayUserInput, truncateStr } from "@cline/shared";
+import type { KeyEvent } from "@opentui/core";
 import { useRenderer, useTerminalDimensions } from "@opentui/react";
 import type { ChoiceContext } from "@opentui-ui/dialog";
 import {
@@ -21,6 +22,14 @@ import {
 	type CheckpointPickerItem,
 	type CheckpointPickerResult,
 } from "./components/dialogs/checkpoint-picker";
+import {
+	CommandPaletteContent,
+	type CommandPaletteResult,
+} from "./components/dialogs/command-palette";
+import {
+	buildCommandPaletteItems,
+	findCommandPaletteShortcut,
+} from "./components/dialogs/command-palette-items";
 import {
 	SKILLS_MARKETPLACE_ACTION,
 	SKILLS_MARKETPLACE_URL,
@@ -56,7 +65,7 @@ function App(props: TuiProps) {
 	const renderer = useRenderer();
 	const dialog = useDialog();
 	const isDialogOpen = useDialogState((s: { isOpen: boolean }) => s.isOpen);
-	const { height: termHeight } = useTerminalDimensions();
+	const { height: termHeight, width: termWidth } = useTerminalDimensions();
 
 	const [repoStatus, setRepoStatus] = useState<RepoStatus>(
 		props.initialRepoStatus ?? { branch: null, diffStats: null },
@@ -485,6 +494,67 @@ function App(props: TuiProps) {
 		onExit: exitCline,
 	});
 
+	const runCommandPaletteResult = useCallback(
+		async (result: CommandPaletteResult) => {
+			if (result.action === "change-provider") {
+				await openModelSelector({ startWithProviderChange: true });
+				return;
+			}
+			if (result.action === "change-model") {
+				await openModelSelector();
+				return;
+			}
+
+			await Promise.resolve(handleSlashCommand(result.action));
+		},
+		[handleSlashCommand, openModelSelector],
+	);
+
+	const commandPaletteOpenRef = useRef(false);
+	const globalPaletteItems = useMemo(
+		() => buildCommandPaletteItems({ canForkSession }),
+		[canForkSession],
+	);
+	const openCommandPalette = useCallback(async () => {
+		if (commandPaletteOpenRef.current) return;
+		commandPaletteOpenRef.current = true;
+		const dialogWidth = Math.min(
+			64,
+			Math.max(48, Math.floor(termWidth * 0.58)),
+			Math.max(42, termWidth - 8),
+		);
+		try {
+			const result = await dialog.choice<CommandPaletteResult>({
+				style: { width: dialogWidth, maxHeight: termHeight - 2 },
+				content: (ctx: ChoiceContext<CommandPaletteResult>) => (
+					<CommandPaletteContent
+						{...ctx}
+						canForkSession={canForkSession}
+						contentWidth={dialogWidth - 2}
+					/>
+				),
+			});
+			if (result) {
+				await runCommandPaletteResult(result);
+				return;
+			}
+			refocusTextareaRef.current();
+		} finally {
+			commandPaletteOpenRef.current = false;
+		}
+	}, [canForkSession, dialog, runCommandPaletteResult, termHeight, termWidth]);
+
+	const runCommandPaletteShortcut = useCallback(
+		(key: KeyEvent) => {
+			const shortcut = findCommandPaletteShortcut(globalPaletteItems, key);
+			if (!shortcut) return false;
+			key.preventDefault();
+			void runCommandPaletteResult(shortcut.result);
+			return true;
+		},
+		[globalPaletteItems, runCommandPaletteResult],
+	);
+
 	const agentHandlers = useAgentEventHandlers({
 		appendEntry: session.appendEntry,
 		updateLastEntry: session.updateLastEntry,
@@ -556,6 +626,8 @@ function App(props: TuiProps) {
 		onToggleMode: toggleMode,
 		onClearConversation: clearConversation,
 		onRestoreCheckpoint: openCheckpointRestore,
+		onOpenCommandPalette: openCommandPalette,
+		onCommandPaletteShortcut: runCommandPaletteShortcut,
 	});
 
 	useRuntimeDialogBridge({

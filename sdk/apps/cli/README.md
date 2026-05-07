@@ -199,6 +199,7 @@ clite config
 # Inline composer supports completion menus:
 # - `@` opens workspace file mention search (arrow keys to move, Enter/Tab to insert)
 # - `/` opens workflow slash command search (arrow keys to move, Enter/Tab to insert)
+# - Ctrl+P opens the command palette for common CLI actions
 # - `/config` (or `/settings`) opens the interactive config browser
 #   with tabs for workflows, rules, skills, hooks, and agents
 # Footer rows mirror the legacy CLI layout:
