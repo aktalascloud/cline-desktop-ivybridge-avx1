@@ -94,12 +94,12 @@ selection UIs, defaults, or validation.
 Use this for API-key-backed provider validation against real endpoints.
 
 1. Ensure provider keys are present in your environment (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `CLINE_API_KEY`, etc.).
-2. Use the sample config at `packages/llms/scripts/live-providers.example.json` as the providers list.
+2. Use the sample config at `packages/llms/src/tests/live-providers.example.json` as the providers list.
 3. Run:
 
 ```bash
 LLMS_LIVE_TESTS=1 \
-LLMS_LIVE_PROVIDERS_PATH=/absolute/path/to/packages/llms/scripts/live-providers.example.json \
+LLMS_LIVE_PROVIDERS_PATH=/absolute/path/to/packages/llms/src/tests/live-providers.example.json \
 bun -F @cline/llms run test:live
 ```
 
@@ -107,7 +107,7 @@ Reasoning-focused live run (same command, different flags):
 
 ```bash
 LLMS_LIVE_REASONING_TESTS=1 \
-LLMS_LIVE_REASONING_PROVIDERS_PATH=/absolute/path/to/packages/llms/scripts/live-providers.reasoning.example.json \
+LLMS_LIVE_REASONING_PROVIDERS_PATH=/absolute/path/to/packages/llms/src/tests/live-providers.reasoning.example.json \
 bun -F @cline/llms run test:live
 ```
 
@@ -115,7 +115,7 @@ Tool-use-focused live run (same command, different flags):
 
 ```bash
 LLMS_LIVE_TOOL_TESTS=1 \
-LLMS_LIVE_TOOL_PROVIDERS_PATH=/absolute/path/to/packages/llms/scripts/live-providers.tools.example.json \
+LLMS_LIVE_TOOL_PROVIDERS_PATH=/absolute/path/to/packages/llms/src/tests/live-providers.tools.example.json \
 bun -F @cline/llms run test:live
 ```
 
@@ -126,6 +126,9 @@ Optional:
 - Point `LLMS_LIVE_PROVIDERS_PATH` to a custom file if you want a narrower provider set.
 - Point `LLMS_LIVE_REASONING_PROVIDERS_PATH` to a custom file for reasoning-enabled suites.
 - Point `LLMS_LIVE_TOOL_PROVIDERS_PATH` to a custom file for tool-use suites.
+- Use `apiKeyEnv`, `baseUrlEnv`, and `headersEnv` in a provider entry when a live config needs secrets without writing them to JSON.
+
+OpenAI Codex subscription live runs use the saved OAuth credentials from `~/.cline/data/settings/providers.json` after `clite auth --provider openai-codex`. Point the plain or reasoning suite at `packages/llms/src/tests/live-providers.openai-codex.example.json` or `packages/llms/src/tests/live-providers.openai-codex.reasoning.example.json`.
 
 Per-provider live assertions are configured in the JSON via `expectations`:
 
@@ -138,7 +141,7 @@ Per-provider live assertions are configured in the JSON via `expectations`:
 - `requireToolCall`: fail unless at least one `tool_calls` chunk is emitted.
 
 In reasoning suites, set `requireReasoningSignal: true` to require either a reasoning chunk or `thoughtsTokenCount > 0` (provider-dependent; can be flaky on some endpoints).
-To check that disabling reasoning actually suppresses reasoning output across models, use `packages/llms/scripts/live-providers.reasoning-disabled.example.json`; it covers direct and routed provider paths across `cline`, `openai`, `openrouter`, `anthropic`, `gemini`, `vercel-ai-gateway`, `zai`, and `deepseek` where model support exists, with `reasoning.enabled: false` and `requireNoReasoningChunk: true`.
+To check that disabling reasoning actually suppresses reasoning output across models, use `packages/llms/src/tests/live-providers.reasoning-disabled.example.json`; it covers direct and routed provider paths across `cline`, `openai`, `openrouter`, `anthropic`, `gemini`, `vercel-ai-gateway`, `zai`, and `deepseek` where model support exists, with `reasoning.enabled: false` and `requireNoReasoningChunk: true`.
 
 Common live failure classes:
 
@@ -151,10 +154,10 @@ Common live failure classes:
 
 Add a new entry under the `providers` object in either config file:
 
-- Cache/smoke suite: `packages/llms/scripts/live-providers.example.json`
-- Reasoning suite: `packages/llms/scripts/live-providers.reasoning.example.json`
-- Reasoning-disabled suite (asserts no reasoning chunks when reasoning is off): `packages/llms/scripts/live-providers.reasoning-disabled.example.json`
-- Tool-use suite: `packages/llms/scripts/live-providers.tools.example.json`
+- Cache/smoke suite: `packages/llms/src/tests/live-providers.example.json`
+- Reasoning suite: `packages/llms/src/tests/live-providers.reasoning.example.json`
+- Reasoning-disabled suite (asserts no reasoning chunks when reasoning is off): `packages/llms/src/tests/live-providers.reasoning-disabled.example.json`
+- Tool-use suite: `packages/llms/src/tests/live-providers.tools.example.json`
 
 Minimal smoke/cache entry:
 

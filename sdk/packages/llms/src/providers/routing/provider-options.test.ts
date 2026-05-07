@@ -792,6 +792,18 @@ describe("composeAiSdkProviderOptions: family/provider thinking patches", () => 
 });
 
 describe("composeAiSdkProviderOptions: provider-specific overlays", () => {
+	it.each([
+		"openai",
+		"openai-native",
+	])("emits truncation for native OpenAI provider %s", (providerId) => {
+		const result = composeAiSdkProviderOptions(
+			makeRequest({ providerId, modelId: "gpt-5.4" }),
+			makeContext({ providerId, modelId: "gpt-5.4" }),
+		);
+
+		expect(result.openai).toHaveProperty("truncation", "auto");
+	});
+
 	it("emits the openai-codex `openai` bucket alongside provider-id and alias buckets", () => {
 		const result = composeAiSdkProviderOptions(
 			makeRequest({
@@ -810,6 +822,7 @@ describe("composeAiSdkProviderOptions: provider-specific overlays", () => {
 				systemMessageMode: "remove",
 			}),
 		);
+		expect(result.openai).not.toHaveProperty("truncation");
 		expect(result["openai-codex"]).toEqual(
 			expect.objectContaining({
 				store: false,
@@ -817,9 +830,11 @@ describe("composeAiSdkProviderOptions: provider-specific overlays", () => {
 				reasoningSummary: "auto",
 			}),
 		);
+		expect(result["openai-codex"]).not.toHaveProperty("truncation");
 		expect(result.openaiCodex).toEqual(
 			expect.objectContaining({ store: false }),
 		);
+		expect(result.openaiCodex).not.toHaveProperty("truncation");
 	});
 
 	it("emits the gemini google.thinkingConfig only when reasoning effort is set", () => {

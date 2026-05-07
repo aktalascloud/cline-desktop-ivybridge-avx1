@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "vitest";
-import * as LlmsProviders from "./providers";
+import * as LlmsProviders from "../providers";
+import { toLiveProviderConfig } from "./provider-live-config";
 
-type ProviderConfig = import("./providers").ProviderConfig;
+type ProviderConfig = import("../providers").ProviderConfig;
 
 interface StoredProviderSettingsEntryLike {
 	settings?: unknown;
@@ -19,21 +20,9 @@ interface ProviderTarget {
 	systemPrompt: string;
 	userPrompt: string;
 	runs: number;
-	expectations: LiveReasoningExpectations;
+	requireUsage: boolean;
+	requireToolCall: boolean;
 }
-
-const LIVE_TEST_ENABLED = process.env.LLMS_LIVE_REASONING_TESTS === "1";
-const PROVIDERS_FILE_ENV = "LLMS_LIVE_REASONING_PROVIDERS_PATH";
-const PROVIDER_TIMEOUT_MS = Number(
-	process.env.LLMS_LIVE_PROVIDER_TIMEOUT_MS ?? "90000",
-);
-const PROVIDER_RETRIES = Number(process.env.LLMS_LIVE_PROVIDER_RETRIES ?? "2");
-const PROVIDER_ATTEMPTS = Number.isFinite(PROVIDER_RETRIES)
-	? Math.max(1, Math.floor(PROVIDER_RETRIES) + 1)
-	: 1;
-const DEFAULT_SYSTEM_PROMPT = "You are a concise assistant.";
-const DEFAULT_USER_PROMPT =
-	"Solve briefly: what is 47*83? Then give one short sentence.";
 
 interface LiveProviderEntryLike {
 	settings?: unknown;
@@ -44,82 +33,47 @@ interface LiveProviderEntryLike {
 	runs?: unknown;
 }
 
-interface LiveReasoningExpectations {
-	requireUsage: boolean;
-	requireReasoningSignal: boolean;
-	requireReasoningChunk: boolean;
-	requireNoReasoningChunk: boolean;
-}
-
 interface LiveRunMetrics {
 	usageSeen: boolean;
-	reasoningChunkCount: number;
-	thoughtsTokenCountMax: number;
+	toolCallCount: number;
 }
 
-function toProviderConfig(settingsInput: unknown): ProviderConfig {
-	const settings =
-		settingsInput && typeof settingsInput === "object"
-			? (settingsInput as Record<string, unknown>)
-			: {};
-	const provider = settings.provider;
-	if (typeof provider !== "string" || provider.trim().length === 0) {
-		throw new Error("live provider entry must include a provider string");
-	}
-	const config: ProviderConfig = {
-		providerId: provider,
-	};
-	if (typeof settings.model === "string") {
-		config.modelId = settings.model;
-	}
-	if (typeof settings.apiKey === "string") {
-		config.apiKey = settings.apiKey;
-	}
-	if (typeof settings.baseUrl === "string") {
-		config.baseUrl = settings.baseUrl;
-	}
-	if (
-		settings.reasoning &&
-		typeof settings.reasoning === "object" &&
-		!Array.isArray(settings.reasoning)
-	) {
-		const reasoning = settings.reasoning as Record<string, unknown>;
-		if (typeof reasoning.enabled === "boolean") {
-			config.thinking = reasoning.enabled;
-		}
-		if (typeof reasoning.effort === "string" && reasoning.effort !== "none") {
-			config.reasoningEffort = reasoning.effort as
-				| "low"
-				| "medium"
-				| "high"
-				| "xhigh";
-		}
-		if (typeof reasoning.budgetTokens === "number") {
-			config.thinkingBudgetTokens = reasoning.budgetTokens;
-		}
-	}
-	return config;
-}
+const LIVE_TEST_ENABLED = process.env.LLMS_LIVE_TOOL_TESTS === "1";
+const PROVIDERS_FILE_ENV = "LLMS_LIVE_TOOL_PROVIDERS_PATH";
+const PROVIDER_TIMEOUT_MS = Number(
+	process.env.LLMS_LIVE_PROVIDER_TIMEOUT_MS ?? "90000",
+);
+const PROVIDER_RETRIES = Number(process.env.LLMS_LIVE_PROVIDER_RETRIES ?? "2");
+const PROVIDER_ATTEMPTS = Number.isFinite(PROVIDER_RETRIES)
+	? Math.max(1, Math.floor(PROVIDER_RETRIES) + 1)
+	: 1;
+const DEFAULT_SYSTEM_PROMPT = "You are a tool-using assistant.";
+const DEFAULT_USER_PROMPT = [
+	'Call the "echo_tool" tool exactly once with {"text":"ping"}.',
+	"After the tool call, output exactly: DONE",
+].join(" ");
 
-function parseExpectations(input: unknown): LiveReasoningExpectations {
-	const value =
-		input && typeof input === "object"
-			? (input as Record<string, unknown>)
-			: {};
-	return {
-		requireUsage: value.requireUsage !== false,
-		requireReasoningSignal: value.requireReasoningSignal === true,
-		requireReasoningChunk: value.requireReasoningChunk === true,
-		requireNoReasoningChunk: value.requireNoReasoningChunk === true,
-	};
-}
+const LIVE_TOOL_DEFINITIONS = [
+	{
+		name: "echo_tool",
+		description: "Echoes text for tool-routing tests.",
+		inputSchema: {
+			type: "object",
+			properties: {
+				text: { type: "string" },
+			},
+			required: ["text"],
+			additionalProperties: false,
+		},
+	},
+];
 
 function toTarget(
 	label: string,
 	settingsInput: unknown,
 	entry?: LiveProviderEntryLike,
 ): ProviderTarget {
-	const config = toProviderConfig(settingsInput);
+	const config = toLiveProviderConfig(settingsInput);
 	const runsCandidate = entry?.runs;
 	const runs =
 		typeof runsCandidate === "number" &&
@@ -127,15 +81,10 @@ function toTarget(
 		runsCandidate > 0
 			? Math.floor(runsCandidate)
 			: 1;
-	const expectations = parseExpectations(entry?.expectations);
-	if (
-		expectations.requireReasoningChunk &&
-		expectations.requireNoReasoningChunk
-	) {
-		throw new Error(
-			`${label}: requireReasoningChunk and requireNoReasoningChunk are mutually exclusive`,
-		);
-	}
+	const expectations =
+		entry?.expectations && typeof entry.expectations === "object"
+			? (entry.expectations as Record<string, unknown>)
+			: {};
 
 	return {
 		label: `${label} (${config.providerId})`,
@@ -151,7 +100,8 @@ function toTarget(
 					? entry.prompt
 					: DEFAULT_USER_PROMPT,
 		runs,
-		expectations,
+		requireUsage: expectations.requireUsage !== false,
+		requireToolCall: expectations.requireToolCall === true,
 	};
 }
 
@@ -159,7 +109,7 @@ function requireProvidersFilePath(): string {
 	const filePath = process.env[PROVIDERS_FILE_ENV];
 	if (!filePath) {
 		throw new Error(
-			`Set ${PROVIDERS_FILE_ENV} to a provider json path before running live reasoning tests.`,
+			`Set ${PROVIDERS_FILE_ENV} to a provider json path before running live tool-use tests.`,
 		);
 	}
 	return path.resolve(filePath);
@@ -220,55 +170,37 @@ function assertTargetExpectations(
 	metrics: LiveRunMetrics,
 ): void {
 	const errors: string[] = [];
-	const expectations = target.expectations;
-	if (expectations.requireUsage && !metrics.usageSeen) {
+	if (target.requireUsage && !metrics.usageSeen) {
 		errors.push("expected at least one usage chunk");
 	}
-	if (
-		expectations.requireReasoningSignal &&
-		metrics.reasoningChunkCount <= 0 &&
-		metrics.thoughtsTokenCountMax <= 0
-	) {
-		errors.push(
-			"expected reasoning signal (reasoning chunk or thoughts tokens)",
-		);
-	}
-	if (expectations.requireReasoningChunk && metrics.reasoningChunkCount <= 0) {
-		errors.push("expected at least one reasoning chunk");
-	}
-	if (expectations.requireNoReasoningChunk && metrics.reasoningChunkCount > 0) {
-		errors.push(
-			`expected no reasoning chunks, got ${metrics.reasoningChunkCount}`,
-		);
+	if (target.requireToolCall && metrics.toolCallCount <= 0) {
+		errors.push("expected at least one tool_calls chunk");
 	}
 	if (errors.length > 0) {
 		throw new Error(errors.join("; "));
 	}
 }
 
-async function runReasoningPrompt(target: ProviderTarget): Promise<void> {
+async function runToolUsePrompt(target: ProviderTarget): Promise<void> {
 	const handler = await LlmsProviders.createHandlerAsync(target.config);
 	const metrics: LiveRunMetrics = {
 		usageSeen: false,
-		reasoningChunkCount: 0,
-		thoughtsTokenCountMax: 0,
+		toolCallCount: 0,
 	};
 
 	for (let run = 0; run < target.runs; run++) {
-		const stream = handler.createMessage(target.systemPrompt, [
-			{ role: "user", content: target.userPrompt },
-		]);
+		const stream = handler.createMessage(
+			target.systemPrompt,
+			[{ role: "user", content: target.userPrompt }],
+			LIVE_TOOL_DEFINITIONS,
+		);
 		for await (const chunk of stream) {
-			if (chunk.type === "reasoning") {
-				metrics.reasoningChunkCount += 1;
+			if (chunk.type === "tool_calls") {
+				metrics.toolCallCount += 1;
 				continue;
 			}
 			if (chunk.type === "usage") {
 				metrics.usageSeen = true;
-				metrics.thoughtsTokenCountMax = Math.max(
-					metrics.thoughtsTokenCountMax,
-					chunk.thoughtsTokenCount ?? 0,
-				);
 				continue;
 			}
 			if (chunk.type === "done" && !chunk.success) {
@@ -279,10 +211,10 @@ async function runReasoningPrompt(target: ProviderTarget): Promise<void> {
 	assertTargetExpectations(target, metrics);
 }
 
-describe("live provider reasoning smoke test", () => {
+describe("live provider tool-use smoke test", () => {
 	const runLive = LIVE_TEST_ENABLED ? it : it.skip;
 	runLive(
-		"runs reasoning-enabled provider configs and reports failures",
+		"runs tool-enabled provider configs and reports failures",
 		async () => {
 			const filePath = requireProvidersFilePath();
 			const targets = loadProviderTargets(filePath);
@@ -297,7 +229,7 @@ describe("live provider reasoning smoke test", () => {
 				for (let attempt = 1; attempt <= PROVIDER_ATTEMPTS; attempt++) {
 					try {
 						await withTimeout(
-							runReasoningPrompt(target),
+							runToolUsePrompt(target),
 							PROVIDER_TIMEOUT_MS,
 							target.label,
 						);

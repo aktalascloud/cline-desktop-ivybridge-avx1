@@ -1496,6 +1496,14 @@ describe("sdk-gateway", () => {
 				}),
 			}),
 		);
+		const call = streamTextSpy.mock.calls.at(-1)?.[0] as
+			| { providerOptions?: Record<string, Record<string, unknown>> }
+			| undefined;
+		expect(call?.providerOptions?.openai).not.toHaveProperty("truncation");
+		expect(call?.providerOptions?.["openai-codex"]).not.toHaveProperty(
+			"truncation",
+		);
+		expect(call?.providerOptions?.openaiCodex).not.toHaveProperty("truncation");
 	});
 
 	it("passes object JSON schemas unchanged to the OpenAI Codex tool adapter", async () => {

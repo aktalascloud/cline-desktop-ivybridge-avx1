@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, it } from "vitest";
-import * as LlmsProviders from "./providers";
+import * as LlmsProviders from "../providers";
+import { toLiveProviderConfig } from "./provider-live-config";
 
-type ProviderConfig = import("./providers").ProviderConfig;
+type ProviderConfig = import("../providers").ProviderConfig;
 
 interface StoredProviderSettingsEntryLike {
 	settings?: unknown;
@@ -68,61 +69,6 @@ interface LiveRunMetrics {
 	outputTokensMax: number;
 }
 
-function toProviderConfig(settingsInput: unknown): ProviderConfig {
-	const settings =
-		settingsInput && typeof settingsInput === "object"
-			? (settingsInput as Record<string, unknown>)
-			: {};
-	const provider = settings.provider;
-	if (typeof provider !== "string" || provider.trim().length === 0) {
-		throw new Error("live provider entry must include a provider string");
-	}
-	const config: ProviderConfig = {
-		providerId: provider,
-	};
-	if (typeof settings.model === "string") {
-		config.modelId = settings.model;
-	}
-	if (typeof settings.apiKey === "string") {
-		config.apiKey = settings.apiKey;
-	}
-	if (typeof settings.baseUrl === "string") {
-		config.baseUrl = settings.baseUrl;
-	}
-	if (
-		settings.headers &&
-		typeof settings.headers === "object" &&
-		!Array.isArray(settings.headers)
-	) {
-		config.headers = Object.fromEntries(
-			Object.entries(settings.headers).filter(
-				([key, value]) => typeof key === "string" && typeof value === "string",
-			),
-		);
-	}
-	if (
-		settings.reasoning &&
-		typeof settings.reasoning === "object" &&
-		!Array.isArray(settings.reasoning)
-	) {
-		const reasoning = settings.reasoning as Record<string, unknown>;
-		if (typeof reasoning.enabled === "boolean") {
-			config.thinking = reasoning.enabled;
-		}
-		if (typeof reasoning.effort === "string" && reasoning.effort !== "none") {
-			config.reasoningEffort = reasoning.effort as
-				| "low"
-				| "medium"
-				| "high"
-				| "xhigh";
-		}
-		if (typeof reasoning.budgetTokens === "number") {
-			config.thinkingBudgetTokens = reasoning.budgetTokens;
-		}
-	}
-	return config;
-}
-
 function parseExpectations(input: unknown): LiveExpectations {
 	if (!input || typeof input !== "object") {
 		return {};
@@ -159,7 +105,7 @@ function toTarget(
 	settingsInput: unknown,
 	entry?: LiveProviderEntryLike,
 ): ProviderTarget {
-	const config = toProviderConfig(settingsInput);
+	const config = toLiveProviderConfig(settingsInput);
 	const runsCandidate = entry?.runs;
 	let runs =
 		typeof runsCandidate === "number" &&

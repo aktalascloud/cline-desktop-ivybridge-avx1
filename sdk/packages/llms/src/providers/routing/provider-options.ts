@@ -260,11 +260,9 @@ function buildCompatibleEffortOptions(options: {
 function buildOpenAINativeProviderOptions(
 	request: GatewayStreamRequest,
 ): Record<string, unknown> {
-	const isNativeOpenAIClient = [
-		"openai-native",
-		"openai",
-		"openai-codex",
-	].includes(request.providerId);
+	const isNativeOpenAIClient = ["openai-native", "openai"].includes(
+		request.providerId,
+	);
 	return isNativeOpenAIClient ? { truncation: "auto" } : {};
 }
 
