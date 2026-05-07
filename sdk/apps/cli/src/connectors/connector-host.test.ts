@@ -397,6 +397,121 @@ describe("handleConnectorUserTurn", () => {
 		expect(messageText(posts.at(-1))).toContain('Scheduled "nightly".');
 	});
 
+	it("handles schedule commands directly in connector chats", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "connector-host-test-"));
+		tempDirs.push(dir);
+		const bindingsPath = join(dir, "threads.json");
+		const { thread, posts } = createThread({
+			cwd: "/tmp/work",
+			workspaceRoot: "/tmp/work",
+			participantKey: "telegram:user:alice",
+			participantLabel: "alice",
+		});
+		const createSchedule = vi.fn(async () => ({
+			name: "nightly",
+			scheduleId: "schedule-1",
+			cronPattern: "0 * * * *",
+			nextRunAt: "2026-05-01T20:00:00.000Z",
+		}));
+		const listSchedules = vi.fn(async () => [
+			{
+				name: "nightly",
+				scheduleId: "schedule-1",
+				cronPattern: "0 * * * *",
+				nextRunAt: "2026-05-01T20:00:00.000Z",
+				enabled: true,
+				metadata: {
+					delivery: {
+						adapter: "telegram",
+						bindingKey: "telegram:user:alice",
+						threadId: "thread-1",
+					},
+				},
+			},
+			{
+				name: "other",
+				scheduleId: "schedule-2",
+				cronPattern: "0 9 * * *",
+				enabled: true,
+				metadata: {
+					delivery: {
+						adapter: "telegram",
+						bindingKey: "telegram:user:bob",
+						threadId: "thread-2",
+					},
+				},
+			},
+		]);
+		const triggerScheduleNow = vi.fn(async () => ({
+			executionId: "execution-1",
+			status: "queued",
+		}));
+		const deleteSchedule = vi.fn(async () => true);
+		const commonInput = {
+			thread: thread as never,
+			client: {
+				createSchedule,
+				listSchedules,
+				triggerScheduleNow,
+				deleteSchedule,
+			} as never,
+			pendingApprovals: new Map(),
+			baseStartRequest: baseStartRequest() as never,
+			explicitSystemPrompt: undefined,
+			clientId: "client-1",
+			logger: {
+				core: { debug: vi.fn(), log: vi.fn(), error: vi.fn() },
+			} as never,
+			transport: "telegram",
+			botUserName: "ClineAdapterBot",
+			requestStop: vi.fn(),
+			bindingsPath,
+			systemRules: "rules",
+			errorLabel: "Telegram",
+			getSessionMetadata: () => ({}),
+			reusedLogMessage: "reused",
+		};
+
+		await handleConnectorUserTurn({
+			...commonInput,
+			text: '/schedule create "nightly" --cron "0 * * * *" --prompt "check repo"',
+		});
+		await handleConnectorUserTurn({ ...commonInput, text: "/schedule list" });
+		await handleConnectorUserTurn({
+			...commonInput,
+			text: "/schedule trigger schedule-1",
+		});
+		await handleConnectorUserTurn({
+			...commonInput,
+			text: "/schedule delete schedule-1",
+		});
+
+		expect(createSchedule).toHaveBeenCalledWith(
+			expect.objectContaining({
+				name: "nightly",
+				cronPattern: "0 * * * *",
+				prompt: "check repo",
+				metadata: expect.objectContaining({
+					delivery: expect.objectContaining({
+						adapter: "telegram",
+						threadId: "thread-1",
+						bindingKey: "telegram:user:alice",
+						userName: "ClineAdapterBot",
+					}),
+				}),
+			}),
+		);
+		expect(messageText(posts.at(-4))).toContain('Scheduled "nightly".');
+		expect(messageText(posts.at(-3))).toContain("schedule-1 [enabled]");
+		expect(messageText(posts.at(-3))).not.toContain("schedule-2");
+		expect(messageText(posts.at(-2))).toContain(
+			"Triggered schedule schedule-1.",
+		);
+		expect(triggerScheduleNow).toHaveBeenCalledWith("schedule-1");
+		expect(messageText(posts.at(-1))).toBe("Deleted schedule schedule-1.");
+		expect(deleteSchedule).toHaveBeenCalledWith("schedule-1");
+	});
+
 	it("posts Telegram runtime replies as raw text and disables tools in runtime config", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "connector-host-test-"));
 		tempDirs.push(dir);

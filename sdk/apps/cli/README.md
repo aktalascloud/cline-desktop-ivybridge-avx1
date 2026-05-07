@@ -134,18 +134,23 @@ clite auth --provider openai-native --apikey sk-... --modelid gpt-5 --baseurl ht
 # Authenticate OAuth providers explicitly
 clite auth <cline|openai-codex|oca>
 
-# Bridge a Telegram bot into RPC-backed chat sessions (polling mode)
+# Bridge a Telegram Bot API bot into RPC-backed chat sessions (polling mode)
+# Create the bot with @BotFather, copy the username without @ and the token,
+# then keep this connector process running while you want Telegram access.
 clite connect telegram -m my_bot -k 123456:ABCDEF...
 # Foreground mode for local debugging / logs in the active terminal
 clite connect telegram -i -m my_bot -k 123456:ABCDEF...
-# Reuse the last-used provider/model; tools are enabled by default for Telegram
-# Override provider/model if needed
-clite connect telegram -m my_bot -k 123456:ABCDEF... --provider cline --model openai/gpt-5.3-codex
-# Disable tools if you do not trust the Telegram surface
+# Tools are enabled by default for Telegram. Use --no-tools when the chat surface is not trusted.
 clite connect telegram -m my_bot -k 123456:ABCDEF... --no-tools
+# Provider/model default to the CLI's last-used provider settings. Override them if needed.
+clite connect telegram -m my_bot -k 123456:ABCDEF... --provider cline --model openai/gpt-5.3-codex
 # Dispatch connector lifecycle/message events to an external hook command
 clite connect telegram -m my_bot -k 123456:ABCDEF... --hook-command '/Users/me/bin/on-connector-event'
-# In Telegram chats, use /help, /start, /tools, /yolo, /cwd <path>, /clear, /whereami, /abort, /exit
+# In Telegram chats, use /help, /start, /new, /clear, /whereami, /tools,
+# /yolo, /cwd <path>, /schedule, /abort, and /exit.
+# In groups, bot-addressed commands like /help@my_bot are recognized only for this bot.
+# Final assistant replies use Telegram entity payloads with raw-text fallback.
+# Detailed Telegram connector docs: apps/cli/src/connectors/adapters/telegram.md
 
 # Bridge a Google Chat app into RPC-backed chat sessions (webhook mode)
 clite connect gchat --base-url https://your-domain.com
@@ -216,6 +221,7 @@ clite schedule create "Daily code review" \
 
 # Route a scheduled result back to a Telegram thread handled by the connector
 # First, send /whereami to your bot in Telegram to get the thread id
+# Keep the Telegram connector running when the scheduled result is delivered
 clite schedule create "Daily summary" \
   --cron "0 9 * * *" \
   --prompt "Summarize yesterday's activity in this workspace." \
@@ -233,6 +239,8 @@ clite schedule upcoming --limit 10
 clite schedule export <schedule-id> > daily-review.yaml
 clite schedule import ./daily-review.yaml
 ```
+
+Telegram connector details live next to the adapter implementation: [`src/connectors/adapters/telegram.md`](./src/connectors/adapters/telegram.md).
 
 ## OAuth Authentication
 
@@ -324,7 +332,8 @@ Schedule shortcuts:
 Behavior notes:
 
 - `clite auth` without a provider opens the interactive auth setup TUI.
-- Connector slash commands are shared across connector chat surfaces: `/help`, `/start`, `/clear`, `/whereami`, `/tools`, `/yolo`, `/cwd <path>`, `/abort`, `/exit`.
+- Connector slash commands are shared across connector chat surfaces: `/help`, `/start`, `/new`, `/clear`, `/whereami`, `/tools`, `/yolo`, `/cwd <path>`, `/schedule`, `/abort`, `/exit`.
+- Telegram group commands addressed to the bot, such as `/help@my_bot`, are normalized only when the suffix matches the configured bot username.
 - Interactive CLI can use the shared slash-command parser when `CLINE_ENABLE_CHAT_COMMANDS=1`.
 - `/team <task>` is handled directly by the CLI in both interactive and non-interactive runs, even when chat commands are otherwise disabled.
 
@@ -475,8 +484,8 @@ Custom provider registry notes:
 
 ### Connector runtime behavior
 
-- Telegram, Google Chat, and WhatsApp all reuse the same shared connector runtime formatting path.
-- Assistant text streams incrementally into the chat surface.
+- Telegram final assistant replies are sent through Telegram entity payloads with raw-text fallback; Google Chat and WhatsApp use the shared connector runtime formatting path.
+- Assistant text streams incrementally into chat surfaces that use the shared runtime streaming path; Telegram sends final assistant replies after the turn completes.
 - Tool activity is summarized as compact start/error messages with short argument previews.
 - Required tool approvals are posted back into the chat thread and accept `Y` / `N` replies.
 - Google Chat serves its webhook at `/api/webhooks/gchat`; configure the Google Chat App URL as `<base-url>/api/webhooks/gchat`.
