@@ -200,6 +200,45 @@ Use this skill.`,
 		).toBe(true);
 	});
 
+	it("uses the package name for package-backed plugin entries", async () => {
+		const tempRoot = await mkdtemp(join(tmpdir(), "cli-config-data-"));
+		tempRoots.push(tempRoot);
+		const packageDir = join(
+			tempRoot,
+			".cline",
+			"plugins",
+			"_installed",
+			"git",
+			"github.com",
+			"demo",
+			"package",
+		);
+		await mkdir(packageDir, { recursive: true });
+		const pluginPath = join(packageDir, "index.ts");
+		await writeFile(
+			join(packageDir, "package.json"),
+			JSON.stringify(
+				{
+					name: "cline-sdk-portable-agents",
+					cline: {
+						plugins: [{ paths: ["./index.ts"] }],
+					},
+				},
+				null,
+				2,
+			),
+		);
+		await writeFile(pluginPath, "export default {};\n");
+		const loader = createInteractiveConfigDataLoader({
+			config: createConfig(tempRoot),
+		});
+
+		const data = await loader.loadConfigData();
+		const plugin = data.plugins.find((item) => item.path === pluginPath);
+
+		expect(plugin?.name).toBe("cline-sdk-portable-agents");
+	});
+
 	it("does not toggle workflow items", async () => {
 		const tempRoot = await mkdtemp(join(tmpdir(), "cli-config-data-"));
 		tempRoots.push(tempRoot);

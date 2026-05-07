@@ -154,6 +154,31 @@ describe("plugin-loader", () => {
 			"utf8",
 		);
 
+		const packagedSdkSubpathDir = join(copyDir, "packaged-sdk-subpath");
+		await mkdir(packagedSdkSubpathDir, { recursive: true });
+		await writeFile(
+			join(packagedSdkSubpathDir, "package.json"),
+			JSON.stringify({
+				name: "packaged-sdk-subpath",
+				type: "module",
+				cline: {
+					plugins: ["index.ts"],
+				},
+			}),
+			"utf8",
+		);
+		await writeFile(
+			join(packagedSdkSubpathDir, "index.ts"),
+			[
+				"import { createConfiguredTelemetryHandle } from '@cline/core/telemetry';",
+				"export default {",
+				"  name: typeof createConfiguredTelemetryHandle === 'function' ? 'sdk-subpath-ok' : 'invalid',",
+				"  manifest: { capabilities: ['tools'] },",
+				"};",
+			].join("\n"),
+			"utf8",
+		);
+
 		await writeFile(
 			join(dir, "invalid-plugin.mjs"),
 			"export default { name: 'invalid-plugin' };",
@@ -259,6 +284,17 @@ describe("plugin-loader", () => {
 				useCache: true,
 			}),
 		).rejects.toThrow(/Cannot find (package|module) 'yaml'/i);
+	});
+
+	it("allows package-based plugins to use host SDK subpath exports", async () => {
+		const plugin = await loadAgentPluginFromPath(
+			join(copyDir, "packaged-sdk-subpath", "index.ts"),
+			{
+				cwd: join(copyDir, "packaged-sdk-subpath"),
+				useCache: true,
+			},
+		);
+		expect(plugin.name).toBe("sdk-subpath-ok");
 	});
 
 	it("rejects invalid plugin export missing manifest", async () => {

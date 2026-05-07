@@ -225,6 +225,50 @@ export async function runCli(): Promise<void> {
 			const realCmd = await createConfigRuntimeCommand();
 			await realCmd.parseAsync(cmd.args, { from: "user" });
 		});
+
+	const pluginCmd = program
+		.command("plugin")
+		.description("Manage Cline Plugins")
+		.action(() => {
+			pluginCmd.help();
+		});
+	const pluginInstallCmd = pluginCmd
+		.command("install")
+		.alias("i")
+		.description("Install a Cline Plugin from npm, git, or a local path")
+		.argument("<source>", "npm package, git URL, or local plugin path")
+		.option("--npm", "Treat source as an npm package")
+		.option("--git", "Treat source as a git repository")
+		.option("--force", "Replace an existing install for the same source")
+		.option("--json", "Output as JSON")
+		.option("--cwd <path>", "Install to <path>/.cline/plugins")
+		.action(async (source: string) => {
+			const opts = pluginInstallCmd.opts<{
+				npm?: boolean;
+				git?: boolean;
+				force?: boolean;
+				json?: boolean;
+				cwd?: string;
+			}>();
+			const sourceTypes = [
+				opts.npm ? ("npm" as const) : undefined,
+				opts.git ? ("git" as const) : undefined,
+			].filter((sourceType) => sourceType !== undefined);
+			if (sourceTypes.length > 1) {
+				writeErr("plugin install accepts only one source type flag");
+				ctx.exitCode = 1;
+				return;
+			}
+			const { runPluginInstallCommand } = await import("./commands/plugin");
+			ctx.exitCode = await runPluginInstallCommand({
+				source,
+				sourceType: sourceTypes[0],
+				cwd: opts.cwd,
+				force: opts.force === true,
+				json: opts.json === true || program.opts().json === true,
+				io,
+			});
+		});
 	const connectCmd = program
 		.command("connect")
 		.description("Connect to an external channel")

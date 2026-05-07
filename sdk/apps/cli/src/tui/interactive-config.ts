@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { basename, extname, join } from "node:path";
+import { basename, dirname, extname, join, resolve } from "node:path";
 import {
 	type BuiltinToolAvailabilityContext,
 	discoverPluginModulePaths,
@@ -178,6 +178,39 @@ function loadAgentConfigItems(workspaceRoot: string): InteractiveConfigItem[] {
 	return [...agentsById.values()];
 }
 
+function readPackageName(packageJsonPath: string): string | undefined {
+	try {
+		const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+			name?: unknown;
+		};
+		return typeof packageJson.name === "string" && packageJson.name.trim()
+			? packageJson.name.trim()
+			: undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function getPluginDisplayName(filePath: string): string {
+	let current = dirname(filePath);
+	for (let depth = 0; depth < 4; depth++) {
+		const packageJsonPath = join(current, "package.json");
+		if (existsSync(packageJsonPath)) {
+			const packageName = readPackageName(packageJsonPath);
+			if (packageName) {
+				return packageName;
+			}
+			break;
+		}
+		const parent = resolve(current, "..");
+		if (parent === current) {
+			break;
+		}
+		current = parent;
+	}
+	return basename(filePath, extname(filePath));
+}
+
 export async function loadInteractiveConfigData(input: {
 	userInstructionService?: UserInstructionConfigService;
 	cwd: string;
@@ -261,7 +294,7 @@ export async function loadInteractiveConfigData(input: {
 			for (const filePath of discoverPluginModulePaths(directory)) {
 				plugins.push({
 					id: filePath,
-					name: basename(filePath, extname(filePath)),
+					name: getPluginDisplayName(filePath),
 					path: filePath,
 					enabled: !disabledPlugins.has(filePath),
 					kind: "plugin",
