@@ -253,6 +253,9 @@ if (dryRun) {
 	console.log(
 		`  [dry-run] Would publish @cline/cli@${version} with tag ${npmTag}`,
 	);
+	console.log(
+		`  [dry-run] Would publish @clinebot/cli@${version} with tag ${npmTag}`,
+	);
 	console.log("\nDry run complete. No packages were published.");
 } else {
 	await publishPackage({
@@ -263,6 +266,31 @@ if (dryRun) {
 		dryRun: false,
 	});
 	console.log(`\nPublished @cline/cli@${version} with tag ${npmTag}`);
+
+	// Publish mirror wrapper under the legacy @clinebot scope so existing
+	// users who installed via `npm i -g @clinebot/cli` continue receiving
+	// updates. The wrapper is identical except for the package name; it
+	// references the same @cline/cli-* platform packages.
+	console.log("\nPreparing @clinebot/cli mirror package...");
+	const mirrorPkgDir = join(cliDir, "dist", "cli-mirror");
+	await $`rm -rf ${mirrorPkgDir}`;
+	await $`cp -r ${mainPkgDir} ${mirrorPkgDir}`;
+
+	const mirrorPackageJson = { ...wrapperPackageJson, name: "@clinebot/cli" };
+	await Bun.write(
+		join(mirrorPkgDir, "package.json"),
+		`${JSON.stringify(mirrorPackageJson, null, 2)}\n`,
+	);
+
+	await publishPackage({
+		name: "@clinebot/cli",
+		version,
+		dir: mirrorPkgDir,
+		tag: npmTag,
+		dryRun: false,
+	});
+	console.log(`Published @clinebot/cli@${version} with tag ${npmTag}`);
+
 	console.log("\nInstall with:");
 	console.log(`  npm install -g @cline/cli`);
 }

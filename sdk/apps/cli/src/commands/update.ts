@@ -11,7 +11,10 @@ import { version } from "../../package.json";
 import { ensureCliHubServer } from "../utils/hub-runtime";
 import { c, writeErr, writeln } from "../utils/output";
 
-const PACKAGE_NAME = "@cline/cli";
+const DEFAULT_PACKAGE_NAME = "@cline/cli";
+const LEGACY_PACKAGE_NAME = "@clinebot/cli";
+
+type CliPackageName = typeof DEFAULT_PACKAGE_NAME | typeof LEGACY_PACKAGE_NAME;
 
 export enum PackageManager {
 	NPM = "npm",
@@ -24,6 +27,7 @@ export enum PackageManager {
 
 interface InstallationInfo {
 	packageManager: PackageManager;
+	packageName: CliPackageName;
 	updateCommand?: string;
 }
 
@@ -71,15 +75,23 @@ function compareVersions(v1: string, v2: string): number {
 	return 0;
 }
 
+function getPackageNameFromWrapperPath(scriptPath: string): CliPackageName {
+	if (scriptPath.includes(`/node_modules/${LEGACY_PACKAGE_NAME}/`)) {
+		return LEGACY_PACKAGE_NAME;
+	}
+	return DEFAULT_PACKAGE_NAME;
+}
+
 export function getInstallationInfo(currentVersion: string): InstallationInfo {
 	const tag = getNpmTag(currentVersion);
 	try {
 		const scriptPath = realpathSync(
 			process.env.CLITE_WRAPPER_PATH || process.argv[1] || "",
 		).replace(/\\/g, "/");
+		const packageName = getPackageNameFromWrapperPath(scriptPath);
 
 		if (scriptPath.includes("/.npm/_npx") || scriptPath.includes("/npm/_npx")) {
-			return { packageManager: PackageManager.NPX };
+			return { packageManager: PackageManager.NPX, packageName };
 		}
 		if (
 			scriptPath.includes("/.pnpm/global") ||
@@ -87,40 +99,48 @@ export function getInstallationInfo(currentVersion: string): InstallationInfo {
 		) {
 			return {
 				packageManager: PackageManager.PNPM,
-				updateCommand: `pnpm add -g ${PACKAGE_NAME}@${tag}`,
+				packageName,
+				updateCommand: `pnpm add -g ${packageName}@${tag}`,
 			};
 		}
 		if (scriptPath.includes("/.yarn/") || scriptPath.includes("/yarn/global")) {
 			return {
 				packageManager: PackageManager.YARN,
-				updateCommand: `yarn global add ${PACKAGE_NAME}@${tag}`,
+				packageName,
+				updateCommand: `yarn global add ${packageName}@${tag}`,
 			};
 		}
 		if (scriptPath.includes("/.bun/bin")) {
 			return {
 				packageManager: PackageManager.BUN,
-				updateCommand: `bun add -g ${PACKAGE_NAME}@${tag}`,
+				packageName,
+				updateCommand: `bun add -g ${packageName}@${tag}`,
 			};
 		}
 		if (scriptPath.includes("/node_modules/")) {
 			return {
 				packageManager: PackageManager.NPM,
-				updateCommand: `npm install -g ${PACKAGE_NAME}@${tag}`,
+				packageName,
+				updateCommand: `npm install -g ${packageName}@${tag}`,
 			};
 		}
 	} catch {
 		// Fall through to unknown
 	}
-	return { packageManager: PackageManager.UNKNOWN };
+	return {
+		packageManager: PackageManager.UNKNOWN,
+		packageName: DEFAULT_PACKAGE_NAME,
+	};
 }
 
 async function getLatestVersion(
+	packageName: CliPackageName,
 	currentVersion: string,
 ): Promise<string | null> {
 	const tag = getNpmTag(currentVersion);
 	try {
 		const res = await fetch(
-			`https://registry.npmjs.org/${encodeURIComponent(PACKAGE_NAME)}/${tag}`,
+			`https://registry.npmjs.org/${encodeURIComponent(packageName)}/${tag}`,
 		);
 		if (!res.ok) return null;
 		const data = (await res.json()) as { version: string };
@@ -212,12 +232,12 @@ export function autoUpdateOnStartup(): void {
 	if (process.env.IS_DEV === "true") return;
 	if (process.env.CLINE_NO_AUTO_UPDATE === "1") return;
 
-	const { updateCommand } = getInstallationInfo(version);
+	const { packageName, updateCommand } = getInstallationInfo(version);
 	if (!updateCommand) return;
 
 	void (async () => {
 		try {
-			const latest = await getLatestVersion(version);
+			const latest = await getLatestVersion(packageName, version);
 			if (!latest || compareVersions(version, latest) >= 0) return;
 			const child = spawn(updateCommand, {
 				shell: true,
@@ -249,14 +269,16 @@ export async function checkForUpdates(
 	const currentVersion = version;
 	writeln(`${c.cyan}Checking for updates…${c.reset}`);
 
-	const { updateCommand, packageManager } = getInstallationInfo(currentVersion);
+	const { packageName, updateCommand, packageManager } =
+		getInstallationInfo(currentVersion);
 
 	try {
-		const latestVersion = await getLatestVersion(currentVersion);
+		const latestVersion = await getLatestVersion(packageName, currentVersion);
 
 		if (options.verbose) {
 			writeln(`${c.dim}Current version: ${currentVersion}${c.reset}`);
 			writeln(`${c.dim}Package manager: ${packageManager}${c.reset}`);
+			writeln(`${c.dim}Package name:    ${packageName}${c.reset}`);
 			if (latestVersion) {
 				writeln(`${c.dim}Latest version:  ${latestVersion}${c.reset}`);
 			}
@@ -285,7 +307,7 @@ export async function checkForUpdates(
 			return 1;
 		}
 
-		writeln(`${c.cyan}Installing ${PACKAGE_NAME}@${latestVersion}…${c.reset}`);
+		writeln(`${c.cyan}Installing ${packageName}@${latestVersion}…${c.reset}`);
 		const updateProcess = spawn(updateCommand, {
 			stdio: "inherit",
 			shell: true,
@@ -296,7 +318,7 @@ export async function checkForUpdates(
 
 		if (exitCode === 0) {
 			writeln(
-				`${c.green}✓${c.reset} Updated to ${c.bold}${PACKAGE_NAME}@${latestVersion}${c.reset}`,
+				`${c.green}✓${c.reset} Updated to ${c.bold}${packageName}@${latestVersion}${c.reset}`,
 			);
 			await restartHubServerIfRunning();
 			return 0;
