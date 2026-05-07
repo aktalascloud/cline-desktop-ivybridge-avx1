@@ -20,19 +20,18 @@ on:
     # Run nightly at 2:00 AM UTC
     - cron: "0 2 * * *"
 
-permissions:
-  contents: write
-  id-token: write # Required for npm trusted publishing (OIDC)
-  checks: write # Required by test workflow
-  pull-requests: write # Required by test workflow
-
 jobs:
   test:
+    permissions:
+      contents: read
     uses: ./.github/workflows/test.yml
 
   publish-sdk:
     needs: test
     name: Publish SDK Packages
+    permissions:
+      contents: write
+      id-token: write
     if: github.repository == 'cline/sdk' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
