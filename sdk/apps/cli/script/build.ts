@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, realpathSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { $ } from "bun";
 import {
 	parseBuildOptions,
@@ -73,34 +73,93 @@ if (!buildOptions.skipSdkBuild) {
 
 const binaries: Record<string, string> = {};
 
+function findOpenTuiParserWorker(): string {
+	const localPath = resolve(
+		cliDir,
+		"node_modules/@opentui/core/parser.worker.js",
+	);
+	const rootPath = resolve(
+		rootDir,
+		"node_modules/@opentui/core/parser.worker.js",
+	);
+	const parserWorkerPath = existsSync(localPath) ? localPath : rootPath;
+	return realpathSync(parserWorkerPath);
+}
+
+function getBunTarget(
+	item: (typeof allTargets)[number],
+): Bun.Build.CompileTarget {
+	const targetOs = item.os === "win32" ? "windows" : item.os;
+	return `bun-${targetOs}-${item.arch}` as Bun.Build.CompileTarget;
+}
+
+async function buildCompiledBinary(input: {
+	bunTarget: Bun.Build.CompileTarget;
+	dirName: string;
+	outfile: string;
+}): Promise<void> {
+	const parserWorker = findOpenTuiParserWorker();
+	const targetOs = input.bunTarget.includes("windows") ? "windows" : "posix";
+	const bunfsRoot = targetOs === "windows" ? "B:/~BUN/root/" : "/$bunfs/root/";
+	const parserWorkerPath = relative(rootDir, parserWorker).replaceAll(
+		"\\",
+		"/",
+	);
+
+	// Build to /tmp first so Bun's temp-file rename stays on one filesystem
+	// layer in containerized environments (virtiofs, overlayfs).
+	const entrypoint = join(cliDir, "src/index.ts");
+	const tmpDir = join("/tmp", `clite-build-${input.dirName}`);
+	const tmpOutfile = join(
+		tmpDir,
+		input.outfile.endsWith(".exe") ? "clite.exe" : "clite",
+	);
+	mkdirSync(tmpDir, { recursive: true });
+
+	process.chdir("/tmp");
+	const result = await Bun.build({
+		entrypoints: [entrypoint, parserWorker],
+		splitting: true,
+		compile: {
+			target: input.bunTarget,
+			outfile: tmpOutfile,
+		},
+		minify: true,
+		external: ["@anthropic-ai/vertex-sdk"],
+		define: {
+			OTUI_TREE_SITTER_WORKER_PATH: bunfsRoot + parserWorkerPath,
+		},
+		throw: false,
+	});
+	process.chdir(cliDir);
+
+	if (!result.success) {
+		console.error(`Build failed for ${input.dirName}:`);
+		for (const log of result.logs) {
+			console.error(log);
+		}
+		process.exit(1);
+	}
+
+	await $`cp ${tmpOutfile} ${input.outfile} && chmod 755 ${input.outfile}`;
+	await $`rm -rf ${tmpDir}`;
+}
+
 for (const item of targets) {
 	// npm treats "win32" specially in os field, but for package naming use "windows"
 	const displayOs = item.os === "win32" ? "windows" : item.os;
 	const name = `@cline/cli-${displayOs}-${item.arch}`;
 	const dirName = `cli-${displayOs}-${item.arch}`;
 	const binaryName = item.os === "win32" ? "clite.exe" : "clite";
-	const bunTarget = `bun-${item.os === "win32" ? "windows" : item.os}-${item.arch}`;
+	const bunTarget = getBunTarget(item);
 
 	console.log(`\nBuilding ${name} (target: ${bunTarget})...`);
 	const outDir = join(cliDir, `dist/${dirName}/bin`);
 	mkdirSync(outDir, { recursive: true });
 
 	const outfile = join(outDir, binaryName);
-	const entrypoint = join(cliDir, "src/index.ts");
 
-	// Build to a temp directory first, then move to dist/. Bun creates a temp
-	// file in CWD during compilation and renames it to the outfile. In
-	// containerized environments (virtiofs, overlayfs), cross-device renames
-	// fail if CWD and outfile are on different filesystem layers. Using /tmp
-	// as CWD ensures both paths are on the same native filesystem.
-	const tmpOutfile = join("/tmp", `clite-build-${dirName}`, binaryName);
-	mkdirSync(join("/tmp", `clite-build-${dirName}`), { recursive: true });
-
-	await $`bun build ${entrypoint} --compile --target ${bunTarget} --outfile ${tmpOutfile} --minify --external @anthropic-ai/vertex-sdk`.cwd(
-		"/tmp",
-	);
-	await $`cp ${tmpOutfile} ${outfile} && chmod 755 ${outfile}`;
-	await $`rm -rf ${join("/tmp", `clite-build-${dirName}`)}`;
+	await buildCompiledBinary({ bunTarget, dirName, outfile });
 
 	// Smoke test: only run on current platform
 	if (item.os === process.platform && item.arch === process.arch) {
