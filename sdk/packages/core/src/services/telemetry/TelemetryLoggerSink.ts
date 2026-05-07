@@ -1,4 +1,4 @@
-import type { BasicLogger } from "@clinebot/shared";
+import type { BasicLogger } from "@cline/shared";
 import type {
 	ITelemetryAdapter,
 	TelemetryProperties,

@@ -1,4 +1,4 @@
-import { initVcr } from "@clinebot/shared";
+import { initVcr } from "@cline/shared";
 import { createLocalHubScheduleRuntimeHandlers } from "../daemon/runtime-handlers";
 import { resolveHubEndpointOptions } from "../discovery/defaults";
 import { resolveSharedHubOwnerContext } from "../discovery/workspace";

@@ -4,7 +4,7 @@ import {
 	resolveLocalClineAuthToken,
 	type SessionMessagesArtifactUploader,
 	type StartSessionInput,
-} from "@clinebot/core";
+} from "@cline/core";
 import {
 	buildEnterpriseSessionBlobUploadMetadata,
 	createEnterpriseSessionMessagesArtifactUploader,
@@ -13,8 +13,8 @@ import {
 	prepareEnterpriseCoreIntegration,
 	readEnterpriseSessionBlobUploadMetadata,
 	registerEnterpriseSessionBlobUpload,
-} from "@clinebot/enterprise";
-import { RemoteConfigSchema } from "@clinebot/shared";
+} from "@cline/enterprise";
+import { RemoteConfigSchema } from "@cline/shared";
 import { getCliTelemetryService } from "./telemetry";
 
 const DEFAULT_CLINE_API_BASE_URL = "https://api.cline.bot";

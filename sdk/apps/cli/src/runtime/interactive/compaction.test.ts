@@ -1,4 +1,4 @@
-import type { CoreCompactionContext } from "@clinebot/core";
+import type { CoreCompactionContext } from "@cline/core";
 import { describe, expect, it, vi } from "vitest";
 import type { Config } from "../../utils/types";
 import { compactInteractiveMessages } from "./compaction";

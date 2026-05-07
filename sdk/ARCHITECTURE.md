@@ -4,7 +4,7 @@ This document is the architecture source of truth for the Cline SDK repository. 
 
 **Who should read this?**
 - SDK contributors working across multiple packages
-- Developers building integrations or host applications using `@clinebot/core`
+- Developers building integrations or host applications using `@cline/core`
 - Plugin authors understanding the runtime and extension systems
 
 **What this covers:**
@@ -25,11 +25,11 @@ The workspace is organized as a layered runtime stack.
 
 ```mermaid
 flowchart LR
-  shared["@clinebot/shared"]
-  llms["@clinebot/llms"]
-  agents["@clinebot/agents"]
-  core["@clinebot/core"]
-  enterprise["@clinebot/enterprise (internal)"]
+  shared["@cline/shared"]
+  llms["@cline/llms"]
+  agents["@cline/agents"]
+  core["@cline/core"]
+  enterprise["@cline/enterprise (internal)"]
   apps["Host Apps"]
 
   llms --> shared
@@ -46,7 +46,7 @@ flowchart LR
 
 ## Package Responsibilities
 
-### `@clinebot/shared`
+### `@cline/shared`
 
 Owns reusable low-level contracts and infrastructure:
 
@@ -61,7 +61,7 @@ Design rule:
 
 - `shared` should not depend on higher-level runtime packages.
 
-### `@clinebot/llms`
+### `@cline/llms`
 
 Owns model/provider runtime concerns:
 
@@ -75,7 +75,7 @@ Design rule:
 
 - provider-specific behavior should be isolated here, not spread across `core` or apps.
 
-### `@clinebot/agents`
+### `@cline/agents`
 
 Owns the stateless runtime loop:
 
@@ -90,7 +90,7 @@ Design rule:
 
 - `agents` should not own persistent storage or host lifecycle concerns.
 
-### `@clinebot/core`
+### `@cline/core`
 
 Owns stateful orchestration:
 
@@ -104,8 +104,8 @@ Owns stateful orchestration:
 - default context compaction policy
 - telemetry integration
 - hub server and scheduled-runtime services under `src/hub/`
-- hub discovery, the detached hub daemon, and the `@clinebot/core/hub/daemon-entry` subpath
-- host-side hub client adapters (`NodeHubClient`, `HubSessionClient`, `HubUIClient`, `connectToHub`) exported from `@clinebot/core/hub`
+- hub discovery, the detached hub daemon, and the `@cline/core/hub/daemon-entry` subpath
+- host-side hub client adapters (`NodeHubClient`, `HubSessionClient`, `HubUIClient`, `connectToHub`) exported from `@cline/core/hub`
 
 Design rules:
 
@@ -117,7 +117,7 @@ Design rules:
   - `server/` contains WebSocket server startup, native/browser socket adapters, server transport, server helpers, and `handlers/` for hub command dispatch
 - settings mutations belong in core services and hub commands, not in host-specific file writes. Hosts should call the core settings facade or the `settings.*` hub command family and react to `settings.changed`.
 
-### `@clinebot/enterprise`
+### `@cline/enterprise`
 
 Internal-only enterprise integration layer:
 
@@ -138,13 +138,13 @@ Design rules:
 
 ### Local In-Process Runtime
 
-1. Host constructs a `RuntimeHost` through `@clinebot/core`.
-2. `@clinebot/core` selects `LocalRuntimeHost` through `packages/core/src/runtime/host.ts`.
+1. Host constructs a `RuntimeHost` through `@cline/core`.
+2. `@cline/core` selects `LocalRuntimeHost` through `packages/core/src/runtime/host.ts`.
 3. Hosts normalize broad local config into `RuntimeSessionConfig` plus `localRuntime` overrides before calling `RuntimeHost.start(...)`.
-4. `@clinebot/core` prepares a local bootstrap artifact from `localRuntime`, then builds the runtime from it.
-5. `@clinebot/core` creates an `Agent` from `@clinebot/agents`.
-6. `@clinebot/agents` runs the loop using `@clinebot/llms` handlers.
-7. `@clinebot/core` persists state, artifacts, and metadata.
+4. `@cline/core` prepares a local bootstrap artifact from `localRuntime`, then builds the runtime from it.
+5. `@cline/core` creates an `Agent` from `@cline/agents`.
+6. `@cline/agents` runs the loop using `@cline/llms` handlers.
+7. `@cline/core` persists state, artifacts, and metadata.
 
 Completion telemetry is anchored to the assistant's explicit completion
 declaration, not session shutdown. After each agent turn, the local
@@ -159,14 +159,14 @@ event payload and `source` field.
 
 ### Hub-Backed Runtime
 
-1. Host constructs a `RuntimeHost` through `@clinebot/core`.
-2. `@clinebot/core` selects `HubRuntimeHost` or `RemoteRuntimeHost` through `packages/core/src/runtime/host.ts`.
-3. When no compatible local hub is already discovered, `@clinebot/core` can spawn a detached hub daemon and reconnect through discovery.
+1. Host constructs a `RuntimeHost` through `@cline/core`.
+2. `@cline/core` selects `HubRuntimeHost` or `RemoteRuntimeHost` through `packages/core/src/runtime/host.ts`.
+3. When no compatible local hub is already discovered, `@cline/core` can spawn a detached hub daemon and reconnect through discovery.
 4. Hosts attach and detach from shared sessions without stopping the authority runtime, so another client can keep streaming or resume the same session later.
-5. The hub-hosted runtime executes the agent loop using `@clinebot/agents` and `@clinebot/llms`.
-6. `@clinebot/core` hub services broker sessions, events, approvals, schedules, and client-owned runtime capabilities such as session-local tool executors.
+5. The hub-hosted runtime executes the agent loop using `@cline/agents` and `@cline/llms`.
+6. `@cline/core` hub services broker sessions, events, approvals, schedules, and client-owned runtime capabilities such as session-local tool executors.
 7. Hub event forwarding preserves structured streaming lifecycle boundaries: text/reasoning deltas, final text/reasoning completion, tool start/finish, and agent done events are translated across the hub transport so host UIs can reliably close loading/streaming state.
-8. Hub client adapters exported from `@clinebot/core/hub` (`NodeHubClient`, `HubSessionClient`, `HubUIClient`, `connectToHub`) translate command/reply and event streams into host-facing APIs.
+8. Hub client adapters exported from `@cline/core/hub` (`NodeHubClient`, `HubSessionClient`, `HubUIClient`, `connectToHub`) translate command/reply and event streams into host-facing APIs.
 
 Local hub discovery also carries the authentication contract for the shared
 daemon. On startup, the hub server generates a cryptographically random
@@ -203,9 +203,9 @@ different process.
 3. Enterprise caches the token and bundle through enterprise stores.
 4. Enterprise materializes managed rules/workflows/skills under workspace-local `.cline/<plugin>/`.
 5. Enterprise optionally derives telemetry config or telemetry services.
-6. Hosts pass the prepared result into `@clinebot/core` through the generic `prepare` seam.
+6. Hosts pass the prepared result into `@cline/core` through the generic `prepare` seam.
 7. Enterprise applies extensions and telemetry through `localRuntime.configOverrides`, not the transport-safe `RuntimeSessionConfig`.
-8. `@clinebot/core` consumes the prepared local overrides during local bootstrap.
+8. `@cline/core` consumes the prepared local overrides during local bootstrap.
 
 This keeps enterprise-specific behavior above the published orchestration layer.
 
@@ -287,7 +287,7 @@ Design implication:
 
 ### 6. Logging
 
-Cross-package logging uses a small injected interface exported from `@clinebot/shared`:
+Cross-package logging uses a small injected interface exported from `@cline/shared`:
 
 - **`BasicLogger`** — required `debug` and `log`; optional `error`. Hosts map these to their backend (Pino, VS Code `OutputChannel`, etc.). Many runtime options take `logger?: BasicLogger`; when omitted, components skip logging or use `noopBasicLogger` where a full object is required.
 - **`BasicLogMetadata`** — optional structured fields (`sessionId`, `runId`, `providerId`, `toolName`, `durationMs`, …) plus `severity` on `log` when a single method must represent both informational and warning-style messages (for example the CLI Pino bridge maps `severity: "warn"` to Pino `warn`).
@@ -295,7 +295,7 @@ Cross-package logging uses a small injected interface exported from `@clinebot/s
 Naming clarity:
 
 - **`CliLoggerAdapter` (CLI)** — a **host bundle**: holds the raw `pino` logger (for file paths, rotation, and CLI-only concerns) and exposes `.core: BasicLogger` for anything that consumes the SDK contract. It is not an `ITelemetryAdapter`.
-- **`TelemetryLoggerSink` (`@clinebot/core`)** — an **`ITelemetryAdapter`** that mirrors telemetry events and metrics into a `BasicLogger`. It is a telemetry sink, not a host logging implementation.
+- **`TelemetryLoggerSink` (`@cline/core`)** — an **`ITelemetryAdapter`** that mirrors telemetry events and metrics into a `BasicLogger`. It is a telemetry sink, not a host logging implementation.
 
 The agent and other call sites route former `info` / `warn` semantics through `log` (warnings include `severity: "warn"` in metadata). Errors prefer `error` when implemented; otherwise `log` with `severity: "error"` is used as a fallback.
 
@@ -327,10 +327,10 @@ Design implication:
 
 Context compaction is owned by `core`.
 
-- `@clinebot/agents` owns the generic turn-preparation seam:
+- `@cline/agents` owns the generic turn-preparation seam:
   - run normal lifecycle hooks
   - allow hosts to rewrite message history or system prompt before the provider call
-- `@clinebot/core` owns compaction policy:
+- `@cline/core` owns compaction policy:
   - inject a prepare-turn pipeline for root sessions
   - choose between built-in strategies through a registry map
   - keep compaction logic out of the low-level agent message builder
@@ -358,7 +358,7 @@ Design implications:
 
 ### Keep `agents` Stateless
 
-Do not move these concerns into `@clinebot/agents`:
+Do not move these concerns into `@cline/agents`:
 
 - session persistence
 - provider settings storage
@@ -368,9 +368,9 @@ Do not move these concerns into `@clinebot/agents`:
 
 ### Keep `core` Generic
 
-Do not make `@clinebot/core` enterprise-specific.
+Do not make `@cline/core` enterprise-specific.
 
-If a capability is truly generic, add a generic seam to core. If it is enterprise-specific, keep it in `@clinebot/enterprise`.
+If a capability is truly generic, add a generic seam to core. If it is enterprise-specific, keep it in `@cline/enterprise`.
 
 ### Use One-Way Optional Layers
 
@@ -384,7 +384,7 @@ That rule is what keeps:
 
 ## Current Internal Enterprise Design
 
-`@clinebot/enterprise` currently integrates with core through three main entrypoints:
+`@cline/enterprise` currently integrates with core through three main entrypoints:
 
 - `prepareEnterpriseRuntime(...)`
 - `prepareEnterpriseCoreIntegration(...)`
@@ -403,7 +403,7 @@ Why:
 
 ## File-Based And Event-Driven Automation (`ClineCore` / `CronService`)
 
-`@clinebot/core` ships a file-based automation subsystem under
+`@cline/core` ships a file-based automation subsystem under
 `packages/core/src/cron/`. It lets operators author recurring and one-off
 tasks as Markdown files under global `~/.cline/cron/` by default, and
 event-driven tasks as `events/*.event.md` specs. All trigger kinds run
@@ -415,7 +415,7 @@ orchestrator used by core and hub layers.
 
 1. **Spec parser** (`cron/specs/cron-spec-parser.ts`): parses YAML frontmatter + body
    into a `CronSpec` discriminated union (`one_off | schedule | event`).
-   Types live in `@clinebot/shared` under `src/cron/cron-spec-types.ts`
+   Types live in `@cline/shared` under `src/cron/cron-spec-types.ts`
    so other packages can consume them without the YAML parser. Schedule
    expressions and timezones are validated before a spec can become
    runnable.
@@ -539,16 +539,16 @@ Architectural consequence:
 
 The following packages are published to npm:
 
-- `@clinebot/shared` — shared types, contracts, and low-level utilities
-- `@clinebot/llms` — provider integrations and model manifests
-- `@clinebot/agents` — the agent loop and tool orchestration
-- `@clinebot/core` — the main SDK with session management, hub, and configuration
+- `@cline/shared` — shared types, contracts, and low-level utilities
+- `@cline/llms` — provider integrations and model manifests
+- `@cline/agents` — the agent loop and tool orchestration
+- `@cline/core` — the main SDK with session management, hub, and configuration
 
 ### Internal Packages
 
 The following packages are internal and not published:
 
-- `@clinebot/enterprise` — enterprise integrations (internal only)
+- `@cline/enterprise` — enterprise integrations (internal only)
 - `apps/cli` — CLI implementation
 - `apps/webview` — VS Code webview
 - `apps/examples` — example plugins and integrations

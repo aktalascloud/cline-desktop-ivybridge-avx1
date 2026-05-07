@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AgentResult } from "@clinebot/shared";
+import type { AgentResult } from "@cline/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ClineCoreStartInput } from "./cline-core/types";
 import type {

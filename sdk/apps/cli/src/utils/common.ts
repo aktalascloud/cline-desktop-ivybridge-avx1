@@ -1,5 +1,5 @@
 import * as os from "node:os";
-import type { RuntimeEnv } from "@clinebot/shared";
+import type { RuntimeEnv } from "@cline/shared";
 import { displayName, version } from "../../package.json";
 
 export function getCliBuildInfo(): RuntimeEnv {

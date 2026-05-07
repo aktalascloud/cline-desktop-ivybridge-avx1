@@ -1,26 +1,26 @@
-# [experimental] @clinebot/llms
+# [experimental] @cline/llms
 
-`@clinebot/llms` is the model and provider layer for the Cline SDK. It gives
+`@cline/llms` is the model and provider layer for the Cline SDK. It gives
 you typed provider settings, model catalogs, shared gateway contracts, and
 AI SDK-backed handler creation for supported LLM backends.
 
 ## What You Get
 
-- `@clinebot/llms/runtime` for declarative config and runtime registry creation
-- `@clinebot/llms/providers` for handler creation and provider settings/types
-- `@clinebot/llms/models` for model catalogs and query helpers
-- `@clinebot/llms` root exports for the gateway registry and shared llm contracts
+- `@cline/llms/runtime` for declarative config and runtime registry creation
+- `@cline/llms/providers` for handler creation and provider settings/types
+- `@cline/llms/models` for model catalogs and query helpers
+- `@cline/llms` root exports for the gateway registry and shared llm contracts
 
 ## Installation
 
 ```bash
-npm install @clinebot/llms zod
+npm install @cline/llms zod
 ```
 
 ## Quick Start
 
 ```ts
-import { createHandler } from "@clinebot/llms";
+import { createHandler } from "@cline/llms";
 
 const handler = createHandler({
 	providerId: "anthropic",
@@ -49,12 +49,12 @@ Use `createLlmsRuntime(...)` when you want a small registry around:
 Preferred import:
 
 ```ts
-import { createLlmsRuntime, defineLlmsConfig } from "@clinebot/llms/runtime";
+import { createLlmsRuntime, defineLlmsConfig } from "@cline/llms/runtime";
 ```
 
 ### Providers
 
-Use `@clinebot/llms/providers` for:
+Use `@cline/llms/providers` for:
 
 - `createHandler(...)` and `createHandlerAsync(...)`
 - `ProviderSettings` and `ProviderSettingsSchema`
@@ -63,26 +63,26 @@ Use `@clinebot/llms/providers` for:
 
 Built-in providers are routed through the internal gateway registry and backed by
 AI SDK provider implementations. Shared gateway contracts are exported from both
-`@clinebot/llms` and `@clinebot/shared`.
+`@cline/llms` and `@cline/shared`.
 
 ### Models
 
-Use `@clinebot/llms/models` when you need generated provider/model metadata for
+Use `@cline/llms/models` when you need generated provider/model metadata for
 selection UIs, defaults, or validation.
 
 ## Entry Points
 
-- `@clinebot/llms`: runtime-focused convenience entrypoint
-- `@clinebot/llms/node`: explicit Node/runtime entrypoint
-- `@clinebot/llms/browser`: browser-safe bundle
-- `@clinebot/llms/runtime`: focused runtime entrypoint
-- `@clinebot/llms/models`: model catalog/query entrypoint
-- `@clinebot/llms/providers`: provider handler/settings entrypoint
+- `@cline/llms`: runtime-focused convenience entrypoint
+- `@cline/llms/node`: explicit Node/runtime entrypoint
+- `@cline/llms/browser`: browser-safe bundle
+- `@cline/llms/runtime`: focused runtime entrypoint
+- `@cline/llms/models`: model catalog/query entrypoint
+- `@cline/llms/providers`: provider handler/settings entrypoint
 
 ## Related Packages
 
-- `@clinebot/agents`: agent loop and tool execution
-- `@clinebot/core`: stateful runtime assembly and provider settings storage
+- `@cline/agents`: agent loop and tool execution
+- `@cline/core`: stateful runtime assembly and provider settings storage
 
 ## More Examples
 
@@ -100,7 +100,7 @@ Use this for API-key-backed provider validation against real endpoints.
 ```bash
 LLMS_LIVE_TESTS=1 \
 LLMS_LIVE_PROVIDERS_PATH=/absolute/path/to/packages/llms/scripts/live-providers.example.json \
-bun -F @clinebot/llms run test:live
+bun -F @cline/llms run test:live
 ```
 
 Reasoning-focused live run (same command, different flags):
@@ -108,7 +108,7 @@ Reasoning-focused live run (same command, different flags):
 ```bash
 LLMS_LIVE_REASONING_TESTS=1 \
 LLMS_LIVE_REASONING_PROVIDERS_PATH=/absolute/path/to/packages/llms/scripts/live-providers.reasoning.example.json \
-bun -F @clinebot/llms run test:live
+bun -F @cline/llms run test:live
 ```
 
 Tool-use-focused live run (same command, different flags):
@@ -116,7 +116,7 @@ Tool-use-focused live run (same command, different flags):
 ```bash
 LLMS_LIVE_TOOL_TESTS=1 \
 LLMS_LIVE_TOOL_PROVIDERS_PATH=/absolute/path/to/packages/llms/scripts/live-providers.tools.example.json \
-bun -F @clinebot/llms run test:live
+bun -F @cline/llms run test:live
 ```
 
 Optional:

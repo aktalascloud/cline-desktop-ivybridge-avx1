@@ -6,21 +6,21 @@ import type {
 	CronTriggerKind,
 	HubScheduleCreateInput,
 	HubScheduleUpdateInput,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import {
 	asOptionalString,
 	asString,
 	loadSqliteDb,
 	nowIso,
 	type SqliteDb,
-} from "@clinebot/shared/db";
-import { resolveCronDbPath } from "@clinebot/shared/storage";
+} from "@cline/shared/db";
+import { resolveCronDbPath } from "@cline/shared/storage";
 import { getNextCronTime } from "../schedule/scheduler";
 import { ensureCronSchema } from "./cron-schema";
 
 /**
  * Generalized cron/automation store backed by `cron.db`. Sessions stay in
- * their own database (see @clinebot/shared `ensureSessionSchema`). cron_runs
+ * their own database (see @cline/shared `ensureSessionSchema`). cron_runs
  * here absorb one-off, recurring, and event-driven work under one queue.
  */
 

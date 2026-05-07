@@ -3,7 +3,7 @@ import type {
 	GatewayProviderContext,
 	GatewayProviderManifest,
 	GatewayStreamRequest,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { createEphemeralCacheControl, toProviderOptionsKey } from "./utils";
 
 const ANTHROPIC_DEFAULT_THINKING_BUDGET_TOKENS = 1024;

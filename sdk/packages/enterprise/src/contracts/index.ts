@@ -1,14 +1,14 @@
 import type {
 	ClineCoreStartInput,
 	CreateOpenTelemetryTelemetryServiceOptions,
-} from "@clinebot/core";
+} from "@cline/core";
 import type {
 	AgentExtension,
 	BasicLogger,
 	ITelemetryService,
 	OpenTelemetryClientConfig,
 	RemoteConfig,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 export type { AgentExtension };
 

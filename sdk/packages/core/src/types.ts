@@ -3,7 +3,7 @@ export type {
 	AgentRunStatus,
 	WorkspaceInfo,
 	WorkspaceManifest,
-} from "@clinebot/shared";
+} from "@cline/shared";
 export { ClineCore } from "./ClineCore";
 export type {
 	ClineCoreListHistoryOptions,

@@ -1,6 +1,6 @@
-# [experimental] @clinebot/core
+# [experimental] @cline/core
 
-`@clinebot/core` is the stateful orchestration layer of the Cline SDK. It
+`@cline/core` is the stateful orchestration layer of the Cline SDK. It
 connects the agent runtime, provider settings, storage, default tools, and
 session lifecycle into a host-ready runtime.
 
@@ -10,24 +10,24 @@ session lifecycle into a host-ready runtime.
 - provider settings and account services
 - default runtime tools and MCP integration
 - storage-backed session and team state helpers
-- host-facing Node helpers through `@clinebot/core`
+- host-facing Node helpers through `@cline/core`
 
 ## Installation
 
 ```bash
-npm install @clinebot/core
+npm install @cline/core
 ```
 
 ## Entry Points
 
-- `@clinebot/core`: core contracts, shared utilities, and Node/server helpers for building hosts and runtimes
+- `@cline/core`: core contracts, shared utilities, and Node/server helpers for building hosts and runtimes
 
 ## Typical Usage
 
-Most host apps should start with `@clinebot/core`.
+Most host apps should start with `@cline/core`.
 
 ```ts
-import { ClineCore } from "@clinebot/core";
+import { ClineCore } from "@cline/core";
 
 const cline = await ClineCore.create({});
 
@@ -64,7 +64,7 @@ contract.
 
 ### Runtime and Sessions
 
-Use `@clinebot/core` for host-facing runtime assembly:
+Use `@cline/core` for host-facing runtime assembly:
 
 - `ClineCore.create(...)`
 - `createRuntimeHost(...)`
@@ -82,7 +82,7 @@ primitive vocabulary.
 
 ### Default Tools
 
-`@clinebot/core` owns the built-in host tools and executors:
+`@cline/core` owns the built-in host tools and executors:
 
 - `createBuiltinTools(...)`
 - `createDefaultTools(...)`
@@ -94,12 +94,12 @@ The package also exports storage and settings helpers such as:
 
 - `ProviderSettingsManager`
 - `SqliteTeamStore`
-- SQLite-backed local session stores and artifacts through `@clinebot/core`
+- SQLite-backed local session stores and artifacts through `@cline/core`
 
 ## Related Packages
 
-- `@clinebot/agents`: stateless agent loop and tool primitives
-- `@clinebot/llms`: provider/model configuration and handlers
+- `@cline/agents`: stateless agent loop and tool primitives
+- `@cline/llms`: provider/model configuration and handlers
 
 ## More Examples
 

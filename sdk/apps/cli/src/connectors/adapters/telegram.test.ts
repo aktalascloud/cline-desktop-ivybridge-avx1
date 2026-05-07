@@ -1,4 +1,4 @@
-import type { ConnectTelegramOptions } from "@clinebot/shared";
+import type { ConnectTelegramOptions } from "@cline/shared";
 import { describe, expect, it } from "vitest";
 import { __test__, telegramConnector } from "./telegram";
 

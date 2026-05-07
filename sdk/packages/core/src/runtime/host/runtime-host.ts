@@ -1,5 +1,5 @@
-import type * as LlmsProviders from "@clinebot/llms";
-import type { AgentResult, RuntimeConfigExtensionKind } from "@clinebot/shared";
+import type * as LlmsProviders from "@cline/llms";
+import type { AgentResult, RuntimeConfigExtensionKind } from "@cline/shared";
 import type { HookEventPayload } from "../../hooks";
 import type { CheckpointEntry } from "../../hooks/checkpoint-hooks";
 import type { ProviderSettings } from "../../services/llms/provider-settings";
@@ -80,7 +80,7 @@ export interface StartSessionInput {
 	 */
 	localRuntime?: LocalRuntimeStartOptions;
 	capabilities?: RuntimeCapabilities;
-	toolPolicies?: import("@clinebot/shared").AgentConfig["toolPolicies"];
+	toolPolicies?: import("@cline/shared").AgentConfig["toolPolicies"];
 }
 
 export function splitCoreSessionConfig(config: CoreSessionConfig): {

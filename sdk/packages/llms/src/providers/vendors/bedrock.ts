@@ -1,5 +1,5 @@
 import { createAmazonBedrock } from "@ai-sdk/amazon-bedrock";
-import type { GatewayResolvedProviderConfig } from "@clinebot/shared";
+import type { GatewayResolvedProviderConfig } from "@cline/shared";
 import { resolveApiKey } from "../http";
 import type { ProviderFactoryResult } from "./types";
 

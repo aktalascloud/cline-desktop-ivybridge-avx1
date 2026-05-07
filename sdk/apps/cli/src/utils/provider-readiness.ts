@@ -2,7 +2,7 @@ import {
 	getProviderConfigFields,
 	type ProviderConfig,
 	type ProviderSettings,
-} from "@clinebot/core";
+} from "@cline/core";
 import {
 	getPersistedProviderApiKey,
 	isOAuthProvider,

@@ -2,7 +2,7 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import type {
 	GatewayProviderContext,
 	GatewayResolvedProviderConfig,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { resolveApiKey } from "../http";
 import type { ProviderFactoryResult } from "./types";
 

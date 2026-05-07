@@ -1,7 +1,7 @@
 import type {
 	GatewayProviderContext,
 	GatewayStreamRequest,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import {
 	buildAnthropicCompatibleReasoningOptions,
 	buildAnthropicProviderOptions,

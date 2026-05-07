@@ -8,7 +8,7 @@ import type {
 	CronSpecMode,
 	CronSpecParseResult,
 	CronTriggerKind,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import YAML from "yaml";
 import { ALL_DEFAULT_TOOL_NAMES } from "../../extensions/tools/constants";
 import { validateCronSchedule } from "../schedule/scheduler";
@@ -16,8 +16,8 @@ import { validateCronSchedule } from "../schedule/scheduler";
 /**
  * Markdown frontmatter parser for `.cline/cron/*.md` automation specs.
  *
- * Lives in @clinebot/core because it depends on `yaml`. The spec types
- * themselves live in @clinebot/shared so other packages can consume them
+ * Lives in @cline/core because it depends on `yaml`. The spec types
+ * themselves live in @cline/shared so other packages can consume them
  * without pulling in a YAML parser.
  *
  * The parser never throws for a single bad file — it produces a

@@ -1,4 +1,4 @@
-import type { HubCommandEnvelope, HubEventEnvelope } from "@clinebot/shared";
+import type { HubCommandEnvelope, HubEventEnvelope } from "@cline/shared";
 
 export function eventNameForScheduleCommand(
 	command: HubCommandEnvelope["command"],

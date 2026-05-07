@@ -158,7 +158,7 @@ class StdioMcpClient implements McpServerClient {
 						protocolVersion: MCP_PROTOCOL_VERSION,
 						capabilities: {},
 						clientInfo: {
-							name: "@clinebot/core",
+							name: "@cline/core",
 							version: "0.0.0",
 						},
 					},

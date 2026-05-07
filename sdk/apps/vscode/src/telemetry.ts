@@ -2,11 +2,11 @@ import * as os from "node:os";
 import {
 	type ConfiguredTelemetryHandle,
 	createConfiguredTelemetryHandle,
-} from "@clinebot/core";
+} from "@cline/core";
 import {
 	createClineTelemetryServiceConfig,
 	createClineTelemetryServiceMetadata,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 export interface VscodeTelemetryOptions {
 	extensionVersion: string;

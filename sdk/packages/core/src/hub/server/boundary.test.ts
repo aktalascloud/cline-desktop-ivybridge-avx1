@@ -1,4 +1,4 @@
-import type { AgentToolContext, HubEventEnvelope } from "@clinebot/shared";
+import type { AgentToolContext, HubEventEnvelope } from "@cline/shared";
 import { describe, expect, it, vi } from "vitest";
 import type {
 	StartSessionInput,

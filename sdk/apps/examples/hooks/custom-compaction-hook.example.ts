@@ -18,7 +18,7 @@
  * to the current request and snapshot.
  */
 
-import type { AgentPlugin } from "@clinebot/core";
+import type { AgentPlugin } from "@cline/core";
 
 type PluginHooks = NonNullable<AgentPlugin["hooks"]>;
 type BeforeModelHook = NonNullable<PluginHooks["beforeModel"]>;

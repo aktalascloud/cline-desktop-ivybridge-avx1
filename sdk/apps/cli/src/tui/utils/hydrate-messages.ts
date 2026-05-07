@@ -1,4 +1,4 @@
-import { formatDisplayUserInput, type Message } from "@clinebot/shared";
+import { formatDisplayUserInput, type Message } from "@cline/shared";
 import { formatToolInput } from "../../utils/helpers";
 import type { ChatEntry } from "../types";
 

@@ -146,16 +146,16 @@ cline -i "do something"  # Hooks will execute automatically
 To use the SDK in your own Node app (outside this monorepo), start with:
 
 ```bash
-npm add @clinebot/core
+npm add @cline/core
 ```
 
-Add `@clinebot/agents` or `@clinebot/llms` only if you intentionally want lower-level control. For RPC client helpers, prefer importing from `@clinebot/core` when you want the app-facing SDK surface.
+Add `@cline/agents` or `@cline/llms` only if you intentionally want lower-level control. For RPC client helpers, prefer importing from `@cline/core` when you want the app-facing SDK surface.
 
 Current SDK layering:
 
-- `@clinebot/core` owns config discovery/watchers, runtime plugin loading, and the context pipeline
+- `@cline/core` owns config discovery/watchers, runtime plugin loading, and the context pipeline
 - context compaction is core-owned and runs through turn preparation before model calls
-- most app integrations should stay on the `@clinebot/core` surface unless they intentionally need lower-level agent or model control
+- most app integrations should stay on the `@cline/core` surface unless they intentionally need lower-level agent or model control
 
 ## 📚 Learning Path
 

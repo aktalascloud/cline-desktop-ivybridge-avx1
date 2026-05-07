@@ -1,5 +1,5 @@
-import { SessionSource } from "@clinebot/core";
-import type { Message } from "@clinebot/shared";
+import { SessionSource } from "@cline/core";
+import type { Message } from "@cline/shared";
 import { deriveForkSessionTitle } from "./title";
 
 type SourceSession = {

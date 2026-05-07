@@ -5,7 +5,7 @@
  * extensions, and results.
  *
  * ProviderConfig is left as `unknown` here so that shared stays
- * dependency-free of @clinebot/llms. Consuming packages narrow it
+ * dependency-free of @cline/llms. Consuming packages narrow it
  * via re-exports. ModelInfo lives in shared (../llms/model-info)
  * and is used directly.
  */

@@ -7,9 +7,9 @@ import {
 	truncateSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import type { BasicLogger, RuntimeLoggerConfig } from "@clinebot/core";
-import { resolveClineDataDir } from "@clinebot/core";
-import { registerDisposable } from "@clinebot/shared";
+import type { BasicLogger, RuntimeLoggerConfig } from "@cline/core";
+import { resolveClineDataDir } from "@cline/core";
+import { registerDisposable } from "@cline/shared";
 import pino, {
 	type DestinationStream,
 	type LevelWithSilent,

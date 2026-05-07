@@ -1,6 +1,6 @@
-# [experimental] @clinebot/agents
+# [experimental] @cline/agents
 
-`@clinebot/agents` is the runtime-agnostic agent loop package in the Cline SDK.
+`@cline/agents` is the runtime-agnostic agent loop package in the Cline SDK.
 It gives you the core primitives for building tool-using LLM agents without
 bringing in session storage, hub transport, or host-specific default tools.
 
@@ -17,12 +17,12 @@ bringing in session storage, hub transport, or host-specific default tools.
 
 ## What This Package Does Not Include
 
-`@clinebot/agents` does not ship a full application runtime by itself.
+`@cline/agents` does not ship a full application runtime by itself.
 
-- Default host tools like filesystem access, shell execution, or web fetching live in `@clinebot/core`
-- Session persistence and stateful orchestration live in `@clinebot/core`
-- Shared hub runtime/session transport lives in `@clinebot/core` (see `@clinebot/core/hub`)
-- Sub-agent and team coordination primitives live in `@clinebot/core`
+- Default host tools like filesystem access, shell execution, or web fetching live in `@cline/core`
+- Session persistence and stateful orchestration live in `@cline/core`
+- Shared hub runtime/session transport lives in `@cline/core` (see `@cline/core/hub`)
+- Sub-agent and team coordination primitives live in `@cline/core`
 
 That split keeps this package usable in Node, browser, and custom host
 environments where you want to supply your own tools and runtime policy.
@@ -30,14 +30,14 @@ environments where you want to supply your own tools and runtime policy.
 ## Installation
 
 ```bash
-npm install @clinebot/agents @clinebot/shared @clinebot/llms
+npm install @cline/agents @cline/shared @cline/llms
 ```
 
 ## Quick Start
 
 ```ts
-import { Agent } from "@clinebot/agents";
-import type { AgentTool } from "@clinebot/shared";
+import { Agent } from "@cline/agents";
+import type { AgentTool } from "@cline/shared";
 
 const getWeather: AgentTool<{ city: string }, { forecast: string }> = {
 	name: "get_weather",
@@ -69,7 +69,7 @@ console.log(result.outputText);
 `Agent` / `AgentRuntime` accepts two config shapes:
 
 **Provider form** — friendly entrypoint. The runtime builds an `AgentModel` for
-you via `@clinebot/llms`:
+you via `@cline/llms`:
 
 ```ts
 new Agent({
@@ -82,11 +82,11 @@ new Agent({
 ```
 
 **Model form** — advanced. Supply a pre-built `AgentModel` directly. Useful
-when the host already owns gateway construction (this is what `@clinebot/core`
+when the host already owns gateway construction (this is what `@cline/core`
 uses internally):
 
 ```ts
-import { createGateway } from "@clinebot/llms";
+import { createGateway } from "@cline/llms";
 
 const gateway = createGateway({ providerConfigs: [/* ... */] });
 const model = gateway.createAgentModel({ providerId, modelId });
@@ -102,11 +102,11 @@ new Agent({
 ### Tools
 
 Tools conform to the `AgentTool<TInput, TOutput>` interface from
-`@clinebot/shared`. Each tool has a JSON Schema `inputSchema` and an
+`@cline/shared`. Each tool has a JSON Schema `inputSchema` and an
 `execute(input, context)` function that returns the tool output directly:
 
 ```ts
-import type { AgentTool } from "@clinebot/shared";
+import type { AgentTool } from "@cline/shared";
 
 const summarize: AgentTool<{ text: string }, { summary: string }> = {
 	name: "summarize_text",
@@ -155,7 +155,7 @@ new Agent({
 
 `AgentRuntimeEvent` covers run/turn boundaries, assistant text and reasoning
 deltas, tool lifecycle, usage updates, and run completion/failure. See
-`AgentRuntimeEvent` in `@clinebot/shared` for the full union.
+`AgentRuntimeEvent` in `@cline/shared` for the full union.
 
 ### Conversation Control
 
@@ -204,14 +204,14 @@ new Agent({
 ```
 
 For richer, host-side hook orchestration (15-stage `HookEngine`,
-subprocess-backed hooks, MCP extensions), use `@clinebot/core`.
+subprocess-backed hooks, MCP extensions), use `@cline/core`.
 
 ### Plugins
 
 Plugins can contribute tools and hooks at setup time:
 
 ```ts
-import type { AgentRuntimePlugin } from "@clinebot/shared";
+import type { AgentRuntimePlugin } from "@cline/shared";
 
 const loggingPlugin: AgentRuntimePlugin = {
 	name: "logging",
@@ -237,7 +237,7 @@ new Agent({
 
 ### Teams and Spawn
 
-For multi-agent workflows, use `@clinebot/core`:
+For multi-agent workflows, use `@cline/core`:
 
 ```ts
 import {
@@ -245,7 +245,7 @@ import {
 	AgentTeamsRuntime,
 	createAgentTeamsTools,
 	bootstrapAgentTeams,
-} from "@clinebot/core";
+} from "@cline/core";
 ```
 
 These helpers provide coordination primitives for delegated runs,
@@ -253,17 +253,17 @@ mailboxes, task management, and outcome convergence.
 
 ## Entry Point
 
-- `@clinebot/agents` — the single package entrypoint. The `package.json`
+- `@cline/agents` — the single package entrypoint. The `package.json`
   `exports` map automatically serves a browser-safe bundle when bundlers
   resolve the `browser` condition.
 
 ## Related Packages
 
-- `@clinebot/shared`: shared types (`AgentTool`, `AgentMessage`,
+- `@cline/shared`: shared types (`AgentTool`, `AgentMessage`,
   `AgentRuntimeEvent`, `AgentRuntimeHooks`, etc.)
-- `@clinebot/llms`: provider settings, model catalogs, and gateway/handler
+- `@cline/llms`: provider settings, model catalogs, and gateway/handler
   creation
-- `@clinebot/core`: stateful runtime assembly, storage, default tools,
+- `@cline/core`: stateful runtime assembly, storage, default tools,
   subprocess hooks, hub transport, and MCP integration
 
 ## More Examples

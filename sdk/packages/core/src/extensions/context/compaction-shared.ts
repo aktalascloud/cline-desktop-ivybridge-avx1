@@ -1,5 +1,5 @@
-import type { ToolResultContent } from "@clinebot/llms";
-import type { MessageWithMetadata } from "@clinebot/shared";
+import type { ToolResultContent } from "@cline/llms";
+import type { MessageWithMetadata } from "@cline/shared";
 import type {
 	CoreCompactionContext,
 	CoreCompactionSummarizerConfig,

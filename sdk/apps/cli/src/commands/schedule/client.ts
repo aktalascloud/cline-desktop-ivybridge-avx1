@@ -3,7 +3,7 @@ import {
 	HubScheduleCommandService,
 	HubScheduleService,
 	sendHubCommand,
-} from "@clinebot/core";
+} from "@cline/core";
 import {
 	ensureCliHubServer,
 	parseHubEndpointOverride,

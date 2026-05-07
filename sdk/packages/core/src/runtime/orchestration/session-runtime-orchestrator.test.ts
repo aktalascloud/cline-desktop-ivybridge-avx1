@@ -14,7 +14,7 @@
  *  - `canStartRun` / `shutdown` guards enforce the lifecycle rules.
  */
 
-import type { AgentRuntime, AgentRuntimeConfig } from "@clinebot/agents";
+import type { AgentRuntime, AgentRuntimeConfig } from "@cline/agents";
 import type {
 	AgentConfig,
 	AgentEvent,
@@ -25,7 +25,7 @@ import type {
 	AgentRuntimeEvent,
 	AgentTool,
 	AgentToolContext,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { describe, expect, it, vi } from "vitest";
 import {
 	SessionRuntime,

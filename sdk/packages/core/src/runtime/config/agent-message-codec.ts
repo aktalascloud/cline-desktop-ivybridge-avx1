@@ -12,7 +12,7 @@ import type {
 	ThinkingContent,
 	ToolResultContent,
 	ToolUseContent,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 export function messageToAgentMessages(
 	message: MessageWithMetadata,

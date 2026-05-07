@@ -7,9 +7,9 @@ import {
 	type SessionPendingPrompt,
 	SessionSource,
 	splitCoreSessionConfig,
-} from "@clinebot/core";
-import type { Message } from "@clinebot/llms";
-import { buildClineSystemPrompt } from "@clinebot/shared";
+} from "@cline/core";
+import type { Message } from "@cline/llms";
+import { buildClineSystemPrompt } from "@cline/shared";
 import { emitChunk, nowMs, sendEvent } from "./context";
 import { readSessionManifest, sharedSessionDataDir } from "./paths";
 import type {

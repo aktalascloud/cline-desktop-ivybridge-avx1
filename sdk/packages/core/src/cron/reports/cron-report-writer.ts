@@ -3,7 +3,7 @@ import { join } from "node:path";
 import {
 	type ResolveCronSpecsDirOptions,
 	resolveCronReportsDir,
-} from "@clinebot/shared/storage";
+} from "@cline/shared/storage";
 import type {
 	CronEventLogRecord,
 	CronRunRecord,

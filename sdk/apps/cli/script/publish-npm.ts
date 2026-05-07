@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-// Publishes @clinebot/cli and all platform-specific binary packages to npm.
+// Publishes @cline/cli and all platform-specific binary packages to npm.
 //
 // Usage:
 //   bun script/publish-npm.ts                 # publish with "latest" tag
@@ -32,12 +32,12 @@ const dryRun = values["dry-run"] ?? false;
 const npmTag = values.tag ?? "latest";
 
 const expectedPlatformPackages = [
-	"@clinebot/cli-darwin-arm64",
-	"@clinebot/cli-darwin-x64",
-	"@clinebot/cli-linux-arm64",
-	"@clinebot/cli-linux-x64",
-	"@clinebot/cli-windows-arm64",
-	"@clinebot/cli-windows-x64",
+	"@cline/cli-darwin-arm64",
+	"@cline/cli-darwin-x64",
+	"@cline/cli-linux-arm64",
+	"@cline/cli-linux-x64",
+	"@cline/cli-windows-arm64",
+	"@cline/cli-windows-x64",
 ] as const;
 
 interface PlatformPackageManifest {
@@ -175,7 +175,7 @@ if (sourceVersion !== version) {
 const sourceRepository =
 	"repository" in sourcePkgRecord ? sourcePkgRecord.repository : undefined;
 
-console.log(`Publishing @clinebot/cli v${version}`);
+console.log(`Publishing @cline/cli v${version}`);
 console.log(`  Tag: ${npmTag}`);
 console.log(`  Dry run: ${dryRun}`);
 console.log(`  Platform packages: ${Object.keys(binaries).length}`);
@@ -188,7 +188,7 @@ console.log("\nPublishing platform packages...");
 const platformTasks = Object.keys(binaries)
 	.sort()
 	.map(async (name) => {
-		const dirName = name.replace("@clinebot/", "");
+		const dirName = name.replace("@cline/", "");
 		const pkgDir = join(cliDir, "dist", dirName);
 
 		await publishPackage({
@@ -230,7 +230,7 @@ const license =
 		? mainPkgRecord.license
 		: undefined;
 const wrapperPackageJson = {
-	name: "@clinebot/cli",
+	name: "@cline/cli",
 	version,
 	description: description || "Cline CLI",
 	license: license || "Apache-2.0",
@@ -251,18 +251,18 @@ await Bun.write(
 
 if (dryRun) {
 	console.log(
-		`  [dry-run] Would publish @clinebot/cli@${version} with tag ${npmTag}`,
+		`  [dry-run] Would publish @cline/cli@${version} with tag ${npmTag}`,
 	);
 	console.log("\nDry run complete. No packages were published.");
 } else {
 	await publishPackage({
-		name: "@clinebot/cli",
+		name: "@cline/cli",
 		version,
 		dir: mainPkgDir,
 		tag: npmTag,
 		dryRun: false,
 	});
-	console.log(`\nPublished @clinebot/cli@${version} with tag ${npmTag}`);
+	console.log(`\nPublished @cline/cli@${version} with tag ${npmTag}`);
 	console.log("\nInstall with:");
-	console.log(`  npm install -g @clinebot/cli`);
+	console.log(`  npm install -g @cline/cli`);
 }

@@ -8,42 +8,42 @@ export default defineConfig({
 	resolve: {
 		alias: [
 			{
-				find: /^@clinebot\/core\/telemetry$/,
+				find: /^@cline\/core\/telemetry$/,
 				replacement: resolve(
 					rootDir,
 					"../../packages/core/src/services/telemetry/index.ts",
 				),
 			},
 			{
-				find: /^@clinebot\/core$/,
+				find: /^@cline\/core$/,
 				replacement: resolve(rootDir, "../../packages/core/src/index.ts"),
 			},
 			{
-				find: /^@clinebot\/core\/(.+)$/,
+				find: /^@cline\/core\/(.+)$/,
 				replacement: resolve(rootDir, "../../packages/core/src/$1"),
 			},
 			{
-				find: /^@clinebot\/llms$/,
+				find: /^@cline\/llms$/,
 				replacement: resolve(rootDir, "../../packages/llms/src/index.ts"),
 			},
 			{
-				find: /^@clinebot\/llms\/(.+)$/,
+				find: /^@cline\/llms\/(.+)$/,
 				replacement: resolve(rootDir, "../../packages/llms/src/$1"),
 			},
 			{
-				find: /^@clinebot\/shared\/(.+)$/,
+				find: /^@cline\/shared\/(.+)$/,
 				replacement: resolve(rootDir, "../../packages/shared/src/$1"),
 			},
 			{
-				find: /^@clinebot\/agents$/,
+				find: /^@cline\/agents$/,
 				replacement: resolve(rootDir, "../../packages/agents/src/index.ts"),
 			},
 			{
-				find: /^@clinebot\/core$/,
+				find: /^@cline\/core$/,
 				replacement: resolve(rootDir, "../../packages/core/src/index.ts"),
 			},
 			{
-				find: /^@clinebot\/shared$/,
+				find: /^@cline\/shared$/,
 				replacement: resolve(rootDir, "../../packages/shared/src/index.ts"),
 			},
 		],

@@ -4,7 +4,7 @@ import {
 	type ProviderSettingsManager,
 	saveLocalProviderOAuthCredentials,
 	startClineDeviceAuth,
-} from "@clinebot/core";
+} from "@cline/core";
 import open from "open";
 
 export type OnboardingOAuthProviderId = "cline" | "oca" | "openai-codex";

@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { createUserInstructionConfigService } from "@clinebot/core";
-import type { AgentExtensionApi } from "@clinebot/shared";
+import { createUserInstructionConfigService } from "@cline/core";
+import type { AgentExtensionApi } from "@cline/shared";
 import { describe, expect, it, vi } from "vitest";
 import type {
 	EnterpriseClaimsMapper,

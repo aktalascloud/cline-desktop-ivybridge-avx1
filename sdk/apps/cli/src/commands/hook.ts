@@ -1,4 +1,4 @@
-import type { HookEventPayload } from "@clinebot/core";
+import type { HookEventPayload } from "@cline/core";
 import { handleSessionHookEvent } from "../session/session";
 import {
 	appendHookAudit,

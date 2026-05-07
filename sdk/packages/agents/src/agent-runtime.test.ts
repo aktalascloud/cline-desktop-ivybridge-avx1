@@ -5,7 +5,7 @@ import type {
 	AgentModelRequest,
 	AgentRuntimePlugin,
 	AgentTool,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { describe, expect, it, vi } from "vitest";
 import { AgentRuntime } from "./index";
 

@@ -7,8 +7,8 @@ import type {
 	SessionLineage,
 	SessionManifest,
 	ToolPolicy,
-} from "@clinebot/core";
-import type { Message } from "@clinebot/shared";
+} from "@cline/core";
+import type { Message } from "@cline/shared";
 
 export type CliOutputMode = "text" | "json";
 export type CliAgentMode = AgentMode;

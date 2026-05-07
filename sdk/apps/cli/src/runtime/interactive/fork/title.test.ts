@@ -1,4 +1,4 @@
-import type { Message } from "@clinebot/shared";
+import type { Message } from "@cline/shared";
 import { describe, expect, it } from "vitest";
 import { deriveForkSessionTitle } from "./title";
 

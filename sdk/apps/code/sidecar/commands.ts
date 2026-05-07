@@ -13,7 +13,7 @@ import type {
 	ProviderCapability,
 	ProviderClient,
 	ProviderProtocol,
-} from "@clinebot/core";
+} from "@cline/core";
 import {
 	addLocalProvider,
 	ClineAccountService,
@@ -45,7 +45,7 @@ import {
 	setDisabledPlugin,
 	setDisabledTools,
 	toggleDisabledTool,
-} from "@clinebot/core";
+} from "@cline/core";
 import { broadcastEvent, resolveSidecarAskQuestion } from "./context";
 import {
 	findArtifactUnderDir,

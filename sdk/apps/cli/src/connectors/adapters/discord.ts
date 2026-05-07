@@ -2,15 +2,15 @@ import {
 	createDiscordAdapter,
 	type DiscordAdapter,
 } from "@chat-adapter/discord";
-import type { ChatStartSessionRequest } from "@clinebot/core";
+import type { ChatStartSessionRequest } from "@cline/core";
 import {
 	createUserInstructionConfigService,
 	HubSessionClient,
-} from "@clinebot/core";
+} from "@cline/core";
 import type {
 	ConnectDiscordOptions,
 	DiscordConnectorState,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { Chat, ConsoleLogger, type Thread, ThreadImpl } from "chat";
 import type { Command } from "commander";
 import { createCliLoggerAdapter } from "../../logging/adapter";

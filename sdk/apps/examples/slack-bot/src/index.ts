@@ -22,11 +22,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { createSlackAdapter, type SlackAdapter } from "@chat-adapter/slack";
-import {
-	Agent,
-	ProviderSettingsSchema,
-	toProviderConfig,
-} from "@clinebot/core";
+import { Agent, ProviderSettingsSchema, toProviderConfig } from "@cline/core";
 import {
 	Chat,
 	ConsoleLogger,

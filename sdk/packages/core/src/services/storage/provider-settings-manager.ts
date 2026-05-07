@@ -6,7 +6,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { basename, dirname } from "node:path";
-import { resolveProviderSettingsPath } from "@clinebot/shared/storage";
+import { resolveProviderSettingsPath } from "@cline/shared/storage";
 import { getLiveModelsCatalog } from "../..";
 import {
 	emptyStoredProviderSettings,

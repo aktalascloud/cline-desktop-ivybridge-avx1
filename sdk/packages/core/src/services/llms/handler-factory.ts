@@ -1,13 +1,10 @@
-import {
-	createGateway,
-	MODEL_COLLECTIONS_BY_PROVIDER_ID,
-} from "@clinebot/llms";
+import { createGateway, MODEL_COLLECTIONS_BY_PROVIDER_ID } from "@cline/llms";
 import type {
 	AgentConfig,
 	AgentModel,
 	BasicLogger,
 	ModelInfo,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { ProviderConfig } from "./provider-settings";
 
 export function resolveKnownModelsFromConfig(

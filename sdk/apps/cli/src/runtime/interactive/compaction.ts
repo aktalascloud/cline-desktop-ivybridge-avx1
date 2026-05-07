@@ -1,5 +1,5 @@
-import { createContextCompactionPrepareTurn } from "@clinebot/core";
-import type { Message } from "@clinebot/shared";
+import { createContextCompactionPrepareTurn } from "@cline/core";
+import type { Message } from "@cline/shared";
 import type { Config } from "../../utils/types";
 
 const FALLBACK_MANUAL_COMPACTION_CONTEXT_WINDOW_TOKENS = 64_000;

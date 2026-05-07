@@ -14,7 +14,7 @@ import {
 	type AutomationEventEnvelope,
 	normalizePluginManifest,
 	type PluginManifest,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { importPluginModule } from "./plugin-module-import";
 import {
 	matchesPluginManifestTargeting,

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { ITelemetryService, WorkspaceInfo } from "@clinebot/shared";
+import type { ITelemetryService, WorkspaceInfo } from "@cline/shared";
 import {
 	captureWorkspaceInitError,
 	captureWorkspaceInitialized,

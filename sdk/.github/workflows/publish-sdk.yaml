@@ -155,47 +155,47 @@ jobs:
       # Pack with Bun so workspace/catalog protocols are resolved in the tarball,
       # then publish that tarball with npm so npm trusted publishing can use GitHub OIDC.
       # Publish sequentially in dependency order: shared → llms → agents → core → sdk
-      - name: Publish @clinebot/shared
+      - name: Publish @cline/shared
         if: steps.check_commits.outputs.skip != 'true'
         run: |
           CHANNEL="${{ steps.channel.outputs.channel }}"
-          echo "Publishing @clinebot/shared@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
+          echo "Publishing @cline/shared@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
           cd packages/shared
           TARBALL=$(bun pm pack --destination "$RUNNER_TEMP/sdk-npm-packs" --quiet)
           npm publish "$RUNNER_TEMP/sdk-npm-packs/$(basename "$TARBALL")" --tag "$CHANNEL" --access public
 
-      - name: Publish @clinebot/llms
+      - name: Publish @cline/llms
         if: steps.check_commits.outputs.skip != 'true'
         run: |
           CHANNEL="${{ steps.channel.outputs.channel }}"
-          echo "Publishing @clinebot/llms@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
+          echo "Publishing @cline/llms@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
           cd packages/llms
           TARBALL=$(bun pm pack --destination "$RUNNER_TEMP/sdk-npm-packs" --quiet)
           npm publish "$RUNNER_TEMP/sdk-npm-packs/$(basename "$TARBALL")" --tag "$CHANNEL" --access public
 
-      - name: Publish @clinebot/agents
+      - name: Publish @cline/agents
         if: steps.check_commits.outputs.skip != 'true'
         run: |
           CHANNEL="${{ steps.channel.outputs.channel }}"
-          echo "Publishing @clinebot/agents@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
+          echo "Publishing @cline/agents@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
           cd packages/agents
           TARBALL=$(bun pm pack --destination "$RUNNER_TEMP/sdk-npm-packs" --quiet)
           npm publish "$RUNNER_TEMP/sdk-npm-packs/$(basename "$TARBALL")" --tag "$CHANNEL" --access public
 
-      - name: Publish @clinebot/core
+      - name: Publish @cline/core
         if: steps.check_commits.outputs.skip != 'true'
         run: |
           CHANNEL="${{ steps.channel.outputs.channel }}"
-          echo "Publishing @clinebot/core@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
+          echo "Publishing @cline/core@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
           cd packages/core
           TARBALL=$(bun pm pack --destination "$RUNNER_TEMP/sdk-npm-packs" --quiet)
           npm publish "$RUNNER_TEMP/sdk-npm-packs/$(basename "$TARBALL")" --tag "$CHANNEL" --access public
 
-      - name: Publish @clinebot/sdk
+      - name: Publish @cline/sdk
         if: steps.check_commits.outputs.skip != 'true'
         run: |
           CHANNEL="${{ steps.channel.outputs.channel }}"
-          echo "Publishing @clinebot/sdk@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
+          echo "Publishing @cline/sdk@${{ steps.version.outputs.version }} with tag '${CHANNEL}'..."
           cd packages/sdk
           TARBALL=$(bun pm pack --destination "$RUNNER_TEMP/sdk-npm-packs" --quiet)
           npm publish "$RUNNER_TEMP/sdk-npm-packs/$(basename "$TARBALL")" --tag "$CHANNEL" --access public
@@ -213,7 +213,7 @@ jobs:
             if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
               echo "Tag already exists locally: ${TAG}"
             else
-              git tag -a "${TAG}" -m "@clinebot/${PKG}@${VERSION}"
+              git tag -a "${TAG}" -m "@cline/${PKG}@${VERSION}"
               echo "Created tag: ${TAG}"
             fi
 
@@ -227,11 +227,11 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           CHANNEL="${{ steps.channel.outputs.channel }}"
           echo "✅ Published SDK packages with tag '${CHANNEL}':"
-          echo "  - @clinebot/shared@${VERSION}"
-          echo "  - @clinebot/llms@${VERSION}"
-          echo "  - @clinebot/agents@${VERSION}"
-          echo "  - @clinebot/core@${VERSION}"
-          echo "  - @clinebot/sdk@${VERSION}"
+          echo "  - @cline/shared@${VERSION}"
+          echo "  - @cline/llms@${VERSION}"
+          echo "  - @cline/agents@${VERSION}"
+          echo "  - @cline/core@${VERSION}"
+          echo "  - @cline/sdk@${VERSION}"
           if [ "$CHANNEL" = "latest" ]; then
             echo "✅ Created git tags:"
             echo "  - sdk/shared/v${VERSION}"

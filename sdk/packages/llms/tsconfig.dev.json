@@ -4,9 +4,9 @@
 		"baseUrl": ".",
 		"rootDir": "..",
 		"paths": {
-			"@clinebot/agents": ["../agents/src/index.ts"],
-			"@clinebot/shared": ["../shared/src/index.ts"],
-			"@clinebot/shared/*": ["../shared/src/*", "../shared/src/*/index.ts"]
+			"@cline/agents": ["../agents/src/index.ts"],
+			"@cline/shared": ["../shared/src/index.ts"],
+			"@cline/shared/*": ["../shared/src/*", "../shared/src/*/index.ts"]
 		}
 	}
 }

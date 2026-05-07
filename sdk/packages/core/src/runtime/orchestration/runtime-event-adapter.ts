@@ -1,8 +1,8 @@
 /**
  * Adapter from the new `AgentRuntimeEvent` union (13 variants, defined
- * in `@clinebot/shared/src/agent.ts`) to the legacy `AgentEvent` union
+ * in `@cline/shared/src/agent.ts`) to the legacy `AgentEvent` union
  * (9 top-level types, defined in
- * `@clinebot/shared/src/agents/types.ts`) consumed by today's
+ * `@cline/shared/src/agents/types.ts`) consumed by today's
  * `Agent.subscribeEvents` callback.
  *
  * @see PLAN.md §3.1  — new file introduced alongside the core runtime port.
@@ -60,7 +60,7 @@ import type {
 	AgentToolResultPart,
 	AgentUsage,
 	LegacyAgentUsage,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 // =============================================================================
 // Helpers

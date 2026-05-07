@@ -1,7 +1,7 @@
 import type {
 	ClineAccountActionRequest,
 	ProviderActionRequest,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type {
 	ClineAccountBalance,
 	ClineAccountOrganization,

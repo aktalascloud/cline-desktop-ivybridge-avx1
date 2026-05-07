@@ -12,23 +12,23 @@ Quick-reference for active development. For onboarding, workspace setup, publish
 
 ### Published SDK Packages
 
-- `@clinebot/shared`: shared contracts, schemas, path helpers, hook engine, extension registry, low-level utilities
-- `@clinebot/llms`: provider settings/config, model catalogs, provider manifests, gateway contracts, handler creation
-- `@clinebot/agents`: stateless agent loop, tool orchestration, hook/extension runtime, event streaming
-- `@clinebot/core`: stateful orchestration, session lifecycle, storage, config watching, plugin loading, default tools, telemetry. Exposes `@clinebot/core/hub` for discovery, the detached daemon entry, WebSocket clients, and session/UI client adapters, plus `@clinebot/core/hub/daemon-entry` for launching the shared daemon
+- `@cline/shared`: shared contracts, schemas, path helpers, hook engine, extension registry, low-level utilities
+- `@cline/llms`: provider settings/config, model catalogs, provider manifests, gateway contracts, handler creation
+- `@cline/agents`: stateless agent loop, tool orchestration, hook/extension runtime, event streaming
+- `@cline/core`: stateful orchestration, session lifecycle, storage, config watching, plugin loading, default tools, telemetry. Exposes `@cline/core/hub` for discovery, the detached daemon entry, WebSocket clients, and session/UI client adapters, plus `@cline/core/hub/daemon-entry` for launching the shared daemon
 
 ### Internal Package
 
-- `@clinebot/enterprise`: enterprise identity adapters, control-plane sync, managed instruction materialization, claims-to-role mapping, telemetry bridging. Composes with core but `core` must not depend on it. Excluded from root SDK build/version/publish flows.
+- `@cline/enterprise`: enterprise identity adapters, control-plane sync, managed instruction materialization, claims-to-role mapping, telemetry bridging. Composes with core but `core` must not depend on it. Excluded from root SDK build/version/publish flows.
 
 ### Dependency Direction
 
 ```mermaid
 flowchart TD
-  shared["@clinebot/shared"] --> llms["@clinebot/llms"] & agents["@clinebot/agents"] & core["@clinebot/core"]
+  shared["@cline/shared"] --> llms["@cline/llms"] & agents["@cline/agents"] & core["@cline/core"]
   llms --> agents & core
   agents --> core
-  enterprise["@clinebot/enterprise"] --> agents & core & shared
+  enterprise["@cline/enterprise"] --> agents & core & shared
   core --> apps["CLI / VS Code / Code App"]
 ```
 
@@ -42,10 +42,10 @@ Rules:
 
 Route changes to the package that owns the concern:
 
-- model/provider schemas or handler behavior: `@clinebot/llms`
-- stateless loop, tool orchestration, streaming, hook/extension runtime: `@clinebot/agents`
-- session lifecycle, storage, config watching, default tools, plugin loading, telemetry, hub runtime services, hub discovery, hub daemon spawn, and session-oriented client helpers (`HubSessionClient`, `HubUIClient`, `connectToHub`): `@clinebot/core` (hub pieces live under `src/hub/`)
-- enterprise identity, control-plane sync, materialization, claims mapping: `@clinebot/enterprise`
+- model/provider schemas or handler behavior: `@cline/llms`
+- stateless loop, tool orchestration, streaming, hook/extension runtime: `@cline/agents`
+- session lifecycle, storage, config watching, default tools, plugin loading, telemetry, hub runtime services, hub discovery, hub daemon spawn, and session-oriented client helpers (`HubSessionClient`, `HubUIClient`, `connectToHub`): `@cline/core` (hub pieces live under `src/hub/`)
+- enterprise identity, control-plane sync, materialization, claims mapping: `@cline/enterprise`
 - host-specific UX or shell behavior: app package
 
 ## Verifying Changes

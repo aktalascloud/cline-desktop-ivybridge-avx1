@@ -3,7 +3,7 @@ import type {
 	SessionConfigOption,
 	SessionUpdate,
 } from "@agentclientprotocol/sdk";
-import type { AgentEvent } from "@clinebot/core";
+import type { AgentEvent } from "@cline/core";
 import { buildToolTitle, mapToolKind } from "./tool-utils";
 
 /**

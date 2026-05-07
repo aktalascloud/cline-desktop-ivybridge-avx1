@@ -15,7 +15,7 @@ import {
 	type SkillConfig,
 	type UserInstructionConfigService,
 	type WorkflowConfig,
-} from "@clinebot/core";
+} from "@cline/core";
 import { getToolCatalog } from "../runtime/tools";
 
 export type InteractiveConfigTab =

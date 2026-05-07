@@ -30,7 +30,7 @@ import {
 	type TeamTask,
 	type TeamTaskListItem,
 	type TeamTaskStatus,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { nanoid } from "nanoid";
 import { SessionRuntime } from "../../../runtime/orchestration/session-runtime-orchestrator";
 
@@ -59,10 +59,10 @@ export {
 	type TeamTask,
 	type TeamTaskListItem,
 	type TeamTaskStatus,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 // =============================================================================
-// Types that depend on @clinebot/agents (cannot live in shared)
+// Types that depend on @cline/agents (cannot live in shared)
 // =============================================================================
 
 export interface TeamMemberConfig extends AgentConfig {

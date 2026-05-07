@@ -5,7 +5,7 @@
  * the injected `userFileContentLoader`.
  */
 
-import type * as LlmsProviders from "@clinebot/llms";
+import type * as LlmsProviders from "@cline/llms";
 
 export async function buildInitialUserContent(
 	userMessage: string,

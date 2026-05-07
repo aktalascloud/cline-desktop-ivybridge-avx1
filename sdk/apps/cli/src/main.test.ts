@@ -119,7 +119,7 @@ vi.mock("./runtime/run-interactive", () => {
 	};
 });
 vi.mock("./utils/session", () => sessionMocks);
-vi.mock("@clinebot/core", () => {
+vi.mock("@cline/core", () => {
 	return {
 		resolveProviderConfig: llmMocks.resolveProviderConfig,
 		createTeamName: vi.fn(() => "team-test"),

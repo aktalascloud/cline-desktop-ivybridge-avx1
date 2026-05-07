@@ -1,4 +1,4 @@
-import type { ITelemetryService } from "@clinebot/shared";
+import type { ITelemetryService } from "@cline/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProviderSettings } from "../types/provider-settings";
 

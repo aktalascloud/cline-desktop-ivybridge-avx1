@@ -7,7 +7,7 @@ import {
 	identifyAccount,
 	registerDisposable,
 	TelemetryLoggerSink,
-} from "@clinebot/core";
+} from "@cline/core";
 import { getCliBuildInfo } from "./common";
 import {
 	markActivationCaptured,

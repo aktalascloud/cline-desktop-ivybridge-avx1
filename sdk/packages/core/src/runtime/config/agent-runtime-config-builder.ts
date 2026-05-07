@@ -24,7 +24,7 @@ import type {
 	AgentTelemetry,
 	AgentTool,
 	BasicLogger,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 /**
  * Inputs required to assemble an `AgentRuntimeConfig`. Distinct from

@@ -9,8 +9,8 @@ import {
 	resolveClineDataDir,
 	resolveSharedHubOwnerContext,
 	stopLocalHubServerGracefully,
-} from "@clinebot/core";
-import { formatUptime } from "@clinebot/shared";
+} from "@cline/core";
+import { formatUptime } from "@cline/shared";
 import { Command } from "commander";
 import open from "open";
 import { isProcessRunning } from "../connectors/common";

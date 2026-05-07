@@ -1,7 +1,7 @@
 import type {
 	GatewayProviderContext,
 	GatewayStreamRequest,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { resolveModelFamily } from "./anthropic-compatible";
 import type { ProviderOptionsPatch } from "./utils";
 

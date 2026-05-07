@@ -1,13 +1,10 @@
 import { createSlackAdapter, type SlackAdapter } from "@chat-adapter/slack";
-import type { ChatStartSessionRequest } from "@clinebot/core";
+import type { ChatStartSessionRequest } from "@cline/core";
 import {
 	createUserInstructionConfigService,
 	HubSessionClient,
-} from "@clinebot/core";
-import type {
-	ConnectSlackOptions,
-	SlackConnectorState,
-} from "@clinebot/shared";
+} from "@cline/core";
+import type { ConnectSlackOptions, SlackConnectorState } from "@cline/shared";
 import {
 	type Adapter,
 	Chat,

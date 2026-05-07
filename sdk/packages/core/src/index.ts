@@ -1,10 +1,10 @@
 /**
- * @clinebot/core
+ * @cline/core
  *
  * Core contracts, shared state utilities, and Node runtime services.
  */
 
-export * as Llms from "@clinebot/llms";
+export * as Llms from "@cline/llms";
 // Shared contracts and path helpers re-exported for app consumers.
 export type {
 	AddProviderActionRequest,
@@ -74,7 +74,7 @@ export type {
 	WorkspaceInfoSchema,
 	WorkspaceManifest,
 	WorkspaceManifestSchema,
-} from "@clinebot/shared";
+} from "@cline/shared";
 export {
 	buildClineSystemPrompt as getClineDefaultSystemPrompt,
 	ContributionRegistry,
@@ -88,8 +88,8 @@ export {
 	normalizeUserInput,
 	parseUserCommandEnvelope,
 	registerDisposable,
-} from "@clinebot/shared";
-export * from "@clinebot/shared/storage";
+} from "@cline/shared";
+export * from "@cline/shared/storage";
 export {
 	type ClineAccountBalance,
 	type ClineAccountOperations,
@@ -590,7 +590,7 @@ export { CORE_BUILD_VERSION } from "./version";
 export async function loadOpenTelemetryAdapter() {
 	return import("./services/telemetry/index.js");
 }
-export { Agent, createAgentRuntime } from "@clinebot/agents";
+export { Agent, createAgentRuntime } from "@cline/agents";
 export { createContextCompactionPrepareTurn } from "./extensions/context/compaction";
 export {
 	ALL_DEFAULT_TOOL_NAMES,

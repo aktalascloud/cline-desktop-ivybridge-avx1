@@ -171,7 +171,7 @@ The setup context can also include `session`, `client`, `user`, `workspaceInfo`,
 
 ## Runtime Hooks
 
-Plugins use the same runtime hook names as `@clinebot/agents`. These are
+Plugins use the same runtime hook names as `@cline/agents`. These are
 in-process callbacks, not file hook event names:
 
 - Runtime hooks: typed in-process plugin/agent lifecycle callbacks such as
@@ -200,7 +200,7 @@ want successful completion. The equivalent file-hook event is `agent_end`.
 ## Runtime hooks vs file hooks
 
 File hooks are external scripts discovered from hook config directories such as
-`.cline/hooks`. They use serialized event names from `@clinebot/shared`, while
+`.cline/hooks`. They use serialized event names from `@cline/shared`, while
 plugin runtime hooks use the typed in-process runtime lifecycle names above.
 Core adapts file hooks onto the runtime hook layer before executing the scripts.
 

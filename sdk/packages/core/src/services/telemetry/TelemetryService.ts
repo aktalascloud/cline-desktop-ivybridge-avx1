@@ -3,7 +3,7 @@ import type {
 	ITelemetryService,
 	TelemetryMetadata,
 	TelemetryProperties,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { ITelemetryAdapter } from "./ITelemetryAdapter";
 import { TelemetryLoggerSink } from "./TelemetryLoggerSink";
 

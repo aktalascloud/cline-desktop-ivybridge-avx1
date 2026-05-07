@@ -7,7 +7,7 @@ import {
 	getValidClineCredentials,
 	type ProviderSettings,
 	ProviderSettingsManager,
-} from "@clinebot/core";
+} from "@cline/core";
 import { formatCreditBalance, normalizeCreditBalance } from "../utils/output";
 import { toProviderApiKey } from "../utils/provider-auth";
 import type { Config } from "../utils/types";

@@ -1,4 +1,4 @@
-import type { ToolPolicy } from "@clinebot/shared";
+import type { ToolPolicy } from "@cline/shared";
 import { defaultMcpToolNameTransform } from "./name-transform";
 import type { McpToolNameTransform } from "./types";
 

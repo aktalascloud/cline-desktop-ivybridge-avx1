@@ -1,4 +1,4 @@
-import type { ProviderSettings, ProviderSettingsManager } from "@clinebot/core";
+import type { ProviderSettings, ProviderSettingsManager } from "@cline/core";
 import type { OAuthCredentials } from "../commands/auth";
 import {
 	getPersistedProviderApiKey,
@@ -35,9 +35,9 @@ async function performOAuthLogin(
 ): Promise<OAuthCredentials> {
 	const [{ createOAuthClientCallbacks }, { default: open }, coreOAuth] =
 		await Promise.all([
-			import("@clinebot/core"),
+			import("@cline/core"),
 			import("open"),
-			import("@clinebot/core").then((m) => ({
+			import("@cline/core").then((m) => ({
 				loginClineOAuth: m.loginClineOAuth as (input: {
 					useWorkOSDeviceAuth?: boolean;
 					apiBaseUrl: string;

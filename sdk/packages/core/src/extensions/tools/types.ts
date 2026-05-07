@@ -8,7 +8,7 @@ import type {
 	AgentToolContext,
 	ImageContent,
 	TextContent,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type {
 	ApplyPatchInput,
 	EditFileInput,

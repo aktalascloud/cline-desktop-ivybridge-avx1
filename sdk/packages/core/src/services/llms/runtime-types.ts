@@ -10,7 +10,7 @@ import type {
 	ProviderConfig,
 	ProviderInfo,
 	ProviderProtocol,
-} from "@clinebot/llms";
+} from "@cline/llms";
 import type { ProviderCapability } from "./provider-settings";
 
 export type ProviderConfigDefaults = Omit<

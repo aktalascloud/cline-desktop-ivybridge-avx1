@@ -7,7 +7,7 @@ import {
 	refreshProviderModelsFromSource,
 	resolveProviderConfig,
 	saveLocalProviderSettings,
-} from "@clinebot/core";
+} from "@cline/core";
 
 type ByoFieldKey = "apiKey" | "baseUrl";
 

@@ -1,5 +1,5 @@
-import { createTeamName } from "@clinebot/core";
-import { formatUserCommandBlock } from "@clinebot/shared";
+import { createTeamName } from "@cline/core";
+import { formatUserCommandBlock } from "@cline/shared";
 import type { Config } from "./types";
 
 export const TEAM_COMMAND_USAGE =

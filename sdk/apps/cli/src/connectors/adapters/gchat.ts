@@ -1,13 +1,13 @@
 import { createGoogleChatAdapter } from "@chat-adapter/gchat";
-import type { ChatStartSessionRequest } from "@clinebot/core";
+import type { ChatStartSessionRequest } from "@cline/core";
 import {
 	createUserInstructionConfigService,
 	HubSessionClient,
-} from "@clinebot/core";
+} from "@cline/core";
 import type {
 	ConnectGoogleChatOptions,
 	GoogleChatConnectorState,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { Chat, ConsoleLogger, type Thread } from "chat";
 import type { Command } from "commander";
 import type { CliLoggerAdapter } from "../../logging/adapter";

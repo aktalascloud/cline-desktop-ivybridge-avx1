@@ -2,7 +2,7 @@ import type {
 	HubCommandEnvelope,
 	HubEventEnvelope,
 	HubReplyEnvelope,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { HubCommandTransport } from "./command-transport";
 
 export interface NativeHubTransport {

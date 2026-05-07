@@ -1,4 +1,4 @@
-import type { ITelemetryService } from "@clinebot/shared";
+import type { ITelemetryService } from "@cline/shared";
 import { describe, expect, test, vi } from "vitest";
 import {
 	captureExtensionActivated,

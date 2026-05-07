@@ -1,5 +1,5 @@
 {
-	"name": "@clinebot/cli",
+	"name": "@cline/cli",
 	"displayName": "clite",
 	"version": "0.0.11",
 	"description": "[EXPERIMENTAL] A lightweight Cline CLI built with the Cline SDKs",
@@ -71,9 +71,9 @@
 	},
 	"license": "Apache-2.0",
 	"devDependencies": {
-		"@clinebot/core": "workspace:*",
-		"@clinebot/enterprise": "workspace:*",
-		"@clinebot/shared": "workspace:*",
+		"@cline/core": "workspace:*",
+		"@cline/enterprise": "workspace:*",
+		"@cline/shared": "workspace:*",
 		"@microsoft/tui-test": "^0.0.2",
 		"@types/react": "19.2.14"
 	}

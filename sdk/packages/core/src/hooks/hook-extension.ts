@@ -1,4 +1,4 @@
-import type { AgentExtension, AgentHooks } from "@clinebot/shared";
+import type { AgentExtension, AgentHooks } from "@cline/shared";
 
 export function createAgentHooksExtension(
 	name: string,

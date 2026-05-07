@@ -34,28 +34,24 @@ describe("getInstallationInfo", () => {
 	});
 
 	it("detects npm installs from the wrapper path passed to the compiled binary", () => {
-		const wrapperPath = createTempFile(
-			"lib/node_modules/@clinebot/cli/bin/clite",
-		);
+		const wrapperPath = createTempFile("lib/node_modules/@cline/cli/bin/clite");
 		process.env.CLITE_WRAPPER_PATH = wrapperPath;
 		process.argv = ["bun", "/$bunfs/root/clite", "update", "--verbose"];
 
 		expect(getInstallationInfo("1.2.3")).toEqual({
 			packageManager: PackageManager.NPM,
-			updateCommand: "npm install -g @clinebot/cli@latest",
+			updateCommand: "npm install -g @cline/cli@latest",
 		});
 	});
 
 	it("uses the nightly tag when the current CLI version is nightly", () => {
-		const wrapperPath = createTempFile(
-			"lib/node_modules/@clinebot/cli/bin/clite",
-		);
+		const wrapperPath = createTempFile("lib/node_modules/@cline/cli/bin/clite");
 		process.env.CLITE_WRAPPER_PATH = wrapperPath;
 		process.argv = ["bun", "/$bunfs/root/clite", "update", "--verbose"];
 
 		expect(getInstallationInfo("1.2.3-nightly.456")).toEqual({
 			packageManager: PackageManager.NPM,
-			updateCommand: "npm install -g @clinebot/cli@nightly",
+			updateCommand: "npm install -g @cline/cli@nightly",
 		});
 	});
 

@@ -5,12 +5,12 @@ import type {
 	RuntimeHostMode,
 	SessionHistoryRecord,
 	SessionRecord,
-} from "@clinebot/core";
+} from "@cline/core";
 import {
 	ClineCore,
 	listSessionHistoryFromBackend,
 	resolveSessionBackend,
-} from "@clinebot/core";
+} from "@cline/core";
 import { resolveWorkspaceRoot } from "../utils/helpers";
 import { getCliTelemetryService } from "../utils/telemetry";
 import type { ConversationHistory } from "./export";

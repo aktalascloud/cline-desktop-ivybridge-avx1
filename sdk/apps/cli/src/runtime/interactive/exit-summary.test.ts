@@ -1,4 +1,4 @@
-import type { SessionRecord } from "@clinebot/core";
+import type { SessionRecord } from "@cline/core";
 import { describe, expect, it } from "vitest";
 import {
 	createInteractiveExitSummary,

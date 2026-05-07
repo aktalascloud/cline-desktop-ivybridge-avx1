@@ -5,8 +5,8 @@ import {
 	buildWorkspaceMetadata,
 	mergeRulesForSystemPrompt,
 	type UserInstructionConfigService,
-} from "@clinebot/core";
-import { type AgentMode, buildClineSystemPrompt } from "@clinebot/shared";
+} from "@cline/core";
+import { type AgentMode, buildClineSystemPrompt } from "@cline/shared";
 import { isImagePath, loadImageAsDataUrl } from "../utils/image-attachments";
 
 const PLAN_MODE_INSTRUCTIONS = `# Plan Mode

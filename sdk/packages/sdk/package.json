@@ -1,6 +1,6 @@
 {
-	"name": "@clinebot/sdk",
-	"description": "Cline SDK - user-facing alias for @clinebot/core",
+	"name": "@cline/sdk",
+	"description": "Cline SDK - user-facing alias for @cline/core",
 	"version": "0.0.38",
 	"repository": {
 		"type": "git",
@@ -27,7 +27,7 @@
 		"typecheck": "bun tsc -p tsconfig.json --noEmit"
 	},
 	"dependencies": {
-		"@clinebot/core": "workspace:*"
+		"@cline/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=22"

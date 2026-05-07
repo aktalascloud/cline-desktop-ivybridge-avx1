@@ -1,4 +1,4 @@
-import { createTool } from "@clinebot/shared";
+import { createTool } from "@cline/shared";
 import type { Config } from "../../utils/types";
 import { resolveSystemPrompt } from "../prompt";
 

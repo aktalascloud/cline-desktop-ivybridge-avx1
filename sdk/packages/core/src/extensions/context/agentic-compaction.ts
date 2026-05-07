@@ -1,5 +1,5 @@
-import { createHandler } from "@clinebot/llms";
-import type { BasicLogger } from "@clinebot/shared";
+import { createHandler } from "@cline/llms";
+import type { BasicLogger } from "@cline/shared";
 import type {
 	CoreCompactionContext,
 	CoreCompactionResult,

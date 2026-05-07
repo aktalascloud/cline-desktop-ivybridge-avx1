@@ -5,7 +5,7 @@ import {
 	listLocalProviders,
 	type ProviderSettings,
 	type ProviderSettingsManager,
-} from "@clinebot/core";
+} from "@cline/core";
 import { Command } from "commander";
 import open from "open";
 import React from "react";
@@ -102,7 +102,7 @@ let cachedCoreOAuthApi: Promise<CoreOAuthApi> | undefined;
 
 async function getCoreOAuthApi(): Promise<CoreOAuthApi> {
 	if (!cachedCoreOAuthApi) {
-		cachedCoreOAuthApi = import("@clinebot/core").then((module) => {
+		cachedCoreOAuthApi = import("@cline/core").then((module) => {
 			const runtimeApi = module as Partial<CoreOAuthApi>;
 			if (
 				typeof runtimeApi.loginClineOAuth !== "function" ||
@@ -110,7 +110,7 @@ async function getCoreOAuthApi(): Promise<CoreOAuthApi> {
 				typeof runtimeApi.loginOpenAICodex !== "function"
 			) {
 				throw new Error(
-					"Installed @clinebot/core does not expose OAuth login helpers required by the CLI",
+					"Installed @cline/core does not expose OAuth login helpers required by the CLI",
 				);
 			}
 			return runtimeApi as CoreOAuthApi;

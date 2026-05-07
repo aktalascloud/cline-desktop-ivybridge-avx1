@@ -50,7 +50,7 @@ vi.mock("node:child_process", () => ({
 	spawnSync: mockSpawnSync,
 }));
 
-vi.mock("@clinebot/core", () => ({
+vi.mock("@cline/core", () => ({
 	resolveClineDataDir: mockResolveClineDataDir,
 	resolveSharedHubOwnerContext: mockResolveSharedHubOwnerContext,
 	clearHubDiscovery: mockClearHubDiscovery,

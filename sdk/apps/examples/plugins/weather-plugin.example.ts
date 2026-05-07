@@ -17,7 +17,7 @@
  *   ANTHROPIC_API_KEY=sk-... bun run apps/examples/plugin-examples/cline-plugin/weather-plugin.example.ts
  */
 
-import { type AgentPlugin, ClineCore, createTool } from "@clinebot/core";
+import { type AgentPlugin, ClineCore, createTool } from "@cline/core";
 
 // ---------------------------------------------------------------------------
 // Plugin-level state — populated from setup context and available to all hook

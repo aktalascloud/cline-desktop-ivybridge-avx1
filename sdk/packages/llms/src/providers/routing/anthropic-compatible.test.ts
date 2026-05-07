@@ -1,7 +1,7 @@
 import type {
 	GatewayProviderContext,
 	GatewayProviderManifest,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { describe, expect, it } from "vitest";
 import {
 	isAnthropicCompatibleModel,

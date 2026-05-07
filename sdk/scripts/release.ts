@@ -46,11 +46,9 @@ if (!target || !["sdk", "cli"].includes(target)) {
 	console.error("Usage: bun release <sdk|cli> [version] [options]");
 	console.error("");
 	console.error("Targets:");
+	console.error("  sdk   Publish @cline/{shared,llms,agents,core,sdk} to npm");
 	console.error(
-		"  sdk   Publish @clinebot/{shared,llms,agents,core,sdk} to npm",
-	);
-	console.error(
-		"  cli   Publish @clinebot/cli from an existing cli-vX.Y.Z git tag",
+		"  cli   Publish @cline/cli from an existing cli-vX.Y.Z git tag",
 	);
 	console.error("");
 	console.error("Options:");
@@ -394,7 +392,7 @@ async function releaseSDK(version: string): Promise<number> {
 	header("Step 4/5: Publishing packages");
 	for (const workspace of SDK_PUBLISH_ORDER) {
 		const pkgDir = join(packagesDir, workspace);
-		const name = `@clinebot/${workspace}`;
+		const name = `@cline/${workspace}`;
 		console.log(`  Publishing ${name}@${version} with tag '${npmTag}'...`);
 		await run(["bun", "publish", "--tag", npmTag, "--access", "public"], {
 			cwd: pkgDir,
@@ -432,7 +430,7 @@ async function releaseSDK(version: string): Promise<number> {
 	} else {
 		console.log(`  Published SDK packages with tag '${npmTag}':`);
 		for (const workspace of SDK_PUBLISH_ORDER) {
-			console.log(`    - @clinebot/${workspace}@${version}`);
+			console.log(`    - @cline/${workspace}@${version}`);
 		}
 	}
 	console.log(`${"═".repeat(60)}\n`);
@@ -489,7 +487,7 @@ async function releaseCLI(version: string): Promise<number> {
 		console.log(`  CLI v${version} published to npm.`);
 		console.log("");
 		console.log("  Install via npm:");
-		console.log("    npm install -g @clinebot/cli");
+		console.log("    npm install -g @cline/cli");
 	}
 	console.log(`${"═".repeat(60)}\n`);
 

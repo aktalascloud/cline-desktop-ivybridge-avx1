@@ -1,4 +1,4 @@
-import { truncateSplit } from "@clinebot/shared";
+import { truncateSplit } from "@cline/shared";
 import type {
 	SkillConfig,
 	UserInstructionConfigWatcher,

@@ -1,4 +1,4 @@
-import type { PluginManifest } from "@clinebot/shared";
+import type { PluginManifest } from "@cline/shared";
 
 export interface PluginTargeting {
 	providerId?: string;

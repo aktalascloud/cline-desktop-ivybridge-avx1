@@ -4,7 +4,7 @@ import {
 	ProviderSettingsManager,
 	prewarmFileIndex,
 	type UserInstructionConfigService,
-} from "@clinebot/core";
+} from "@cline/core";
 import { logCliError } from "../logging/errors";
 import {
 	loadClineAccountSnapshot,

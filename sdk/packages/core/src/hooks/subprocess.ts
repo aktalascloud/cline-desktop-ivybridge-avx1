@@ -32,7 +32,7 @@ import {
 	type ToolResultHookPayload,
 	type UserPromptSubmitData,
 	type WorkspaceInfo,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { z } from "zod";
 import {
 	type RunSubprocessEventResult,

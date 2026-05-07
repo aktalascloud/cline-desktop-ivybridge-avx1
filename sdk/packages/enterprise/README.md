@@ -1,40 +1,40 @@
-# @clinebot/enterprise
+# @cline/enterprise
 
-Enterprise composition layer for the Cline SDK. Provides identity resolution, remote control plane sync, policy materialization, and telemetry configuration without leaking enterprise-specific concerns into `@clinebot/core`.
+Enterprise composition layer for the Cline SDK. Provides identity resolution, remote control plane sync, policy materialization, and telemetry configuration without leaking enterprise-specific concerns into `@cline/core`.
 
 ## Installation
 
 ```sh
-npm install @clinebot/enterprise
+npm install @cline/enterprise
 # or
-bun add @clinebot/enterprise
+bun add @cline/enterprise
 ```
 
 **Requires Node.js >= 20.**
 
 ## Overview
 
-`packages/enterprise` is an optional layer that sits on top of `@clinebot/agents`, `@clinebot/core`, and `@clinebot/shared`. It handles the full enterprise sync lifecycle:
+`packages/enterprise` is an optional layer that sits on top of `@cline/agents`, `@cline/core`, and `@cline/shared`. It handles the full enterprise sync lifecycle:
 
 1. Resolve identity via an `IdentityAdapter` (e.g. WorkOS)
 2. Fetch a remote config bundle via an `EnterpriseControlPlane`
 3. Persist the bundle via an `EnterpriseBundleStore`
 4. Materialize managed rules, workflows, and skills to disk via an `EnterprisePolicyMaterializer`
 5. Resolve telemetry configuration via an `EnterpriseTelemetryAdapter`
-6. Register the result as an `AgentExtension` consumed by `@clinebot/core`
+6. Register the result as an `AgentExtension` consumed by `@cline/core`
 
-Provider-specific code ends at the adapter boundary. `@clinebot/core` loads materialized files through the same local discovery path it uses for any other instruction files.
+Provider-specific code ends at the adapter boundary. `@cline/core` loads materialized files through the same local discovery path it uses for any other instruction files.
 
 ## Quick Start
 
 ```ts
-import { ClineCore } from "@clinebot/core";
+import { ClineCore } from "@cline/core";
 import {
   createEnterpriseSessionMessagesArtifactUploader,
   createWorkosControlPlaneAdapter,
   createWorkosIdentityAdapter,
   prepareEnterpriseCoreIntegration,
-} from "@clinebot/enterprise";
+} from "@cline/enterprise";
 
 const runtime = await ClineCore.create({
   backendMode: "local",
@@ -81,7 +81,7 @@ This keeps enterprise as a materialization layer:
 To run the sync step explicitly before constructing the runtime, use `prepareEnterpriseRuntime`:
 
 ```ts
-import { prepareEnterpriseRuntime } from "@clinebot/enterprise";
+import { prepareEnterpriseRuntime } from "@cline/enterprise";
 
 const prepared = await prepareEnterpriseRuntime({
   workspacePath,
@@ -90,10 +90,10 @@ const prepared = await prepareEnterpriseRuntime({
 });
 
 // prepared.bundle         — the fetched EnterpriseConfigBundle
-// prepared.telemetry      — resolved OpenTelemetryClientConfig from @clinebot/shared
+// prepared.telemetry      — resolved OpenTelemetryClientConfig from @cline/shared
 // prepared.workflowsDirectories — directories registered for workflow discovery
 // prepared.skillsDirectories    — directories registered for skill discovery
-// prepared.pluginDefinition     — AgentExtension for @clinebot/core
+// prepared.pluginDefinition     — AgentExtension for @cline/core
 ```
 
 ## Core Interfaces
@@ -144,7 +144,7 @@ interface EnterpriseTelemetryAdapter {
 }
 ```
 
-`OpenTelemetryClientConfig` is defined in `@clinebot/shared`. Enterprise resolves that shared telemetry shape; it does not define a separate enterprise-only OTEL config contract.
+`OpenTelemetryClientConfig` is defined in `@cline/shared`. Enterprise resolves that shared telemetry shape; it does not define a separate enterprise-only OTEL config contract.
 
 ### `EnterpriseConfigBundle`
 
@@ -154,7 +154,7 @@ The normalized data contract produced by the control plane and consumed by the m
 interface EnterpriseConfigBundle {
   source: string;
   version: string;
-  remoteConfig?: RemoteConfig;            // from @clinebot/shared
+  remoteConfig?: RemoteConfig;            // from @cline/shared
   managedInstructions?: EnterpriseRuleFile[];
   telemetry?: Record<string, unknown>;
   claims?: EnterpriseIdentityClaims;
@@ -162,7 +162,7 @@ interface EnterpriseConfigBundle {
 }
 ```
 
-`RemoteConfig` is defined in `@clinebot/shared` and is the single normalized config contract shared across the SDK. Enterprise providers normalize into this shape; do not redefine it locally.
+`RemoteConfig` is defined in `@cline/shared` and is the single normalized config contract shared across the SDK. Enterprise providers normalize into this shape; do not redefine it locally.
 
 ## Storage
 
@@ -184,14 +184,14 @@ WorkOS adapters are included under `src/providers/workos/`. Use the factory func
 import {
   createWorkosIdentityAdapter,
   createWorkosControlPlaneAdapter,
-} from "@clinebot/enterprise";
+} from "@cline/enterprise";
 ```
 
 `createWorkosIdentityAdapter` accepts a `resolveIdentity` callback that returns a `WorkosResolvedIdentity`. `createWorkosControlPlaneAdapter` accepts a `fetchBundle` callback that returns an `EnterpriseConfigBundle`.
 
 ## Managed Instruction Materialization
 
-Rules, workflows, and skills from the remote bundle are written to managed directories on disk, then discovered and loaded through `@clinebot/core`'s standard local file path, the same path used for any other instruction files.
+Rules, workflows, and skills from the remote bundle are written to managed directories on disk, then discovered and loaded through `@cline/core`'s standard local file path, the same path used for any other instruction files.
 
 This means:
 - Prompt assembly is consistent between local and enterprise-managed instructions
@@ -203,10 +203,10 @@ Materialized file paths are resolved via `resolveEnterprisePaths` and reported b
 ## Package Boundaries
 
 `packages/enterprise` depends on:
-- `@clinebot/agents` — for `AgentExtension`
-- `@clinebot/shared` — for `RemoteConfig`, `BasicLogger`, and telemetry config contracts
+- `@cline/agents` — for `AgentExtension`
+- `@cline/shared` — for `RemoteConfig`, `BasicLogger`, and telemetry config contracts
 
-It does not re-implement the agent loop, session host, transport selection, plugin loading, or generic tool registry. Those belong in `@clinebot/agents`, `@clinebot/core`, and other lower-level SDK packages.
+It does not re-implement the agent loop, session host, transport selection, plugin loading, or generic tool registry. Those belong in `@cline/agents`, `@cline/core`, and other lower-level SDK packages.
 
 A useful boundary test before adding a feature: if it works without org identity, remote admin policy, or enterprise telemetry config, it probably does not belong in this package.
 

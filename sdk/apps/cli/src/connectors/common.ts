@@ -8,9 +8,9 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import type { HubSessionClient, HubSessionRow } from "@clinebot/core";
-import { ensureParentDir, resolveClineDataDir } from "@clinebot/core";
-import { withResolvedClineBuildEnv } from "@clinebot/shared";
+import type { HubSessionClient, HubSessionRow } from "@cline/core";
+import { ensureParentDir, resolveClineDataDir } from "@cline/core";
+import { withResolvedClineBuildEnv } from "@cline/shared";
 import { createCliLoggerAdapter } from "../logging/adapter";
 import { logSpawnedProcess } from "../logging/process";
 import { resolveCliLaunchSpec } from "../utils/internal-launch";

@@ -14,7 +14,7 @@ const result = await Bun.build({
 	target: "node",
 	format: "esm",
 	sourcemap,
-	packages: "bundle", // Keep private workspace packages bundled so npm consumers do not need @clinebot/* at runtime.
+	packages: "bundle", // Keep private workspace packages bundled so npm consumers do not need @cline/* at runtime.
 	external: [
 		// OpenTUI resolves a platform-specific native package at runtime.
 		// Bundling through that resolution path rewrites the import in a way that

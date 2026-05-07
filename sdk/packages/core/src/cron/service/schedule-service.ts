@@ -8,7 +8,7 @@ import type {
 	ScheduleExecutionRecord,
 	ScheduleExecutionStatus,
 	ScheduleRecord,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { CronMaterializer } from "../runner/cron-materializer";
 import { CronRunner } from "../runner/cron-runner";
 import { validateCronPattern } from "../schedule/scheduler";

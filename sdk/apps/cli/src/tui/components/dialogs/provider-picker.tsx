@@ -6,7 +6,7 @@ import {
 	saveLocalProviderOAuthCredentials,
 	saveLocalProviderSettings,
 	startClineDeviceAuth,
-} from "@clinebot/core";
+} from "@cline/core";
 import type { ChoiceContext } from "@opentui-ui/dialog";
 import { useDialogKeyboard } from "@opentui-ui/dialog/react";
 import open from "open";

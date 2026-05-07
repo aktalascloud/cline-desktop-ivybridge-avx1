@@ -1,5 +1,5 @@
 {
-	"name": "@clinebot/core",
+	"name": "@cline/core",
 	"description": "Cline Core SDK for Node Runtime",
 	"version": "0.0.38",
 	"repository": {
@@ -48,9 +48,9 @@
 		"test:watch": "vitest --config vitest.config.ts"
 	},
 	"dependencies": {
-		"@clinebot/agents": "workspace:*",
-		"@clinebot/shared": "workspace:*",
-		"@clinebot/llms": "workspace:*",
+		"@cline/agents": "workspace:*",
+		"@cline/shared": "workspace:*",
+		"@cline/llms": "workspace:*",
 		"@opentelemetry/api": "^1.9.0",
 		"@opentelemetry/api-logs": "^0.214.0",
 		"@opentelemetry/exporter-logs-otlp-http": "^0.214.0",

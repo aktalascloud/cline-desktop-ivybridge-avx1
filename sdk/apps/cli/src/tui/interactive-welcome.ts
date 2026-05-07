@@ -2,7 +2,7 @@ import {
 	getFileIndex,
 	type ProviderSettings,
 	type UserInstructionConfigService,
-} from "@clinebot/core";
+} from "@cline/core";
 import type { Config } from "../utils/types";
 import { formatClineCredits, loadClineAccountSnapshot } from "./cline-account";
 

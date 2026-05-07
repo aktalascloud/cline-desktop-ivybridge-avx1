@@ -7,7 +7,7 @@ Think of it as `spawn()` for AI agents: fire off a recon agent to map a codebase
 ## Quick Start
 
 ```ts
-import { ClineCore } from "@clinebot/core";
+import { ClineCore } from "@cline/core";
 
 const cline = await ClineCore.create({ backendMode: "auto" });
 

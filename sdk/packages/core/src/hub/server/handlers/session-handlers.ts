@@ -3,11 +3,8 @@ import type {
 	HubReplyEnvelope,
 	JsonValue,
 	ToolApprovalRequest,
-} from "@clinebot/shared";
-import {
-	createSessionId,
-	parseRuntimeConfigExtensions,
-} from "@clinebot/shared";
+} from "@cline/shared";
+import { createSessionId, parseRuntimeConfigExtensions } from "@cline/shared";
 import type { RuntimeSessionConfig } from "../../../runtime/host/runtime-host";
 import {
 	SessionVersioningError,

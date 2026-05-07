@@ -1,4 +1,4 @@
-import type { ProviderSettingsManager } from "@clinebot/core";
+import type { ProviderSettingsManager } from "@cline/core";
 import { useTerminalDimensions } from "@opentui/react";
 import { useMouseTracker } from "../../components/tracked-robot";
 import { HOME_VIEW_MAX_WIDTH } from "../../types";

@@ -13,12 +13,12 @@ Detailed CLI command/feature reference is centralized in [`DOC.md`](./DOC.md).
 
 ## Installation
 
-> NOTE: The package is not published yet, so the CLI is not available on npm. To use the CLI, you can clone the repository and link the package locally with `bun link` from the `@clinebot/cli` workspace. Global installation from npm will be available after the initial release.
+> NOTE: The package is not published yet, so the CLI is not available on npm. To use the CLI, you can clone the repository and link the package locally with `bun link` from the `@cline/cli` workspace. Global installation from npm will be available after the initial release.
 
 ```bash
-npm i -g @clinebot/cli
+npm i -g @cline/cli
 # or
-bun i -g @clinebot/cli
+bun i -g @cline/cli
 ```
 
 ## Development
@@ -32,7 +32,7 @@ bun run build
 
 bun run cli # Run Dev script for the CLI package 
 # or
-bun run -F @clinebot/cli dev "your prompt" # Run the CLI from the package workspace
+bun run -F @cline/cli dev "your prompt" # Run the CLI from the package workspace
 # or
 bun link # Link the package globally for easy access from anywhere
 # Run from the linked binary
@@ -44,12 +44,12 @@ bun cli/dist/index.js "your prompt"
 
 Dev runtime note:
 
-- Distinct host ID resolution is handled by `@clinebot/core` `createRuntimeHost(...)`.
+- Distinct host ID resolution is handled by `@cline/core` `createRuntimeHost(...)`.
 - When no explicit `distinctId` is provided, core uses `node-machine-id` first and only persists a generated fallback at `<session-data-dir>/machine-id` if machine ID lookup is unavailable.
 
 ## Publishing
 
-From the @clinebot/cli package workspace:
+From the @cline/cli package workspace:
 
 ```bash
 # Package the latest model list from models.dev
@@ -68,11 +68,11 @@ bun run release
 ```bash
 
 # Run CLI unit tests
-bun -F @clinebot/cli test:unit
+bun -F @cline/cli test:unit
 
 # Run CLI e2e tests
-bun -F @clinebot/cli test:e2e
-bun -F @clinebot/cli test:e2e:interactive
+bun -F @cline/cli test:e2e
+bun -F @cline/cli test:e2e:interactive
 ```
 
 ## Usage
@@ -248,7 +248,7 @@ For non-interactive runs, if one of these providers is selected and no saved cre
 
 During OAuth login, `clite` tries to open the authorization URL in your default browser automatically and still prints the URL for manual fallback.
 
-OAuth refresh is handled by `@clinebot/core` during session turns. If refresh cannot recover credentials, the run fails with a re-authentication message; clients are not sent a separate auth-request event that can mutate provider config on their behalf.
+OAuth refresh is handled by `@cline/core` during session turns. If refresh cannot recover credentials, the run fails with a re-authentication message; clients are not sent a separate auth-request event that can mutate provider config on their behalf.
 
 `clite auth` (without a provider) opens the interactive auth TUI with the same auth options as the old CLI flow:
 
@@ -421,17 +421,17 @@ CLINE_BUILD_ENV=development bun --conditions=development --inspect-brk=6499 ./sr
 
 - The workspace includes [.vscode/launch.json](./.vscode/launch.json) with a single `Launch CLI Debugger` compound entry for VS Code. It launches `apps/cli/src/index.ts` directly under Bun in development mode and attaches the common SDK child-process debuggers.
 - The launch config uses `"type": "bun"` (requires the [`oven.bun-vscode`](https://marketplace.visualstudio.com/items?itemName=oven.bun-vscode) extension). Using `type: node` will not work because breakpoints in the CLI and workspace packages like `packages/core` will be silently ignored.
-- Attach configs use `"url": "ws://127.0.0.1:<port>"` with `localRoot`/`remoteRoot` both set to `${workspaceFolder}`. This lets the Bun debug adapter resolve source maps for files loaded through workspace symlinks (for example `node_modules/@clinebot/core` to `packages/core/src/...`), so breakpoints set in `packages/core` hit correctly.
+- Attach configs use `"url": "ws://127.0.0.1:<port>"` with `localRoot`/`remoteRoot` both set to `${workspaceFolder}`. This lets the Bun debug adapter resolve source maps for files loaded through workspace symlinks (for example `node_modules/@cline/core` to `packages/core/src/...`), so breakpoints set in `packages/core` hit correctly.
 
 ## Logging Adapter
 
 `clite` uses a `pino`-backed adapter that targets the core `BasicLogger` contract:
 
-- CLI runtime passes `logger` directly into local `@clinebot/core` sessions.
+- CLI runtime passes `logger` directly into local `@cline/core` sessions.
 - Hub-backed sessions include a serialized logger payload in `ChatStartSessionRequest.logger`; the runtime reconstructs the same `pino` settings and injects them into core.
 - Hosts can attach stable runtime logger bindings (for example `clientId`, `clientType`, `clientApp`) through `RuntimeLoggerConfig.bindings`.
 
-After login, OAuth credentials are persisted with `auth.expiresAt`, and `@clinebot/core` refreshes these tokens automatically during session turns. Provider auth and model settings should be changed through `clite auth`, the interactive config UI, or core provider-settings APIs rather than editing provider settings files directly.
+After login, OAuth credentials are persisted with `auth.expiresAt`, and `@cline/core` refreshes these tokens automatically during session turns. Provider auth and model settings should be changed through `clite auth`, the interactive config UI, or core provider-settings APIs rather than editing provider settings files directly.
 
 On startup, `clite` also attempts a legacy settings import:
 

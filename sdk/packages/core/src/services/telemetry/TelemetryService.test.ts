@@ -1,4 +1,4 @@
-import type { BasicLogger } from "@clinebot/shared";
+import type { BasicLogger } from "@cline/shared";
 import { describe, expect, it, vi } from "vitest";
 import type { ITelemetryAdapter } from "./ITelemetryAdapter";
 import { TelemetryService } from "./TelemetryService";

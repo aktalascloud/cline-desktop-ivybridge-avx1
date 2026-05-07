@@ -9,7 +9,7 @@ import {
 	type AgentToolContext,
 	getDefaultShell,
 	getShellArgs,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { BashExecutor } from "../types";
 
 /**

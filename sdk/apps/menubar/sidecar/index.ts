@@ -9,8 +9,8 @@ import {
 	ProviderSettingsManager,
 	stopLocalHubServerGracefully,
 	toHubHealthUrl,
-} from "@clinebot/core";
-import type { HubUINotifyPayload, SessionRecord } from "@clinebot/shared";
+} from "@cline/core";
+import type { HubUINotifyPayload, SessionRecord } from "@cline/shared";
 
 interface TrackedClient {
 	clientId: string;
@@ -661,7 +661,7 @@ async function main(): Promise<void> {
 }
 
 if (isBundledDaemonEntryInvocation()) {
-	await import("@clinebot/core/hub/daemon-entry");
+	await import("@cline/core/hub/daemon-entry");
 } else {
 	main().catch((err) => {
 		const msg = err instanceof Error ? err.message : String(err);

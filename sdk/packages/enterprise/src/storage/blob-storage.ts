@@ -1,14 +1,11 @@
 import { createHmac } from "node:crypto";
 import { basename } from "node:path";
-import type {
-	SessionMessagesArtifactUploader,
-	SessionRow,
-} from "@clinebot/core";
+import type { SessionMessagesArtifactUploader, SessionRow } from "@cline/core";
 import type {
 	PromptUploading,
 	RemoteConfig,
 	S3AccessKeySettings,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { AwsClient } from "aws4fetch";
 
 export interface EnterpriseBlobStoreSettings {

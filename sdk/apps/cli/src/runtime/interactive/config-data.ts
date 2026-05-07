@@ -2,7 +2,7 @@ import {
 	createCoreSettingsService,
 	setDisabledPlugin,
 	type UserInstructionConfigService,
-} from "@clinebot/core";
+} from "@cline/core";
 import {
 	type InteractiveConfigData,
 	type InteractiveConfigItem,

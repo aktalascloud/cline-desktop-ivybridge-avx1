@@ -1,4 +1,4 @@
-import { validateWithZod } from "@clinebot/shared";
+import { validateWithZod } from "@cline/shared";
 import {
 	type EditFileInput,
 	INPUT_ARG_CHAR_LIMIT,

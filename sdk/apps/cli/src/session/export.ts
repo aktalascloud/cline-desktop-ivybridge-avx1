@@ -4,7 +4,7 @@ import {
 	normalizeUserInput,
 	type ToolResultContent,
 	type ToolUseContent,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 export interface ConversationHistory {
 	version: number;

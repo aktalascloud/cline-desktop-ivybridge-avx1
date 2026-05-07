@@ -1,7 +1,7 @@
 import type {
 	GatewayProviderFactory,
 	GatewayProviderRegistration,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { BUILTIN_SPECS, type ProviderFamily, toManifest } from "./builtins";
 
 const FAMILY_FACTORY_PROMISES = new Map<

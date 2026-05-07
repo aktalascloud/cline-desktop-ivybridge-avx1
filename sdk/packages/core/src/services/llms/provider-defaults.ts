@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/style/noNonNullAssertion: static */
 
-import * as Llms from "@clinebot/llms";
+import * as Llms from "@cline/llms";
 import {
 	fetchModelIdsFromSource,
 	resolveModelsSourceUrl,

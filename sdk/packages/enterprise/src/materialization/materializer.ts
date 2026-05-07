@@ -1,4 +1,4 @@
-import type { GlobalInstructionsFile, RemoteConfig } from "@clinebot/shared";
+import type { GlobalInstructionsFile, RemoteConfig } from "@cline/shared";
 import type {
 	EnterpriseConfigBundle,
 	EnterpriseMaterializationInput,

@@ -1,4 +1,4 @@
-import type { AgentEvent, AgentTool } from "@clinebot/shared";
+import type { AgentEvent, AgentTool } from "@cline/shared";
 import {
 	createBuiltinTools,
 	resolveToolPresetName,

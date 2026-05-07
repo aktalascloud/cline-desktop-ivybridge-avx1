@@ -1,14 +1,11 @@
-import type {
-	ChatStartSessionRequest,
-	RuntimeLoggerConfig,
-} from "@clinebot/core";
+import type { ChatStartSessionRequest, RuntimeLoggerConfig } from "@cline/core";
 import {
 	CoreSessionService,
 	HubSessionClient,
 	Llms,
 	ProviderSettingsManager,
 	SqliteSessionStore,
-} from "@clinebot/core";
+} from "@cline/core";
 import type { Thread } from "chat";
 import {
 	ensureOAuthProviderApiKey,

@@ -239,7 +239,7 @@ async function main(): Promise<number> {
 
 		console.log("\n--- Verifying publish-only package invariants ---");
 		for (const pkg of published) {
-			if (pkg.name !== "@clinebot/core") {
+			if (pkg.name !== "@cline/core") {
 				continue;
 			}
 
@@ -250,17 +250,17 @@ async function main(): Promise<number> {
 					`import { readFileSync } from "node:fs";`,
 					`import { join } from "node:path";`,
 					`try {`,
-					`  const root = await import("@clinebot/core");`,
+					`  const root = await import("@cline/core");`,
 					`  if (typeof root.ClineCore?.create !== "function") {`,
-					`    console.error("  FAIL @clinebot/core: root export is missing ClineCore.create");`,
+					`    console.error("  FAIL @cline/core: root export is missing ClineCore.create");`,
 					`    process.exit(1);`,
 					`  }`,
 					`} catch (error) {`,
 					`  const message = error instanceof Error ? error.message : String(error);`,
-					`  console.error("  FAIL @clinebot/core: published runtime shape is invalid:", message);`,
+					`  console.error("  FAIL @cline/core: published runtime shape is invalid:", message);`,
 					`  process.exit(1);`,
 					`}`,
-					`console.log("  OK @clinebot/core publish shape");`,
+					`console.log("  OK @cline/core publish shape");`,
 				].join("\n"),
 			);
 			try {

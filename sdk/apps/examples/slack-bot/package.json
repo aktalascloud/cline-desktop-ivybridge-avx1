@@ -9,7 +9,7 @@
 	},
 	"dependencies": {
 		"@chat-adapter/slack": "^4.16.1",
-		"@clinebot/core": "workspace:*",
+		"@cline/core": "workspace:*",
 		"chat": "^4.16.1"
 	}
 }

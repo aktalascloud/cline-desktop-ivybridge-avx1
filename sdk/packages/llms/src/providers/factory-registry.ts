@@ -7,7 +7,7 @@
  *
  * @example
  * ```typescript
- * import { registerHandler, BaseHandler, type ProviderConfig, type ApiStream, type Message } from "@clinebot/providers"
+ * import { registerHandler, BaseHandler, type ProviderConfig, type ApiStream, type Message } from "@cline/providers"
  * import * as vscode from "vscode"
  *
  * class VSCodeLmHandler extends BaseHandler {

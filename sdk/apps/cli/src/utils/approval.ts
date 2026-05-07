@@ -1,5 +1,5 @@
 import { createInterface } from "node:readline";
-import type { ToolApprovalRequest, ToolApprovalResult } from "@clinebot/shared";
+import type { ToolApprovalRequest, ToolApprovalResult } from "@cline/shared";
 import { truncate } from "./helpers";
 import { c, getActiveCliSession, write } from "./output";
 
@@ -25,7 +25,7 @@ async function requestDesktopToolApprovalFromCore(
 	request: ToolApprovalRequest,
 ): Promise<ToolApprovalResult> {
 	if (!cachedDesktopApprovalRequester) {
-		cachedDesktopApprovalRequester = import("@clinebot/core")
+		cachedDesktopApprovalRequester = import("@cline/core")
 			.then((module) => {
 				const fn = (
 					module as {
@@ -40,7 +40,7 @@ async function requestDesktopToolApprovalFromCore(
 				).requestDesktopToolApproval;
 				if (typeof fn !== "function") {
 					throw new Error(
-						"Installed @clinebot/core does not expose requestDesktopToolApproval",
+						"Installed @cline/core does not expose requestDesktopToolApproval",
 					);
 				}
 				return fn;

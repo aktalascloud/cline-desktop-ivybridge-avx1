@@ -1,4 +1,4 @@
-import type { TeamProgressProjectionEvent } from "@clinebot/shared";
+import type { TeamProgressProjectionEvent } from "@cline/shared";
 import type {
 	CoreSessionEvent,
 	SessionPendingPrompt,

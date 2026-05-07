@@ -6,7 +6,7 @@ import type {
 	GatewayProviderSettings,
 	JsonValue,
 	ProviderCapability,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { getGeneratedModelsForProvider } from "../catalog/catalog.generated-access";
 import type {
 	ModelCollection,

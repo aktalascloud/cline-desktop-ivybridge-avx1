@@ -1,4 +1,4 @@
-import type { HubReplyEnvelope } from "@clinebot/shared";
+import type { HubReplyEnvelope } from "@cline/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BrowserWebSocketHubAdapter } from "./browser-websocket";
 

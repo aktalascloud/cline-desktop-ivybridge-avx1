@@ -1,9 +1,6 @@
-import {
-	getCurrentContextSize,
-	summarizeUsageFromMessages,
-} from "@clinebot/core";
-import type { Message } from "@clinebot/shared";
-import { formatDisplayUserInput, truncateStr } from "@clinebot/shared";
+import { getCurrentContextSize, summarizeUsageFromMessages } from "@cline/core";
+import type { Message } from "@cline/shared";
+import { formatDisplayUserInput, truncateStr } from "@cline/shared";
 import { useRenderer, useTerminalDimensions } from "@opentui/react";
 import type { ChoiceContext } from "@opentui-ui/dialog";
 import {

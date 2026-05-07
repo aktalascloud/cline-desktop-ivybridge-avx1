@@ -14,7 +14,7 @@ const coreMocks = vi.hoisted(() => {
 	};
 });
 
-vi.mock("@clinebot/core", () => {
+vi.mock("@cline/core", () => {
 	return {
 		ClineAccountService: class {
 			constructor(options: {

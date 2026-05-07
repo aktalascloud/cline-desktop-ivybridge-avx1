@@ -1,6 +1,6 @@
 # CLI Distribution
 
-The Cline CLI (`clite`) is distributed as compiled binaries via npm. Users run `npm i -g @clinebot/cli` and get a working `clite` command without needing Bun, Zig, or any other runtime installed.
+The Cline CLI (`clite`) is distributed as compiled binaries via npm. Users run `npm i -g @cline/cli` and get a working `clite` command without needing Bun, Zig, or any other runtime installed.
 
 ## Why Compiled Binaries?
 
@@ -18,19 +18,19 @@ Publishing the CLI publishes 7 packages to npm:
 
 | Package | Description |
 |---|---|
-| `@clinebot/cli-darwin-arm64` | macOS Apple Silicon binary |
-| `@clinebot/cli-darwin-x64` | macOS Intel binary |
-| `@clinebot/cli-linux-arm64` | Linux ARM binary |
-| `@clinebot/cli-linux-x64` | Linux x64 binary |
-| `@clinebot/cli-windows-x64` | Windows x64 binary |
-| `@clinebot/cli-windows-arm64` | Windows ARM binary |
-| `@clinebot/cli` | Wrapper package (pulls the right binary via `optionalDependencies`) |
+| `@cline/cli-darwin-arm64` | macOS Apple Silicon binary |
+| `@cline/cli-darwin-x64` | macOS Intel binary |
+| `@cline/cli-linux-arm64` | Linux ARM binary |
+| `@cline/cli-linux-x64` | Linux x64 binary |
+| `@cline/cli-windows-x64` | Windows x64 binary |
+| `@cline/cli-windows-arm64` | Windows ARM binary |
+| `@cline/cli` | Wrapper package (pulls the right binary via `optionalDependencies`) |
 
 Each platform package contains a compiled binary and a minimal `package.json` with `os` and `cpu` fields:
 
 ```json
 {
-  "name": "@clinebot/cli-darwin-arm64",
+  "name": "@cline/cli-darwin-arm64",
   "version": "0.1.0",
   "os": ["darwin"],
   "cpu": ["arm64"],
@@ -42,11 +42,11 @@ Each platform package contains a compiled binary and a minimal `package.json` wi
 
 The `os` and `cpu` fields tell npm to skip this package on non-matching platforms. A macOS ARM user gets ~30-60MB, not ~200MB of binaries for every platform.
 
-The main `@clinebot/cli` wrapper package contains no binary -- just the resolver script, postinstall script, and `optionalDependencies` pointing to all platform packages:
+The main `@cline/cli` wrapper package contains no binary -- just the resolver script, postinstall script, and `optionalDependencies` pointing to all platform packages:
 
 ```json
 {
-  "name": "@clinebot/cli",
+  "name": "@cline/cli",
   "version": "0.1.0",
   "bin": {
     "clite": "./bin/clite"
@@ -55,12 +55,12 @@ The main `@clinebot/cli` wrapper package contains no binary -- just the resolver
     "postinstall": "node ./postinstall.mjs || true"
   },
   "optionalDependencies": {
-    "@clinebot/cli-darwin-arm64": "0.1.0",
-    "@clinebot/cli-darwin-x64": "0.1.0",
-    "@clinebot/cli-linux-arm64": "0.1.0",
-    "@clinebot/cli-linux-x64": "0.1.0",
-    "@clinebot/cli-windows-x64": "0.1.0",
-    "@clinebot/cli-windows-arm64": "0.1.0"
+    "@cline/cli-darwin-arm64": "0.1.0",
+    "@cline/cli-darwin-x64": "0.1.0",
+    "@cline/cli-linux-arm64": "0.1.0",
+    "@cline/cli-linux-x64": "0.1.0",
+    "@cline/cli-windows-x64": "0.1.0",
+    "@cline/cli-windows-arm64": "0.1.0"
   }
 }
 ```
@@ -68,7 +68,7 @@ The main `@clinebot/cli` wrapper package contains no binary -- just the resolver
 After installing, users run `clite`:
 
 ```bash
-npm i -g @clinebot/cli
+npm i -g @cline/cli
 
 clite              # interactive mode
 clite "prompt"     # single-prompt mode
@@ -117,7 +117,7 @@ gh release create cli-vX.Y.Z --verify-tag --title "CLI vX.Y.Z" --notes "Paste th
 
 The release helper checks the working tree, verifies the tag points at `HEAD` locally and on `origin`, runs tests, builds all platform packages, and publishes the platform packages plus wrapper package to npm. The package version and tag must match.
 
-By default, `bun release cli` publishes with the npm dist-tag `latest` (what users get with `npm i -g @clinebot/cli`). To publish under a different dist-tag like `next`, pass `--tag`:
+By default, `bun release cli` publishes with the npm dist-tag `latest` (what users get with `npm i -g @cline/cli`). To publish under a different dist-tag like `next`, pass `--tag`:
 
 ```bash
 bun release cli --tag next
@@ -137,17 +137,17 @@ CI publishing uses npm trusted publishing. Configure npm trusted publishers for 
 ## How It Works Under the Hood
 
 ```
-User runs: npm i -g @clinebot/cli
+User runs: npm i -g @cline/cli
   |
   v
-npm installs @clinebot/cli (wrapper package)
+npm installs @cline/cli (wrapper package)
   + optionalDependencies (only the matching platform gets installed):
-    - @clinebot/cli-darwin-arm64
-    - @clinebot/cli-darwin-x64
-    - @clinebot/cli-linux-arm64
-    - @clinebot/cli-linux-x64
-    - @clinebot/cli-windows-x64
-    - @clinebot/cli-windows-arm64
+    - @cline/cli-darwin-arm64
+    - @cline/cli-darwin-x64
+    - @cline/cli-linux-arm64
+    - @cline/cli-linux-x64
+    - @cline/cli-windows-x64
+    - @cline/cli-windows-arm64
   |
   v
 postinstall script runs:
@@ -195,7 +195,7 @@ Direct `bun pm pack` and `bun pm pack --dry-run` from `apps/cli` are blocked bec
 Cross-compiles the CLI for all target platforms:
 
 1. When `--install-native-variants` is passed, pre-installs all platform variants of `@opentui/core` using `bun install --os="*" --cpu="*"` so Bun can resolve native FFI binaries for cross-compilation. Without this, Bun only has the host platform's native binary and cross-compiled builds fail.
-2. Builds SDK packages (`bun run build:sdk`) and the CLI JS bundle (`bun -F @clinebot/cli build`)
+2. Builds SDK packages (`bun run build:sdk`) and the CLI JS bundle (`bun -F @cline/cli build`)
 3. For each target platform:
    - Runs `bun build --compile --target bun-{os}-{arch}` to create a standalone executable
    - Generates a `package.json` with `os` and `cpu` fields for npm platform filtering
@@ -213,8 +213,8 @@ Flags:
 Orchestrates publishing all packages to npm:
 
 1. Reads built packages from `dist/`
-2. Publishes all 6 platform packages in parallel (`@clinebot/cli-darwin-arm64`, etc.)
-3. Generates a clean main package (`@clinebot/cli`) with:
+2. Publishes all 6 platform packages in parallel (`@cline/cli-darwin-arm64`, etc.)
+3. Generates a clean main package (`@cline/cli`) with:
    - `bin.clite` pointing to the resolver script
    - `postinstall` running the binary caching script
    - `optionalDependencies` listing all platform packages
@@ -237,7 +237,7 @@ Resolution chain:
 
 ## Postinstall (`script/postinstall.mjs`)
 
-Runs after `npm install @clinebot/cli`. Creates a hard link from the platform binary to `bin/.clite` for fast startup on subsequent runs. Falls back to file copy if hard linking fails (NFS, cross-device, network-mounted filesystems).
+Runs after `npm install @cline/cli`. Creates a hard link from the platform binary to `bin/.clite` for fast startup on subsequent runs. Falls back to file copy if hard linking fails (NFS, cross-device, network-mounted filesystems).
 
 The postinstall is defensive: it wraps everything in try/catch and always exits 0 (the `|| true` in the npm script). If postinstall fails, the resolver script has its own fallback logic to find the binary at runtime, so the cached binary is just an optimization.
 
@@ -251,7 +251,7 @@ During development, `bin` in package.json points to `src/index.ts` for `bun link
 |---|---|---|---|
 | `bun run dev` | src/index.ts | Bun (source) | Yes |
 | `bun link` + `clite` | src/index.ts | Bun (source) | Yes |
-| `npm i -g @clinebot/cli` | bin/clite resolver | Compiled binary | No |
+| `npm i -g @cline/cli` | bin/clite resolver | Compiled binary | No |
 
 ## Gotchas
 
@@ -262,7 +262,7 @@ When building for a different platform (e.g., compiling for Linux on a Mac), Bun
 All 7 packages (6 platform + 1 wrapper) must have the same version. The build script reads the version from `apps/cli/package.json`. The publish script verifies that the built package versions match each other and `apps/cli/package.json`.
 
 ### Package naming and scoping
-All packages are published under the `@clinebot` scope. The npm org must have the right permissions for all 7 package names.
+All packages are published under the `@cline` scope. The npm org must have the right permissions for all 7 package names.
 
 ### postinstall reliability
 The postinstall script runs in diverse environments (CI, Docker, restricted permissions, network-mounted filesystems where hard links fail). It always wraps operations in try/catch and exits 0. The resolver script is the ultimate fallback.

@@ -87,12 +87,12 @@ describe("plugin-loader", () => {
 			"utf8",
 		);
 
-		const sdkDir = join(dir, "node_modules", "@clinebot", "shared");
+		const sdkDir = join(dir, "node_modules", "@cline", "shared");
 		await mkdir(sdkDir, { recursive: true });
 		await writeFile(
 			join(sdkDir, "package.json"),
 			JSON.stringify({
-				name: "@clinebot/shared",
+				name: "@cline/shared",
 				type: "module",
 				exports: "./index.js",
 			}),
@@ -106,7 +106,7 @@ describe("plugin-loader", () => {
 		await writeFile(
 			join(dir, "plugin-with-sdk-dep.ts"),
 			[
-				"import { sdkMarker } from '@clinebot/shared';",
+				"import { sdkMarker } from '@cline/shared';",
 				"export default {",
 				"  name: sdkMarker,",
 				"  manifest: { capabilities: ['tools'] },",
@@ -118,8 +118,8 @@ describe("plugin-loader", () => {
 		await writeFile(
 			join(copyDir, "portable-subagents.ts"),
 			[
-				"import { safeJsonStringify } from '@clinebot/shared';",
-				"import { resolveClineDataDir } from '@clinebot/shared/storage';",
+				"import { safeJsonStringify } from '@cline/shared';",
+				"import { resolveClineDataDir } from '@cline/shared/storage';",
 				"import YAML from 'yaml';",
 				"export default {",
 				"  name: typeof safeJsonStringify === 'function' ? YAML.stringify({ ok: !!resolveClineDataDir() }) : 'invalid',",

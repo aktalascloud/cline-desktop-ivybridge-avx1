@@ -6,8 +6,8 @@
 		"declaration": false,
 		"declarationMap": false,
 		"paths": {
-			"@clinebot/sdk-core": ["../../sdk/core/dist/index"],
-			"@clinebot/sdk-shared": ["../../shared/dist/index"]
+			"@cline/sdk-core": ["../../sdk/core/dist/index"],
+			"@cline/sdk-shared": ["../../shared/dist/index"]
 		}
 	},
 	"include": ["src/**/*"],

@@ -1,4 +1,4 @@
-import type { AgentConfig, AgentTool } from "@clinebot/shared";
+import type { AgentConfig, AgentTool } from "@cline/shared";
 import { resolveAgentPluginPaths } from "../extensions/plugin/plugin-config-loader";
 import { loadAgentPluginsFromPathsWithDiagnostics } from "../extensions/plugin/plugin-loader";
 import { resolveDisabledToolNames } from "./global-settings";

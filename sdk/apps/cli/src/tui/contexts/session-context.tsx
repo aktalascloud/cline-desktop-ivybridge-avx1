@@ -1,4 +1,4 @@
-import type { AgentMode } from "@clinebot/core";
+import type { AgentMode } from "@cline/core";
 import type React from "react";
 import {
 	createContext,

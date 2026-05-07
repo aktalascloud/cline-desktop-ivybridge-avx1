@@ -9,7 +9,7 @@ import type {
 	SessionRecord as HubSessionRecord,
 	JsonValue,
 	ToolApprovalRequest,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import {
 	createSessionId,
 	HUB_CHECKPOINT_CAPABILITY,
@@ -20,7 +20,7 @@ import {
 	HUB_TOOL_EXECUTOR_CAPABILITY_PREFIX,
 	HUB_USER_INSTRUCTIONS_SNAPSHOT_CAPABILITY,
 	isHubToolExecutorName,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { HookEventPayload } from "../../hooks";
 import type { RuntimeCapabilities } from "../../runtime/capabilities";
 import { normalizeRuntimeCapabilities } from "../../runtime/capabilities";
@@ -916,7 +916,7 @@ export class HubRuntimeHost implements RuntimeHost {
 			this.ensureSessionSubscription(newSessionId);
 		}
 		const messages = Array.isArray(reply.payload?.messages)
-			? (reply.payload.messages as import("@clinebot/llms").Message[])
+			? (reply.payload.messages as import("@cline/llms").Message[])
 			: undefined;
 		const checkpoint = reply.payload?.checkpoint as
 			| RestoreSessionResult["checkpoint"]
@@ -1174,7 +1174,7 @@ export class HubRuntimeHost implements RuntimeHost {
 
 	async readSessionMessages(
 		sessionId: string,
-	): Promise<import("@clinebot/llms").Message[]> {
+	): Promise<import("@cline/llms").Message[]> {
 		const target = sessionId.trim();
 		if (!target) {
 			return [];
@@ -1189,7 +1189,7 @@ export class HubRuntimeHost implements RuntimeHost {
 		}
 		const messages = reply.payload?.messages;
 		return Array.isArray(messages)
-			? (messages as import("@clinebot/llms").Message[])
+			? (messages as import("@cline/llms").Message[])
 			: [];
 	}
 

@@ -1,5 +1,5 @@
-import type { MessageWithMetadata } from "@clinebot/llms";
-import type { AgentResult } from "@clinebot/shared";
+import type { MessageWithMetadata } from "@cline/llms";
+import type { AgentResult } from "@cline/shared";
 import { describe, expect, it } from "vitest";
 import { withLatestAssistantTurnMetadata } from "./session-data";
 

@@ -27,8 +27,8 @@ import {
 	Llms,
 	ProviderSettingsManager,
 	SessionSource,
-} from "@clinebot/core";
-import type { Message } from "@clinebot/shared";
+} from "@cline/core";
+import type { Message } from "@cline/shared";
 import { getPersistedProviderApiKey } from "../commands/auth";
 import { resolveSystemPrompt } from "../runtime/prompt";
 import { subscribeToAgentEvents } from "../runtime/session-events";

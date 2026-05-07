@@ -1,4 +1,4 @@
-import type { ToolApprovalRequest, ToolApprovalResult } from "@clinebot/shared";
+import type { ToolApprovalRequest, ToolApprovalResult } from "@cline/shared";
 import type { ToolExecutors } from "../../extensions/tools";
 
 export interface RuntimeCapabilities {

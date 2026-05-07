@@ -1,4 +1,4 @@
-import type { ITelemetryService } from "@clinebot/shared";
+import type { ITelemetryService } from "@cline/shared";
 import {
 	captureAuthFailed,
 	captureAuthLoggedOut,

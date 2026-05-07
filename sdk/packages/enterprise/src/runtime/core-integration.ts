@@ -1,13 +1,13 @@
 import {
 	type ClineCoreStartInput,
 	createConfiguredTelemetryService,
-} from "@clinebot/core";
+} from "@cline/core";
 import {
 	createClineTelemetryServiceConfig,
 	createSessionId,
 	type ITelemetryService,
 	type OpenTelemetryClientConfig,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type {
 	PreparedEnterpriseCoreIntegration,
 	PreparedEnterpriseRuntime,

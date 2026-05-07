@@ -6,7 +6,7 @@ import {
 	type HubReplyEnvelope,
 	type HubTransportFrame,
 	resolveHubCommandTimeoutMs,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { spawnDetachedHubServer } from "../daemon";
 import {
 	clearHubDiscovery,

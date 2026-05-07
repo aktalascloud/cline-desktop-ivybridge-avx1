@@ -1,4 +1,4 @@
-import { formatDisplayUserInput } from "@clinebot/shared";
+import { formatDisplayUserInput } from "@cline/shared";
 import { readSessionManifest } from "../paths";
 import type { JsonRecord } from "../types";
 

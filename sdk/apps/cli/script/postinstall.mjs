@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Post-install script for @clinebot/cli.
+// Post-install script for @cline/cli.
 //
 // Creates a hard link (or copy fallback) from the platform-specific binary
 // to bin/.clite for fast startup on subsequent runs.
@@ -31,7 +31,7 @@ function main() {
 	};
 	const platform = platformMap[os.platform()] || os.platform();
 	const arch = os.arch();
-	const packageName = `@clinebot/cli-${platform}-${arch}`;
+	const packageName = `@cline/cli-${platform}-${arch}`;
 	const binaryName = "clite";
 
 	let binaryPath;

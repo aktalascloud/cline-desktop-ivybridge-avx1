@@ -7,7 +7,7 @@ import {
 	resolveWorkflowsConfigSearchPaths as resolveWorkflowsConfigSearchPathsFromShared,
 	SKILLS_CONFIG_DIRECTORY_NAME,
 	WORKFLOWS_CONFIG_DIRECTORY_NAME,
-} from "@clinebot/shared/storage";
+} from "@cline/shared/storage";
 import YAML from "yaml";
 import {
 	type UnifiedConfigDefinition,

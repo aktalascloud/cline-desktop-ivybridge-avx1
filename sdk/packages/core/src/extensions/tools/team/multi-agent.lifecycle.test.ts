@@ -1,4 +1,4 @@
-import type { AgentConfig, AgentEvent } from "@clinebot/shared";
+import type { AgentConfig, AgentEvent } from "@cline/shared";
 import { describe, expect, it, vi } from "vitest";
 import {
 	AgentTeamsRuntime,

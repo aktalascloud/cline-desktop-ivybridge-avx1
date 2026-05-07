@@ -16,7 +16,7 @@
  *   cline -i "Search the codebase for dispatcher usage, then summarize it"
  */
 
-import type { AgentPlugin, Message, ToolResultContent } from "@clinebot/core";
+import type { AgentPlugin, Message, ToolResultContent } from "@cline/core";
 
 const CONTEXT_WINDOW_TOKENS = 120_000;
 const COMPACT_AT_RATIO = 0.75;

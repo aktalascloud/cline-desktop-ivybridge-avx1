@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Binary resolver for @clinebot/cli.
+// Binary resolver for @cline/cli.
 //
 // This script runs with Node.js (available everywhere npm is) and finds the
 // correct platform-specific compiled binary to execute. The compiled binary
@@ -74,7 +74,7 @@ if (!arch) {
 	arch = os.arch();
 }
 
-const base = "@clinebot/cli-" + platform + "-" + arch;
+const base = "@cline/cli-" + platform + "-" + arch;
 const binary = platform === "windows" ? "clite.exe" : "clite";
 
 // Build fallback chain of package names to try
@@ -86,8 +86,8 @@ function findBinary(startDir) {
 		const modules = path.join(current, "node_modules");
 		if (fs.existsSync(modules)) {
 			for (const name of names) {
-				// Scoped package: @clinebot/cli-darwin-arm64 lives at
-				// node_modules/@clinebot/cli-darwin-arm64
+				// Scoped package: @cline/cli-darwin-arm64 lives at
+				// node_modules/@cline/cli-darwin-arm64
 				const candidate = path.join(modules, name, "bin", binary);
 				if (fs.existsSync(candidate)) return candidate;
 			}
@@ -114,7 +114,7 @@ if (!resolved) {
 				return '"' + n + '"';
 			}).join(" or ") +
 			"\n\n" +
-			"Try reinstalling: npm install -g @clinebot/cli",
+			"Try reinstalling: npm install -g @cline/cli",
 	);
 	process.exit(1);
 }

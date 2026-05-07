@@ -1,4 +1,4 @@
-import type { AgentMode } from "@clinebot/core";
+import type { AgentMode } from "@cline/core";
 import { useTerminalDimensions } from "@opentui/react";
 import type { ChoiceContext } from "@opentui-ui/dialog";
 import { useDialog } from "@opentui-ui/dialog/react";

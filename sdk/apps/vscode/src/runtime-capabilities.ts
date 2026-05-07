@@ -2,7 +2,7 @@ import type {
 	RuntimeCapabilities,
 	ToolApprovalRequest,
 	ToolApprovalResult,
-} from "@clinebot/core";
+} from "@cline/core";
 
 type QuickPickOptions = {
 	placeHolder?: string;

@@ -15,7 +15,7 @@ import {
 	normalizeUserInput,
 	type TextContent,
 	type ToolResultContent,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 const DEFAULT_MAX_TOOL_RESULT_CHARS = 50_000;
 const DEFAULT_MAX_TOTAL_TEXT_BYTES = 6_000_000;

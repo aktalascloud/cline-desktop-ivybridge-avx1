@@ -13,7 +13,7 @@
 import {
 	createClineTelemetryServiceConfig,
 	type ITelemetryService,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import {
 	captureExtensionActivated,
 	identifyAccount,
@@ -70,7 +70,7 @@ function dumpActivationEvents(
  * `apps/cli/src/utils/telemetry.ts` (`captureCliExtensionActivated`).
  *
  * Cross-importing from `apps/cli/...` here would pull the full
- * `@clinebot/core` barrel which transitively requires `@clinebot/llms`, so
+ * `@cline/core` barrel which transitively requires `@cline/llms`, so
  * we replicate the exact memoization pattern locally and call the same
  * underlying core helper.
  */

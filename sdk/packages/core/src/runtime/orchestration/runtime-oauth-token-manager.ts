@@ -2,7 +2,7 @@ import {
 	type ITelemetryService,
 	isOAuthProviderId,
 	type OAuthProviderId,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import {
 	type ClineOAuthCredentials,
 	getValidClineCredentials,

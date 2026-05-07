@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { UserInstructionConfigService } from "@clinebot/core";
+import type { UserInstructionConfigService } from "@cline/core";
 import { afterEach, describe, expect, it } from "vitest";
 import type { InteractiveConfigItem } from "../../tui/interactive-config";
 import type { Config } from "../../utils/types";

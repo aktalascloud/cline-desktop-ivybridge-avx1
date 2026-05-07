@@ -34,8 +34,8 @@ export interface SessionToolEvent {
 export interface SessionTeamProgressEvent {
 	sessionId: string;
 	teamName: string;
-	lifecycle: import("@clinebot/shared").TeamProgressLifecycleEvent;
-	summary: import("@clinebot/shared").TeamProgressSummary;
+	lifecycle: import("@cline/shared").TeamProgressLifecycleEvent;
+	summary: import("@cline/shared").TeamProgressSummary;
 }
 
 export interface SessionPendingPrompt {
@@ -69,7 +69,7 @@ export type CoreSessionEvent =
 			type: "agent_event";
 			payload: {
 				sessionId: string;
-				event: import("@clinebot/shared").AgentEvent;
+				event: import("@cline/shared").AgentEvent;
 				/** Identifies the named agent within the team (e.g. "educator", "assessor", "coordinator") for both lead and teammate agents */
 				teamAgentId?: string;
 				/** Whether this is the lead agent or a teammate */

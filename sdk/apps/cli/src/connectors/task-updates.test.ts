@@ -1,4 +1,4 @@
-import type { TeamProgressProjectionEvent } from "@clinebot/shared";
+import type { TeamProgressProjectionEvent } from "@cline/shared";
 import { describe, expect, it } from "vitest";
 import {
 	createTaskUpdateFingerprint,

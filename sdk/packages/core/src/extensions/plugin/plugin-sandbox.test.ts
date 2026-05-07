@@ -7,7 +7,7 @@ import type {
 	AgentTool,
 	AgentToolContext,
 	Message,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { loadSandboxedPlugins } from "./plugin-sandbox";
 
@@ -219,12 +219,12 @@ describe("plugin-sandbox", () => {
 			"utf8",
 		);
 
-		const sdkDepDir = join(dir, "node_modules", "@clinebot", "shared");
+		const sdkDepDir = join(dir, "node_modules", "@cline", "shared");
 		await mkdir(sdkDepDir, { recursive: true });
 		await writeFile(
 			join(sdkDepDir, "package.json"),
 			JSON.stringify({
-				name: "@clinebot/shared",
+				name: "@cline/shared",
 				type: "module",
 				exports: "./index.js",
 			}),
@@ -238,7 +238,7 @@ describe("plugin-sandbox", () => {
 		await writeFile(
 			join(dir, "plugin-sdk.ts"),
 			[
-				"import { sdkMarker } from '@clinebot/shared';",
+				"import { sdkMarker } from '@cline/shared';",
 				"export default {",
 				"  name: sdkMarker,",
 				"  manifest: { capabilities: ['tools'] },",
@@ -250,7 +250,7 @@ describe("plugin-sandbox", () => {
 		await writeFile(
 			join(dir, "plugin-host-dep.ts"),
 			[
-				"import { resolveClineDataDir } from '@clinebot/shared/storage';",
+				"import { resolveClineDataDir } from '@cline/shared/storage';",
 				"import YAML from 'yaml';",
 				"export default {",
 				"  name: YAML.stringify({ host: !!resolveClineDataDir() }).trim(),",
@@ -263,7 +263,7 @@ describe("plugin-sandbox", () => {
 		await writeFile(
 			join(dir, "plugin-create-tool.ts"),
 			[
-				"import { createTool } from '@clinebot/agents';",
+				"import { createTool } from '@cline/agents';",
 				"export default {",
 				"  name: 'sandbox-create-tool',",
 				"  manifest: { capabilities: ['tools'] },",

@@ -22,7 +22,7 @@ const {
 	writeln: vi.fn(),
 }));
 
-vi.mock("@clinebot/core", () => ({
+vi.mock("@cline/core", () => ({
 	HubSessionClient: class {
 		connect = connect;
 		close = close;

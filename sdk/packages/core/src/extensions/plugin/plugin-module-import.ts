@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { builtinModules, createRequire } from "node:module";
 import { dirname, extname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PLUGIN_FILE_EXTENSIONS } from "@clinebot/shared";
+import { PLUGIN_FILE_EXTENSIONS } from "@cline/shared";
 
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
 const HOST_REQUIRE = createRequire(import.meta.url);
@@ -22,15 +22,15 @@ export interface ImportPluginModuleOptions {
 function collectWorkspaceAliases(root: string): Record<string, string> {
 	const aliases: Record<string, string> = {};
 	const candidates: Record<string, string> = {
-		"@clinebot/agents": resolve(root, "packages/agents/src/index.ts"),
-		"@clinebot/core": resolve(root, "packages/core/src/index.ts"),
-		"@clinebot/llms": resolve(root, "packages/llms/src/index.ts"),
-		"@clinebot/shared": resolve(root, "packages/shared/src/index.ts"),
-		"@clinebot/shared/storage": resolve(
+		"@cline/agents": resolve(root, "packages/agents/src/index.ts"),
+		"@cline/core": resolve(root, "packages/core/src/index.ts"),
+		"@cline/llms": resolve(root, "packages/llms/src/index.ts"),
+		"@cline/shared": resolve(root, "packages/shared/src/index.ts"),
+		"@cline/shared/storage": resolve(
 			root,
 			"packages/shared/src/storage/index.ts",
 		),
-		"@clinebot/shared/db": resolve(root, "packages/shared/src/db/index.ts"),
+		"@cline/shared/db": resolve(root, "packages/shared/src/db/index.ts"),
 	};
 	for (const [key, value] of Object.entries(candidates)) {
 		if (existsSync(value)) {

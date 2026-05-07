@@ -3,7 +3,7 @@ import {
 	type WorkspaceInfo,
 	type WorkspaceManifest,
 	WorkspaceManifestSchema,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import {
 	generateWorkspaceInfo,
 	normalizeWorkspacePath,

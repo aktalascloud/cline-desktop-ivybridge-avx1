@@ -9,7 +9,7 @@
  * class uses to decide when to fire `session_start` hooks.
  */
 
-import type { MessageWithMetadata } from "@clinebot/shared";
+import type { MessageWithMetadata } from "@cline/shared";
 
 /** Generate a fresh conversation id. Exported for reuse by `SessionRuntime`. */
 export function createConversationId(): string {

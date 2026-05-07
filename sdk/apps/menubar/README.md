@@ -5,7 +5,7 @@ Any Client (CLI, VS Code, agents)
     │
     │  ws://  ui.notify / ui.show_window commands
     ▼
-Hub WebSocket Server (@clinebot/core/hub/server.ts)
+Hub WebSocket Server (@cline/core/hub/server.ts)
     │
     │  broadcasts ui.notify / ui.show_window events to ALL subscribers
     ▼

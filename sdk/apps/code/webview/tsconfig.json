@@ -3,15 +3,15 @@
 	"compilerOptions": {
 		"paths": {
 			"@/*": ["./*"],
-			"@clinebot/agents": ["../../../packages/agents/src/index.ts"],
-			"@clinebot/core": ["../../../packages/core/src/index.ts"],
-			"@clinebot/llms": ["../../../packages/llms/src/index.ts"],
-			"@clinebot/shared": ["../../../packages/shared/src/index.ts"],
-			"@clinebot/shared/storage": [
+			"@cline/agents": ["../../../packages/agents/src/index.ts"],
+			"@cline/core": ["../../../packages/core/src/index.ts"],
+			"@cline/llms": ["../../../packages/llms/src/index.ts"],
+			"@cline/shared": ["../../../packages/shared/src/index.ts"],
+			"@cline/shared/storage": [
 				"../../../packages/shared/src/storage/index.ts"
 			],
-			"@clinebot/shared/db": ["../../../packages/shared/src/db/index.ts"],
-			"@clinebot/shared/*": [
+			"@cline/shared/db": ["../../../packages/shared/src/db/index.ts"],
+			"@cline/shared/*": [
 				"../../../packages/shared/src/*",
 				"../../../packages/shared/src/*/index.ts"
 			]

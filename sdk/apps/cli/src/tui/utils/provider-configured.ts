@@ -1,4 +1,4 @@
-import { ProviderSettingsManager } from "@clinebot/core";
+import { ProviderSettingsManager } from "@cline/core";
 import { isProviderSettingsUsable } from "../../utils/provider-readiness";
 import type { TuiProps } from "../types";
 

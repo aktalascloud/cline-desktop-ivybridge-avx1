@@ -1,10 +1,10 @@
-import type { Message } from "@clinebot/llms";
+import type { Message } from "@cline/llms";
 import type {
 	AgentConfig,
 	AutomationEventEnvelope,
 	BasicLogger,
 	ITelemetryService,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { CronEventSuppression } from "../cron/events/cron-event-ingress";
 import type {
 	CronEventLogRecord,
@@ -242,9 +242,9 @@ export interface ClineCoreOptions {
 	 * to-local auto mode). For hub and remote runtimes the HTTP call happens
 	 * inside the process that owns the gateway, so configure `fetch` there:
 	 *   - `startHubServer({ fetch })` / `ensureHubServer({ fetch })` from
-	 *     `@clinebot/hub`
+	 *     `@cline/hub`
 	 *   - `createLocalHubScheduleRuntimeHandlers({ fetch })` from
-	 *     `@clinebot/core/hub` for the scheduler
+	 *     `@cline/core/hub` for the scheduler
 	 */
 	fetch?: typeof fetch;
 	/**

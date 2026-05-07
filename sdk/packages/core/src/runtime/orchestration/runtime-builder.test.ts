@@ -6,7 +6,7 @@ import {
 	type AgentTool,
 	createContributionRegistry,
 	type Message,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { afterEach, describe, expect, it } from "vitest";
 import { TelemetryService } from "../../services/telemetry/TelemetryService";
 import type { CoreSessionConfig } from "../../types/config";

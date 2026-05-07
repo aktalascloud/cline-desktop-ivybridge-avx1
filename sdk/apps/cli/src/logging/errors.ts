@@ -1,4 +1,4 @@
-import type { BasicLogger } from "@clinebot/core";
+import type { BasicLogger } from "@cline/core";
 import { createCliLoggerAdapter, flushCliLoggerAdapters } from "./adapter";
 
 export function logCliError(

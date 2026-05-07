@@ -47,7 +47,7 @@ describe("CLI distribution package shape", () => {
 				join(packageDir, "package.json"),
 				`${JSON.stringify(
 					{
-						name: "@clinebot/cli",
+						name: "@cline/cli",
 						version: "1.2.3",
 						description: "CLI test package",
 						license: "Apache-2.0",
@@ -58,7 +58,7 @@ describe("CLI distribution package shape", () => {
 							postinstall: "node ./postinstall.mjs || true",
 						},
 						optionalDependencies: {
-							"@clinebot/cli-linux-x64": "1.2.3",
+							"@cline/cli-linux-x64": "1.2.3",
 						},
 					},
 					null,

@@ -17,7 +17,7 @@ const pkg = JSON.parse(readFileSync(join(cliDir, "package.json"), "utf-8"));
 const version: string = pkg.version;
 const repository: unknown = pkg.repository;
 
-console.log(`Building @clinebot/cli v${version}`);
+console.log(`Building @cline/cli v${version}`);
 
 const buildOptions = parseBuildOptions(process.argv.slice(2));
 
@@ -68,7 +68,7 @@ if (!buildOptions.skipSdkBuild) {
 	await $`bun run build:sdk`.cwd(rootDir);
 
 	console.log("Building CLI bundle...");
-	await $`bun -F @clinebot/cli build`.cwd(rootDir);
+	await $`bun -F @cline/cli build`.cwd(rootDir);
 }
 
 const binaries: Record<string, string> = {};
@@ -76,7 +76,7 @@ const binaries: Record<string, string> = {};
 for (const item of targets) {
 	// npm treats "win32" specially in os field, but for package naming use "windows"
 	const displayOs = item.os === "win32" ? "windows" : item.os;
-	const name = `@clinebot/cli-${displayOs}-${item.arch}`;
+	const name = `@cline/cli-${displayOs}-${item.arch}`;
 	const dirName = `cli-${displayOs}-${item.arch}`;
 	const binaryName = item.os === "win32" ? "clite.exe" : "clite";
 	const bunTarget = `bun-${item.os === "win32" ? "windows" : item.os}-${item.arch}`;

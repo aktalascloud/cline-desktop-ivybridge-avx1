@@ -33,7 +33,7 @@ permissions:
 
 jobs:
   publish-main:
-    name: Publish @clinebot/cli
+    name: Publish @cline/cli
     permissions:
       contents: write
       id-token: write
@@ -140,16 +140,16 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           EXPECTED=(
-            "@clinebot/cli-darwin-arm64"
-            "@clinebot/cli-darwin-x64"
-            "@clinebot/cli-linux-arm64"
-            "@clinebot/cli-linux-x64"
-            "@clinebot/cli-windows-arm64"
-            "@clinebot/cli-windows-x64"
+            "@cline/cli-darwin-arm64"
+            "@cline/cli-darwin-x64"
+            "@cline/cli-linux-arm64"
+            "@cline/cli-linux-x64"
+            "@cline/cli-windows-arm64"
+            "@cline/cli-windows-x64"
           )
 
           for package_name in "${EXPECTED[@]}"; do
-            dir="apps/cli/dist/${package_name#@clinebot/}"
+            dir="apps/cli/dist/${package_name#@cline/}"
             if [ ! -f "$dir/package.json" ]; then
               echo "Missing package manifest: $dir/package.json"
               exit 1
@@ -182,13 +182,13 @@ jobs:
           gh release create "$TAG" \
             --verify-tag \
             --title "CLI v${VERSION}" \
-            --notes "Published @clinebot/cli@${VERSION} to npm."
+            --notes "Published @cline/cli@${VERSION} to npm."
 
       - name: Summary
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "Published @clinebot/cli@${VERSION} to npm with dist-tag 'latest'"
-          echo "Install with: npm install -g @clinebot/cli"
+          echo "Published @cline/cli@${VERSION} to npm with dist-tag 'latest'"
+          echo "Install with: npm install -g @cline/cli"
 
       - name: Post release to Slack
         uses: slackapi/slack-github-action@v3.0.1
@@ -206,10 +206,10 @@ jobs:
               - type: "context"
                 elements:
                   - type: "mrkdwn"
-                    text: "<https://www.npmjs.com/package/@clinebot/cli/v/${{ steps.version.outputs.version }}|View on npm>"
+                    text: "<https://www.npmjs.com/package/@cline/cli/v/${{ steps.version.outputs.version }}|View on npm>"
 
   publish-nightly:
-    name: Publish @clinebot/cli nightly
+    name: Publish @cline/cli nightly
     permissions:
       contents: read
       id-token: write
@@ -328,16 +328,16 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           EXPECTED=(
-            "@clinebot/cli-darwin-arm64"
-            "@clinebot/cli-darwin-x64"
-            "@clinebot/cli-linux-arm64"
-            "@clinebot/cli-linux-x64"
-            "@clinebot/cli-windows-arm64"
-            "@clinebot/cli-windows-x64"
+            "@cline/cli-darwin-arm64"
+            "@cline/cli-darwin-x64"
+            "@cline/cli-linux-arm64"
+            "@cline/cli-linux-x64"
+            "@cline/cli-windows-arm64"
+            "@cline/cli-windows-x64"
           )
 
           for package_name in "${EXPECTED[@]}"; do
-            dir="apps/cli/dist/${package_name#@clinebot/}"
+            dir="apps/cli/dist/${package_name#@cline/}"
             if [ ! -f "$dir/package.json" ]; then
               echo "Missing package manifest: $dir/package.json"
               exit 1
@@ -365,5 +365,5 @@ jobs:
         if: steps.check_commits.outputs.skip != 'true'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "Published @clinebot/cli@${VERSION} to npm with dist-tag 'nightly'"
-          echo "Install with: npm install -g @clinebot/cli@nightly"
+          echo "Published @cline/cli@${VERSION} to npm with dist-tag 'nightly'"
+          echo "Install with: npm install -g @cline/cli@nightly"

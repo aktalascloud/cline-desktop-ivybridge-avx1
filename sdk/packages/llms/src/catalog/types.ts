@@ -1,13 +1,13 @@
 /**
  * Model Schema Definitions
  *
- * Re-exports model info types from @clinebot/shared (canonical source)
- * and defines provider-level schemas local to @clinebot/llms.
+ * Re-exports model info types from @cline/shared (canonical source)
+ * and defines provider-level schemas local to @cline/llms.
  */
 
 import { z } from "zod";
 
-// ModelInfo and dependencies have their canonical home in @clinebot/shared
+// ModelInfo and dependencies have their canonical home in @cline/shared
 export {
 	ApiFormat,
 	ApiFormatSchema,
@@ -21,10 +21,10 @@ export {
 	ModelStatusSchema,
 	type ThinkingConfig,
 	ThinkingConfigSchema,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 // Re-import for use in local schemas
-import { ModelInfoSchema, ProviderCapabilitySchema } from "@clinebot/shared";
+import { ModelInfoSchema, ProviderCapabilitySchema } from "@cline/shared";
 
 export const ModelEntrySchema = z.object({
 	id: z.string(),

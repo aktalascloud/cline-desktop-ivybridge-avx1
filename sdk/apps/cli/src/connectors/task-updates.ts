@@ -1,5 +1,5 @@
-import type { HubSessionClient } from "@clinebot/core";
-import type { TeamProgressProjectionEvent } from "@clinebot/shared";
+import type { HubSessionClient } from "@cline/core";
+import type { TeamProgressProjectionEvent } from "@cline/shared";
 import type { Chat, Thread } from "chat";
 import type { CliLoggerAdapter } from "../logging/adapter";
 import { truncateConnectorText } from "./runtime-turn";

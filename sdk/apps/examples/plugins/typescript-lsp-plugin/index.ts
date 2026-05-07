@@ -19,7 +19,7 @@
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import { type AgentPlugin, ClineCore, createTool } from "@clinebot/core";
+import { type AgentPlugin, ClineCore, createTool } from "@cline/core";
 
 // ---------------------------------------------------------------------------
 // TypeScript Language Service setup

@@ -2,7 +2,7 @@ import type {
 	SessionRecord as HubSessionRecord,
 	JsonValue,
 	SessionParticipant,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { SessionRecord as LocalSessionRecord } from "../../types/sessions";
 
 export type HubSessionState = {

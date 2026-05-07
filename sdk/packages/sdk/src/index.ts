@@ -1,1 +1,1 @@
-export * from "@clinebot/core";
+export * from "@cline/core";

@@ -30,7 +30,7 @@
 The Cline SDK is a TypeScript framework for building AI agents that can edit files, run shell commands, browse the web, call APIs, and use any custom tool you give them. It's the same engine that powers [Cline](https://github.com/cline/cline), packaged as a library you can embed in your own applications.
 
 ```typescript
-import { Agent } from "@clinebot/sdk"
+import { Agent } from "@cline/sdk"
 
 const agent = new Agent({
   providerId: "cline",
@@ -48,7 +48,7 @@ That's it. The agent streams its response, calls tools if you give it any, and r
 ## Install
 
 ```bash
-npm install @clinebot/sdk
+npm install @cline/sdk
 ```
 
 ## What You Can Build
@@ -92,7 +92,7 @@ Explore full working examples in [`apps/examples/`](apps/examples):
 Tools are how agents interact with the world. Define a tool with a name, a description the model reads, a JSON Schema for inputs, and a function that does the work:
 
 ```typescript
-import { createTool } from "@clinebot/sdk"
+import { createTool } from "@cline/sdk"
 
 const deploy = createTool({
   name: "deploy",
@@ -181,7 +181,7 @@ const metrics: AgentPlugin = {
 When you need session persistence, built-in tools, config discovery, and multi-process support, use `ClineCore`:
 
 ```typescript
-import { ClineCore } from "@clinebot/sdk"
+import { ClineCore } from "@cline/sdk"
 
 const cline = await ClineCore.create({ clientName: "my-app" })
 
@@ -207,13 +207,13 @@ The SDK is a layered stack. Use as much or as little as you need:
 
 | Package | What it does |
 |---------|-------------|
-| `@clinebot/sdk` | Everything you need -- install this one |
-| `@clinebot/core` | Sessions, persistence, built-in tools, config discovery, RPC |
-| `@clinebot/agents` | Stateless agent loop with tool execution and streaming |
-| `@clinebot/llms` | LLM provider gateway (Anthropic, OpenAI, Google, Bedrock, Mistral, and more) |
-| `@clinebot/shared` | Types, tool creation helpers, hook engine |
+| `@cline/sdk` | Everything you need -- install this one |
+| `@cline/core` | Sessions, persistence, built-in tools, config discovery, RPC |
+| `@cline/agents` | Stateless agent loop with tool execution and streaming |
+| `@cline/llms` | LLM provider gateway (Anthropic, OpenAI, Google, Bedrock, Mistral, and more) |
+| `@cline/shared` | Types, tool creation helpers, hook engine |
 
-`@clinebot/sdk` is an alias for `@clinebot/core` that re-exports from all packages, so a single install gives you the full API. The individual packages are available if you want a minimal dependency footprint.
+`@cline/sdk` is an alias for `@cline/core` that re-exports from all packages, so a single install gives you the full API. The individual packages are available if you want a minimal dependency footprint.
 
 ## CLI
 

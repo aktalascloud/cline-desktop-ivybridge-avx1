@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { ensureParentDir } from "@clinebot/core";
+import { ensureParentDir } from "@cline/core";
 import type { Lock, QueueEntry, StateAdapter } from "chat";
 
 type PersistedStateSnapshot = {

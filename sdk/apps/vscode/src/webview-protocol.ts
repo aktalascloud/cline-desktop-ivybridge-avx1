@@ -2,7 +2,7 @@ import type {
 	ChatMessage as CoreChatMessage,
 	ProviderListItem,
 	ProviderModel,
-} from "@clinebot/core";
+} from "@cline/core";
 
 export type WebviewUsage = {
 	inputTokens?: number;

@@ -1,4 +1,4 @@
-import type { AgentMessage, AgentModelEvent } from "@clinebot/shared";
+import type { AgentMessage, AgentModelEvent } from "@cline/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { normalizeModelsDevProviderModels } from "../catalog/catalog-live";
 import { createGateway } from "./gateway";

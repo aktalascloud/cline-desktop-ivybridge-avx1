@@ -3,7 +3,7 @@ import type {
 	AutomationEventEnvelope,
 	BasicLogger,
 	BasicLogMetadata,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { TeamEvent } from "../../../extensions/tools/team";
 import {
 	type AgentEventContext,

@@ -8,7 +8,7 @@ import type {
 	ChatTurnResult,
 	ExtensionContext,
 	ITelemetryService,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { CronEventIngressResult } from "../cron/events/cron-event-ingress";
 import type { CronService } from "../cron/service/cron-service";
 import type { HubScheduleRuntimeHandlers } from "../cron/service/schedule-service";

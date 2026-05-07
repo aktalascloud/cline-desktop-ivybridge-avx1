@@ -1,4 +1,4 @@
-import { getFileIndex } from "@clinebot/core";
+import { getFileIndex } from "@cline/core";
 import type { SidecarContext } from "../types";
 
 export function searchWorkspaceFiles(

@@ -10,7 +10,7 @@
  */
 
 import { execFile } from "node:child_process";
-import type { AgentPlugin, AgentRunResult } from "@clinebot/core";
+import type { AgentPlugin, AgentRunResult } from "@cline/core";
 
 function quoteAppleScriptString(value: string): string {
 	return `"${value

@@ -1,4 +1,4 @@
-import * as Llms from "@clinebot/llms";
+import * as Llms from "@cline/llms";
 import { z } from "zod";
 import {
 	DEFAULT_EXTERNAL_OCA_BASE_URL,

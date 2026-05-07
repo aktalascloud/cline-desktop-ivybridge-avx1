@@ -1,5 +1,5 @@
 /**
- * Message Types — re-exported from @clinebot/shared
+ * Message Types — re-exported from @cline/shared
  */
 export type {
 	ContentBlock,
@@ -14,4 +14,4 @@ export type {
 	ToolDefinition,
 	ToolResultContent,
 	ToolUseContent,
-} from "@clinebot/shared";
+} from "@cline/shared";

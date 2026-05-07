@@ -1,5 +1,5 @@
 /**
- * Telemetry adapter interface for the @clinebot/core SDK.
+ * Telemetry adapter interface for the @cline/core SDK.
  *
  * This is the SDK-side counterpart to the extension's ITelemetryProvider.
  * It is intentionally free of VS Code / host-provider dependencies so that
@@ -7,7 +7,7 @@
  * backend without pulling in the full extension runtime.
  */
 
-import type { TelemetryProperties } from "@clinebot/shared";
+import type { TelemetryProperties } from "@cline/shared";
 
 export type {
 	TelemetryArray,
@@ -16,7 +16,7 @@ export type {
 	TelemetryPrimitive,
 	TelemetryProperties,
 	TelemetryValue,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 // ---------------------------------------------------------------------------
 // Adapter interface

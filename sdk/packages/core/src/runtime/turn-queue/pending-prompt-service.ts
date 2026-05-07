@@ -1,4 +1,4 @@
-import { normalizeUserInput } from "@clinebot/shared";
+import { normalizeUserInput } from "@cline/shared";
 import { nanoid } from "nanoid";
 import type {
 	CoreSessionEvent,

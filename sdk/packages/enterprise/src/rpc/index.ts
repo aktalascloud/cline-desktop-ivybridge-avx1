@@ -5,7 +5,7 @@ import type {
 	EnterpriseStatusResponse,
 	EnterpriseSyncRequest,
 	EnterpriseSyncResponse,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { EnterpriseAuthService } from "../auth/service";
 import type {
 	EnterpriseClaimsMapper,

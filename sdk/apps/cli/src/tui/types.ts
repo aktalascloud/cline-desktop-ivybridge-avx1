@@ -3,12 +3,12 @@ import type {
 	AgentMode,
 	CheckpointEntry,
 	TeamEvent,
-} from "@clinebot/core";
+} from "@cline/core";
 import type {
 	Message,
 	ToolApprovalRequest,
 	ToolApprovalResult,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type {
 	PendingPromptSnapshot,
 	PendingPromptSubmittedEvent,

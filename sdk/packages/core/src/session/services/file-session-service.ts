@@ -6,7 +6,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import { resolveSessionDataDir } from "@clinebot/shared/storage";
+import { resolveSessionDataDir } from "@cline/shared/storage";
 import type { SessionMessagesArtifactUploader } from "../../types/session";
 import type { SessionRow } from "../models/session-row";
 import type {

@@ -1,5 +1,5 @@
-import type { ClineCore } from "@clinebot/core";
-import type { Message } from "@clinebot/shared";
+import type { ClineCore } from "@cline/core";
+import type { Message } from "@cline/shared";
 
 export async function loadInteractiveResumeMessages(
 	sessionManager: ClineCore,

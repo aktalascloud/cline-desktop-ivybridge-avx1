@@ -5,7 +5,7 @@ description: Use when preparing, tagging, and publishing an apps/cli npm release
 
 # CLI Release
 
-Use this skill when the user asks to release the CLI, publish `@clinebot/cli`, bump the CLI version, draft release notes, create a `cli-vX.Y.Z` tag, or trigger the CLI publish workflow.
+Use this skill when the user asks to release the CLI, publish `@cline/cli`, bump the CLI version, draft release notes, create a `cli-vX.Y.Z` tag, or trigger the CLI publish workflow.
 
 The CLI is npm-only. Do not add alternate distribution or signing steps.
 
@@ -72,8 +72,8 @@ Prepend a section to `apps/cli/CHANGELOG.md` for the approved version using the 
 Run focused checks first:
 
 ```sh
-bun -F @clinebot/cli typecheck
-bun -F @clinebot/cli test:unit
+bun -F @cline/cli typecheck
+bun -F @cline/cli test:unit
 ```
 
 For higher confidence, run:

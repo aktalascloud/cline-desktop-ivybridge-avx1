@@ -1,4 +1,4 @@
-import type { OpenTelemetryClientConfig, RemoteConfig } from "@clinebot/shared";
+import type { OpenTelemetryClientConfig, RemoteConfig } from "@cline/shared";
 import type {
 	EnterpriseConfigBundle,
 	EnterpriseSyncContext,

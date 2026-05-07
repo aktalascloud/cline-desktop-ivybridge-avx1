@@ -1,5 +1,5 @@
 {
-	"name": "@clinebot/code",
+	"name": "@cline/code",
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
@@ -16,9 +16,9 @@
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.2.0",
-		"@clinebot/core": "workspace:*",
-		"@clinebot/llms": "workspace:*",
-		"@clinebot/shared": "workspace:*",
+		"@cline/core": "workspace:*",
+		"@cline/llms": "workspace:*",
+		"@cline/shared": "workspace:*",
 		"@fontsource-variable/geist": "^5.2.8",
 		"@hookform/resolvers": "^3.9.1",
 		"@radix-ui/react-accordion": "1.2.12",

@@ -1,4 +1,4 @@
-import type { ApiHandler } from "@clinebot/llms";
+import type { ApiHandler } from "@cline/llms";
 import {
 	BUILT_IN_PROVIDER_IDS,
 	createHandler as createProviderHandler,
@@ -9,7 +9,7 @@ import {
 	registerHandler,
 	registerModel as registerModelInCatalog,
 	registerProvider as registerProviderInCatalog,
-} from "@clinebot/llms";
+} from "@cline/llms";
 import {
 	ConfiguredProviderRegistry,
 	toBuiltInProviderSummary,

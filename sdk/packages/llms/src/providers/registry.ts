@@ -7,7 +7,7 @@ import type {
 	GatewayProviderRegistration,
 	GatewayResolvedModel,
 	GatewayResolvedProviderConfig,
-} from "@clinebot/shared";
+} from "@cline/shared";
 
 interface ProviderRecord {
 	manifest: GatewayProviderManifest;

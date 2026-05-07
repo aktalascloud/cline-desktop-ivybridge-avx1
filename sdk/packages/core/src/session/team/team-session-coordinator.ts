@@ -2,7 +2,7 @@ import {
 	type AgentMode,
 	type AgentResult,
 	formatUserInputBlock,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { TeamEvent } from "../../extensions/tools/team";
 import {
 	buildTeamProgressSummary,

@@ -1,6 +1,6 @@
 import { dirname } from "node:path";
-import type * as LlmsProviders from "@clinebot/llms";
-import type { AgentResult } from "@clinebot/shared";
+import type * as LlmsProviders from "@cline/llms";
+import type { AgentResult } from "@cline/shared";
 import { nanoid } from "nanoid";
 import type {
 	SubAgentEndContext,

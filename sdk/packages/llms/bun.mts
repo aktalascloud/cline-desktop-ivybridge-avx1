@@ -15,7 +15,7 @@ const sourcemap = Bun.env.CLINE_SOURCEMAPS === "1" ? "linked" : "none";
 const external = Object.keys({
 	...(packageJson.dependencies ?? {}),
 	...(packageJson.peerDependencies ?? {}),
-}).filter((name) => !name.startsWith("@clinebot/"));
+}).filter((name) => !name.startsWith("@cline/"));
 
 const builds: Parameters<typeof Bun.build>[0][] = [
 	{

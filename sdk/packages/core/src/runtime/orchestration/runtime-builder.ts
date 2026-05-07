@@ -3,8 +3,8 @@ import type {
 	BasicLogger,
 	RuntimeConfigExtensionKind,
 	TeamTeammateSpec,
-} from "@clinebot/shared";
-import { hasRuntimeConfigExtension } from "@clinebot/shared";
+} from "@cline/shared";
+import { hasRuntimeConfigExtension } from "@cline/shared";
 import { nanoid } from "nanoid";
 import { createUserInstructionConfigService } from "../../extensions/config";
 import {

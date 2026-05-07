@@ -10,6 +10,6 @@
 		"typescript": "^5"
 	},
 	"dependencies": {
-		"@clinebot/core": "workspace:*"
+		"@cline/core": "workspace:*"
 	}
 }

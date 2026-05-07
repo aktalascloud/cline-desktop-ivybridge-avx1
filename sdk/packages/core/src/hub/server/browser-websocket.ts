@@ -3,12 +3,12 @@ import type {
 	HubEventEnvelope,
 	HubReplyEnvelope,
 	HubTransportFrame,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import {
 	HUB_COMMAND_SLOW_LOG_MS,
 	resolveHubCommandTimeoutMs,
 	safeJsonParse,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import type { HubCommandTransport } from "./command-transport";
 import { logHubMessage } from "./hub-server-logging";
 

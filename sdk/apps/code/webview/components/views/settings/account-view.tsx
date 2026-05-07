@@ -8,7 +8,7 @@ import type {
 	ClineAccountPaymentTransaction,
 	ClineAccountUsageTransaction,
 	ClineAccountUser,
-} from "@clinebot/core";
+} from "@cline/core";
 import {
 	AlertCircle,
 	Building,

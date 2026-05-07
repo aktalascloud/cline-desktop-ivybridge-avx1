@@ -9,8 +9,8 @@ import {
 	nowIso,
 	type SqliteDb,
 	toBoolInt,
-} from "@clinebot/shared/db";
-import { resolveDbDataDir } from "@clinebot/shared/storage";
+} from "@cline/shared/db";
+import { resolveDbDataDir } from "@cline/shared/storage";
 import type { SessionStatus } from "../../types/common";
 import type { SessionRecord } from "../../types/sessions";
 import type { SessionStore } from "../../types/storage";

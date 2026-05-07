@@ -3,8 +3,8 @@ import type {
 	HubReplyEnvelope,
 	HubScheduleCreateInput,
 	HubScheduleUpdateInput,
-} from "@clinebot/shared";
-import { createSessionId } from "@clinebot/shared";
+} from "@cline/shared";
+import { createSessionId } from "@cline/shared";
 import type { HubScheduleService } from "./schedule-service";
 
 function okReply(

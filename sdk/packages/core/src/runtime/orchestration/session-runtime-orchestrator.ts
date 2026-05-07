@@ -19,8 +19,8 @@
  * OAuth-retry and run replay feasible.
  */
 
-import type { AgentRuntime } from "@clinebot/agents";
-import { createAgentRuntime } from "@clinebot/agents";
+import type { AgentRuntime } from "@cline/agents";
+import { createAgentRuntime } from "@cline/agents";
 import {
 	type AgentConfig,
 	type AgentEvent,
@@ -45,7 +45,7 @@ import {
 	type MessageWithMetadata,
 	type ModelInfo,
 	type ToolCallRecord,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import {
 	createAgentModelFromConfig,
 	resolveKnownModelsFromConfig,

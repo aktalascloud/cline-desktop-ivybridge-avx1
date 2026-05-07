@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { resolveDefaultMcpSettingsPath } from "@clinebot/core";
+import { resolveDefaultMcpSettingsPath } from "@cline/core";
 
 export interface McpServerEntry {
 	name: string;

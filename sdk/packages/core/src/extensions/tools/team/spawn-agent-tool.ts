@@ -17,7 +17,7 @@ import {
 	type ToolApprovalResult,
 	type ToolPolicy,
 	zodToJsonSchema,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { z } from "zod";
 import {
 	createDelegatedAgent,

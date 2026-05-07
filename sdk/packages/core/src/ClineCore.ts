@@ -1,4 +1,4 @@
-import type { BasicLogger, ITelemetryService } from "@clinebot/shared";
+import type { BasicLogger, ITelemetryService } from "@cline/shared";
 import {
 	ClineCoreAutomationController,
 	createClineCoreAutomationExtensionContext,
@@ -75,7 +75,7 @@ export type {
  *
  * @example
  * ```ts
- * import { ClineCore } from "@clinebot/core";
+ * import { ClineCore } from "@cline/core";
  *
  * const cline = await ClineCore.create({ clientName: "my-app" });
  * const session = await cline.start({ ... });

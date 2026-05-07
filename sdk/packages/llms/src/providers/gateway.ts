@@ -8,12 +8,12 @@ import type {
 	GatewayModelSelection,
 	GatewayProviderRegistration,
 	GatewayStreamRequest,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { toAsyncIterable } from "./async";
 import { BUILTIN_PROVIDER_REGISTRATIONS } from "./builtins-runtime";
 import { GatewayRegistry } from "./registry";
 
-export type * from "@clinebot/shared";
+export type * from "@cline/shared";
 
 export interface Gateway {
 	registerProvider(registration: GatewayProviderRegistration): this;

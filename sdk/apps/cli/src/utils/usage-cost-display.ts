@@ -1,4 +1,4 @@
-import { Llms } from "@clinebot/core";
+import { Llms } from "@cline/core";
 
 export function shouldShowCliUsageCost(providerId: string): boolean {
 	return Llms.shouldShowProviderUsageCost(providerId);

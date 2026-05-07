@@ -6,8 +6,8 @@ import type {
 	SessionRecord as HubSessionRecord,
 	JsonValue,
 	SessionParticipant,
-} from "@clinebot/shared";
-import { createSessionId } from "@clinebot/shared";
+} from "@cline/shared";
+import { createSessionId } from "@cline/shared";
 import type {
 	PendingPromptsRuntimeService,
 	RuntimeHost,

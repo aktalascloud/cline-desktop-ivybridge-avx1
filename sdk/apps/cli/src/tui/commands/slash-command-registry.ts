@@ -1,4 +1,4 @@
-import { formatUserCommandBlock } from "@clinebot/shared";
+import { formatUserCommandBlock } from "@cline/shared";
 import type { InteractiveSlashCommand } from "../interactive-welcome";
 
 export type SlashCommandSource =

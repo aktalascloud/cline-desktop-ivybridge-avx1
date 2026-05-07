@@ -1,4 +1,4 @@
-import type { AgentExtension, AgentTool } from "@clinebot/shared";
+import type { AgentExtension, AgentTool } from "@cline/shared";
 import { loadRulesForSystemPromptFromWatcher } from "../../runtime/safety/rules";
 import {
 	createSkillsTool,

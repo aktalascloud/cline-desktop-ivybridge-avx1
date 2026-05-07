@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { resolveClineDataDir } from "@clinebot/shared/storage";
+import { resolveClineDataDir } from "@cline/shared/storage";
 
 const MAX_HISTORY = 20;
 

@@ -4,7 +4,7 @@ import type {
 	HubUINotifyPayload,
 	HubUIShowWindowPayload,
 	SessionRecord,
-} from "@clinebot/shared";
+} from "@cline/shared";
 import { NodeHubClient } from "../client";
 
 export interface HubUIClientOptions {

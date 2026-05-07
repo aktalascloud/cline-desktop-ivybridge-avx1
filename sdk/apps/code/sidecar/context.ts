@@ -11,8 +11,8 @@ import {
 	setHomeDirIfUnset,
 	type ToolApprovalRequest,
 	type ToolApprovalResult,
-} from "@clinebot/core";
-import type { AgentEvent } from "@clinebot/shared";
+} from "@cline/core";
+import type { AgentEvent } from "@cline/shared";
 import { sessionLogPath } from "./paths";
 import type {
 	LiveSession,

@@ -6,12 +6,12 @@ import {
 	readHubDiscovery,
 	resolveSharedHubOwnerContext,
 	stopLocalHubServerGracefully,
-} from "@clinebot/core";
+} from "@cline/core";
 import { version } from "../../package.json";
 import { ensureCliHubServer } from "../utils/hub-runtime";
 import { c, writeErr, writeln } from "../utils/output";
 
-const PACKAGE_NAME = "@clinebot/cli";
+const PACKAGE_NAME = "@cline/cli";
 
 export enum PackageManager {
 	NPM = "npm",

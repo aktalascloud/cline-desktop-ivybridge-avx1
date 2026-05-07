@@ -6,8 +6,8 @@
 		"types": ["node"],
 		"lib": ["ES2022", "DOM"],
 		"paths": {
-			"@clinebot/agents": ["../../packages/agents/src/index.ts"],
-			"@clinebot/shared": ["../../packages/shared/src/index.ts"]
+			"@cline/agents": ["../../packages/agents/src/index.ts"],
+			"@cline/shared": ["../../packages/shared/src/index.ts"]
 		}
 	},
 	"include": [

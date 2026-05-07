@@ -1,4 +1,4 @@
-import type { ITelemetryService, TelemetryProperties } from "@clinebot/shared";
+import type { ITelemetryService, TelemetryProperties } from "@cline/shared";
 
 const MAX_ERROR_MESSAGE_LENGTH = 500;
 

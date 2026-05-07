@@ -1,4 +1,4 @@
-import type { AgentExtension } from "@clinebot/shared";
+import type { AgentExtension } from "@cline/shared";
 import {
 	type AvailableRuntimeCommand,
 	listAvailableRuntimeCommandsFromWatcher,
