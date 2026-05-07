@@ -168,6 +168,10 @@ event payload and `source` field.
 7. Hub event forwarding preserves structured streaming lifecycle boundaries: text/reasoning deltas, final text/reasoning completion, tool start/finish, and agent done events are translated across the hub transport so host UIs can reliably close loading/streaming state.
 8. Hub client adapters exported from `@cline/core/hub` (`NodeHubClient`, `HubSessionClient`, `HubUIClient`, `connectToHub`) translate command/reply and event streams into host-facing APIs.
 
+Detached daemon startup retries transient `ETXTBSY` spawn failures before
+polling discovery. This covers package-manager updates that replace the CLI
+binary immediately before a command restarts the shared hub.
+
 Local hub discovery also carries the authentication contract for the shared
 daemon. On startup, the hub server generates a cryptographically random
 per-process auth token, stores it in the owner discovery record, and writes that

@@ -7,7 +7,7 @@ import {
 	type HubTransportFrame,
 	resolveHubCommandTimeoutMs,
 } from "@cline/shared";
-import { spawnDetachedHubServer } from "../daemon";
+import { spawnDetachedHubServerWithRetry } from "../daemon";
 import {
 	clearHubDiscovery,
 	type HubOwnerContext,
@@ -989,7 +989,7 @@ export async function ensureCompatibleLocalHubUrl(
 		return undefined;
 	}
 	const owner = resolveSharedHubOwnerContext();
-	spawnDetachedHubServer(options.workspaceRoot ?? process.cwd());
+	await spawnDetachedHubServerWithRetry(options.workspaceRoot ?? process.cwd());
 	return await waitForCompatibleHubUrl(owner);
 }
 

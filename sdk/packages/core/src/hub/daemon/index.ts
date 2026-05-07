@@ -31,6 +31,7 @@ const HUB_STARTUP_TIMEOUT_MS = 8_000;
 const HUB_STARTUP_POLL_MS = 200;
 const HUB_RETIRE_TIMEOUT_MS = 3_000;
 const HUB_RETIRE_POLL_MS = 100;
+const HUB_SPAWN_RETRY_DELAYS_MS = [100, 250, 500, 1_000, 2_000];
 const COMPILED_BUN_HUB_DAEMON_ARG = "--cline-hub-daemon";
 
 function endpointArgs(endpoint: HubEndpointOverrides): string[] {
@@ -133,6 +134,18 @@ function resolveLaunchCommand(
 	};
 }
 
+function isTextFileBusyError(error: unknown): boolean {
+	if (!error || typeof error !== "object") {
+		return false;
+	}
+	const code = "code" in error ? error.code : undefined;
+	if (code === "ETXTBSY") {
+		return true;
+	}
+	const message = "message" in error ? error.message : undefined;
+	return typeof message === "string" && message.includes("ETXTBSY");
+}
+
 export function spawnDetachedHubServer(
 	workspaceRoot: string,
 	endpoint: HubEndpointOverrides = {},
@@ -153,6 +166,24 @@ export function spawnDetachedHubServer(
 	} finally {
 		if (logFile) {
 			closeSync(logFile.fd);
+		}
+	}
+}
+
+export async function spawnDetachedHubServerWithRetry(
+	workspaceRoot: string,
+	endpoint: HubEndpointOverrides = {},
+): Promise<void> {
+	for (let attempt = 0; ; attempt++) {
+		try {
+			spawnDetachedHubServer(workspaceRoot, endpoint);
+			return;
+		} catch (error) {
+			const delay = HUB_SPAWN_RETRY_DELAYS_MS[attempt];
+			if (!isTextFileBusyError(error) || delay === undefined) {
+				throw error;
+			}
+			await new Promise((resolve) => setTimeout(resolve, delay));
 		}
 	}
 }
@@ -204,7 +235,7 @@ export function prewarmDetachedHubServer(
 			const spawnEndpoint = shouldUseFallbackPort
 				? { ...resolvedEndpoint, port: 0 }
 				: resolvedEndpoint;
-			spawnDetachedHubServer(workspaceRoot, spawnEndpoint);
+			await spawnDetachedHubServerWithRetry(workspaceRoot, spawnEndpoint);
 		})
 		.catch(() => {
 			// best-effort prewarm only
@@ -275,7 +306,7 @@ export async function ensureDetachedHubServer(
 	const spawnEndpoint = shouldUseFallbackPort
 		? { ...endpoint, port: 0 }
 		: endpoint;
-	spawnDetachedHubServer(workspaceRoot, spawnEndpoint);
+	await spawnDetachedHubServerWithRetry(workspaceRoot, spawnEndpoint);
 	const deadline = Date.now() + HUB_STARTUP_TIMEOUT_MS;
 	while (Date.now() < deadline) {
 		const nextDiscovery = await readHubDiscovery(owner.discoveryPath);

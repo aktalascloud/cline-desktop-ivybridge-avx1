@@ -137,6 +137,46 @@ describe("ensureDetachedHubServer", () => {
 		expect(spawnOptions?.env?.[CLINE_RUN_AS_HUB_DAEMON_ENV]).toBe("1");
 	});
 
+	it("retries a transient ETXTBSY spawn failure while starting the detached daemon", async () => {
+		vi.useFakeTimers();
+		try {
+			const textFileBusy = Object.assign(
+				new Error(
+					"ETXTBSY: text file is busy, posix_spawn '/usr/local/bin/clite'",
+				),
+				{ code: "ETXTBSY" },
+			);
+			spawn
+				.mockImplementationOnce(() => {
+					throw textFileBusy;
+				})
+				.mockImplementationOnce(() => ({ unref: vi.fn() }));
+			readHubDiscovery.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
+				url: "ws://127.0.0.1:5555/hub",
+				authToken: "new-token",
+			});
+			probeHubServer.mockResolvedValueOnce(undefined).mockResolvedValueOnce({
+				url: "ws://127.0.0.1:5555/hub",
+				buildId: "current-build",
+			});
+			verifyHubConnection.mockResolvedValueOnce(true);
+
+			const { ensureDetachedHubServer } = await import(".");
+			const pending = ensureDetachedHubServer("/workspace");
+			await vi.runAllTimersAsync();
+			const result = await pending;
+
+			expect(result).toEqual({
+				url: "ws://127.0.0.1:5555/hub",
+				authToken: "new-token",
+			});
+			expect(spawn).toHaveBeenCalledTimes(2);
+			expect(closeSync).toHaveBeenCalledTimes(2);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
 	it("does not spawn another detached daemon from inside the hub daemon process", async () => {
 		process.env[CLINE_RUN_AS_HUB_DAEMON_ENV] = "1";
 
@@ -176,6 +216,34 @@ describe("ensureDetachedHubServer", () => {
 			probeHubServer.mock.invocationCallOrder[0],
 		);
 		expect(spawn).toHaveBeenCalledOnce();
+	});
+
+	it("retries a transient ETXTBSY spawn failure while prewarming the detached daemon", async () => {
+		vi.useFakeTimers();
+		try {
+			const textFileBusy = Object.assign(
+				new Error(
+					"ETXTBSY: text file is busy, posix_spawn '/usr/local/bin/clite'",
+				),
+				{ code: "ETXTBSY" },
+			);
+			spawn
+				.mockImplementationOnce(() => {
+					throw textFileBusy;
+				})
+				.mockImplementationOnce(() => ({ unref: vi.fn() }));
+			readHubDiscovery.mockResolvedValueOnce(undefined);
+			probeHubServer.mockResolvedValueOnce(undefined);
+
+			const { prewarmDetachedHubServer } = await import(".");
+			prewarmDetachedHubServer("/workspace");
+			await vi.runAllTimersAsync();
+
+			expect(spawn).toHaveBeenCalledTimes(2);
+			expect(closeSync).toHaveBeenCalledTimes(2);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	it("does not reuse a healthy hub from a different build", async () => {
