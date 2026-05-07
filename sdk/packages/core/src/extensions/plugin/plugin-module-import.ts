@@ -29,6 +29,13 @@ const BUILTIN_MODULES = new Set(
 	builtinModules.flatMap((id) => [id, id.replace(/^node:/, "")]),
 );
 const SUPPORTED_PLUGIN_EXTENSIONS = new Set(PLUGIN_FILE_EXTENSIONS);
+const WORKSPACE_EXPORT_CONDITIONS = [
+	"development",
+	"node",
+	"import",
+	"require",
+	"default",
+];
 
 export interface ImportPluginModuleOptions {
 	useCache?: boolean;
@@ -77,27 +84,18 @@ function collectWorkspaceAliases(root: string): Record<string, string> {
 				continue;
 			}
 			for (const [exportPath, exportValue] of Object.entries(pkg.exports)) {
-				const developmentPath =
-					exportValue != null &&
-					typeof exportValue === "object" &&
-					"development" in exportValue &&
-					typeof exportValue.development === "string"
-						? exportValue.development
-						: typeof exportValue === "string"
-							? exportValue
-							: undefined;
-				if (!developmentPath) {
-					continue;
-				}
-				const target = resolve(packageRoot, developmentPath);
-				if (!existsSync(target)) {
+				const sourcePath = resolveWorkspaceExportSourcePath(
+					packageRoot,
+					exportValue,
+				);
+				if (!sourcePath) {
 					continue;
 				}
 				const specifier =
 					exportPath === "."
 						? pkg.name
 						: `${pkg.name}/${exportPath.replace(/^\.\//, "")}`;
-				aliases[specifier] = target;
+				aliases[specifier] = sourcePath;
 			}
 		} catch {
 			// Workspace aliases are a development convenience; ignore malformed
@@ -105,6 +103,78 @@ function collectWorkspaceAliases(root: string): Record<string, string> {
 		}
 	}
 	return aliases;
+}
+
+function resolveWorkspaceExportSourcePath(
+	packageRoot: string,
+	exportValue: unknown,
+): string | null {
+	const exportPath = selectWorkspaceExportPath(exportValue);
+	if (!exportPath) {
+		return null;
+	}
+	const candidates = inferWorkspaceSourceCandidates(packageRoot, exportPath);
+	for (const candidate of candidates) {
+		if (existsSync(candidate)) {
+			return candidate;
+		}
+	}
+	return null;
+}
+
+function selectWorkspaceExportPath(
+	exportValue: unknown,
+	seen = new Set<unknown>(),
+): string | null {
+	if (typeof exportValue === "string") {
+		return exportValue;
+	}
+	if (!exportValue || typeof exportValue !== "object") {
+		return null;
+	}
+	if (seen.has(exportValue)) {
+		return null;
+	}
+	seen.add(exportValue);
+	const exports = exportValue as Record<string, unknown>;
+	for (const condition of WORKSPACE_EXPORT_CONDITIONS) {
+		const resolved = selectWorkspaceExportPath(exports[condition], seen);
+		if (resolved) {
+			return resolved;
+		}
+	}
+	return null;
+}
+
+function inferWorkspaceSourceCandidates(
+	packageRoot: string,
+	exportPath: string,
+): string[] {
+	const normalizedPath = exportPath.replace(/^\.\//, "");
+	const candidates = [resolve(packageRoot, exportPath)];
+	if (normalizedPath.startsWith("dist/")) {
+		const sourceBasePath = normalizedPath
+			.replace(/^dist\//, "src/")
+			.replace(/\.(mjs|cjs|js)$/, "");
+		return [
+			resolve(packageRoot, `${sourceBasePath}.ts`),
+			resolve(packageRoot, `${sourceBasePath}.tsx`),
+			resolve(packageRoot, `${sourceBasePath}.mts`),
+			resolve(packageRoot, `${sourceBasePath}.cts`),
+			...candidates,
+		];
+	}
+	return candidates;
+}
+
+function sortAliasesBySpecificity(
+	aliases: Record<string, string>,
+): Record<string, string> {
+	return Object.fromEntries(
+		Object.entries(aliases).sort(
+			([left], [right]) => right.length - left.length,
+		),
+	);
 }
 
 function isBareSpecifier(specifier: string): boolean {
@@ -124,6 +194,14 @@ function getPackageName(specifier: string): string {
 		return name ? `${scope}/${name}` : specifier;
 	}
 	return specifier.split("/", 1)[0] ?? specifier;
+}
+
+function getPackageExportPath(specifier: string): string {
+	const packageName = getPackageName(specifier);
+	if (specifier === packageName) {
+		return ".";
+	}
+	return `.${specifier.slice(packageName.length)}`;
 }
 
 function isClineSdkSpecifier(specifier: string): boolean {
@@ -153,19 +231,93 @@ function hasInstalledDependency(
 }
 
 function resolvesFromHostRuntime(specifier: string): boolean {
-	try {
-		HOST_REQUIRE.resolve(specifier);
-		return true;
-	} catch {
-		return false;
-	}
+	return resolveFromHostRuntime(specifier) !== null;
 }
 
 function resolveFromHostRuntime(specifier: string): string | null {
 	try {
 		return HOST_REQUIRE.resolve(specifier);
 	} catch {
+		// Continue with package export resolution for ESM-only package exports.
+	}
+	return resolveHostPackageExport(specifier);
+}
+
+function resolveHostPackageExport(specifier: string): string | null {
+	const packageName = getPackageName(specifier);
+	const packageRoot = findHostPackageRoot(packageName);
+	if (!packageRoot) {
 		return null;
+	}
+	const packageJsonPath = resolve(packageRoot, "package.json");
+	try {
+		const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+			exports?: unknown;
+			main?: unknown;
+		};
+		const exportPath = getPackageExportPath(specifier);
+		const exportValue =
+			exportPath === "." && typeof pkg.exports === "string"
+				? pkg.exports
+				: pkg.exports &&
+						typeof pkg.exports === "object" &&
+						Object.hasOwn(pkg.exports, exportPath)
+					? (pkg.exports as Record<string, unknown>)[exportPath]
+					: undefined;
+		const resolvedExportPath =
+			selectWorkspaceExportPath(exportValue) ??
+			(exportPath === "." && typeof pkg.main === "string" ? pkg.main : null);
+		if (!resolvedExportPath) {
+			return null;
+		}
+		const exportTarget = resolve(packageRoot, resolvedExportPath);
+		const candidates = [
+			exportTarget,
+			...inferWorkspaceSourceCandidates(packageRoot, resolvedExportPath).filter(
+				(candidate) => candidate !== exportTarget,
+			),
+		];
+		for (const candidate of candidates) {
+			if (existsSync(candidate)) {
+				return candidate;
+			}
+		}
+		return null;
+	} catch {
+		return null;
+	}
+}
+
+function findHostPackageRoot(packageName: string): string | null {
+	let current = MODULE_DIR;
+	while (true) {
+		const packageJsonPath = resolve(current, "package.json");
+		if (existsSync(packageJsonPath)) {
+			try {
+				const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+					name?: unknown;
+				};
+				if (pkg.name === packageName) {
+					return current;
+				}
+			} catch {
+				// Keep walking; malformed manifests are not useful for resolution.
+			}
+		}
+		const dependencyPackageJsonPath = resolve(
+			current,
+			"node_modules",
+			packageName,
+			"package.json",
+		);
+		if (existsSync(dependencyPackageJsonPath)) {
+			return dirname(dependencyPackageJsonPath);
+		}
+		const parent = resolve(current, "..");
+		if (parent === current) {
+			return null;
+		}
+		current = parent;
 	}
 }
 
@@ -385,6 +537,7 @@ export async function importPluginModule(
 		pluginPath,
 		preferHostRuntimeDependencies,
 	);
+	const sortedAliases = sortAliasesBySpecificity(aliases);
 	const jitiModule = (await import("jiti")) as unknown;
 	const createJiti =
 		typeof jitiModule === "function"
@@ -396,13 +549,13 @@ export async function importPluginModule(
 		throw new Error("Unable to load jiti");
 	}
 	const jiti = createJiti(pluginPath, {
-		alias: aliases,
+		alias: sortedAliases,
 		cache: options.useCache,
 		requireCache: options.useCache,
 		esmResolve: true,
 		interopDefault: false,
 		nativeModules: [...BUILTIN_MODULES],
-		transformModules: Object.keys(aliases),
+		transformModules: Object.keys(sortedAliases),
 	});
 	return (await jiti.import(pluginPath, {})) as Record<string, unknown>;
 }
