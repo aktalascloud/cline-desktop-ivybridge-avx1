@@ -1,7 +1,7 @@
 {
 	"name": "@cline/cli",
 	"displayName": "clite",
-	"version": "0.0.11",
+	"version": "0.0.12",
 	"description": "[EXPERIMENTAL] A lightweight Cline CLI built with the Cline SDKs",
 	"type": "module",
 	"publishConfig": {

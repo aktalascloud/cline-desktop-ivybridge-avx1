@@ -1,5 +1,16 @@
 # Cline CLI Changelog
 
+## 0.0.12 (2026-05-06)
+
+- Fix markdown rendering in the published binary: headers, inline code, blockquotes, bold, italic, and lists now render with proper syntax highlighting (tables were the only element working before)
+- Add keyboard shortcuts for scrolling through the chat transcript (Page Up/Down, Home/End)
+- Preserve typed input when selecting slash command skills instead of clearing the prompt
+- Fix `--thinking none` being ignored when persisted reasoning settings existed, which caused DeepSeek API errors
+- Fix terminal cleanup on exit so the summary prints cleanly
+- Fix onboarding provider model resolution
+- Hide ChatGPT subscription provider usage costs
+- Handle file index prewarm timeouts gracefully instead of hanging
+
 ## 0.0.11 (2026-05-06)
 
 - Add `/skills` slash command for browsing and toggling available skills interactively
