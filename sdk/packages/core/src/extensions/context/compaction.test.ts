@@ -424,7 +424,7 @@ describe("createContextCompactionPrepareTurn", () => {
 	});
 
 	it("manual mode forces compaction below the auto threshold", async () => {
-		const compact = vi.fn((context: CoreCompactionContext) => ({
+		const compact = vi.fn((_context: CoreCompactionContext) => ({
 			messages: [{ role: "user" as const, content: "Compacted manually" }],
 		}));
 		const prepareTurn = createContextCompactionPrepareTurn(

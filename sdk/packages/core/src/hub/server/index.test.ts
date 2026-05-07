@@ -1,5 +1,9 @@
 import { createServer as createHttpServer } from "node:http";
-import { createConnection, createServer as createNetServer } from "node:net";
+import {
+	createConnection,
+	createServer as createNetServer,
+	type Socket,
+} from "node:net";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { WebSocketServer } from "ws";
 import { createLocalHubScheduleRuntimeHandlers } from "../daemon/runtime-handlers";
@@ -153,9 +157,17 @@ describe("hub server startup", () => {
 			"hub-server-test-port-fallback",
 		);
 		const port = await reservePort();
+		const blockerSockets = new Set<Socket>();
 		const blocker = createHttpServer((_req, res) => {
 			res.statusCode = 404;
+			res.setHeader("connection", "close");
 			res.end("not a hub");
+		});
+		blocker.on("connection", (socket) => {
+			blockerSockets.add(socket);
+			socket.once("close", () => {
+				blockerSockets.delete(socket);
+			});
 		});
 		await new Promise<void>((resolve, reject) => {
 			blocker.once("error", reject);
@@ -177,6 +189,9 @@ describe("hub server startup", () => {
 			expect(server.port).not.toBe(port);
 			servers.add(server);
 		} finally {
+			for (const socket of blockerSockets) {
+				socket.destroy();
+			}
 			await new Promise<void>((resolve, reject) => {
 				blocker.close((error) => {
 					if (error) {
