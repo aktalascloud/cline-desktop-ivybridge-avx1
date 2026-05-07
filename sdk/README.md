@@ -6,15 +6,6 @@
 <table>
 <tbody>
 <td align="center">
-<a href="https://docs.cline.bot/sdk/overview" target="_blank"><strong>Docs</strong></a>
-</td>
-<td align="center">
-<a href="https://docs.cline.bot/sdk/quickstart" target="_blank"><strong>Quickstart</strong></a>
-</td>
-<td align="center">
-<a href="https://docs.cline.bot/sdk/examples" target="_blank"><strong>Examples</strong></a>
-</td>
-<td align="center">
 <a href="https://discord.gg/cline" target="_blank"><strong>Discord</strong></a>
 </td>
 <td align="center">
@@ -26,6 +17,9 @@
 </tbody>
 </table>
 </div>
+
+> **⚠️ Disclaimer:** This repo is currently still under active development. We will move this repo to be under the `cline/cline` repository soon. We currently do not accept public contributions given the early stage.
+
 
 The Cline SDK is a TypeScript framework for building AI agents that can edit files, run shell commands, browse the web, call APIs, and use any custom tool you give them. It's the same engine that powers [Cline](https://github.com/cline/cline), packaged as a library you can embed in your own applications.
 
