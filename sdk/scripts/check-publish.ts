@@ -14,11 +14,11 @@ type PackedManifest = {
 	name?: string;
 	version?: string;
 	dependencies?: Record<string, string>;
+	exports?: unknown;
 };
 
 const root = join(import.meta.dir, "..");
 const packagesDir = join(root, "packages");
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
 async function runCommandOrThrow(
 	cmd: string[],
@@ -109,6 +109,19 @@ async function readPackedPackageJson(tarball: string): Promise<PackedManifest> {
 	return JSON.parse(raw) as PackedManifest;
 }
 
+function containsDevelopmentExportCondition(value: unknown): boolean {
+	if (value === null || typeof value !== "object") {
+		return false;
+	}
+	if (Array.isArray(value)) {
+		return value.some(containsDevelopmentExportCondition);
+	}
+	if (Object.hasOwn(value, "development")) {
+		return true;
+	}
+	return Object.values(value).some(containsDevelopmentExportCondition);
+}
+
 async function main(): Promise<number> {
 	const published = await listPublishedPackages();
 	if (published.length === 0) {
@@ -122,7 +135,7 @@ async function main(): Promise<number> {
 
 	const testDir = await mkdtemp(join(tmpdir(), "cline-pkg-verify-"));
 	const packDir = await mkdtemp(join(tmpdir(), "cline-pkg-packs-"));
-	const npmCacheDir = await mkdtemp(join(tmpdir(), "cline-pkg-npm-cache-"));
+	const bunCacheDir = await mkdtemp(join(tmpdir(), "cline-pkg-bun-cache-"));
 	const tarballs: { name: string; tarball: string }[] = [];
 	const packedManifests = new Map<string, PackedManifest>();
 
@@ -166,30 +179,52 @@ async function main(): Promise<number> {
 		}
 		console.log("  OK - packed workspace dependency versions are aligned\n");
 
+		console.log("\n--- Verifying packed export maps ---");
+		let exportMapFailed = false;
+		for (const [pkgName, manifest] of packedManifests.entries()) {
+			if (containsDevelopmentExportCondition(manifest.exports)) {
+				console.error(
+					`  FAIL ${pkgName}: packed package exports include a "development" condition`,
+				);
+				exportMapFailed = true;
+			}
+		}
+		if (exportMapFailed) {
+			console.info(
+				"\nPublished packages must resolve to built dist files even when consumers enable custom development conditions.\n",
+			);
+			return 1;
+		}
+		console.log(
+			"  OK - packed export maps do not include development conditions\n",
+		);
+
 		console.log("\n--- Installing packages in isolated directory ---");
+		const tarballDependencies = Object.fromEntries(
+			tarballs.map((entry) => [entry.name, `file:${entry.tarball}`]),
+		);
 		const testPkg = {
 			name: "cline-pkg-verify",
 			private: true,
 			type: "module",
-			dependencies: Object.fromEntries(
-				tarballs.map((entry) => [entry.name, `file:${entry.tarball}`]),
-			),
+			dependencies: tarballDependencies,
+			overrides: tarballDependencies,
 		};
 		await writeFile(
 			join(testDir, "package.json"),
 			JSON.stringify(testPkg, null, 2),
 		);
 
-		await runCommandOrThrow([npmCommand, "install", "--ignore-scripts"], {
+		await runCommandOrThrow(["bun", "install", "--ignore-scripts"], {
 			cwd: testDir,
 			env: {
 				...process.env,
-				npm_config_cache: npmCacheDir,
+				BUN_INSTALL_CACHE_DIR: bunCacheDir,
 			},
 			stdout: "pipe",
 			stderr: "pipe",
 		});
-		console.log("  OK - npm install succeeded\n");
+		console.log("  OK - bun install succeeded\n");
 
 		console.log("--- Verifying module resolution ---");
 		let importFailed = false;
@@ -307,7 +342,7 @@ async function main(): Promise<number> {
 	} finally {
 		await rm(testDir, { recursive: true, force: true });
 		await rm(packDir, { recursive: true, force: true });
-		await rm(npmCacheDir, { recursive: true, force: true });
+		await rm(bunCacheDir, { recursive: true, force: true });
 	}
 
 	return exitCode;

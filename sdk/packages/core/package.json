@@ -16,22 +16,18 @@
 	},
 	"exports": {
 		".": {
-			"development": "./src/index.ts",
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
 		},
 		"./hub": {
-			"development": "./src/hub/index.ts",
 			"types": "./dist/hub/index.d.ts",
 			"import": "./dist/hub/index.js"
 		},
 		"./hub/daemon-entry": {
-			"development": "./src/hub/daemon/entry.ts",
 			"types": "./dist/hub/daemon/entry.d.ts",
 			"import": "./dist/hub/daemon/entry.js"
 		},
 		"./telemetry": {
-			"development": "./src/services/telemetry/index.ts",
 			"types": "./dist/services/telemetry/index.d.ts",
 			"import": "./dist/services/telemetry/index.js"
 		}

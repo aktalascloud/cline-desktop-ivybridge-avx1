@@ -15,15 +15,13 @@
 	"exports": {
 		".": {
 			"browser": "./dist/index.js",
-			"development": "./src/index.ts",
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
 		}
 	},
 	"description": "Browser-safe agent runtime for the next-generation Cline SDK",
 	"files": [
-		"dist",
-		"src"
+		"dist"
 	],
 	"keywords": [
 		"llm",
