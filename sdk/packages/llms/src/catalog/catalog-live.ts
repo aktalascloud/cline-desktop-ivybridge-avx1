@@ -79,7 +79,10 @@ function toCapabilities(model: ModelsDevModel): ModelInfo["capabilities"] {
 	if (model.temperature === true) {
 		capabilities.push("temperature");
 	}
-	if ((model.cost?.cache_read ?? 0) > 0) {
+	if (
+		(model.cost?.cache_read && model.cost?.cache_read >= 0) ||
+		(model.cost?.cache_write && model.cost?.cache_write >= 0)
+	) {
 		capabilities.push("prompt-cache");
 	}
 	return capabilities;

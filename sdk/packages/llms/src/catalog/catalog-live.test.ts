@@ -19,7 +19,7 @@ describe("models-dev-catalog", () => {
 						release_date: "2026-01-01",
 						modalities: { input: ["text", "image"] },
 						limit: { context: 1_000_000 },
-						cost: { input: 1, output: 2, cache_read: 0.5, cache_write: 0.8 },
+						cost: { input: 1, output: 2, cache_write: 0.8 },
 						status: "preview",
 						family: "gpt",
 					},
@@ -73,7 +73,7 @@ describe("models-dev-catalog", () => {
 					pricing: {
 						input: 1,
 						output: 2,
-						cacheRead: 0.5,
+						cacheRead: 0,
 						cacheWrite: 0.8,
 					},
 					status: "preview",
