@@ -1,5 +1,11 @@
 # Cline CLI Changelog
 
+## 0.0.13 (2026-05-07)
+
+- Detect prompt-cache support from cache write pricing so providers with write-only caching are represented correctly in the model catalog
+- Dual-publish `@clinebot/cli` mirror wrapper so existing users who installed via `npm i -g @clinebot/cli` continue receiving updates
+- Fix response truncation for OpenAI Codex model responses
+
 ## 0.0.12 (2026-05-06)
 
 - Fix markdown rendering in the published binary: headers, inline code, blockquotes, bold, italic, and lists now render with proper syntax highlighting (tables were the only element working before)
