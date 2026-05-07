@@ -2,7 +2,6 @@ import {
 	getCurrentContextSize,
 	type ProviderSettings,
 	ProviderSettingsManager,
-	prewarmFileIndex,
 	type UserInstructionConfigService,
 } from "@cline/core";
 import { logCliError } from "../logging/errors";
@@ -60,9 +59,6 @@ export async function runInteractive(
 	assertInteractivePreflight(config);
 
 	const initialRepoStatus = await readRepoStatus(config.cwd);
-	void prewarmFileIndex(config.cwd).catch((error: unknown) => {
-		logCliError(config.logger, "File index prewarm failed", { error });
-	});
 	const workflowSlashCommands = listInteractiveSlashCommands(
 		userInstructionService,
 	);
