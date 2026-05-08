@@ -6,6 +6,7 @@ import {
 	type ProviderSettings,
 	type ProviderSettingsManager,
 } from "@cline/core";
+import { DEFAULT_CLINE_API_BASE_URL } from "@cline/shared";
 import { Command } from "commander";
 import open from "open";
 import React from "react";
@@ -280,7 +281,7 @@ async function loginWithOAuthProvider(
 
 	if (providerId === "cline") {
 		return oauthApi.loginClineOAuth({
-			apiBaseUrl: existing?.baseUrl?.trim() || "https://api.cline.bot",
+			apiBaseUrl: existing?.baseUrl?.trim() || DEFAULT_CLINE_API_BASE_URL,
 			useWorkOSDeviceAuth: true,
 			callbacks,
 		});

@@ -7,6 +7,7 @@ import {
 	saveLocalProviderSettings,
 	startClineDeviceAuth,
 } from "@cline/core";
+import { DEFAULT_CLINE_API_BASE_URL } from "@cline/shared";
 import type { ChoiceContext } from "@opentui-ui/dialog";
 import { useDialogKeyboard } from "@opentui-ui/dialog/react";
 import open from "open";
@@ -454,7 +455,7 @@ export function OAuthLoginContent(
 
 		const manager = new ProviderSettingsManager();
 		const existing = manager.getProviderSettings(providerId);
-		const apiBaseUrl = existing?.baseUrl?.trim() || "https://api.cline.bot";
+		const apiBaseUrl = existing?.baseUrl?.trim() || DEFAULT_CLINE_API_BASE_URL;
 
 		startClineDeviceAuth()
 			.then((result) => {

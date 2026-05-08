@@ -1,3 +1,4 @@
+import { DEFAULT_CLINE_API_BASE_URL } from "@cline/shared";
 import { ProviderSettingsManager } from "../storage/provider-settings-manager";
 
 export interface ClineRecommendedModel {
@@ -22,7 +23,7 @@ export interface FetchClineRecommendedModelsOptions {
 	timeoutMs?: number;
 }
 
-const DEFAULT_API_BASE_URL = "https://api.cline.bot";
+const DEFAULT_API_BASE_URL = DEFAULT_CLINE_API_BASE_URL;
 const DEFAULT_REQUEST_TIMEOUT_MS = 5_000;
 
 export const FALLBACK_CLINE_RECOMMENDED_MODELS: ClineRecommendedModelsData = {

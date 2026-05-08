@@ -1,3 +1,5 @@
+export const DEFAULT_CLINE_API_BASE_URL = "https://api.cline.bot";
+
 export const DEFAULT_REQUEST_HEADERS: Record<string, string> = {
 	"HTTP-Referer": "https://cline.bot",
 	"X-Title": "Cline",

@@ -1,4 +1,5 @@
 import {
+	DEFAULT_CLINE_API_BASE_URL,
 	type ITelemetryService,
 	isOAuthProviderId,
 	type OAuthProviderId,
@@ -13,7 +14,6 @@ import { decodeJwtPayload } from "../../auth/utils";
 import { ProviderSettingsManager } from "../../services/storage/provider-settings-manager";
 import type { ProviderSettings } from "../../types/provider-settings";
 
-const DEFAULT_CLINE_API_BASE_URL = "https://api.cline.bot";
 const WORKOS_TOKEN_PREFIX = "workos:";
 
 type ManagedOAuthProviderId = OAuthProviderId;

@@ -8,11 +8,11 @@ import {
 	type ProviderSettings,
 	ProviderSettingsManager,
 } from "@cline/core";
+import { DEFAULT_CLINE_API_BASE_URL } from "@cline/shared";
 import { formatCreditBalance, normalizeCreditBalance } from "../utils/output";
 import { toProviderApiKey } from "../utils/provider-auth";
 import type { Config } from "../utils/types";
 
-const DEFAULT_CLINE_API_BASE_URL = "https://api.cline.bot";
 const WORKOS_TOKEN_PREFIX = "workos:";
 
 type ClineAccountConfig = Pick<Config, "apiKey" | "providerId">;

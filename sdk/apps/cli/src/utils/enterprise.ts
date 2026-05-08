@@ -14,10 +14,9 @@ import {
 	readEnterpriseSessionBlobUploadMetadata,
 	registerEnterpriseSessionBlobUpload,
 } from "@cline/enterprise";
-import { RemoteConfigSchema } from "@cline/shared";
+import { DEFAULT_CLINE_API_BASE_URL, RemoteConfigSchema } from "@cline/shared";
 import { getCliTelemetryService } from "./telemetry";
 
-const DEFAULT_CLINE_API_BASE_URL = "https://api.cline.bot";
 const initializedRemoteConfigKeys = new Set<string>();
 
 async function loadCliRemoteConfigBundle(): Promise<

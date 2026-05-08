@@ -1,6 +1,7 @@
 import * as LlmsModels from "@cline/llms";
 import {
 	type AddProviderActionRequest,
+	DEFAULT_CLINE_API_BASE_URL,
 	isOAuthProviderId,
 	type OAuthProviderId,
 	type ProviderCapability,
@@ -701,7 +702,7 @@ export async function loginLocalProvider(
 
 	if (providerId === "cline") {
 		return loginClineOAuth({
-			apiBaseUrl: existing?.baseUrl?.trim() || "https://api.cline.bot",
+			apiBaseUrl: existing?.baseUrl?.trim() || DEFAULT_CLINE_API_BASE_URL,
 			useWorkOSDeviceAuth: true,
 			callbacks,
 		});

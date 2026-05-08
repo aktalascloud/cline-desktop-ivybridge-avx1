@@ -125,7 +125,11 @@ export {
 	resolveReasoningBudgetFromRatio,
 	resolveReasoningEffortRatio,
 } from "./llms/reasoning-effort";
-export { DEFAULT_REQUEST_HEADERS, serializeAbortReason } from "./llms/requests";
+export {
+	DEFAULT_CLINE_API_BASE_URL,
+	DEFAULT_REQUEST_HEADERS,
+	serializeAbortReason,
+} from "./llms/requests";
 export type {
 	ToolApprovalRequest,
 	ToolApprovalResult,

@@ -1,11 +1,12 @@
-import type {
-	GatewayModelCapability,
-	GatewayModelDefinition,
-	GatewayProviderManifest,
-	GatewayProviderMetadata,
-	GatewayProviderSettings,
-	JsonValue,
-	ProviderCapability,
+import {
+	DEFAULT_CLINE_API_BASE_URL,
+	type GatewayModelCapability,
+	type GatewayModelDefinition,
+	type GatewayProviderManifest,
+	type GatewayProviderMetadata,
+	type GatewayProviderSettings,
+	type JsonValue,
+	type ProviderCapability,
 } from "@cline/shared";
 import { getGeneratedModelsForProvider } from "../catalog/catalog.generated-access";
 import type {
@@ -215,7 +216,7 @@ const OPENAI_COMPATIBLE_SPECS: BuiltinSpec[] = [
 		modelsProviderId: "openrouter",
 		defaultModelId: "anthropic/claude-sonnet-4.6",
 		apiKeyEnv: ["CLINE_API_KEY"],
-		defaults: { baseUrl: "https://api.cline.bot/api/v1" },
+		defaults: { baseUrl: `${DEFAULT_CLINE_API_BASE_URL}/api/v1` },
 		metadata: { promptCacheStrategy: "anthropic-automatic" },
 	},
 	{
