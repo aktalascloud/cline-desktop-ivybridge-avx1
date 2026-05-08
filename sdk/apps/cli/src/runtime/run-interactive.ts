@@ -442,6 +442,11 @@ export async function runInteractive(
 			if (mode !== "plan" && mode !== "act") {
 				return;
 			}
+			if (isRunning) {
+				pendingModeChange.current = mode;
+				sessionRuntime.abortAll();
+				return;
+			}
 			await sessionRuntime.applyMode(mode);
 		},
 		onModelChange: async () => {
