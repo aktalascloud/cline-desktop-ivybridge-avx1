@@ -50,7 +50,6 @@
       },
       "devDependencies": {
         "@cline/core": "workspace:*",
-        "@cline/enterprise": "workspace:*",
         "@cline/shared": "workspace:*",
         "@microsoft/tui-test": "^0.0.2",
         "@types/react": "19.2.14",
@@ -283,15 +282,6 @@
         "@types/ws": "^8.18.1",
       },
     },
-    "packages/enterprise": {
-      "name": "@cline/enterprise",
-      "version": "0.0.0",
-      "dependencies": {
-        "@cline/core": "workspace:*",
-        "@cline/shared": "workspace:*",
-        "aws4fetch": "^1.0.20",
-      },
-    },
     "packages/llms": {
       "name": "@cline/llms",
       "version": "0.0.38",
@@ -336,6 +326,7 @@
       "name": "@cline/shared",
       "version": "0.0.38",
       "dependencies": {
+        "aws4fetch": "^1.0.20",
         "jsonrepair": "^3.13.2",
         "zod": "^4.3.6",
         "zod-to-json-schema": "^3.25.1",
@@ -576,8 +567,6 @@
     "@cline/code": ["@cline/code@workspace:apps/examples/desktop-app"],
 
     "@cline/core": ["@cline/core@workspace:packages/core"],
-
-    "@cline/enterprise": ["@cline/enterprise@workspace:packages/enterprise"],
 
     "@cline/llms": ["@cline/llms@workspace:packages/llms"],
 

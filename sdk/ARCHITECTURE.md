@@ -10,7 +10,7 @@ This document is the architecture source of truth for the Cline SDK repository. 
 **What this covers:**
 - Package boundaries and responsibilities
 - Dependency direction and layering rules
-- Runtime flows (local, hub-backed, enterprise-managed)
+- Runtime flows (local, hub-backed, remote-config managed)
 - Design seams (repeated patterns instead of one-off integrations)
 - Architectural constraints and why they exist
 
@@ -29,7 +29,6 @@ flowchart LR
   llms["@cline/llms"]
   agents["@cline/agents"]
   core["@cline/core"]
-  enterprise["@cline/enterprise (internal)"]
   apps["Host Apps"]
 
   llms --> shared
@@ -38,9 +37,6 @@ flowchart LR
   core --> agents
   core --> llms
   core --> shared
-  enterprise --> agents
-  enterprise --> core
-  enterprise --> shared
   apps --> core
 ```
 
@@ -56,6 +52,7 @@ Owns reusable low-level contracts and infrastructure:
 - extension registry contracts
 - prompt and parsing helpers
 - storage path helpers
+- remote-config schemas, managed instruction materialization, telemetry normalization, and blob upload primitives
 
 Design rule:
 
@@ -116,23 +113,6 @@ Design rules:
   - `discovery/` contains endpoint defaults, discovery records, and workspace owner resolution
   - `server/` contains WebSocket server startup, native/browser socket adapters, server transport, server helpers, and `handlers/` for hub command dispatch
 - settings mutations belong in core services and hub commands, not in host-specific file writes. Hosts should call the core settings facade or the `settings.*` hub command family and react to `settings.changed`.
-
-### `@cline/enterprise`
-
-Internal-only enterprise integration layer:
-
-- enterprise identity adapters
-- enterprise control-plane sync
-- enterprise token/bundle storage
-- managed rule/workflow/skill materialization
-- claims-to-role mapping
-- enterprise telemetry normalization and core bridge helpers
-
-Design rules:
-
-- `enterprise` may depend on `core`
-- `core` must not depend on `enterprise`
-- enterprise stays optional and internal to this repo
 
 ## Runtime Flows
 
@@ -200,18 +180,16 @@ different process.
 4. Resume hydration is deferred until after `renderOpenTui()` so loading previous messages cannot block initial TUI paint.
 5. Any future CLI/TUI startup work should follow the same rule: daemon startup, discovery polling, provider catalog refreshes, file indexing, and resume reads must be background or user-action gated unless a command explicitly requires their result before output.
 
-### Enterprise-Managed Runtime
+### Remote-Config Managed Runtime
 
-1. Enterprise bootstrap resolves identity through an `IdentityAdapter`.
-2. Enterprise fetches a normalized `EnterpriseConfigBundle`.
-3. Enterprise caches the token and bundle through enterprise stores.
-4. Enterprise materializes managed rules/workflows/skills under workspace-local `.cline/<plugin>/`.
-5. Enterprise optionally derives telemetry config or telemetry services.
-6. Hosts pass the prepared result into `@cline/core` through the generic `prepare` seam.
-7. Enterprise applies extensions and telemetry through `localRuntime.configOverrides`, not the transport-safe `RuntimeSessionConfig`.
-8. `@cline/core` consumes the prepared local overrides during local bootstrap.
+1. A host or core wrapper fetches a normalized `RemoteConfigBundle`.
+2. `@cline/shared/remote-config` caches the bundle when configured.
+3. Shared remote-config materializes managed rules/workflows/skills under workspace-local `.cline/<plugin>/`.
+4. Shared remote-config derives generic OpenTelemetry config and session blob upload metadata from the bundle.
+5. `@cline/core` exposes the app-facing integration wrapper that applies extensions, telemetry, and session metadata to `StartSessionInput`.
+6. `@cline/core` consumes the prepared local overrides during local bootstrap.
 
-This keeps enterprise-specific behavior above the published orchestration layer.
+This keeps reusable remote-config behavior in `shared` while the session-specific bridge remains in `core`.
 
 ## Design Seams
 
@@ -368,42 +346,20 @@ Do not move these concerns into `@cline/agents`:
 - provider settings storage
 - RPC lifecycle
 - host-specific approvals
-- enterprise policy caching
+- remote-config policy caching
 
 ### Keep `core` Generic
 
-Do not make `@cline/core` enterprise-specific.
+Do not make `@cline/core` organization- or provider-specific.
 
-If a capability is truly generic, add a generic seam to core. If it is enterprise-specific, keep it in `@cline/enterprise`.
+If a capability is truly generic and app-facing, add a generic core seam. Reusable remote-config parsing, materialization, and upload primitives belong in `@cline/shared/remote-config`.
 
 ### Use One-Way Optional Layers
 
 Optional higher-level integrations may depend on lower layers.
 Lower layers should not depend on optional feature packages.
 
-That rule is what keeps:
-
-- `enterprise -> core` acceptable
-- `core -> enterprise` unacceptable
-
-## Current Internal Enterprise Design
-
-`@cline/enterprise` currently integrates with core through three main entrypoints:
-
-- `prepareEnterpriseRuntime(...)`
-- `prepareEnterpriseCoreIntegration(...)`
-- `createEnterprisePlugin(...)`
-
-Preferred bridge:
-
-- `prepareEnterpriseCoreIntegration(...)`
-
-Why:
-
-- it prepares and materializes enterprise-managed files under `.cline/<plugin>/`
-- it returns a valid `AgentPlugin`
-- it can create a telemetry service from enterprise telemetry settings
-- it lets core consume enterprise behavior through existing generic seams and normal watcher discovery
+For remote config, that means shared owns the reusable bundle/materialization/blob primitives and core owns only the session-oriented wrapper exported to apps.
 
 ## File-Based And Event-Driven Automation (`ClineCore` / `CronService`)
 
@@ -548,11 +504,10 @@ The following packages are published to npm:
 - `@cline/agents` — the agent loop and tool orchestration
 - `@cline/core` — the main SDK with session management, hub, and configuration
 
-### Internal Packages
+### Internal Apps
 
-The following packages are internal and not published:
+The following workspace apps are internal and not published as SDK packages:
 
-- `@cline/enterprise` — enterprise integrations (internal only)
 - `apps/cli` — CLI implementation
 - `apps/webview` — VS Code webview
 - `apps/examples` — example plugins and integrations

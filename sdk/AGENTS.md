@@ -17,10 +17,6 @@ Quick-reference for active development. For onboarding, workspace setup, publish
 - `@cline/agents`: stateless agent loop, tool orchestration, hook/extension runtime, event streaming
 - `@cline/core`: stateful orchestration, session lifecycle, storage, config watching, plugin loading, default tools, telemetry. Exposes `@cline/core/hub` for discovery, the detached daemon entry, WebSocket clients, and session/UI client adapters, plus `@cline/core/hub/daemon-entry` for launching the shared daemon
 
-### Internal Package
-
-- `@cline/enterprise`: enterprise identity adapters, control-plane sync, managed instruction materialization, claims-to-role mapping, telemetry bridging. Composes with core but `core` must not depend on it. Excluded from root SDK build/version/publish flows.
-
 ### Dependency Direction
 
 ```mermaid
@@ -28,7 +24,6 @@ flowchart TD
   shared["@cline/shared"] --> llms["@cline/llms"] & agents["@cline/agents"] & core["@cline/core"]
   llms --> agents & core
   agents --> core
-  enterprise["@cline/enterprise"] --> agents & core & shared
   core --> apps["CLI / VS Code / Code App"]
 ```
 
@@ -36,7 +31,6 @@ Rules:
 - `shared` stays low-level and reusable
 - `agents` stays stateless — no session/storage/config concerns
 - `core` owns stateful orchestration, including the shared-hub daemon, server, and client adapters under `src/hub/`
-- `enterprise` may depend on `core`, but not the reverse
 
 ## Change Routing
 
@@ -45,7 +39,7 @@ Route changes to the package that owns the concern:
 - model/provider schemas or handler behavior: `@cline/llms`
 - stateless loop, tool orchestration, streaming, hook/extension runtime: `@cline/agents`
 - session lifecycle, storage, config watching, default tools, plugin loading, telemetry, hub runtime services, hub discovery, hub daemon spawn, and session-oriented client helpers (`HubSessionClient`, `HubUIClient`, `connectToHub`): `@cline/core` (hub pieces live under `src/hub/`)
-- enterprise identity, control-plane sync, materialization, claims mapping: `@cline/enterprise`
+- remote-config schemas, managed instruction materialization, blob upload metadata, and OpenTelemetry config normalization: `@cline/shared/src/remote-config`
 - host-specific UX or shell behavior: app package
 
 ## Verifying Changes
@@ -66,7 +60,7 @@ If you touch hub/bootstrap/session flows, please update `ARCHITECTURE.md`.
 
 - Don't move stateful logic down into `agents`
 - Don't put app-specific behavior into `core` unless it is truly shared host behavior
-- Don't let enterprise concerns leak into published core APIs unless they are generic and reusable
+- Keep remote-config primitives generic in `shared`; host-facing session integration belongs in `core`
 
 ### Refactor Standard
 

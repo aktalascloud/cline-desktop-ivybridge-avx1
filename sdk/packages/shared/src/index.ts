@@ -181,6 +181,20 @@ export {
 	parseUserCommandEnvelope,
 	xmlTagsRemoval,
 } from "./prompt/format";
+export {
+	buildRemoteConfigSessionBlobUploadMetadata,
+	clearRemoteConfigSessionBlobUpload,
+	createRemoteConfigSessionMessagesArtifactUploader,
+	prepareRemoteConfigRuntime,
+	REMOTE_CONFIG_SESSION_BLOB_UPLOAD_METADATA_KEY,
+	readRemoteConfigSessionBlobUploadMetadata,
+	registerRemoteConfigSessionBlobUpload,
+} from "./remote-config";
+export type {
+	PreparedRemoteConfigRuntime,
+	PrepareRemoteConfigRuntimeOptions,
+	RemoteConfigBundle,
+} from "./remote-config/bundle";
 export { REMOTE_URI_SCHEME } from "./remote-config/constants";
 export type {
 	AnthropicModel,

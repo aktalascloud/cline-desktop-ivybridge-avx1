@@ -327,6 +327,16 @@ export type {
 export * from "./hub";
 export { HubRuntimeHost } from "./hub/runtime-host/hub-runtime-host";
 export { RemoteRuntimeHost } from "./hub/runtime-host/remote-runtime-host";
+export {
+	buildRemoteConfigSessionBlobUploadMetadata,
+	createRemoteConfigSessionMessagesArtifactUploader,
+	type PreparedRemoteConfigCoreIntegration,
+	type PrepareRemoteConfigCoreIntegrationOptions,
+	prepareRemoteConfigCoreIntegration,
+	REMOTE_CONFIG_SESSION_BLOB_UPLOAD_METADATA_KEY,
+	readRemoteConfigSessionBlobUploadMetadata,
+	registerRemoteConfigSessionBlobUpload,
+} from "./remote-config/integration";
 export type { RuntimeCapabilities } from "./runtime/capabilities";
 export { normalizeRuntimeCapabilities } from "./runtime/capabilities";
 export { listSessionHistoryFromBackend } from "./runtime/host/history";

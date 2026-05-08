@@ -27,11 +27,6 @@
 				"./packages/core/src/*",
 				"./packages/core/src/*/index.ts"
 			],
-			"@cline/enterprise": ["./packages/enterprise/src/index.ts"],
-			"@cline/enterprise/*": [
-				"./packages/enterprise/src/*",
-				"./packages/enterprise/src/*/index.ts"
-			],
 			"@cline/llms": ["./packages/llms/src/index.ts"],
 			"@cline/llms/browser": ["./packages/llms/src/index.browser.ts"],
 			"@cline/sdk": ["./packages/sdk/src/index.ts"],

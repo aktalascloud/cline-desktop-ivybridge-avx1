@@ -1,63 +1,74 @@
-import type { GlobalInstructionsFile, RemoteConfig } from "@cline/shared";
 import type {
-	EnterpriseConfigBundle,
-	EnterpriseMaterializationInput,
-	EnterpriseMaterializationResult,
-	EnterprisePolicyMaterializer,
-	EnterpriseRuleFile,
-	EnterpriseRuleKind,
-	MaterializedInstructionFile,
-} from "../contracts";
+	RemoteConfigBundle,
+	RemoteConfigManagedInstructionFile,
+	RemoteConfigManagedInstructionKind,
+	RemoteConfigMaterializationInput,
+	RemoteConfigMaterializationResult,
+	RemoteConfigMaterializedInstructionFile,
+	RemoteConfigPolicyMaterializer,
+} from "./bundle";
+import { remoteConfigInstructionToManagedFile } from "./bundle";
+import type { RemoteConfig } from "./schema";
 
 function sanitizeSegment(value: string): string {
-	return (
-		value
-			.trim()
-			.toLowerCase()
-			.replace(/[^a-z0-9._-]+/g, "-")
-			.replace(/^-+|-+$/g, "")
-			.slice(0, 80) || "item"
-	);
+	let result = "";
+	let pendingSeparator = false;
+	for (const char of value.trim().toLowerCase()) {
+		const code = char.charCodeAt(0);
+		const isAllowed =
+			(code >= 97 && code <= 122) ||
+			(code >= 48 && code <= 57) ||
+			char === "." ||
+			char === "_" ||
+			char === "-";
+		if (isAllowed) {
+			if (pendingSeparator && result && result[result.length - 1] !== "-") {
+				result += "-";
+			}
+			pendingSeparator = false;
+			result += char;
+		} else {
+			pendingSeparator = true;
+		}
+		if (result.length >= 80) {
+			break;
+		}
+	}
+	while (result.endsWith("-")) {
+		result = result.slice(0, -1);
+	}
+	while (result.startsWith("-")) {
+		result = result.slice(1);
+	}
+	return result || "item";
 }
 
 function mergeRemoteConfigInstructions(
 	remoteConfig: RemoteConfig | undefined,
-): EnterpriseRuleFile[] {
+): RemoteConfigManagedInstructionFile[] {
 	const rules =
 		remoteConfig?.globalRules?.map((rule, index) =>
-			toRuleFile("rule", rule, `${index}`),
+			remoteConfigInstructionToManagedFile("rule", rule, `${index}`),
 		) ?? [];
 	const workflows =
 		remoteConfig?.globalWorkflows?.map((workflow, index) =>
-			toRuleFile("workflow", workflow, `${index}`),
+			remoteConfigInstructionToManagedFile("workflow", workflow, `${index}`),
 		) ?? [];
 	return [...rules, ...workflows];
 }
 
-function toRuleFile(
-	kind: EnterpriseRuleKind,
-	file: GlobalInstructionsFile,
-	suffix: string,
-): EnterpriseRuleFile {
-	return {
-		id: `remote-config:${kind}:${suffix}:${file.name}`,
-		name: file.name,
-		kind,
-		contents: file.contents,
-		alwaysEnabled: file.alwaysEnabled,
-	};
-}
-
 function combineInstructions(
-	bundle: EnterpriseConfigBundle,
-): EnterpriseRuleFile[] {
+	bundle: RemoteConfigBundle,
+): RemoteConfigManagedInstructionFile[] {
 	return [
 		...mergeRemoteConfigInstructions(bundle.remoteConfig),
 		...(bundle.managedInstructions ?? []),
 	];
 }
 
-function buildRulesMarkdown(rules: readonly EnterpriseRuleFile[]): string {
+function buildRulesMarkdown(
+	rules: readonly RemoteConfigManagedInstructionFile[],
+): string {
 	return rules
 		.map((rule) => {
 			const header = `## ${rule.name}`;
@@ -67,21 +78,28 @@ function buildRulesMarkdown(rules: readonly EnterpriseRuleFile[]): string {
 		.join("\n\n");
 }
 
-export class FileSystemEnterprisePolicyMaterializer
-	implements EnterprisePolicyMaterializer
+function selectInstructions(
+	instructions: readonly RemoteConfigManagedInstructionFile[],
+	kind: RemoteConfigManagedInstructionKind,
+): RemoteConfigManagedInstructionFile[] {
+	return instructions.filter((item) => item.kind === kind);
+}
+
+export class FileSystemRemoteConfigPolicyMaterializer
+	implements RemoteConfigPolicyMaterializer
 {
 	async materialize(
-		input: EnterpriseMaterializationInput,
-	): Promise<EnterpriseMaterializationResult> {
+		input: RemoteConfigMaterializationInput,
+	): Promise<RemoteConfigMaterializationResult> {
 		const instructions = combineInstructions(input.bundle);
-		const rules = instructions.filter((item) => item.kind === "rule");
-		const workflows = instructions.filter((item) => item.kind === "workflow");
-		const skills = instructions.filter((item) => item.kind === "skill");
+		const rules = selectInstructions(instructions, "rule");
+		const workflows = selectInstructions(instructions, "workflow");
+		const skills = selectInstructions(instructions, "skill");
 
 		await input.artifactStore.removeChildren(input.paths.workflowsPath);
 		await input.artifactStore.removeChildren(input.paths.skillsPath);
 
-		const files: MaterializedInstructionFile[] = [];
+		const files: RemoteConfigMaterializedInstructionFile[] = [];
 		if (rules.length > 0) {
 			await input.artifactStore.writeText(
 				input.paths.rulesFilePath,

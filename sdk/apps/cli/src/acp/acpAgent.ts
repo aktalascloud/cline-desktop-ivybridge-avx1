@@ -484,6 +484,8 @@ export class AcpAgent implements Agent {
 				requestToolApproval: (request) =>
 					requestAcpToolApproval(this.conn, acpSessionId, request),
 			},
+			cwd: config.cwd,
+			workspaceRoot: config.workspaceRoot,
 		});
 
 		session.unsubscribe = subscribeToAgentEvents(

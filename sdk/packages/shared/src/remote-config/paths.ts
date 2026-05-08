@@ -1,11 +1,13 @@
 import path from "node:path";
-import type { EnterprisePaths } from "../contracts";
+import type { RemoteConfigManagedPaths } from "./bundle";
 
-export function resolveEnterprisePaths(input: {
+export const DEFAULT_REMOTE_CONFIG_PLUGIN_NAME = "remote-config";
+
+export function resolveRemoteConfigPaths(input: {
 	workspacePath: string;
 	pluginName?: string;
-}): EnterprisePaths {
-	const pluginName = input.pluginName ?? "enterprise";
+}): RemoteConfigManagedPaths {
+	const pluginName = input.pluginName ?? DEFAULT_REMOTE_CONFIG_PLUGIN_NAME;
 	const pluginPath = path.join(input.workspacePath, ".cline", pluginName);
 	return {
 		pluginName,
@@ -13,13 +15,14 @@ export function resolveEnterprisePaths(input: {
 		workflowsPath: path.join(pluginPath, "workflows"),
 		skillsPath: path.join(pluginPath, "skills"),
 		bundleCachePath: path.join(pluginPath, "cache", "bundle.json"),
-		tokenCachePath: path.join(pluginPath, "cache", "token.json"),
 		manifestPath: path.join(pluginPath, "managed.json"),
 		rulesFilePath: path.join(pluginPath, "rules.md"),
 	};
 }
 
-export function getEnterpriseCommandDirectories(paths: EnterprisePaths): {
+export function getRemoteConfigCommandDirectories(
+	paths: RemoteConfigManagedPaths,
+): {
 	workflowsDirectories: readonly string[];
 	skillsDirectories: readonly string[];
 } {

@@ -11,6 +11,10 @@ import {
 	listSessionHistoryFromBackend,
 	resolveSessionBackend,
 } from "@cline/core";
+import {
+	createCliMessagesArtifactUploader,
+	prepareCliEnterpriseIntegration,
+} from "../utils/enterprise";
 import { resolveWorkspaceRoot } from "../utils/helpers";
 import { getCliTelemetryService } from "../utils/telemetry";
 import type { ConversationHistory } from "./export";
@@ -52,6 +56,8 @@ export async function createCliCore(options?: {
 		telemetry: getCliTelemetryService(options?.logger),
 		logger: options?.logger,
 		toolPolicies: options?.toolPolicies,
+		messagesArtifactUploader: createCliMessagesArtifactUploader(),
+		prepare: prepareCliEnterpriseIntegration,
 	});
 	options?.logger?.log("CLI core runtime routing selected", {
 		backendMode: explicitBackendMode ?? "env-managed",

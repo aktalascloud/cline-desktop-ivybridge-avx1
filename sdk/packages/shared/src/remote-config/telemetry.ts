@@ -1,9 +1,10 @@
-import type { OpenTelemetryClientConfig, RemoteConfig } from "@cline/shared";
+import type { OpenTelemetryClientConfig } from "../services/telemetry";
 import type {
-	EnterpriseConfigBundle,
-	EnterpriseSyncContext,
-	EnterpriseTelemetryAdapter,
-} from "../contracts";
+	RemoteConfigBundle,
+	RemoteConfigSyncContext,
+	RemoteConfigTelemetryAdapter,
+} from "./bundle";
+import type { RemoteConfig } from "./schema";
 
 export function resolveOpenTelemetryConfigFromRemoteConfig(
 	remoteConfig: RemoteConfig | undefined,
@@ -106,14 +107,14 @@ export function normalizeBundleTelemetry(
 		: undefined;
 }
 
-export class RemoteConfigEnterpriseTelemetryAdapter
-	implements EnterpriseTelemetryAdapter
+export class DefaultRemoteConfigTelemetryAdapter
+	implements RemoteConfigTelemetryAdapter
 {
 	name = "remote-config";
 
 	resolveTelemetry(
-		bundle: EnterpriseConfigBundle,
-		_context: EnterpriseSyncContext,
+		bundle: RemoteConfigBundle,
+		_context: RemoteConfigSyncContext,
 	): Partial<OpenTelemetryClientConfig> | undefined {
 		return {
 			...resolveOpenTelemetryConfigFromRemoteConfig(bundle.remoteConfig),

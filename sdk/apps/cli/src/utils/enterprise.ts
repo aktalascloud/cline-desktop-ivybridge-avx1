@@ -1,26 +1,37 @@
 import {
+	buildRemoteConfigSessionBlobUploadMetadata,
 	ClineAccountService,
+	type ClineCoreStartInput,
+	createRemoteConfigSessionMessagesArtifactUploader,
 	ProviderSettingsManager,
+	prepareRemoteConfigCoreIntegration,
+	REMOTE_CONFIG_SESSION_BLOB_UPLOAD_METADATA_KEY,
+	readRemoteConfigSessionBlobUploadMetadata,
+	registerRemoteConfigSessionBlobUpload,
 	resolveLocalClineAuthToken,
 	type SessionMessagesArtifactUploader,
-	type StartSessionInput,
 } from "@cline/core";
-import {
-	buildEnterpriseSessionBlobUploadMetadata,
-	createEnterpriseSessionMessagesArtifactUploader,
-	ENTERPRISE_SESSION_BLOB_UPLOAD_METADATA_KEY,
-	type EnterpriseConfigBundle,
-	prepareEnterpriseCoreIntegration,
-	readEnterpriseSessionBlobUploadMetadata,
-	registerEnterpriseSessionBlobUpload,
-} from "@cline/enterprise";
-import { DEFAULT_CLINE_API_BASE_URL, RemoteConfigSchema } from "@cline/shared";
+import { DEFAULT_CLINE_API_BASE_URL, type RemoteConfigBundle, RemoteConfigSchema } from "@cline/shared";
 import { getCliTelemetryService } from "./telemetry";
 
 const initializedRemoteConfigKeys = new Set<string>();
+let cliRemoteConfigBundlePromise:
+	| Promise<RemoteConfigBundle | undefined>
+	| undefined;
 
 async function loadCliRemoteConfigBundle(): Promise<
-	EnterpriseConfigBundle | undefined
+	RemoteConfigBundle | undefined
+> {
+	cliRemoteConfigBundlePromise ??= loadCliRemoteConfigBundleUncached().finally(
+		() => {
+			cliRemoteConfigBundlePromise = undefined;
+		},
+	);
+	return await cliRemoteConfigBundlePromise;
+}
+
+async function loadCliRemoteConfigBundleUncached(): Promise<
+	RemoteConfigBundle | undefined
 > {
 	const manager = new ProviderSettingsManager();
 	const settings = manager.getProviderSettings("cline");
@@ -57,11 +68,11 @@ async function loadCliRemoteConfigBundle(): Promise<
 }
 
 export function createCliMessagesArtifactUploader() {
-	const uploader = createEnterpriseSessionMessagesArtifactUploader();
+	const uploader = createRemoteConfigSessionMessagesArtifactUploader();
 	const telemetry = getCliTelemetryService();
 	return {
 		async uploadMessagesFile(input) {
-			const metadata = readEnterpriseSessionBlobUploadMetadata(input.row);
+			const metadata = readRemoteConfigSessionBlobUploadMetadata(input.row);
 			const startedAt = Date.now();
 			try {
 				await uploader.uploadMessagesFile(input);
@@ -98,7 +109,7 @@ export function createCliMessagesArtifactUploader() {
 	} satisfies SessionMessagesArtifactUploader;
 }
 
-function captureRemoteConfigInitialized(bundle: EnterpriseConfigBundle): void {
+function captureRemoteConfigInitialized(bundle: RemoteConfigBundle): void {
 	const telemetry = getCliTelemetryService();
 	const key = `${bundle.source}:${bundle.version}`;
 	if (initializedRemoteConfigKeys.has(key)) {
@@ -123,15 +134,16 @@ function captureRemoteConfigInitialized(bundle: EnterpriseConfigBundle): void {
 }
 
 export async function prepareCliEnterpriseIntegration(
-	input: StartSessionInput,
+	input: ClineCoreStartInput,
 ) {
 	const bundle = await loadCliRemoteConfigBundle();
 	if (!bundle) {
 		return undefined;
 	}
 	captureRemoteConfigInitialized(bundle);
-	return prepareEnterpriseCoreIntegration({
+	return prepareRemoteConfigCoreIntegration({
 		workspacePath: input.config.workspaceRoot ?? input.config.cwd,
+		pluginName: "enterprise",
 		controlPlane: {
 			name: "cline-account",
 			async fetchBundle() {
@@ -150,15 +162,15 @@ export async function resolveCliSessionMetadata(
 		captureRemoteConfigInitialized(bundle);
 	}
 	if (sessionId) {
-		registerEnterpriseSessionBlobUpload(sessionId, bundle?.remoteConfig);
+		registerRemoteConfigSessionBlobUpload(sessionId, bundle?.remoteConfig);
 	}
-	const blobUploadMetadata = buildEnterpriseSessionBlobUploadMetadata(
+	const blobUploadMetadata = buildRemoteConfigSessionBlobUploadMetadata(
 		bundle?.remoteConfig,
 	);
 	if (!blobUploadMetadata) {
 		return undefined;
 	}
 	return {
-		[ENTERPRISE_SESSION_BLOB_UPLOAD_METADATA_KEY]: blobUploadMetadata,
+		[REMOTE_CONFIG_SESSION_BLOB_UPLOAD_METADATA_KEY]: blobUploadMetadata,
 	};
 }

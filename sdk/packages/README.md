@@ -13,7 +13,6 @@ This directory is the single documentation source for package-level responsibili
 | `@cline/llms` | Model catalog + provider settings schema + handler creation SDK | `@cline/agents`, `@cline/core`, apps | None |
 | `@cline/agents` | Stateless agent runtime loop (tools, hooks, extensions, teams, streaming) | `@cline/core`, apps | `@cline/llms`, `@cline/shared` |
 | `@cline/core` | Stateful runtime orchestration (runtime composition, session lifecycle/storage, local and hub runtime services, hub discovery and client helpers) | CLI/Desktop apps | `@cline/agents`, `@cline/llms`, `@cline/shared` |
-| `@cline/enterprise` | Enterprise composition layer (identity resolution, remote control plane sync, policy materialization, telemetry configuration) | Apps with enterprise/org management | `@cline/agents`, `@cline/shared` |
 
 ## How Packages Work Together
 
@@ -23,7 +22,6 @@ This directory is the single documentation source for package-level responsibili
 4. `@cline/core` hub services orchestrate scheduled runtime execution, execution history, and schedule command handling.
 5. `@cline/core/hub` exposes discovery, the detached hub daemon, and session-oriented client APIs (`HubSessionClient`, `HubUIClient`) when hosts need a shared daemon.
 6. `@cline/shared` provides the shared contracts and path/session primitives used across the stack.
-7. `@cline/enterprise` sits on top of `@cline/core` and `@cline/agents` to sync identity, fetch remote config bundles, materialize managed instructions to disk, and register the result as an `AgentExtension`.
 
 ## Practical Boundary Rules
 
@@ -33,7 +31,7 @@ This directory is the single documentation source for package-level responsibili
 - Put scheduled execution and schedule persistence in `@cline/core` hub services.
 - Put hub discovery, attach flows, and session-oriented client adapters in `@cline/core/hub`.
 - Put cross-package utility types and path/session constants in `@cline/shared`.
-- Put identity resolution, control plane sync, policy materialization, and enterprise telemetry in `@cline/enterprise`.
+- Put remote-config schemas, materialization, telemetry normalization, and blob upload primitives in `@cline/shared/remote-config`.
 
 ## Runtime Entry Points
 

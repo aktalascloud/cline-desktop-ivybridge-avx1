@@ -17,11 +17,6 @@
 			"@cline/core/telemetry": [
 				"../packages/core/src/services/telemetry/index.ts"
 			],
-			"@cline/enterprise": ["../packages/enterprise/src/index.ts"],
-			"@cline/enterprise/*": [
-				"../packages/enterprise/src/*",
-				"../packages/enterprise/src/*/index.ts"
-			],
 			"@cline/llms": ["../packages/llms/src/index.ts"],
 			"@cline/shared": ["../packages/shared/src/index.ts"],
 			"@cline/shared/storage": ["../packages/shared/src/storage/index.ts"],

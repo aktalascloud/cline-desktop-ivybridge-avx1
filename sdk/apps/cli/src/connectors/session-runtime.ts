@@ -15,6 +15,7 @@ import {
 } from "../commands/auth";
 import type { CliLoggerAdapter } from "../logging/adapter";
 import { resolveSystemPrompt } from "../runtime/prompt";
+import { resolveCliSessionMetadata } from "../utils/enterprise";
 import { resolveWorkspaceRoot } from "../utils/helpers";
 import {
 	parseLocalRowMetadata,
@@ -194,6 +195,9 @@ export async function getOrCreateSessionId<
 	if (!sessionId) {
 		throw new Error("runtime start returned an empty session id");
 	}
+	const remoteConfigMetadata = await resolveCliSessionMetadata(sessionId).catch(
+		() => undefined,
+	);
 
 	await input.client
 		.updateSession({
@@ -201,6 +205,7 @@ export async function getOrCreateSessionId<
 			metadata: {
 				transport: input.transport,
 				...input.sessionMetadata,
+				...(remoteConfigMetadata ?? {}),
 				...(threadState.participantKey
 					? { participantKey: threadState.participantKey }
 					: {}),

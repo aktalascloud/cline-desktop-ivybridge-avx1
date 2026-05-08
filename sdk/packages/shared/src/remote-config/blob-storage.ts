@@ -1,14 +1,13 @@
 import { createHmac } from "node:crypto";
 import { basename } from "node:path";
-import type { SessionMessagesArtifactUploader, SessionRow } from "@cline/core";
+import { AwsClient } from "aws4fetch";
 import type {
 	PromptUploading,
 	RemoteConfig,
 	S3AccessKeySettings,
-} from "@cline/shared";
-import { AwsClient } from "aws4fetch";
+} from "./schema";
 
-export interface EnterpriseBlobStoreSettings {
+export interface RemoteConfigBlobStoreSettings {
 	bucket: string;
 	adapterType: "s3" | "r2" | "azure";
 	accessKeyId: string;
@@ -18,7 +17,7 @@ export interface EnterpriseBlobStoreSettings {
 	accountId?: string;
 }
 
-export interface EnterpriseBlobStoreTarget {
+export interface RemoteConfigBlobStoreTarget {
 	bucket: string;
 	adapterType: "s3" | "r2" | "azure";
 	region?: string;
@@ -26,26 +25,46 @@ export interface EnterpriseBlobStoreTarget {
 	accountId?: string;
 }
 
-export interface EnterpriseBlobStorageAdapter {
+export interface RemoteConfigBlobStorageAdapter {
 	write(path: string, value: string): Promise<void>;
 }
 
-export interface EnterpriseSessionBlobUploadMetadata {
+export interface RemoteConfigSessionBlobUploadMetadata {
 	version: 1;
-	storage: EnterpriseBlobStoreTarget;
+	storage: RemoteConfigBlobStoreTarget;
 	keyPrefix?: string;
 	userDistinctId?: string;
 }
 
-export const ENTERPRISE_SESSION_BLOB_UPLOAD_METADATA_KEY =
+export interface RemoteConfigSessionMetadataRow {
+	metadata?: Record<string, unknown> | null;
+}
+
+export interface RemoteConfigSessionMessagesUploadInput {
+	sessionId: string;
+	path: string;
+	contents: string;
+	row?: RemoteConfigSessionMetadataRow;
+}
+
+export interface RemoteConfigSessionMessagesArtifactUploader {
+	uploadMessagesFile(
+		input: RemoteConfigSessionMessagesUploadInput,
+	): Promise<void>;
+}
+
+export const REMOTE_CONFIG_SESSION_BLOB_UPLOAD_METADATA_KEY =
 	"enterprise.blobUpload";
 
-const sessionBlobStoreSettings = new Map<string, EnterpriseBlobStoreSettings>();
+const sessionBlobStoreSettings = new Map<
+	string,
+	RemoteConfigBlobStoreSettings
+>();
 
 function accessSettingsToBlobStorage(
-	adapterType: EnterpriseBlobStoreSettings["adapterType"],
+	adapterType: RemoteConfigBlobStoreSettings["adapterType"],
 	settings: S3AccessKeySettings,
-): EnterpriseBlobStoreSettings {
+): RemoteConfigBlobStoreSettings {
 	return {
 		adapterType,
 		accessKeyId: settings.accessKeyId,
@@ -58,8 +77,8 @@ function accessSettingsToBlobStorage(
 }
 
 function sanitizeBlobStoreTarget(
-	settings: EnterpriseBlobStoreSettings,
-): EnterpriseBlobStoreTarget {
+	settings: RemoteConfigBlobStoreSettings,
+): RemoteConfigBlobStoreTarget {
 	return {
 		adapterType: settings.adapterType,
 		bucket: settings.bucket,
@@ -71,7 +90,7 @@ function sanitizeBlobStoreTarget(
 
 export function resolveBlobStoreSettingsFromPromptUploading(
 	promptUploading: PromptUploading | undefined,
-): EnterpriseBlobStoreSettings | undefined {
+): RemoteConfigBlobStoreSettings | undefined {
 	if (!promptUploading || promptUploading.enabled !== true) {
 		return undefined;
 	}
@@ -101,16 +120,16 @@ export function resolveBlobStoreSettingsFromPromptUploading(
 
 export function resolveBlobStoreSettingsFromRemoteConfig(
 	remoteConfig: RemoteConfig | undefined,
-): EnterpriseBlobStoreSettings | undefined {
+): RemoteConfigBlobStoreSettings | undefined {
 	return resolveBlobStoreSettingsFromPromptUploading(
 		remoteConfig?.enterpriseTelemetry?.promptUploading,
 	);
 }
 
-export function buildEnterpriseSessionBlobUploadMetadata(
+export function buildRemoteConfigSessionBlobUploadMetadata(
 	remoteConfig: RemoteConfig | undefined,
 	userDistinctId?: string,
-): EnterpriseSessionBlobUploadMetadata | undefined {
+): RemoteConfigSessionBlobUploadMetadata | undefined {
 	const storage = resolveBlobStoreSettingsFromRemoteConfig(remoteConfig);
 	if (!storage) {
 		return undefined;
@@ -122,11 +141,11 @@ export function buildEnterpriseSessionBlobUploadMetadata(
 	};
 }
 
-export function registerEnterpriseSessionBlobUpload(
+export function registerRemoteConfigSessionBlobUpload(
 	sessionId: string,
 	remoteConfig: RemoteConfig | undefined,
 	userDistinctId?: string,
-): EnterpriseSessionBlobUploadMetadata | undefined {
+): RemoteConfigSessionBlobUploadMetadata | undefined {
 	const storage = resolveBlobStoreSettingsFromRemoteConfig(remoteConfig);
 	if (!storage) {
 		sessionBlobStoreSettings.delete(sessionId);
@@ -140,7 +159,7 @@ export function registerEnterpriseSessionBlobUpload(
 	};
 }
 
-export function clearEnterpriseSessionBlobUpload(sessionId: string): void {
+export function clearRemoteConfigSessionBlobUpload(sessionId: string): void {
 	sessionBlobStoreSettings.delete(sessionId);
 }
 
@@ -148,7 +167,7 @@ function createAdapter(
 	client: AwsClient,
 	endpoint: string,
 	bucket: string,
-): EnterpriseBlobStorageAdapter {
+): RemoteConfigBlobStorageAdapter {
 	const base = `${endpoint}/${bucket}`;
 	return {
 		async write(path: string, value: string): Promise<void> {
@@ -167,8 +186,8 @@ function createAdapter(
 }
 
 function createS3Adapter(
-	settings: EnterpriseBlobStoreSettings,
-): EnterpriseBlobStorageAdapter | undefined {
+	settings: RemoteConfigBlobStoreSettings,
+): RemoteConfigBlobStorageAdapter | undefined {
 	const { bucket, accessKeyId, secretAccessKey } = settings;
 	if (!bucket || !accessKeyId || !secretAccessKey) {
 		return undefined;
@@ -187,8 +206,8 @@ function createS3Adapter(
 }
 
 function createR2Adapter(
-	settings: EnterpriseBlobStoreSettings,
-): EnterpriseBlobStorageAdapter | undefined {
+	settings: RemoteConfigBlobStoreSettings,
+): RemoteConfigBlobStorageAdapter | undefined {
 	const { accountId, endpoint, bucket, accessKeyId, secretAccessKey } =
 		settings;
 	if (
@@ -248,8 +267,8 @@ function azureSharedKeyAuth(
 }
 
 function createAzureAdapter(
-	settings: EnterpriseBlobStoreSettings,
-): EnterpriseBlobStorageAdapter | undefined {
+	settings: RemoteConfigBlobStoreSettings,
+): RemoteConfigBlobStorageAdapter | undefined {
 	const { accessKeyId, secretAccessKey, bucket } = settings;
 	if (!accessKeyId || !secretAccessKey || !bucket) {
 		return undefined;
@@ -291,9 +310,9 @@ function createAzureAdapter(
 	};
 }
 
-export function createEnterpriseBlobStorageAdapter(
-	settings: EnterpriseBlobStoreSettings,
-): EnterpriseBlobStorageAdapter | undefined {
+export function createRemoteConfigBlobStorageAdapter(
+	settings: RemoteConfigBlobStoreSettings,
+): RemoteConfigBlobStorageAdapter | undefined {
 	if (settings.adapterType === "s3") {
 		return createS3Adapter(settings);
 	}
@@ -310,10 +329,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function readEnterpriseSessionBlobUploadMetadata(
-	row: SessionRow | undefined,
-): EnterpriseSessionBlobUploadMetadata | undefined {
-	const raw = row?.metadata?.[ENTERPRISE_SESSION_BLOB_UPLOAD_METADATA_KEY];
+export function readRemoteConfigSessionBlobUploadMetadata(
+	row: RemoteConfigSessionMetadataRow | undefined,
+): RemoteConfigSessionBlobUploadMetadata | undefined {
+	const raw = row?.metadata?.[REMOTE_CONFIG_SESSION_BLOB_UPLOAD_METADATA_KEY];
 	if (!isRecord(raw)) {
 		return undefined;
 	}
@@ -345,11 +364,10 @@ export function readEnterpriseSessionBlobUploadMetadata(
 	};
 }
 
-// Blob Storage Structure: sessions/{userDistinctId}/{sessionId}/{filename}
 function buildBlobObjectKey(
 	sessionId: string,
 	messagesPath: string,
-	metadata: EnterpriseSessionBlobUploadMetadata,
+	metadata: RemoteConfigSessionBlobUploadMetadata,
 ): string {
 	const userDistinctId = metadata.userDistinctId?.trim() || "unknown";
 	const parts = [
@@ -363,8 +381,8 @@ function buildBlobObjectKey(
 	return parts.join("/");
 }
 
-export function createEnterpriseSessionMessagesArtifactUploader(): SessionMessagesArtifactUploader {
-	const adapters = new Map<string, EnterpriseBlobStorageAdapter>();
+export function createRemoteConfigSessionMessagesArtifactUploader(): RemoteConfigSessionMessagesArtifactUploader {
+	const adapters = new Map<string, RemoteConfigBlobStorageAdapter>();
 	return {
 		async uploadMessagesFile({
 			sessionId,
@@ -372,7 +390,7 @@ export function createEnterpriseSessionMessagesArtifactUploader(): SessionMessag
 			contents,
 			row,
 		}): Promise<void> {
-			const metadata = readEnterpriseSessionBlobUploadMetadata(row);
+			const metadata = readRemoteConfigSessionBlobUploadMetadata(row);
 			if (!metadata) {
 				return;
 			}
@@ -383,7 +401,7 @@ export function createEnterpriseSessionMessagesArtifactUploader(): SessionMessag
 			const cacheKey = JSON.stringify(settings);
 			let adapter = adapters.get(cacheKey);
 			if (!adapter) {
-				adapter = createEnterpriseBlobStorageAdapter(settings);
+				adapter = createRemoteConfigBlobStorageAdapter(settings);
 				if (!adapter) {
 					return;
 				}

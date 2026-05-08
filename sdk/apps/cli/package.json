@@ -72,7 +72,6 @@
 	"license": "Apache-2.0",
 	"devDependencies": {
 		"@cline/core": "workspace:*",
-		"@cline/enterprise": "workspace:*",
 		"@cline/shared": "workspace:*",
 		"@microsoft/tui-test": "^0.0.2",
 		"@types/react": "19.2.14"
