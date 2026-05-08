@@ -5,6 +5,7 @@ import { join } from "node:path";
 import type { MessageWithMetadata } from "@cline/llms";
 import type {
 	AgentConfig,
+	AgentEvent,
 	AgentExtensionAutomationContext,
 	AgentResult,
 	AgentRuntimeEvent,
@@ -1308,6 +1309,21 @@ describe("LocalRuntimeHost", () => {
 					],
 				},
 				totalCost: 0.42,
+				aggregatedAgentsCost: 0.42,
+				usage: {
+					inputTokens: 3,
+					outputTokens: 4,
+					cacheReadTokens: 0,
+					cacheWriteTokens: 0,
+					totalCost: 0.42,
+				},
+				aggregateUsage: {
+					inputTokens: 3,
+					outputTokens: 4,
+					cacheReadTokens: 0,
+					cacheWriteTokens: 0,
+					totalCost: 0.42,
+				},
 			},
 		});
 		expect(writeSessionManifest).toHaveBeenCalledWith(
@@ -1329,6 +1345,21 @@ describe("LocalRuntimeHost", () => {
 						],
 					},
 					totalCost: 0.42,
+					aggregatedAgentsCost: 0.42,
+					usage: {
+						inputTokens: 3,
+						outputTokens: 4,
+						cacheReadTokens: 0,
+						cacheWriteTokens: 0,
+						totalCost: 0.42,
+					},
+					aggregateUsage: {
+						inputTokens: 3,
+						outputTokens: 4,
+						cacheReadTokens: 0,
+						cacheWriteTokens: 0,
+						totalCost: 0.42,
+					},
 				},
 				status: "completed",
 			}),
@@ -1428,6 +1459,21 @@ describe("LocalRuntimeHost", () => {
 			sessionId,
 			metadata: {
 				totalCost: 0,
+				aggregatedAgentsCost: 0,
+				usage: {
+					inputTokens: 1,
+					outputTokens: 2,
+					cacheReadTokens: 0,
+					cacheWriteTokens: 0,
+					totalCost: 0,
+				},
+				aggregateUsage: {
+					inputTokens: 1,
+					outputTokens: 2,
+					cacheReadTokens: 0,
+					cacheWriteTokens: 0,
+					totalCost: 0,
+				},
 			},
 		});
 	});
@@ -2295,6 +2341,7 @@ describe("LocalRuntimeHost", () => {
 			}),
 			persistSessionMessages: vi.fn(),
 			updateSessionStatus: vi.fn().mockResolvedValue({ updated: true }),
+			updateSession: vi.fn().mockResolvedValue({ updated: true }),
 			writeSessionManifest: vi.fn(),
 			listSessions: vi.fn().mockResolvedValue([]),
 			deleteSession: vi.fn().mockResolvedValue({ deleted: true }),
@@ -2438,6 +2485,7 @@ describe("LocalRuntimeHost", () => {
 			}),
 			persistSessionMessages: vi.fn(),
 			updateSessionStatus: vi.fn().mockResolvedValue({ updated: true }),
+			updateSession: vi.fn().mockResolvedValue({ updated: true }),
 			writeSessionManifest: vi.fn(),
 			listSessions: vi.fn().mockResolvedValue([]),
 			deleteSession: vi.fn().mockResolvedValue({ deleted: true }),
@@ -2499,7 +2547,7 @@ describe("LocalRuntimeHost", () => {
 		);
 
 		await manager.runTurn({ sessionId, prompt: "first" });
-		expect(await manager.getAccumulatedUsage(sessionId)).toEqual({
+		expect((await manager.getAccumulatedUsage(sessionId))?.usage).toEqual({
 			inputTokens: 10,
 			outputTokens: 3,
 			cacheReadTokens: 1,
@@ -2508,7 +2556,7 @@ describe("LocalRuntimeHost", () => {
 		});
 
 		await manager.runTurn({ sessionId, prompt: "second" });
-		expect(await manager.getAccumulatedUsage(sessionId)).toEqual({
+		expect((await manager.getAccumulatedUsage(sessionId))?.usage).toEqual({
 			inputTokens: 18,
 			outputTokens: 7,
 			cacheReadTokens: 3,
@@ -2519,12 +2567,40 @@ describe("LocalRuntimeHost", () => {
 
 	it("resumes saved interactive sessions without rewriting metadata or timestamps and seeds usage", async () => {
 		const sessionId = "sess-resume-readonly";
+		const sessionsDir = join(isolatedHomeDir, "sessions");
+		const sessionDir = join(sessionsDir, sessionId);
+		const messagesPath = join(sessionDir, `${sessionId}.messages.json`);
+		mkdirSync(sessionDir, { recursive: true });
+		writeFileSync(
+			join(sessionDir, "investigator__resume.messages.json"),
+			`${JSON.stringify({
+				version: 1,
+				messages: [
+					{
+						role: "assistant",
+						content: "teammate answer",
+						metrics: {
+							inputTokens: 7,
+							outputTokens: 5,
+							cacheReadTokens: 2,
+							cacheWriteTokens: 1,
+							cost: 0.12,
+						},
+					},
+				],
+			})}\n`,
+			"utf8",
+		);
 		const manifest = {
 			...createManifest(sessionId),
 			status: "completed" as const,
 			ended_at: "2026-01-01T00:03:00.000Z",
-			metadata: { title: "saved title", totalCost: 0.25 },
-			messages_path: `/tmp/sessions/${sessionId}/${sessionId}.messages.json`,
+			metadata: {
+				title: "saved title",
+				totalCost: 0.25,
+				aggregatedAgentsCost: 0.37,
+			},
+			messages_path: messagesPath,
 		};
 		const initialMessages: MessageWithMetadata[] = [
 			{ role: "user", content: "first prompt" },
@@ -2548,7 +2624,7 @@ describe("LocalRuntimeHost", () => {
 		});
 		const updateSession = vi.fn().mockResolvedValue({ updated: true });
 		const sessionService = {
-			ensureSessionsDir: vi.fn().mockReturnValue("/tmp/sessions"),
+			ensureSessionsDir: vi.fn().mockReturnValue(sessionsDir),
 			readSessionManifest: vi.fn().mockReturnValue(manifest),
 			createRootSessionWithArtifacts,
 			persistSessionMessages,
@@ -2610,12 +2686,21 @@ describe("LocalRuntimeHost", () => {
 		expect(persistSessionMessages).not.toHaveBeenCalled();
 		expect(updateSessionStatus).not.toHaveBeenCalled();
 		expect(updateSession).not.toHaveBeenCalled();
-		expect(await manager.getAccumulatedUsage(sessionId)).toEqual({
+		expect((await manager.getAccumulatedUsage(sessionId))?.usage).toEqual({
 			inputTokens: 11,
 			outputTokens: 7,
 			cacheReadTokens: 3,
 			cacheWriteTokens: 2,
 			totalCost: 0.25,
+		});
+		expect(
+			(await manager.getAccumulatedUsage(sessionId))?.aggregateUsage,
+		).toEqual({
+			inputTokens: 18,
+			outputTokens: 12,
+			cacheReadTokens: 5,
+			cacheWriteTokens: 3,
+			totalCost: 0.37,
 		});
 
 		await manager.runTurn({ sessionId, prompt: "second prompt" });
@@ -2633,17 +2718,283 @@ describe("LocalRuntimeHost", () => {
 			"completed",
 			0,
 		);
-		expect(updateSession).toHaveBeenCalledWith({
-			sessionId,
-			metadata: { title: "saved title", totalCost: 0.35 },
+		const persistedMetadata = updateSession.mock.calls[0]?.[0]
+			.metadata as Record<string, unknown>;
+		expect(persistedMetadata.title).toBe("saved title");
+		expect(persistedMetadata.totalCost as number).toBeCloseTo(0.35);
+		expect(persistedMetadata.aggregatedAgentsCost as number).toBeCloseTo(0.47);
+		const persistedUsage = persistedMetadata.usage as Record<string, unknown>;
+		const persistedAggregateUsage = persistedMetadata.aggregateUsage as Record<
+			string,
+			unknown
+		>;
+		expect(persistedUsage).toMatchObject({
+			inputTokens: 16,
+			outputTokens: 11,
+			cacheReadTokens: 3,
+			cacheWriteTokens: 2,
 		});
-		expect(await manager.getAccumulatedUsage(sessionId)).toEqual({
+		expect(persistedUsage.totalCost as number).toBeCloseTo(0.35);
+		expect(persistedAggregateUsage).toMatchObject({
+			inputTokens: 23,
+			outputTokens: 16,
+			cacheReadTokens: 5,
+			cacheWriteTokens: 3,
+		});
+		expect(persistedAggregateUsage.totalCost as number).toBeCloseTo(0.47);
+		expect((await manager.getAccumulatedUsage(sessionId))?.usage).toEqual({
 			inputTokens: 16,
 			outputTokens: 11,
 			cacheReadTokens: 3,
 			cacheWriteTokens: 2,
 			totalCost: 0.35,
 		});
+		expect(
+			(await manager.getAccumulatedUsage(sessionId))?.aggregateUsage,
+		).toEqual({
+			inputTokens: 23,
+			outputTokens: 16,
+			cacheReadTokens: 5,
+			cacheWriteTokens: 3,
+			totalCost: 0.47,
+		});
+	});
+
+	it("restores full persisted aggregate usage when child message artifacts are missing", async () => {
+		const sessionId = "sess-resume-aggregate-metadata";
+		const sessionsDir = join(isolatedHomeDir, "sessions");
+		const sessionDir = join(sessionsDir, sessionId);
+		const messagesPath = join(sessionDir, `${sessionId}.messages.json`);
+		mkdirSync(sessionDir, { recursive: true });
+		const aggregateUsage = {
+			inputTokens: 18,
+			outputTokens: 12,
+			cacheReadTokens: 5,
+			cacheWriteTokens: 3,
+			totalCost: 0.37,
+		};
+		const manifest = {
+			...createManifest(sessionId),
+			status: "completed" as const,
+			ended_at: "2026-01-01T00:03:00.000Z",
+			metadata: {
+				title: "saved title",
+				totalCost: 0.25,
+				aggregatedAgentsCost: 0.37,
+				aggregateUsage,
+			},
+			messages_path: messagesPath,
+		};
+		const initialMessages: MessageWithMetadata[] = [
+			{ role: "user", content: "first prompt" },
+			{
+				role: "assistant",
+				content: "first answer",
+				metrics: {
+					inputTokens: 11,
+					outputTokens: 7,
+					cacheReadTokens: 3,
+					cacheWriteTokens: 2,
+					cost: 0.25,
+				},
+			},
+		];
+		const sessionService = {
+			ensureSessionsDir: vi.fn().mockReturnValue(sessionsDir),
+			readSessionManifest: vi.fn().mockReturnValue(manifest),
+			createRootSessionWithArtifacts: vi.fn(),
+			persistSessionMessages: vi.fn(),
+			updateSessionStatus: vi.fn(),
+			updateSession: vi.fn(),
+			writeSessionManifest: vi.fn(),
+			listSessions: vi.fn().mockResolvedValue([]),
+			deleteSession: vi.fn().mockResolvedValue({ deleted: true }),
+		};
+		const manager = new RuntimeHostUnderTest({
+			distinctId,
+			sessionService: sessionService as never,
+			runtimeBuilder: {
+				build: vi.fn().mockReturnValue({
+					tools: [],
+					registerLeadAgent: vi.fn(),
+					shutdown: vi.fn(),
+				}),
+			},
+			createAgent: () =>
+				({
+					run: vi.fn(),
+					continue: vi.fn(),
+					abort: vi.fn(),
+					subscribeEvents: vi.fn().mockReturnValue(() => {}),
+					canStartRun: vi.fn().mockReturnValue(true),
+					getAgentId: vi.fn().mockReturnValue("agent-root-1"),
+					getConversationId: vi.fn().mockReturnValue("conv-root-1"),
+					shutdown: vi.fn().mockResolvedValue(undefined),
+					getMessages: vi.fn().mockReturnValue(initialMessages),
+					messages: initialMessages,
+				}) as never,
+		});
+
+		await manager.startSession(
+			normalizeStartInput({
+				config: createConfig({ sessionId }),
+				interactive: true,
+				initialMessages,
+			}),
+		);
+
+		expect(
+			(await manager.getAccumulatedUsage(sessionId))?.aggregateUsage,
+		).toEqual(aggregateUsage);
+	});
+
+	it("aggregates teammate usage without double-counting lead usage events", async () => {
+		const sessionId = "sess-team-usage";
+		const manifest = createManifest(sessionId);
+		const sessionService = {
+			ensureSessionsDir: vi.fn().mockReturnValue("/tmp/sessions"),
+			createRootSessionWithArtifacts: vi.fn().mockResolvedValue({
+				manifestPath: "/tmp/manifest-team-usage.json",
+				messagesPath: "/tmp/messages-team-usage.json",
+				manifest,
+			}),
+			persistSessionMessages: vi.fn(),
+			updateSessionStatus: vi.fn().mockResolvedValue({ updated: true }),
+			updateSession: vi.fn().mockResolvedValue({ updated: true }),
+			writeSessionManifest: vi.fn(),
+			listSessions: vi.fn().mockResolvedValue([]),
+			deleteSession: vi.fn().mockResolvedValue({ deleted: true }),
+		};
+		let onTeamEvent: ((event: unknown) => void) | undefined;
+		const runtimeBuilder = {
+			build: vi
+				.fn()
+				.mockImplementation(
+					(input: { onTeamEvent?: (event: unknown) => void }) => {
+						onTeamEvent = input.onTeamEvent;
+						return {
+							tools: [],
+							shutdown: vi.fn(),
+						};
+					},
+				),
+		};
+		let onAgentEvent: ((event: AgentEvent) => void) | undefined;
+		const run = vi.fn().mockImplementation(async () => {
+			onAgentEvent?.({
+				type: "usage",
+				inputTokens: 10,
+				outputTokens: 3,
+				cacheReadTokens: 1,
+				cacheWriteTokens: 2,
+				cost: 0.11,
+				totalInputTokens: 10,
+				totalOutputTokens: 3,
+				totalCacheReadTokens: 1,
+				totalCacheWriteTokens: 2,
+				totalCost: 0.11,
+			});
+			onTeamEvent?.({
+				type: "agent_event",
+				agentId: "investigator",
+				event: {
+					type: "usage",
+					agentId: "agent-teammate-1",
+					conversationId: "conv-teammate-1",
+					inputTokens: 7,
+					outputTokens: 5,
+					cacheReadTokens: 2,
+					cacheWriteTokens: 1,
+					cost: 0.12,
+					totalInputTokens: 7,
+					totalOutputTokens: 5,
+					totalCacheReadTokens: 2,
+					totalCacheWriteTokens: 1,
+					totalCost: 0.12,
+				},
+			});
+			return createResult({
+				text: "lead scheduled teammate",
+				usage: {
+					inputTokens: 10,
+					outputTokens: 3,
+					cacheReadTokens: 1,
+					cacheWriteTokens: 2,
+					totalCost: 0.11,
+				},
+			});
+		});
+		const manager = new RuntimeHostUnderTest({
+			distinctId,
+			sessionService: sessionService as never,
+			runtimeBuilder,
+			createAgent: () =>
+				({
+					run,
+					continue: vi.fn(),
+					abort: vi.fn(),
+					subscribeEvents: vi.fn((listener: (event: AgentEvent) => void) => {
+						onAgentEvent = listener;
+						return () => {};
+					}),
+					canStartRun: vi.fn().mockReturnValue(true),
+					getAgentId: vi.fn().mockReturnValue("agent-root-1"),
+					getConversationId: vi.fn().mockReturnValue("conv-root-1"),
+					shutdown: vi.fn().mockResolvedValue(undefined),
+					getMessages: vi.fn().mockReturnValue([]),
+					messages: [],
+				}) as never,
+		});
+
+		await manager.startSession(
+			normalizeStartInput({
+				config: createConfig({ sessionId }),
+				interactive: true,
+			}),
+		);
+
+		await manager.runTurn({ sessionId, prompt: "run teammate work" });
+
+		const usageSummary = await manager.getAccumulatedUsage(sessionId);
+		const usage = usageSummary?.usage;
+		expect(usage).toMatchObject({
+			inputTokens: 10,
+			outputTokens: 3,
+			cacheReadTokens: 1,
+			cacheWriteTokens: 2,
+		});
+		expect(usage?.totalCost).toBeCloseTo(0.11);
+		const aggregateUsage = usageSummary?.aggregateUsage;
+		expect(aggregateUsage).toMatchObject({
+			inputTokens: 17,
+			outputTokens: 8,
+			cacheReadTokens: 3,
+			cacheWriteTokens: 3,
+		});
+		expect(aggregateUsage?.totalCost).toBeCloseTo(0.23);
+		const persistedMetadata = sessionService.updateSession.mock.calls[0]?.[0]
+			.metadata as Record<string, unknown>;
+		expect(persistedMetadata.totalCost as number).toBeCloseTo(0.11);
+		expect(persistedMetadata.aggregatedAgentsCost as number).toBeCloseTo(0.23);
+		const persistedUsage = persistedMetadata.usage as Record<string, unknown>;
+		const persistedAggregateUsage = persistedMetadata.aggregateUsage as Record<
+			string,
+			unknown
+		>;
+		expect(persistedUsage).toMatchObject({
+			inputTokens: 10,
+			outputTokens: 3,
+			cacheReadTokens: 1,
+			cacheWriteTokens: 2,
+		});
+		expect(persistedUsage.totalCost as number).toBeCloseTo(0.11);
+		expect(persistedAggregateUsage).toMatchObject({
+			inputTokens: 17,
+			outputTokens: 8,
+			cacheReadTokens: 3,
+			cacheWriteTokens: 3,
+		});
+		expect(persistedAggregateUsage.totalCost as number).toBeCloseTo(0.23);
 	});
 
 	it("queues sends with explicit queue or steer delivery and emits snapshots", async () => {

@@ -3,6 +3,7 @@ import type {
 	JsonValue,
 	SessionParticipant,
 } from "@cline/shared";
+import type { SessionAccumulatedUsage } from "../../runtime/host/runtime-host";
 import type { SessionRecord as LocalSessionRecord } from "../../types/sessions";
 
 export type HubSessionState = {
@@ -56,6 +57,8 @@ function cloneSessionMetadata(
 export function toHubSessionRecord(
 	session: LocalSessionRecord,
 	state?: HubSessionState,
+	usage?: SessionAccumulatedUsage,
+	aggregateUsage?: SessionAccumulatedUsage,
 ): HubSessionRecord {
 	return {
 		sessionId: session.sessionId,
@@ -86,5 +89,7 @@ export function toHubSessionRecord(
 					team: session.teamName ? { teamId: session.teamName } : undefined,
 				}
 			: undefined,
+		...(usage ? { usage: { ...usage } } : {}),
+		...(aggregateUsage ? { aggregateUsage: { ...aggregateUsage } } : {}),
 	};
 }

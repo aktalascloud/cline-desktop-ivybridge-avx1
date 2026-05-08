@@ -32,6 +32,9 @@ export type ActiveSession = {
 	drainingPendingPrompts: boolean;
 	pluginSandboxShutdown?: () => Promise<void>;
 	turnUsageBaseline?: SessionAccumulatedUsage;
+	turnAggregateUsageBaseline?: SessionAccumulatedUsage;
+	turnPrimaryUsage?: SessionAccumulatedUsage;
+	turnUsageByAgent?: Map<string, SessionAccumulatedUsage>;
 	/**
 	 * Set to `true` once the assistant successfully invoked the canonical
 	 * completion tool (`submit_and_exit`) for this session. Used to:

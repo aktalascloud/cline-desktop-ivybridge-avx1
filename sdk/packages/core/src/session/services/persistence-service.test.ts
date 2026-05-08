@@ -221,6 +221,96 @@ describe("UnifiedSessionPersistenceService", () => {
 		},
 	);
 
+	it("persists plain spawn_agent result usage on child messages", async () => {
+		const sessionsDir = mkdtempSync(join(tmpdir(), "spawn-agent-messages-"));
+		tempDirs.push(sessionsDir);
+
+		const service = new FileSessionService(sessionsDir);
+		const rootSessionId = "root-spawn-session";
+		await service.createRootSessionWithArtifacts({
+			sessionId: rootSessionId,
+			source: SessionSource.CLI,
+			pid: process.pid,
+			interactive: false,
+			provider: "anthropic",
+			model: "claude-sonnet-4-6",
+			cwd: "/tmp/project",
+			workspaceRoot: "/tmp/project",
+			enableTools: true,
+			enableSpawn: true,
+			enableTeams: true,
+			prompt: "lead task",
+			startedAt: "2026-04-10T19:00:00.000Z",
+		});
+
+		const context = {
+			subAgentId: "plain-worker",
+			conversationId: "conv-plain-worker",
+			parentAgentId: "lead",
+			input: {
+				systemPrompt: "You are a worker.",
+				task: "Summarize the repo.",
+			},
+		};
+		await service.handleSubAgentStart(rootSessionId, context);
+		await service.handleSubAgentEnd(rootSessionId, {
+			...context,
+			result: {
+				text: "Done",
+				iterations: 1,
+				finishReason: "completed",
+				usage: {
+					inputTokens: 11,
+					outputTokens: 3,
+				},
+			},
+			agentResult: {
+				text: "Done",
+				usage: {
+					inputTokens: 11,
+					outputTokens: 3,
+					cacheReadTokens: 4,
+					cacheWriteTokens: 2,
+					totalCost: 0.045,
+				},
+				messages: [
+					{ role: "user", content: "Summarize the repo." },
+					{ role: "assistant", content: "Done" },
+				],
+				toolCalls: [],
+				iterations: 1,
+				finishReason: "completed",
+				model: {
+					id: "claude-sonnet-4-6",
+					provider: "anthropic",
+					info: { id: "claude-sonnet-4-6" },
+				},
+				startedAt: new Date("2026-04-10T19:00:01.000Z"),
+				endedAt: new Date("2026-04-10T19:00:02.000Z"),
+				durationMs: 1000,
+			},
+		});
+
+		const childSessions = await service.listSessions(10);
+		const row = childSessions.find((item) => item.agentId === "plain-worker");
+		expect(row?.status).toBe("completed");
+		expect(row?.messagesPath).toBeTruthy();
+		const payload = JSON.parse(
+			readFileSync(row?.messagesPath as string, "utf8"),
+		) as {
+			messages: Array<Record<string, unknown>>;
+		};
+		const assistant = payload.messages[1] as Record<string, unknown>;
+
+		expect(assistant.metrics).toMatchObject({
+			inputTokens: 11,
+			outputTokens: 3,
+			cacheReadTokens: 4,
+			cacheWriteTokens: 2,
+			cost: 0.045,
+		});
+	});
+
 	it("preserves an existing title when the stored prompt changes", async () => {
 		const sessionsDir = mkdtempSync(join(tmpdir(), "prompt-title-sessions-"));
 		tempDirs.push(sessionsDir);

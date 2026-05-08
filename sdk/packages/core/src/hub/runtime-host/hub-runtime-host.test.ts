@@ -820,6 +820,96 @@ describe("HubRuntimeHost", () => {
 		);
 	});
 
+	it("maps hub usage updates back to agent usage events with identity", async () => {
+		let onEvent: ((event: HubEventEnvelope) => void) | undefined;
+		subscribeMock.mockImplementation((listener) => {
+			onEvent = listener;
+			return () => {};
+		});
+		commandMock.mockResolvedValue({
+			payload: {
+				session: {
+					sessionId: "sess-1",
+					status: "running",
+					createdAt: Date.now(),
+					updatedAt: Date.now(),
+					workspaceRoot: "/tmp/project",
+					cwd: "/tmp/project",
+				},
+			},
+		});
+		const events: unknown[] = [];
+
+		const { HubRuntimeHost } = await import("./hub-runtime-host");
+		const host = new HubRuntimeHost({ url: "ws://127.0.0.1:25463/hub" });
+		host.subscribe((event) => events.push(event));
+
+		await host.startSession({
+			config: createConfig(),
+			source: SessionSource.CLI,
+			prompt: "Hey",
+		});
+
+		onEvent?.({
+			version: "v1",
+			event: "usage.updated",
+			sessionId: "sess-1",
+			payload: {
+				delta: {
+					inputTokens: 7,
+					outputTokens: 5,
+					cacheReadTokens: 2,
+					cacheWriteTokens: 1,
+					totalCost: 0.12,
+				},
+				totals: {
+					inputTokens: 17,
+					outputTokens: 8,
+					cacheReadTokens: 3,
+					cacheWriteTokens: 3,
+					totalCost: 0.23,
+				},
+				agent: {
+					kind: "teammate",
+					agentId: "agent-teammate-1",
+					conversationId: "conv-teammate-1",
+					parentAgentId: "lead",
+					teamAgentId: "investigator",
+					teamRole: "teammate",
+				},
+			},
+		});
+
+		expect(events).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					type: "agent_event",
+					payload: {
+						sessionId: "sess-1",
+						teamAgentId: "investigator",
+						teamRole: "teammate",
+						event: {
+							type: "usage",
+							agentId: "agent-teammate-1",
+							conversationId: "conv-teammate-1",
+							parentAgentId: "lead",
+							inputTokens: 7,
+							outputTokens: 5,
+							cacheReadTokens: 2,
+							cacheWriteTokens: 1,
+							cost: 0.12,
+							totalInputTokens: 17,
+							totalOutputTokens: 8,
+							totalCacheReadTokens: 3,
+							totalCacheWriteTokens: 3,
+							totalCost: 0.23,
+						},
+					},
+				}),
+			]),
+		);
+	});
+
 	it("synthesizes done from run.completed when no agent.done was observed", async () => {
 		let onEvent:
 			| ((event: {

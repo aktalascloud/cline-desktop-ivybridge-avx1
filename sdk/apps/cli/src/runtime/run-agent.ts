@@ -336,9 +336,11 @@ export async function runAgent(
 			throw new Error("session manager did not return a result");
 		}
 
-		const usage =
-			(await sessionManager.getAccumulatedUsage(started.sessionId)) ??
-			result.usage;
+		const usageSummary = await sessionManager.getAccumulatedUsage(
+			started.sessionId,
+		);
+		const aggregateUsage = usageSummary?.aggregateUsage;
+		const usage = aggregateUsage ?? usageSummary?.usage ?? result.usage;
 
 		if (config.outputMode === "json") {
 			emitJsonLine("stdout", {
@@ -346,6 +348,7 @@ export async function runAgent(
 				finishReason: result.finishReason,
 				iterations: result.iterations,
 				usage,
+				...(aggregateUsage ? { aggregateUsage } : {}),
 				durationMs: result.durationMs,
 				text: result.text,
 				model: result.model,

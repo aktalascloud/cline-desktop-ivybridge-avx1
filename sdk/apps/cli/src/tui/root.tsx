@@ -583,6 +583,7 @@ function App(props: TuiProps) {
 		activeInlineStreamRef: session.activeInlineStreamRef,
 		setIsRunning: session.setIsRunning,
 		setIsStreaming: session.setIsStreaming,
+		addUsageDelta: session.addUsageDelta,
 		onTurnErrorReported: props.onTurnErrorReported,
 		verbose: props.config.verbose ?? false,
 	});

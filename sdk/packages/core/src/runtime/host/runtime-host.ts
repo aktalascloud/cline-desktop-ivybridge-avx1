@@ -173,6 +173,11 @@ export interface SessionAccumulatedUsage {
 	totalCost: number;
 }
 
+export interface SessionUsageSummary {
+	usage?: SessionAccumulatedUsage;
+	aggregateUsage?: SessionAccumulatedUsage;
+}
+
 export interface PendingPromptMutationResult {
 	sessionId: string;
 	prompts: SessionPendingPrompt[];
@@ -214,7 +219,7 @@ export interface PendingPromptsRuntimeService {
 export interface SessionUsageRuntimeService {
 	getAccumulatedUsage(
 		sessionId: string,
-	): Promise<SessionAccumulatedUsage | undefined>;
+	): Promise<SessionUsageSummary | undefined>;
 }
 
 export interface SessionModelRuntimeService {

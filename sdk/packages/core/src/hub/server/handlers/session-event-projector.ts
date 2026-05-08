@@ -1,4 +1,5 @@
 import type { TeamProgressProjectionEvent } from "@cline/shared";
+import type { SessionUsageSummary } from "../../../runtime/host/runtime-host";
 import type {
 	CoreSessionEvent,
 	SessionPendingPrompt,
@@ -25,7 +26,7 @@ export async function projectSessionEvent(
 			// Structured live content is forwarded via the "agent_event" branch.
 			return;
 		case "agent_event":
-			projectAgentEvent(ctx, event);
+			await projectAgentEvent(ctx, event);
 			return;
 		case "hook":
 			if (event.payload.hookEventName === "tool_call") {
@@ -127,10 +128,10 @@ export async function projectSessionEvent(
 	}
 }
 
-function projectAgentEvent(
+async function projectAgentEvent(
 	ctx: HubTransportContext,
 	event: Extract<CoreSessionEvent, { type: "agent_event" }>,
-): void {
+): Promise<void> {
 	const { sessionId, event: agentEvent } = event.payload;
 	if (agentEvent.type === "iteration_start") {
 		ctx.publish(
@@ -245,6 +246,53 @@ function projectAgentEvent(
 				);
 				break;
 		}
+		return;
+	}
+	if (agentEvent.type === "usage") {
+		let usageSummary: SessionUsageSummary | undefined;
+		try {
+			usageSummary = await ctx.sessionHost.getAccumulatedUsage?.(sessionId);
+		} catch {
+			usageSummary = undefined;
+		}
+		ctx.publish(
+			ctx.buildEvent(
+				"usage.updated",
+				{
+					sessionId,
+					delta: {
+						inputTokens: agentEvent.inputTokens,
+						outputTokens: agentEvent.outputTokens,
+						cacheReadTokens: agentEvent.cacheReadTokens ?? 0,
+						cacheWriteTokens: agentEvent.cacheWriteTokens ?? 0,
+						totalCost: agentEvent.cost ?? 0,
+					},
+					totals: {
+						inputTokens: agentEvent.totalInputTokens,
+						outputTokens: agentEvent.totalOutputTokens,
+						cacheReadTokens: agentEvent.totalCacheReadTokens ?? 0,
+						cacheWriteTokens: agentEvent.totalCacheWriteTokens ?? 0,
+						totalCost: agentEvent.totalCost ?? 0,
+					},
+					usage: usageSummary?.usage,
+					aggregateUsage: usageSummary?.aggregateUsage,
+					agent: {
+						kind:
+							event.payload.teamRole === "teammate"
+								? "teammate"
+								: agentEvent.parentAgentId
+									? "subagent"
+									: "lead",
+						agentId: agentEvent.agentId,
+						conversationId: agentEvent.conversationId,
+						parentAgentId: agentEvent.parentAgentId,
+						teamAgentId: event.payload.teamAgentId,
+						teamRole: event.payload.teamRole,
+					},
+				},
+				sessionId,
+			),
+		);
 		return;
 	}
 	if (agentEvent.type === "done") {

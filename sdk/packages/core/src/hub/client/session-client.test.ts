@@ -132,4 +132,61 @@ describe("HubSessionClient", () => {
 		unsubscribe();
 		client.close();
 	});
+
+	it("maps usage.updated events into runtime chat usage events", async () => {
+		vi.stubGlobal("WebSocket", MockWebSocket);
+		const client = new HubSessionClient({
+			address: "ws://127.0.0.1:25463/hub",
+			clientId: "client-1",
+		});
+		await client.connect();
+		const socket = MockWebSocket.instances[0];
+		if (!socket) {
+			throw new Error("expected websocket");
+		}
+		const received: Array<{
+			sessionId: string;
+			eventType: string;
+			payload: Record<string, unknown>;
+		}> = [];
+		const unsubscribe = client.streamEvents(
+			{ sessionIds: ["session-1"] },
+			{
+				onEvent: (event) => {
+					received.push(event);
+				},
+			},
+		);
+
+		socket.emitFrame({
+			kind: "event",
+			envelope: {
+				version: "v1",
+				eventId: "evt-usage",
+				event: "usage.updated",
+				timestamp: Date.now(),
+				sessionId: "session-1",
+				payload: {
+					delta: { inputTokens: 7, outputTokens: 5, totalCost: 0.12 },
+					aggregateUsage: { inputTokens: 17, outputTokens: 8, totalCost: 0.23 },
+					agent: { kind: "teammate", teamAgentId: "investigator" },
+				},
+			},
+		});
+
+		expect(received).toEqual([
+			{
+				sessionId: "session-1",
+				eventType: "runtime.chat.usage",
+				payload: {
+					delta: { inputTokens: 7, outputTokens: 5, totalCost: 0.12 },
+					aggregateUsage: { inputTokens: 17, outputTokens: 8, totalCost: 0.23 },
+					agent: { kind: "teammate", teamAgentId: "investigator" },
+				},
+			},
+		]);
+
+		unsubscribe();
+		client.close();
+	});
 });

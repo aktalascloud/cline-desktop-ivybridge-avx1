@@ -32,6 +32,16 @@ export function accumulateUsageTotals(
 	};
 }
 
+export function sumUsageTotals(
+	usages: Iterable<SessionAccumulatedUsage>,
+): SessionAccumulatedUsage {
+	let total = createInitialAccumulatedUsage();
+	for (const usage of usages) {
+		total = accumulateUsageTotals(total, usage);
+	}
+	return total;
+}
+
 function asNumber(value: unknown): number {
 	return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }

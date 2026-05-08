@@ -378,6 +378,16 @@ export class TeamChildSessionManager {
 			await this.applySubagentStatusBySessionId(subSessionId, "failed");
 			return;
 		}
+		const persistedMessages = this.toPersistedMessages(
+			context.agentResult?.messages,
+			context.agentResult,
+		);
+		if (persistedMessages) {
+			await this.manifestStore.persistSessionMessages(
+				subSessionId,
+				persistedMessages,
+			);
+		}
 		const reason = context.result?.finishReason ?? "completed";
 		await this.applySubagentStatusBySessionId(
 			subSessionId,

@@ -362,6 +362,7 @@ export type {
 	RuntimeHostSubscribeOptions,
 	SendSessionInput,
 	SessionAccumulatedUsage,
+	SessionUsageSummary,
 	StartSessionInput,
 	StartSessionResult,
 } from "./runtime/host/runtime-host";

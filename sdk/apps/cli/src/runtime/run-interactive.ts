@@ -379,8 +379,11 @@ export async function runInteractive(
 				}
 				if (result.finishReason !== "completed") {
 					if (result.finishReason === "aborted" || isAbortInProgress()) {
+						const usage = await sessionRuntime.getAccumulatedUsage(
+							result.usage,
+						);
 						return {
-							usage: result.usage,
+							usage,
 							currentContextSize: getCurrentContextSize(result.messages),
 							iterations: result.iterations,
 							finishReason: "aborted",

@@ -18,6 +18,7 @@ import { projectSessionEvent } from "./handlers/session-event-projector";
 
 describe("HubServerTransport boundaries", () => {
 	function createTransport(options: Record<string, unknown> = {}) {
+		const { sessionHost: sessionHostOverride, ...transportOptions } = options;
 		return new HubServerTransport({
 			runtimeHandlers: createLocalHubScheduleRuntimeHandlers(),
 			scheduleOptions: { dbPath: ":memory:" },
@@ -36,13 +37,15 @@ describe("HubServerTransport boundaries", () => {
 					workspaceRoot: "/tmp/project",
 					cwd: "/tmp/project",
 				}),
+				getAccumulatedUsage: vi.fn().mockResolvedValue(undefined),
 				listSessions: vi.fn(),
 				deleteSession: vi.fn(),
 				updateSession: vi.fn(),
 				dispatchHookEvent: vi.fn(),
 				readSessionMessages: vi.fn(),
+				...((sessionHostOverride as Record<string, unknown> | undefined) ?? {}),
 			} as never,
-			...options,
+			...transportOptions,
 		});
 	}
 
@@ -151,6 +154,7 @@ describe("HubServerTransport boundaries", () => {
 					enableTeams: false,
 					updatedAt: new Date(0).toISOString(),
 				}),
+				getAccumulatedUsage: vi.fn().mockResolvedValue(undefined),
 				listSessions: vi.fn(),
 				deleteSession: vi.fn(),
 				updateSession: vi.fn(),
@@ -175,6 +179,79 @@ describe("HubServerTransport boundaries", () => {
 		});
 	});
 
+	it("includes accumulated usage on session.get", async () => {
+		const usage = {
+			inputTokens: 10,
+			outputTokens: 3,
+			cacheReadTokens: 1,
+			cacheWriteTokens: 2,
+			totalCost: 0.11,
+		};
+		const aggregateUsage = {
+			inputTokens: 17,
+			outputTokens: 8,
+			cacheReadTokens: 3,
+			cacheWriteTokens: 3,
+			totalCost: 0.23,
+		};
+		const getAccumulatedUsage = vi
+			.fn()
+			.mockResolvedValue({ usage, aggregateUsage });
+		const transport = createTransport({
+			sessionHost: {
+				subscribe: vi.fn(),
+				startSession: vi.fn(),
+				stopSession: vi.fn(),
+				runTurn: vi.fn(),
+				abort: vi.fn(),
+				dispose: vi.fn(),
+				getSession: vi.fn().mockResolvedValue({
+					sessionId: "session-1",
+					source: "cli",
+					pid: 123,
+					startedAt: new Date(0).toISOString(),
+					status: "completed",
+					interactive: false,
+					provider: "cline",
+					model: "test-model",
+					cwd: "/tmp/project",
+					workspaceRoot: "/tmp/project",
+					enableTools: true,
+					enableSpawn: true,
+					enableTeams: true,
+					updatedAt: new Date(0).toISOString(),
+				}),
+				getAccumulatedUsage,
+				listSessions: vi.fn(),
+				deleteSession: vi.fn(),
+				updateSession: vi.fn(),
+				dispatchHookEvent: vi.fn(),
+				readSessionMessages: vi.fn(),
+			} as never,
+		});
+
+		const reply = await transport.handleCommand({
+			version: "v1",
+			requestId: "req-usage",
+			command: "session.get",
+			sessionId: "session-1",
+		});
+
+		expect(getAccumulatedUsage).toHaveBeenCalledWith("session-1");
+		expect(reply).toMatchObject({
+			version: "v1",
+			requestId: "req-usage",
+			ok: true,
+			payload: {
+				session: {
+					sessionId: "session-1",
+					usage,
+					aggregateUsage,
+				},
+			},
+		});
+	});
+
 	it("returns session_not_found when session messages are requested for an unknown session", async () => {
 		const readMessages = vi.fn().mockResolvedValue([]);
 		const transport = createTransport({
@@ -186,6 +263,7 @@ describe("HubServerTransport boundaries", () => {
 				abort: vi.fn(),
 				dispose: vi.fn(),
 				getSession: vi.fn().mockResolvedValue(undefined),
+				getAccumulatedUsage: vi.fn().mockResolvedValue(undefined),
 				listSessions: vi.fn(),
 				deleteSession: vi.fn(),
 				updateSession: vi.fn(),
@@ -241,6 +319,7 @@ describe("HubServerTransport boundaries", () => {
 				abort: vi.fn(),
 				dispose: vi.fn(),
 				getSession: vi.fn().mockResolvedValue(session),
+				getAccumulatedUsage: vi.fn().mockResolvedValue(undefined),
 				listSessions: vi.fn().mockResolvedValue([session]),
 				deleteSession: vi.fn(),
 				updateSession: vi.fn(),
@@ -900,5 +979,92 @@ describe("HubServerTransport boundaries", () => {
 		});
 
 		expect(published).toEqual(["iteration.started", "iteration.finished"]);
+	});
+
+	it("projects live usage events with aggregate usage and agent identity", async () => {
+		const usage = {
+			inputTokens: 10,
+			outputTokens: 3,
+			cacheReadTokens: 1,
+			cacheWriteTokens: 2,
+			totalCost: 0.11,
+		};
+		const aggregateUsage = {
+			inputTokens: 17,
+			outputTokens: 8,
+			cacheReadTokens: 3,
+			cacheWriteTokens: 3,
+			totalCost: 0.23,
+		};
+		const getAccumulatedUsage = vi
+			.fn()
+			.mockResolvedValue({ usage, aggregateUsage });
+		const transport = createTransport({
+			sessionHost: { getAccumulatedUsage },
+		});
+		const events: HubEventEnvelope[] = [];
+		transport.subscribe("test", (event) => {
+			events.push(event);
+		});
+		const ctx = getContext(transport);
+
+		await projectSessionEvent(ctx, {
+			type: "agent_event",
+			payload: {
+				sessionId: "session-1",
+				teamAgentId: "investigator",
+				teamRole: "teammate",
+				event: {
+					type: "usage",
+					agentId: "agent-teammate-1",
+					conversationId: "conv-teammate-1",
+					parentAgentId: "lead",
+					inputTokens: 7,
+					outputTokens: 5,
+					cacheReadTokens: 2,
+					cacheWriteTokens: 1,
+					cost: 0.12,
+					totalInputTokens: 7,
+					totalOutputTokens: 5,
+					totalCacheReadTokens: 2,
+					totalCacheWriteTokens: 1,
+					totalCost: 0.12,
+				},
+			},
+		});
+
+		expect(getAccumulatedUsage).toHaveBeenCalledWith("session-1");
+		expect(events).toHaveLength(1);
+		expect(events[0]).toMatchObject({
+			event: "usage.updated",
+			sessionId: "session-1",
+			payload: {
+				sessionId: "session-1",
+				delta: {
+					inputTokens: 7,
+					outputTokens: 5,
+					cacheReadTokens: 2,
+					cacheWriteTokens: 1,
+					totalCost: 0.12,
+				},
+				totals: {
+					inputTokens: 7,
+					outputTokens: 5,
+					cacheReadTokens: 2,
+					cacheWriteTokens: 1,
+					totalCost: 0.12,
+				},
+				usage,
+				aggregateUsage,
+				agent: {
+					kind: "teammate",
+					agentId: "agent-teammate-1",
+					conversationId: "conv-teammate-1",
+					parentAgentId: "lead",
+					teamAgentId: "investigator",
+					teamRole: "teammate",
+				},
+			},
+		});
 	});
 });

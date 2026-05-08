@@ -26,6 +26,7 @@ import type { SessionAccumulatedUsage } from "../runtime-host";
 export interface AgentEventBridgeDeps {
 	getSession(sessionId: string): ActiveSession | undefined;
 	usageBySession: Map<string, SessionAccumulatedUsage>;
+	aggregateUsageBySession: Map<string, SessionAccumulatedUsage>;
 	emit(event: CoreSessionEvent): void;
 	persistMessages: AgentEventContext["persistMessages"];
 	enqueuePendingPrompt(
@@ -49,18 +50,23 @@ export class AgentEventBridge {
 			config,
 			liveSession,
 			usageBySession: this.deps.usageBySession,
+			aggregateUsageBySession: this.deps.aggregateUsageBySession,
 			persistMessages: this.deps.persistMessages,
 			emit: this.deps.emit,
 		};
 		const eventMetadata = extractAgentEventMetadata(event);
 		const isRootAgentEvent =
-			liveSession && eventMetadata.agentId === readAgentId(liveSession.agent);
+			!!liveSession &&
+			(!eventMetadata.agentId ||
+				eventMetadata.agentId === readAgentId(liveSession.agent));
 		handleAgentEvent(
 			ctx,
 			event,
 			isRootAgentEvent
 				? {
 						isPrimaryAgentEvent: true,
+						agentId: readAgentId(liveSession.agent),
+						conversationId: liveSession.agent.getConversationId(),
 						...(liveSession?.runtime.teamRuntime
 							? { teamRole: "lead" as const }
 							: {}),
@@ -82,10 +88,12 @@ export class AgentEventBridge {
 					config: session.config,
 					liveSession: session,
 					usageBySession: this.deps.usageBySession,
+					aggregateUsageBySession: this.deps.aggregateUsageBySession,
 					persistMessages: this.deps.persistMessages,
 					emit: this.deps.emit,
 				};
 				handleAgentEvent(ctx, event.event, {
+					agentId: event.agentId,
 					teamRole: "teammate",
 					teamAgentId: event.agentId,
 					isPrimaryAgentEvent: false,

@@ -20,6 +20,11 @@ interface AgentEventDeps {
 	activeInlineStreamRef: React.MutableRefObject<InlineStream>;
 	setIsRunning: (v: boolean) => void;
 	setIsStreaming: (v: boolean) => void;
+	addUsageDelta: (usage: {
+		inputTokens?: number;
+		outputTokens?: number;
+		cost?: number;
+	}) => void;
 	onTurnErrorReported: TuiProps["onTurnErrorReported"];
 	verbose: boolean;
 }
@@ -33,6 +38,7 @@ export function useAgentEventHandlers(deps: AgentEventDeps) {
 		activeInlineStreamRef,
 		setIsRunning,
 		setIsStreaming,
+		addUsageDelta,
 		onTurnErrorReported,
 		verbose,
 	} = deps;
@@ -177,6 +183,13 @@ export function useAgentEventHandlers(deps: AgentEventDeps) {
 						}
 					}
 					break;
+				case "usage":
+					addUsageDelta({
+						inputTokens: event.inputTokens,
+						outputTokens: event.outputTokens,
+						cost: event.cost,
+					});
+					break;
 			}
 		},
 		[
@@ -186,6 +199,7 @@ export function useAgentEventHandlers(deps: AgentEventDeps) {
 			activeInlineStreamRef,
 			setIsRunning,
 			setIsStreaming,
+			addUsageDelta,
 			onTurnErrorReported,
 			verbose,
 			closeToolEntry,

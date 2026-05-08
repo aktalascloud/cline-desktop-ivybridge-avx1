@@ -59,6 +59,7 @@ export interface SubAgentEndContext {
 	parentAgentId: string;
 	input: SpawnAgentInput;
 	result?: SpawnAgentOutput;
+	agentResult?: AgentResult;
 	error?: Error;
 }
 
@@ -172,6 +173,7 @@ export function createSpawnAgentTool(
 							parentAgentId,
 							input,
 							result: output,
+							agentResult: result,
 						});
 					} catch {
 						// Best-effort observer callback.

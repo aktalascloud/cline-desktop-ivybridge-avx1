@@ -138,7 +138,13 @@ export async function readHubSessionRecord(
 	if (!session) {
 		return undefined;
 	}
-	return toHubSessionRecord(session, ctx.sessionState.get(sessionId));
+	const usageSummary = await ctx.sessionHost.getAccumulatedUsage?.(sessionId);
+	return toHubSessionRecord(
+		session,
+		ctx.sessionState.get(sessionId),
+		usageSummary?.usage,
+		usageSummary?.aggregateUsage,
+	);
 }
 
 export async function readCoreSessionSnapshot(
@@ -149,13 +155,18 @@ export async function readCoreSessionSnapshot(
 	if (!session) {
 		return undefined;
 	}
-	const [messages, usage] = await Promise.all([
+	const [messages, usageSummary] = await Promise.all([
 		typeof ctx.sessionHost.readSessionMessages === "function"
 			? ctx.sessionHost.readSessionMessages(sessionId)
 			: [],
 		ctx.sessionHost.getAccumulatedUsage?.(sessionId),
 	]);
-	return createCoreSessionSnapshot({ session, messages, usage });
+	return createCoreSessionSnapshot({
+		session,
+		messages,
+		usage: usageSummary?.usage,
+		aggregateUsage: usageSummary?.aggregateUsage,
+	});
 }
 
 export function ensureSessionState(

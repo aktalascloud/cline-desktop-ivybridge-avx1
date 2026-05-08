@@ -87,6 +87,7 @@ export type {
 	RuntimeHostMode,
 	SendSessionInput,
 	SessionAccumulatedUsage,
+	SessionUsageSummary,
 	StartSessionInput,
 	StartSessionResult,
 } from "./runtime/host/runtime-host";

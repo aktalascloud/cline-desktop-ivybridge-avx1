@@ -34,6 +34,11 @@ interface SessionContextValue {
 	setHasSubmitted: (v: boolean) => void;
 	setLastTotalTokens: (v: number) => void;
 	setLastTotalCost: (v: number) => void;
+	addUsageDelta: (usage: {
+		inputTokens?: number;
+		outputTokens?: number;
+		cost?: number;
+	}) => void;
 	setUiMode: (mode: AgentMode) => void;
 	toggleMode: () => void;
 	toggleAutoApprove: () => void;
@@ -188,6 +193,26 @@ export function SessionProvider(props: {
 		setLastTotalCost(0);
 	}, []);
 
+	const addUsageDelta = useCallback(
+		(usage: { inputTokens?: number; outputTokens?: number; cost?: number }) => {
+			const tokenDelta =
+				Math.max(0, usage.inputTokens ?? 0) +
+				Math.max(0, usage.outputTokens ?? 0);
+			if (tokenDelta > 0) {
+				setLastTotalTokens((prev) => prev + tokenDelta);
+			}
+			const costDelta = usage.cost;
+			if (
+				typeof costDelta === "number" &&
+				Number.isFinite(costDelta) &&
+				costDelta > 0
+			) {
+				setLastTotalCost((prev) => prev + costDelta);
+			}
+		},
+		[],
+	);
+
 	const replaceEntries = useCallback((nextEntries: ChatEntry[]) => {
 		setEntries(
 			nextEntries.length > MAX_BUFFERED_LINES
@@ -218,6 +243,7 @@ export function SessionProvider(props: {
 		setHasSubmitted,
 		setLastTotalTokens,
 		setLastTotalCost,
+		addUsageDelta,
 		setUiMode,
 		toggleMode,
 		toggleAutoApprove,

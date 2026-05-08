@@ -1,3 +1,4 @@
+import { readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
 import type * as LlmsProviders from "@cline/llms";
@@ -41,6 +42,7 @@ import {
 	accumulateUsageTotals,
 	createInitialAccumulatedUsage,
 	summarizeUsageFromMessages,
+	sumUsageTotals,
 } from "../../services/usage";
 import { enrichPromptWithMentions } from "../../services/workspace";
 import {
@@ -99,6 +101,7 @@ import type {
 	RuntimeHostSubscribeOptions,
 	SendSessionInput,
 	SessionAccumulatedUsage,
+	SessionUsageSummary,
 	StartSessionInput,
 	StartSessionResult,
 } from "./runtime-host";
@@ -110,6 +113,55 @@ import {
 } from "./runtime-host-support";
 
 const MAX_SCAN_LIMIT = 5000;
+
+function asFiniteUsageNumber(value: unknown): number | undefined {
+	return typeof value === "number" && Number.isFinite(value)
+		? value
+		: undefined;
+}
+
+function parseAccumulatedUsage(
+	value: unknown,
+): SessionAccumulatedUsage | undefined {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	const record = value as Record<string, unknown>;
+	const inputTokens = asFiniteUsageNumber(record.inputTokens);
+	const outputTokens = asFiniteUsageNumber(record.outputTokens);
+	const cacheReadTokens = asFiniteUsageNumber(record.cacheReadTokens);
+	const cacheWriteTokens = asFiniteUsageNumber(record.cacheWriteTokens);
+	const totalCost = asFiniteUsageNumber(record.totalCost);
+	if (
+		inputTokens === undefined ||
+		outputTokens === undefined ||
+		cacheReadTokens === undefined ||
+		cacheWriteTokens === undefined ||
+		totalCost === undefined
+	) {
+		return undefined;
+	}
+	return {
+		inputTokens,
+		outputTokens,
+		cacheReadTokens,
+		cacheWriteTokens,
+		totalCost,
+	};
+}
+
+function maxAccumulatedUsage(
+	left: SessionAccumulatedUsage,
+	right: SessionAccumulatedUsage,
+): SessionAccumulatedUsage {
+	return {
+		inputTokens: Math.max(left.inputTokens, right.inputTokens),
+		outputTokens: Math.max(left.outputTokens, right.outputTokens),
+		cacheReadTokens: Math.max(left.cacheReadTokens, right.cacheReadTokens),
+		cacheWriteTokens: Math.max(left.cacheWriteTokens, right.cacheWriteTokens),
+		totalCost: Math.max(left.totalCost, right.totalCost),
+	};
+}
 
 export interface LocalRuntimeHostOptions {
 	distinctId?: string;
@@ -145,6 +197,10 @@ export class LocalRuntimeHost implements RuntimeHost {
 	private readonly events = new RuntimeHostEventBus();
 	private readonly sessions = new Map<string, ActiveSession>();
 	private readonly usageBySession = new Map<string, SessionAccumulatedUsage>();
+	private readonly aggregateUsageBySession = new Map<
+		string,
+		SessionAccumulatedUsage
+	>();
 	private readonly subAgentStarts: SubAgentStartTracker = new Map();
 	private readonly pendingPromptsController: PendingPromptsController;
 	private readonly eventBridge: AgentEventBridge;
@@ -189,6 +245,7 @@ export class LocalRuntimeHost implements RuntimeHost {
 		this.eventBridge = new AgentEventBridge({
 			getSession: (sid) => this.sessions.get(sid),
 			usageBySession: this.usageBySession,
+			aggregateUsageBySession: this.aggregateUsageBySession,
 			emit: (event) => this.emit(event),
 			persistMessages: (sid, messages, systemPrompt) => {
 				void this.invoke<void>(
@@ -214,12 +271,10 @@ export class LocalRuntimeHost implements RuntimeHost {
 		const sessionId = requestedSessionId || createSessionId();
 		const startInput: StartSessionInput = input;
 		const initialMessages = startInput.initialMessages ?? [];
-		this.usageBySession.set(
-			sessionId,
+		const initialUsage =
 			initialMessages.length > 0
 				? summarizeUsageFromMessages(initialMessages)
-				: createInitialAccumulatedUsage(),
-		);
+				: createInitialAccumulatedUsage();
 
 		const sessionsDir =
 			((await this.invokeOptionalValue("ensureSessionsDir")) as
@@ -274,6 +329,14 @@ export class LocalRuntimeHost implements RuntimeHost {
 				};
 			}
 		}
+		const initialAggregateUsage = await this.seedAggregateUsageFromArtifacts({
+			initialUsage,
+			sessionDir,
+			rootMessagesPath: resumedArtifacts?.messagesPath ?? messagesPath,
+			manifest,
+		});
+		this.usageBySession.set(sessionId, initialUsage);
+		this.aggregateUsageBySession.set(sessionId, initialAggregateUsage);
 
 		const capabilities = normalizeRuntimeCapabilities(
 			this.defaultCapabilities,
@@ -610,8 +673,12 @@ export class LocalRuntimeHost implements RuntimeHost {
 
 	async getAccumulatedUsage(
 		sessionId: string,
-	): Promise<SessionAccumulatedUsage | undefined> {
-		return cloneAccumulatedUsage(this.usageBySession.get(sessionId));
+	): Promise<SessionUsageSummary | undefined> {
+		const usage = cloneAccumulatedUsage(this.usageBySession.get(sessionId));
+		const aggregateUsage = cloneAccumulatedUsage(
+			this.aggregateUsageBySession.get(sessionId),
+		);
+		return usage || aggregateUsage ? { usage, aggregateUsage } : undefined;
 	}
 
 	async abort(sessionId: string, reason?: unknown): Promise<void> {
@@ -664,6 +731,7 @@ export class LocalRuntimeHost implements RuntimeHost {
 			),
 		);
 		this.usageBySession.clear();
+		this.aggregateUsageBySession.clear();
 	}
 
 	async getSession(sessionId: string): Promise<SessionRecord | undefined> {
@@ -702,6 +770,7 @@ export class LocalRuntimeHost implements RuntimeHost {
 		);
 		if (result.deleted) {
 			this.usageBySession.delete(sessionId);
+			this.aggregateUsageBySession.delete(sessionId);
 		}
 		return result.deleted;
 	}
@@ -888,7 +957,12 @@ export class LocalRuntimeHost implements RuntimeHost {
 		const usageBaseline =
 			this.usageBySession.get(session.sessionId) ??
 			createInitialAccumulatedUsage();
+		const aggregateUsageBaseline =
+			this.aggregateUsageBySession.get(session.sessionId) ?? usageBaseline;
 		session.turnUsageBaseline = usageBaseline;
+		session.turnAggregateUsageBaseline = aggregateUsageBaseline;
+		session.turnPrimaryUsage = createInitialAccumulatedUsage();
+		session.turnUsageByAgent = new Map<string, SessionAccumulatedUsage>();
 
 		captureModeSwitch(
 			session.config.telemetry,
@@ -921,14 +995,29 @@ export class LocalRuntimeHost implements RuntimeHost {
 				baselineMessages,
 			);
 			session.persistedMessages = persistedMessages;
+			const teammateTurnUsage = sumUsageTotals(
+				session.turnUsageByAgent?.values() ?? [],
+			);
 			const accumulatedUsage = accumulateUsageTotals(
 				usageBaseline,
 				result.usage,
 			);
+			const aggregateTurnUsage = accumulateUsageTotals(
+				accumulateUsageTotals(createInitialAccumulatedUsage(), result.usage),
+				teammateTurnUsage,
+			);
+			const aggregateUsage = accumulateUsageTotals(
+				aggregateUsageBaseline,
+				aggregateTurnUsage,
+			);
 			this.usageBySession.set(session.sessionId, accumulatedUsage);
+			this.aggregateUsageBySession.set(session.sessionId, aggregateUsage);
 			await this.persistSessionMetadata(session.sessionId, (current) => ({
 				...(current ?? {}),
 				totalCost: accumulatedUsage.totalCost,
+				aggregatedAgentsCost: aggregateUsage.totalCost,
+				usage: accumulatedUsage,
+				aggregateUsage,
 			}));
 			await this.invoke<void>(
 				"persistSessionMessages",
@@ -948,6 +1037,9 @@ export class LocalRuntimeHost implements RuntimeHost {
 			throw error;
 		} finally {
 			session.turnUsageBaseline = undefined;
+			session.turnAggregateUsageBaseline = undefined;
+			session.turnPrimaryUsage = undefined;
+			session.turnUsageByAgent = undefined;
 		}
 	}
 
@@ -1341,6 +1433,78 @@ export class LocalRuntimeHost implements RuntimeHost {
 		});
 	}
 
+	private async seedAggregateUsageFromArtifacts(input: {
+		initialUsage: SessionAccumulatedUsage;
+		sessionDir: string;
+		rootMessagesPath: string;
+		manifest: SessionManifest;
+	}): Promise<SessionAccumulatedUsage> {
+		const teammateUsage = await this.summarizePersistedTeammateUsage(
+			input.sessionDir,
+			input.rootMessagesPath,
+			input.manifest.session_id,
+		);
+		const aggregateUsage = accumulateUsageTotals(
+			input.initialUsage,
+			teammateUsage,
+		);
+		return this.withPersistedAggregateUsageFloor(
+			aggregateUsage,
+			input.manifest,
+		);
+	}
+
+	private async summarizePersistedTeammateUsage(
+		sessionDir: string,
+		rootMessagesPath: string,
+		sessionId: string,
+	): Promise<SessionAccumulatedUsage> {
+		const rootPath = resolve(rootMessagesPath);
+		const defaultRootMessagesFilename = `${sessionId}.messages.json`;
+		let filenames: string[];
+		try {
+			filenames = readdirSync(sessionDir);
+		} catch {
+			return createInitialAccumulatedUsage();
+		}
+
+		let usage = createInitialAccumulatedUsage();
+		for (const filename of filenames) {
+			if (!filename.endsWith(".messages.json")) continue;
+			if (filename === defaultRootMessagesFilename) continue;
+			const messagesPath = resolve(sessionDir, filename);
+			if (messagesPath === rootPath) continue;
+			const messages = await readPersistedMessagesFile(messagesPath);
+			if (messages.length === 0) continue;
+			usage = accumulateUsageTotals(
+				usage,
+				summarizeUsageFromMessages(messages),
+			);
+		}
+		return usage;
+	}
+
+	private withPersistedAggregateUsageFloor(
+		usage: SessionAccumulatedUsage,
+		manifest: SessionManifest,
+	): SessionAccumulatedUsage {
+		const persistedAggregateUsage = parseAccumulatedUsage(
+			manifest.metadata?.aggregateUsage,
+		);
+		if (persistedAggregateUsage) {
+			return maxAccumulatedUsage(usage, persistedAggregateUsage);
+		}
+		const aggregatedAgentsCost = manifest.metadata?.aggregatedAgentsCost;
+		if (
+			typeof aggregatedAgentsCost !== "number" ||
+			!Number.isFinite(aggregatedAgentsCost) ||
+			aggregatedAgentsCost <= usage.totalCost
+		) {
+			return usage;
+		}
+		return { ...usage, totalCost: aggregatedAgentsCost };
+	}
+
 	private emitStatus(sessionId: string, status: string): void {
 		void this.emitSessionSnapshot(sessionId);
 		this.emit({
@@ -1360,6 +1524,7 @@ export class LocalRuntimeHost implements RuntimeHost {
 					session,
 					messages: await this.readSessionMessages(sessionId),
 					usage: this.usageBySession.get(sessionId),
+					aggregateUsage: this.aggregateUsageBySession.get(sessionId),
 				}),
 			},
 		});

@@ -33,6 +33,7 @@ import type {
 	RuntimeHostSubscribeOptions,
 	SendSessionInput,
 	SessionAccumulatedUsage,
+	SessionUsageSummary,
 	StartSessionInput,
 	StartSessionResult,
 } from "../../runtime/host/runtime-host";
@@ -364,6 +365,87 @@ function parseDoneUsage(value: unknown): AgentUsage | undefined {
 				? payload.cacheWriteTokens
 				: 0,
 		totalCost: typeof payload.totalCost === "number" ? payload.totalCost : 0,
+	};
+}
+
+function accumulatedUsageFromMetrics(
+	value: HubSessionRecord["usage"],
+): SessionAccumulatedUsage | undefined {
+	if (!value) {
+		return undefined;
+	}
+	return {
+		inputTokens: typeof value.inputTokens === "number" ? value.inputTokens : 0,
+		outputTokens:
+			typeof value.outputTokens === "number" ? value.outputTokens : 0,
+		cacheReadTokens:
+			typeof value.cacheReadTokens === "number" ? value.cacheReadTokens : 0,
+		cacheWriteTokens:
+			typeof value.cacheWriteTokens === "number" ? value.cacheWriteTokens : 0,
+		totalCost: typeof value.totalCost === "number" ? value.totalCost : 0,
+	};
+}
+
+function finiteNumber(value: unknown): number | undefined {
+	return typeof value === "number" && Number.isFinite(value)
+		? value
+		: undefined;
+}
+
+function usageMetric(
+	record: Record<string, unknown> | undefined,
+	key: string,
+): number {
+	return finiteNumber(record?.[key]) ?? 0;
+}
+
+function usageEventFromPayload(payload: Record<string, unknown> | undefined): {
+	event: Extract<AgentEvent, { type: "usage" }>;
+	teamAgentId?: string;
+	teamRole?: "lead" | "teammate";
+} {
+	const delta =
+		payload?.delta && typeof payload.delta === "object"
+			? (payload.delta as Record<string, unknown>)
+			: undefined;
+	const totals =
+		payload?.totals && typeof payload.totals === "object"
+			? (payload.totals as Record<string, unknown>)
+			: undefined;
+	const agent =
+		payload?.agent && typeof payload.agent === "object"
+			? (payload.agent as Record<string, unknown>)
+			: undefined;
+	const teamRole =
+		agent?.teamRole === "teammate" || agent?.teamRole === "lead"
+			? agent.teamRole
+			: undefined;
+	return {
+		event: {
+			type: "usage",
+			agentId: typeof agent?.agentId === "string" ? agent.agentId : undefined,
+			conversationId:
+				typeof agent?.conversationId === "string"
+					? agent.conversationId
+					: undefined,
+			parentAgentId:
+				typeof agent?.parentAgentId === "string"
+					? agent.parentAgentId
+					: undefined,
+			inputTokens: usageMetric(delta, "inputTokens"),
+			outputTokens: usageMetric(delta, "outputTokens"),
+			cacheReadTokens: usageMetric(delta, "cacheReadTokens"),
+			cacheWriteTokens: usageMetric(delta, "cacheWriteTokens"),
+			cost: finiteNumber(delta?.totalCost),
+			totalInputTokens: usageMetric(totals, "inputTokens"),
+			totalOutputTokens: usageMetric(totals, "outputTokens"),
+			totalCacheReadTokens: usageMetric(totals, "cacheReadTokens"),
+			totalCacheWriteTokens: usageMetric(totals, "cacheWriteTokens"),
+			totalCost: finiteNumber(totals?.totalCost),
+		},
+		teamAgentId:
+			typeof agent?.teamAgentId === "string" ? agent.teamAgentId : undefined,
+		teamRole,
 	};
 }
 
@@ -1033,20 +1115,24 @@ export class HubRuntimeHost implements RuntimeHost {
 
 	async getAccumulatedUsage(
 		sessionId: string,
-	): Promise<SessionAccumulatedUsage | undefined> {
+	): Promise<SessionUsageSummary | undefined> {
 		const reply = await this.client.command(
 			"session.get",
 			{ includeSnapshot: true },
 			sessionId,
 		);
 		const snapshot = parseCoreSessionSnapshot(reply.payload?.snapshot);
-		if (snapshot?.usage) {
-			return { ...snapshot.usage };
+		if (snapshot) {
+			const usage = snapshot.usage ? { ...snapshot.usage } : undefined;
+			const aggregateUsage = snapshot.aggregateUsage
+				? { ...snapshot.aggregateUsage }
+				: undefined;
+			return usage || aggregateUsage ? { usage, aggregateUsage } : undefined;
 		}
-		const session = reply.payload?.session as
-			| (HubSessionRecord & { usage?: SessionAccumulatedUsage })
-			| undefined;
-		return session?.usage ? { ...session.usage } : undefined;
+		const session = reply.payload?.session as HubSessionRecord | undefined;
+		const usage = accumulatedUsageFromMetrics(session?.usage);
+		const aggregateUsage = accumulatedUsageFromMetrics(session?.aggregateUsage);
+		return usage || aggregateUsage ? { usage, aggregateUsage } : undefined;
 	}
 
 	async abort(sessionId: string, reason?: unknown): Promise<void> {
@@ -1434,6 +1520,19 @@ export class HubRuntimeHost implements RuntimeHost {
 				this.emitAgentDoneIfNeeded({
 					sessionId,
 					payload: event.payload,
+				});
+				return;
+			}
+			case "usage.updated": {
+				const usage = usageEventFromPayload(event.payload);
+				this.events.emit({
+					type: "agent_event",
+					payload: {
+						sessionId,
+						event: usage.event,
+						teamAgentId: usage.teamAgentId,
+						teamRole: usage.teamRole,
+					},
 				});
 				return;
 			}

@@ -116,9 +116,12 @@ export function subscribeToAgentEvents(
 			const payload = typedEvent.payload as
 				| { event?: AgentEvent; teamRole?: string }
 				| undefined;
-			// Skip teammate events because they stream concurrently and would interleave
-			// with the lead agent's output on shared stdout.
-			if (payload?.event && payload.teamRole !== "teammate") {
+			// Skip teammate output because it would interleave with lead output on
+			// shared stdout, but keep usage events so session totals update live.
+			if (
+				payload?.event &&
+				(payload.teamRole !== "teammate" || payload.event.type === "usage")
+			) {
 				emitAgentEvent(payload.event);
 			}
 			return;

@@ -13,7 +13,11 @@ import {
 	captureToolUsage,
 	type TelemetryAgentIdentityProperties,
 } from "./telemetry/core-events";
-import { accumulateUsageTotals } from "./usage";
+import {
+	accumulateUsageTotals,
+	createInitialAccumulatedUsage,
+	sumUsageTotals,
+} from "./usage";
 
 export function extractSkillNameFromToolInput(
 	input: unknown,
@@ -31,6 +35,7 @@ export interface AgentEventContext {
 	config: CoreSessionConfig;
 	liveSession: ActiveSession | undefined;
 	usageBySession: Map<string, SessionAccumulatedUsage>;
+	aggregateUsageBySession: Map<string, SessionAccumulatedUsage>;
 	persistMessages: (
 		sessionId: string,
 		messages: unknown[],
@@ -103,6 +108,40 @@ export function buildTelemetryAgentIdentity(
 		teamRole,
 		teamAgentId: context.teamAgentId?.trim() || undefined,
 	};
+}
+
+function usageDeltaFromEvent(event: Extract<AgentEvent, { type: "usage" }>) {
+	return {
+		inputTokens: event.inputTokens,
+		outputTokens: event.outputTokens,
+		cacheWriteTokens: event.cacheWriteTokens,
+		cacheReadTokens: event.cacheReadTokens,
+		totalCost: event.cost,
+	};
+}
+
+function resolveUsageAgentKey(input: {
+	isPrimaryAgentEvent: boolean;
+	overrides?: AgentTelemetryContextOverrides;
+	eventMetadata: ReturnType<typeof extractAgentEventMetadata>;
+}): string {
+	const candidates = input.isPrimaryAgentEvent
+		? [
+				input.overrides?.agentId,
+				input.eventMetadata.agentId,
+				input.overrides?.teamAgentId,
+			]
+		: [
+				input.overrides?.teamAgentId,
+				input.overrides?.agentId,
+				input.eventMetadata.agentId,
+				input.eventMetadata.conversationId,
+			];
+	for (const candidate of candidates) {
+		const value = candidate?.trim();
+		if (value) return value;
+	}
+	return input.isPrimaryAgentEvent ? "root" : "unknown";
 }
 
 export function handleAgentEvent(
@@ -189,39 +228,65 @@ export function handleAgentEvent(
 		});
 	}
 
-	if (
-		event.type === "usage" &&
-		isPrimaryAgentEvent &&
-		liveSession?.turnUsageBaseline
-	) {
-		ctx.usageBySession.set(
-			sessionId,
-			accumulateUsageTotals(liveSession.turnUsageBaseline, {
-				inputTokens: event.inputTokens,
-				outputTokens: event.outputTokens,
+	if (event.type === "usage" && liveSession?.turnUsageBaseline) {
+		const usageDelta = usageDeltaFromEvent(event);
+		if (isPrimaryAgentEvent) {
+			liveSession.turnPrimaryUsage = accumulateUsageTotals(
+				liveSession.turnPrimaryUsage ?? createInitialAccumulatedUsage(),
+				usageDelta,
+			);
+			const mainUsage = accumulateUsageTotals(
+				liveSession.turnUsageBaseline,
+				liveSession.turnPrimaryUsage,
+			);
+			ctx.usageBySession.set(sessionId, mainUsage);
+			captureConversationTurnEvent(telemetry, {
+				ulid: sessionId,
+				provider: config.providerId,
+				model: config.modelId,
+				source: "assistant",
+				mode: config.mode,
+				...agentIdentity,
+			});
+			captureTokenUsage(telemetry, {
+				ulid: sessionId,
+				tokensIn: event.inputTokens,
+				tokensOut: event.outputTokens,
 				cacheWriteTokens: event.cacheWriteTokens,
 				cacheReadTokens: event.cacheReadTokens,
 				totalCost: event.cost,
-			}),
+				model: config.modelId,
+				...agentIdentity,
+			});
+		} else {
+			const agentKey = resolveUsageAgentKey({
+				isPrimaryAgentEvent,
+				overrides,
+				eventMetadata,
+			});
+			const turnUsageByAgent =
+				liveSession.turnUsageByAgent ??
+				new Map<string, SessionAccumulatedUsage>();
+			liveSession.turnUsageByAgent = turnUsageByAgent;
+			turnUsageByAgent.set(
+				agentKey,
+				accumulateUsageTotals(
+					turnUsageByAgent.get(agentKey) ?? createInitialAccumulatedUsage(),
+					usageDelta,
+				),
+			);
+		}
+		const aggregateTurnUsage = accumulateUsageTotals(
+			liveSession.turnPrimaryUsage ?? createInitialAccumulatedUsage(),
+			sumUsageTotals(liveSession.turnUsageByAgent?.values() ?? []),
 		);
-		captureConversationTurnEvent(telemetry, {
-			ulid: sessionId,
-			provider: config.providerId,
-			model: config.modelId,
-			source: "assistant",
-			mode: config.mode,
-			...agentIdentity,
-		});
-		captureTokenUsage(telemetry, {
-			ulid: sessionId,
-			tokensIn: event.inputTokens,
-			tokensOut: event.outputTokens,
-			cacheWriteTokens: event.cacheWriteTokens,
-			cacheReadTokens: event.cacheReadTokens,
-			totalCost: event.cost,
-			model: config.modelId,
-			...agentIdentity,
-		});
+		ctx.aggregateUsageBySession.set(
+			sessionId,
+			accumulateUsageTotals(
+				liveSession.turnAggregateUsageBaseline ?? liveSession.turnUsageBaseline,
+				aggregateTurnUsage,
+			),
+		);
 	}
 
 	if (event.type === "iteration_end" && isPrimaryAgentEvent) {

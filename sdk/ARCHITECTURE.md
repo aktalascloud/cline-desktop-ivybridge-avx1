@@ -147,6 +147,7 @@ event payload and `source` field.
 6. `@cline/core` hub services broker sessions, events, approvals, schedules, and client-owned runtime capabilities such as session-local tool executors.
 7. Hub event forwarding preserves structured streaming lifecycle boundaries: text/reasoning deltas, final text/reasoning completion, tool start/finish, and agent done events are translated across the hub transport so host UIs can reliably close loading/streaming state.
 8. Hub client adapters exported from `@cline/core/hub` (`NodeHubClient`, `HubSessionClient`, `HubUIClient`, `connectToHub`) translate command/reply and event streams into host-facing APIs.
+9. Hub `session.get` records include both canonical root-session usage and explicit aggregate usage from the hub-owned `RuntimeHost`, so attached clients can intentionally render either root-only or root-plus-teammate costs without replaying event streams.
 
 Detached daemon startup retries transient `ETXTBSY` spawn failures before
 polling discovery. This covers package-manager updates that replace the CLI
@@ -244,6 +245,17 @@ Design implication:
 - `RuntimeHost` inputs stay transport-safe, while `ClineCore.start(...)` is the app-facing facade that normalizes broad local config before delegation
 - `RuntimeSessionConfig` is transport-neutral across local, shared hub, and remote hub modes; host-local bootstrap concerns stay under `localRuntime`
 - client-local runtime behaviors that must survive hub mode, such as `defaultToolExecutors`, are attached at session start and proxied through hub capability requests instead of changing host selection
+- pending prompt list/update/delete are exposed through the grouped
+  `ClineCore.pendingPrompts` service. Usage summary lookup and active-session
+  model switching are also service-style capabilities exposed through
+  `ClineCore` when the concrete transport implements them. These service APIs
+  are intentionally outside the minimal `RuntimeHost` primitive vocabulary.
+- The usage service's `getAccumulatedUsage(sessionId)` method returns a summary
+  with two explicit buckets: `usage` for the root/lead agent and
+  `aggregateUsage` for root plus teammates/subagents. Local execution tracks
+  root usage and teammate usage as separate buckets, then derives aggregate
+  totals from those buckets while telemetry remains scoped to the primary
+  lead/root agent.
 
 ### 4. Settings Mutation Boundary
 

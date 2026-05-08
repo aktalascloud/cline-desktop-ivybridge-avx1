@@ -61,6 +61,7 @@ export function createInteractiveExitSummary(input: {
 
 	const totalCost =
 		asFiniteNumber(input.usage?.totalCost) ??
+		asFiniteNumber(input.row?.metadata?.aggregatedAgentsCost) ??
 		asFiniteNumber(input.row?.metadata?.totalCost);
 
 	return {

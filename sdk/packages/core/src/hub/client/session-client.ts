@@ -181,6 +181,12 @@ function mapHubEvent(event: HubEventEnvelope): HubStreamEvent | undefined {
 				eventType: "runtime.chat.text_delta",
 				payload: cloneRecord(event.payload),
 			};
+		case "usage.updated":
+			return {
+				sessionId,
+				eventType: "runtime.chat.usage",
+				payload: cloneRecord(event.payload),
+			};
 		case "tool.started":
 			return {
 				sessionId,

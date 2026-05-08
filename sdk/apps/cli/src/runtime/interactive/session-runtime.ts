@@ -236,10 +236,16 @@ export function createInteractiveSessionRuntime(input: {
 		if (!manager || !sessionId) {
 			return undefined;
 		}
+		const readUsage = async () => {
+			const usageSummary = await manager
+				.getAccumulatedUsage(sessionId)
+				.catch(() => undefined);
+			return usageSummary?.aggregateUsage ?? usageSummary?.usage;
+		};
 		const [row, messages, usage] = await Promise.all([
 			manager.get(sessionId).catch(() => undefined),
 			manager.readMessages(sessionId).catch(() => []),
-			manager.getAccumulatedUsage(sessionId).catch(() => undefined),
+			readUsage(),
 		]);
 		return createInteractiveExitSummary({
 			sessionId,
@@ -295,9 +301,9 @@ export function createInteractiveSessionRuntime(input: {
 		if (!sessionManager) {
 			return fallback;
 		}
-		return (
-			(await sessionManager.getAccumulatedUsage(activeSessionId)) ?? fallback
-		);
+		const usageSummary =
+			await sessionManager.getAccumulatedUsage(activeSessionId);
+		return usageSummary?.aggregateUsage ?? usageSummary?.usage ?? fallback;
 	};
 
 	const forkCurrentSession = async (): Promise<

@@ -96,6 +96,7 @@ export interface HubSessionRuntimeSnapshot {
 	messages?: AgentMessage[];
 	pendingToolCalls?: unknown[];
 	usage?: SessionMetrics;
+	aggregateUsage?: SessionMetrics;
 	lastError?: string;
 }
 
@@ -123,6 +124,7 @@ export interface SessionRecord {
 		team?: HubTeamMembership;
 	};
 	usage?: SessionMetrics;
+	aggregateUsage?: SessionMetrics;
 }
 
 export interface HubSessionSnapshot {
@@ -418,6 +420,7 @@ export type HubEventName =
 	| "reasoning.delta"
 	| "reasoning.finished"
 	| "agent.done"
+	| "usage.updated"
 	| "tool.started"
 	| "tool.updated"
 	| "tool.finished"

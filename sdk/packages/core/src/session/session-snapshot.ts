@@ -49,6 +49,7 @@ export interface CoreSessionSnapshot {
 	};
 	messages?: LlmsProviders.Message[];
 	usage?: SessionAccumulatedUsage;
+	aggregateUsage?: SessionAccumulatedUsage;
 	checkpoint?: CoreSessionCheckpointSnapshot;
 }
 
@@ -117,6 +118,7 @@ export function createCoreSessionSnapshot(input: {
 	session: SessionRecord;
 	messages?: LlmsProviders.Message[];
 	usage?: SessionAccumulatedUsage;
+	aggregateUsage?: SessionAccumulatedUsage;
 }): CoreSessionSnapshot {
 	const { session } = input;
 	const metadata = cloneJsonObject(session.metadata);
@@ -164,6 +166,9 @@ export function createCoreSessionSnapshot(input: {
 			: {}),
 		...(input.messages ? { messages: cloneMessages(input.messages) } : {}),
 		...(input.usage ? { usage: { ...input.usage } } : {}),
+		...(input.aggregateUsage
+			? { aggregateUsage: { ...input.aggregateUsage } }
+			: {}),
 		...(() => {
 			const checkpoint = readCheckpointSnapshot(metadata);
 			return checkpoint ? { checkpoint } : {};

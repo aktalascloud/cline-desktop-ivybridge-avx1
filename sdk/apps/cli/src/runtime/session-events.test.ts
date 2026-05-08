@@ -181,4 +181,59 @@ describe("subscribeToAgentEvents", () => {
 			expect.objectContaining({ type: "done", iterations: 1 }),
 		);
 	});
+
+	it("keeps teammate usage while suppressing teammate output", () => {
+		const teammateText: AgentEvent = {
+			type: "content_start",
+			contentType: "text",
+			text: "hidden teammate output",
+		};
+		const teammateUsage: AgentEvent = {
+			type: "usage",
+			inputTokens: 7,
+			outputTokens: 5,
+			cost: 0.12,
+			totalInputTokens: 7,
+			totalOutputTokens: 5,
+			totalCost: 0.12,
+		};
+		const leadText: AgentEvent = {
+			type: "content_start",
+			contentType: "text",
+			text: "lead output",
+		};
+		const sessionManager = {
+			subscribe: vi.fn((listener: (event: unknown) => void) => {
+				listener({
+					type: "agent_event",
+					payload: {
+						teamRole: "teammate",
+						event: teammateText,
+					},
+				});
+				listener({
+					type: "agent_event",
+					payload: {
+						teamRole: "teammate",
+						event: teammateUsage,
+					},
+				});
+				listener({
+					type: "agent_event",
+					payload: {
+						teamRole: "lead",
+						event: leadText,
+					},
+				});
+				return () => {};
+			}),
+		};
+		const onAgentEvent = vi.fn();
+
+		subscribeToAgentEvents(sessionManager, onAgentEvent);
+
+		expect(onAgentEvent).toHaveBeenCalledTimes(2);
+		expect(onAgentEvent).toHaveBeenNthCalledWith(1, teammateUsage);
+		expect(onAgentEvent).toHaveBeenNthCalledWith(2, leadText);
+	});
 });
