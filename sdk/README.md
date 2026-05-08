@@ -73,13 +73,16 @@ async function handleMessage(threadId: string, message: string) {
 }
 ```
 
-Explore full working examples in [`apps/examples/`](apps/examples):
+Explore full working examples in [`examples/`](examples) and app examples in [`apps/examples/`](apps/examples):
 
 | Example | Description |
 |---------|-------------|
-| [Plugin](apps/examples/cline-plugin) | Custom tools with workspace-aware context, lifecycle hooks, and branch-level safety policies |
-| [Subagent Orchestration](apps/examples/subagent-plugin) | Spawn and manage background agents with presets, skills, and cross-agent handoffs |
-| [Slack Bot](apps/examples/slack-bot) | Production Slack bot with per-thread agent memory, OAuth, and slash commands |
+| [Plugins](examples/plugins) | Custom tools with workspace-aware context, lifecycle hooks, and branch-level safety policies |
+| [Subagent Orchestration](examples/plugins/subagent-plugin) | Spawn and manage background agents with presets, skills, and cross-agent handoffs |
+| [Hooks](examples/hooks) | File-based and runtime hooks for logging, review gates, context injection, and lifecycle automation |
+| [Cron Automations](examples/cron) | Recurring and event-driven automation specs for scheduled quality checks and PR workflows |
+| [Desktop App](apps/examples/desktop-app) | Tauri desktop shell with a Bun sidecar backend and Next.js UI |
+| [VS Code Extension App](apps/examples/vscode) | VS Code extension example that runs Cline sessions over the RPC runtime |
 
 ## Custom Tools
 

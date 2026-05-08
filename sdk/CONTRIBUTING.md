@@ -1,6 +1,6 @@
 # Contributing to the Cline SDK
 
-This document covers onboarding, development workflow, and publishing. For package boundaries and change routing during development, see [AGENTS.md](./AGENTS.md). For architecture and runtime flows, see [ARCHITECTURE.md](./ARCHITECTURE.md). For API details, see [DOC.md](./DOC.md).
+This document covers onboarding, development workflow, and publishing. For package boundaries and change routing during development, see [AGENTS.md](./AGENTS.md). For architecture and runtime flows, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 This repo is a WIP framework for building and orchestrating AI agents. Full refactors are acceptable when they improve the architecture and all call sites are updated.
 
@@ -22,9 +22,10 @@ This repo is a WIP framework for building and orchestrating AI agents. Full refa
 ### Apps
 
 - `apps/cli`: CLI host and local hub management
-- `apps/code`: Tauri + Next.js desktop app
-- `apps/vscode`: VS Code extension
-- `apps/examples`: sample consumers and integration examples
+- `apps/examples/desktop-app`: Tauri + Next.js desktop app example
+- `apps/examples/vscode`: VS Code extension example
+- `apps/examples/menubar`: hub notification menubar example
+- `examples`: plugin, hook, and cron automation examples (customizations upon Cline SDK)
 
 ## Development Workflow
 

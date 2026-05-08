@@ -269,8 +269,9 @@ mailboxes, task management, and outcome convergence.
 ## More Examples
 
 - Repo examples:
-  [apps/examples/cline-sdk](https://github.com/cline/sdk/tree/main/apps/examples/cline-sdk),
-  [apps/examples/slack-bot](https://github.com/cline/sdk/tree/main/apps/examples/slack-bot)
+  [examples/plugins](https://github.com/cline/sdk/tree/main/examples/plugins),
+  [examples/hooks](https://github.com/cline/sdk/tree/main/examples/hooks),
+  [examples/cron](https://github.com/cline/sdk/tree/main/examples/cron)
 - Workspace overview: [README.md](https://github.com/cline/sdk/blob/main/README.md)
 - API and architecture references:
   [DOC.md](https://github.com/cline/sdk/blob/main/DOC.md),

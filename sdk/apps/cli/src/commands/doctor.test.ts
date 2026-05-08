@@ -266,7 +266,7 @@ describe("runDoctorCommand", () => {
 				return {
 					status: 0,
 					stdout:
-						"60123 /Users/example/dev/sdk/apps/code/src-tauri/bin/code-sidecar\n",
+						"60123 /Users/example/dev/sdk/apps/examples/desktop-app/src-tauri/bin/code-sidecar\n",
 				};
 			}
 			return { status: 1, stdout: "" };

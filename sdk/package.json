@@ -5,8 +5,9 @@
 		"packages/*",
 		"apps/*",
 		"apps/examples/*",
-		"apps/examples/plugin-examples/*",
-		"apps/vscode/src/webview"
+		"apps/examples/vscode/src/webview",
+		"examples",
+		"examples/plugins/*"
 	],
 	"scripts": {
 		"prepare": "husky",

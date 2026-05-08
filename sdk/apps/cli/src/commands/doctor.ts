@@ -159,6 +159,10 @@ function listStaleCliPids(): number[] {
 
 function listStaleSidecarPids(): number[] {
 	const patterns = [
+		"/apps/examples/desktop-app/sidecar/index.ts",
+		"/apps/examples/desktop-app/dist/sidecar/index.js",
+		// Keep the pre-example-reorg paths so `doctor --fix` can still clean up
+		// stale sidecars that were launched from older checkouts.
 		"/apps/code/sidecar/index.ts",
 		"/apps/code/dist/sidecar/index.js",
 		"/src-tauri/bin/code-sidecar",

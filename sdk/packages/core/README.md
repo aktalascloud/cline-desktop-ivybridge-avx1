@@ -103,6 +103,6 @@ The package also exports storage and settings helpers such as:
 
 ## More Examples
 
-- Repo examples: [apps/examples/cline-sdk](https://github.com/cline/cline/tree/main/apps/examples/cline-sdk)
+- Repo examples: [examples](https://github.com/cline/sdk/tree/main/examples), [apps/examples](https://github.com/cline/sdk/tree/main/apps/examples)
 - Workspace overview: [README.md](https://github.com/cline/cline/blob/main/README.md)
 - API and architecture references: [DOC.md](https://github.com/cline/cline/blob/main/DOC.md), [ARCHITECTURE.md](https://github.com/cline/cline/blob/main/ARCHITECTURE.md)
