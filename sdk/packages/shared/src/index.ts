@@ -314,6 +314,19 @@ export {
 	resolveClineBuildEnv,
 	withResolvedClineBuildEnv,
 } from "./runtime/build-env";
+export type {
+	ClineEnvironment,
+	ClineEnvironmentConfig,
+	ResolveClineEnvironmentOptions,
+} from "./runtime/cline-environment";
+export {
+	CLINE_ENVIRONMENT_ENV,
+	CLINE_ENVIRONMENT_OVERRIDE_ENV,
+	CLINE_ENVIRONMENTS,
+	DEFAULT_CLINE_ENVIRONMENT,
+	getClineEnvironmentConfig,
+	resolveClineEnvironment,
+} from "./runtime/cline-environment";
 export {
 	CLINE_RUN_AS_HUB_DAEMON_ENV,
 	isHubDaemonProcess,

@@ -1,4 +1,4 @@
-import type { ITelemetryService } from "@cline/shared";
+import { getClineEnvironmentConfig, type ITelemetryService } from "@cline/shared";
 import {
 	captureAuthFailed,
 	captureAuthLoggedOut,
@@ -33,7 +33,6 @@ const DEFAULT_WORKOS_ENDPOINTS = {
 } as const;
 
 const DEFAULT_WORKOS_API_BASE_URL = "https://api.workos.com";
-const DEFAULT_WORKOS_CLIENT_ID = "client_01K3A541FN8TA3EPPHTD2325AR";
 const DEFAULT_CALLBACK_PATH = "/auth";
 const DEFAULT_CALLBACK_PORTS = Array.from(
 	{ length: 11 },
@@ -463,7 +462,7 @@ export async function loginClineOAuth(
 	try {
 		let credentials: ClineOAuthCredentials;
 		if (useWorkOSDeviceAuth) {
-			const clientId = DEFAULT_WORKOS_CLIENT_ID;
+			const clientId = getClineEnvironmentConfig().workOsClientId;
 			const deviceAuthorization = await requestWorkOSDeviceAuthorization(
 				clientId,
 				options,
@@ -566,7 +565,7 @@ export async function startClineDeviceAuth(options?: {
 	pollIntervalSeconds: number;
 }> {
 	return await requestWorkOSDeviceAuthorization(
-		DEFAULT_WORKOS_CLIENT_ID,
+		getClineEnvironmentConfig().workOsClientId,
 		options,
 	);
 }
@@ -585,7 +584,7 @@ export async function completeClineDeviceAuth(options: {
 	captureAuthStarted(options.telemetry, providerName);
 	try {
 		const workosTokens = await pollWorkOSTokens({
-			clientId: DEFAULT_WORKOS_CLIENT_ID,
+			clientId: getClineEnvironmentConfig().workOsClientId,
 			deviceCode: options.deviceCode,
 			expiresInSeconds: options.expiresInSeconds,
 			initialPollIntervalSeconds: options.pollIntervalSeconds,

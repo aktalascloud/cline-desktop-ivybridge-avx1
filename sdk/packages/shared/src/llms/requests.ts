@@ -1,4 +1,7 @@
-export const DEFAULT_CLINE_API_BASE_URL = "https://api.cline.bot";
+import { getClineEnvironmentConfig } from "../runtime/cline-environment";
+
+export const DEFAULT_CLINE_API_BASE_URL =
+	getClineEnvironmentConfig().apiBaseUrl;
 
 export const DEFAULT_REQUEST_HEADERS: Record<string, string> = {
 	"HTTP-Referer": "https://cline.bot",
