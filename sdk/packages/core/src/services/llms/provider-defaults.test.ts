@@ -1,12 +1,16 @@
+import * as Llms from "@cline/llms";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	clearLiveModelsCatalogCache,
+	clearPrivateModelsCatalogCache,
 	resolveProviderConfig,
 } from "./provider-defaults";
 
 afterEach(() => {
 	clearLiveModelsCatalogCache();
+	clearPrivateModelsCatalogCache();
 	vi.unstubAllGlobals();
+	vi.restoreAllMocks();
 });
 
 describe("resolveProviderConfig", () => {
@@ -71,5 +75,44 @@ describe("resolveProviderConfig", () => {
 			{ method: "GET" },
 		);
 		expect(Object.keys(resolved?.knownModels ?? {})).toEqual(["local-llama"]);
+	});
+
+	it("does not expose generic OpenAI models for OpenAI Codex OAuth fallback", async () => {
+		const resolved = await resolveProviderConfig("openai-codex");
+
+		expect(resolved?.knownModels?.["gpt-5.4"]).toBeDefined();
+		expect(resolved?.knownModels?.["gpt-5.4-nano"]).toBeUndefined();
+	});
+
+	it("uses OpenAI Codex account models as the authoritative authenticated list", async () => {
+		const listModels = vi
+			.spyOn(Llms, "listOpenAICodexModels")
+			.mockResolvedValue([
+				{ id: "gpt-5.3-codex", name: "GPT-5.3 Codex" },
+				{ id: "gpt-5.4", name: "GPT-5.4" },
+			]);
+
+		const resolved = await resolveProviderConfig(
+			"openai-codex",
+			{ cacheTtlMs: 1 },
+			{
+				providerId: "openai-codex",
+				modelId: "gpt-5.4",
+				apiKey: "oauth-token",
+				accountId: "acct_123",
+			},
+		);
+
+		expect(listModels).toHaveBeenCalledWith(
+			expect.objectContaining({
+				accessToken: "oauth-token",
+				accountId: "acct_123",
+			}),
+		);
+		expect(Object.keys(resolved?.knownModels ?? {}).sort()).toEqual([
+			"gpt-5.3-codex",
+			"gpt-5.4",
+		]);
+		expect(resolved?.knownModels?.["gpt-5.4-nano"]).toBeUndefined();
 	});
 });

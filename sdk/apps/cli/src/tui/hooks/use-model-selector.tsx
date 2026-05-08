@@ -46,6 +46,25 @@ async function getProviderDisplayName(providerId: string): Promise<string> {
 	return info?.name ?? providerId;
 }
 
+async function refreshCurrentProviderModels(config: Config): Promise<void> {
+	const manager = new ProviderSettingsManager();
+	await refreshProviderModelsFromSource(manager, config.providerId).catch(
+		() => {},
+	);
+	const resolved = await resolveProviderConfig(
+		config.providerId,
+		{
+			loadLatestOnInit: true,
+			loadPrivateOnAuth: true,
+			failOnError: false,
+		},
+		manager.getProviderConfig(config.providerId, { includeKnownModels: false }),
+	);
+	if (resolved?.knownModels) {
+		config.knownModels = resolved.knownModels;
+	}
+}
+
 function clearReasoningConfig(config: Config): void {
 	config.thinking = false;
 	config.reasoningEffort = undefined;
@@ -169,6 +188,7 @@ export function useModelSelector(opts: {
 				refocusTextarea();
 			};
 
+			await refreshCurrentProviderModels(config);
 			let modelOptions = buildModelOptions(
 				config.knownModels as Record<string, Llms.ModelInfo>,
 			);

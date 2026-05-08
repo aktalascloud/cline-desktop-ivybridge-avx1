@@ -733,17 +733,25 @@ export async function runCli(): Promise<void> {
 
 		let knownModels: Config["knownModels"];
 		try {
-			const providerConfig = await coreServer.resolveProviderConfig(
+			const persistedProviderConfig = providerSettingsManager.getProviderConfig(
 				provider,
-				isInteractive
-					? {
-							loadLatestOnInit: true,
-							loadPrivateOnAuth: true,
-							failOnError: false,
-						}
-					: undefined,
+				{
+					includeKnownModels: false,
+				},
 			);
-			knownModels = providerConfig?.knownModels;
+			const catalogOptions = isInteractive
+				? {
+						loadLatestOnInit: true,
+						loadPrivateOnAuth: true,
+						failOnError: false,
+					}
+				: undefined;
+			const resolvedProviderConfig = await coreServer.resolveProviderConfig(
+				provider,
+				catalogOptions,
+				persistedProviderConfig,
+			);
+			knownModels = resolvedProviderConfig?.knownModels;
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			writeln(

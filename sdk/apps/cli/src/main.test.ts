@@ -28,6 +28,9 @@ const authMocks = vi.hoisted(() => ({
 }));
 const providerSettingsMocks = vi.hoisted(() => ({
 	getLastUsedProviderSettings: vi.fn<() => unknown>(() => undefined),
+	getProviderConfig: vi.fn<(providerId: string, options?: unknown) => unknown>(
+		() => undefined,
+	),
 	getProviderSettings: vi.fn<(providerId: string) => unknown>(() => undefined),
 	saveProviderSettings: vi.fn<(settings: unknown, options?: unknown) => void>(
 		() => {},
@@ -133,6 +136,9 @@ vi.mock("@cline/core", () => {
 			}
 			getProviderSettings(providerId: string) {
 				return providerSettingsMocks.getProviderSettings(providerId);
+			}
+			getProviderConfig(providerId: string, options?: unknown) {
+				return providerSettingsMocks.getProviderConfig(providerId, options);
 			}
 			saveProviderSettings(settings: unknown, options?: unknown) {
 				providerSettingsMocks.saveProviderSettings(settings, options);
@@ -369,11 +375,15 @@ describe("runCli lightweight command dispatch", () => {
 		const { runCli } = await import("./main");
 
 		await expect(runCli()).resolves.toBeUndefined();
-		expect(llmMocks.resolveProviderConfig).toHaveBeenCalledWith("cline", {
-			loadLatestOnInit: true,
-			loadPrivateOnAuth: true,
-			failOnError: false,
-		});
+		expect(llmMocks.resolveProviderConfig).toHaveBeenCalledWith(
+			"cline",
+			{
+				loadLatestOnInit: true,
+				loadPrivateOnAuth: true,
+				failOnError: false,
+			},
+			undefined,
+		);
 		expect(runtimeMocks.runInteractive).toHaveBeenCalledWith(
 			expect.objectContaining({
 				knownModels: expect.objectContaining({
@@ -394,11 +404,15 @@ describe("runCli lightweight command dispatch", () => {
 		const { runCli } = await import("./main");
 
 		await expect(runCli()).resolves.toBeUndefined();
-		expect(llmMocks.resolveProviderConfig).toHaveBeenCalledWith("cline", {
-			loadLatestOnInit: true,
-			loadPrivateOnAuth: true,
-			failOnError: false,
-		});
+		expect(llmMocks.resolveProviderConfig).toHaveBeenCalledWith(
+			"cline",
+			{
+				loadLatestOnInit: true,
+				loadPrivateOnAuth: true,
+				failOnError: false,
+			},
+			undefined,
+		);
 		expect(runtimeMocks.runInteractive).toHaveBeenCalledTimes(1);
 		expect(runtimeMocks.runInteractive).toHaveBeenCalledWith(
 			expect.any(Object),
@@ -420,6 +434,7 @@ describe("runCli lightweight command dispatch", () => {
 		await expect(runCli()).resolves.toBeUndefined();
 		expect(llmMocks.resolveProviderConfig).toHaveBeenCalledWith(
 			"cline",
+			undefined,
 			undefined,
 		);
 		expect(runtimeMocks.runAgent).toHaveBeenCalledTimes(1);

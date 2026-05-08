@@ -100,6 +100,21 @@ function buildClaudeCodeModels(): Record<string, ModelInfo> {
 	};
 }
 
+function buildOpenAICodexModels(): Record<string, ModelInfo> {
+	const openaiModels = generatedModels("openai");
+	const fallbackIds = ["gpt-5.4", "gpt-5.3-codex"];
+	return Object.fromEntries(
+		fallbackIds.map((id) => [
+			id,
+			openaiModels[id] ?? {
+				id,
+				name: id,
+				capabilities: ["tools", "reasoning", "streaming"],
+			},
+		]),
+	);
+}
+
 function modelInfoToGateway(
 	providerId: string,
 	info: ModelInfo,
@@ -579,7 +594,7 @@ export const BUILTIN_SPECS: BuiltinSpec[] = [
 		family: "openai",
 		capabilities: ["reasoning", "oauth"],
 		defaultModelId: "gpt-5.4",
-		modelsProviderId: "openai",
+		modelsFactory: buildOpenAICodexModels,
 		defaults: { baseUrl: "https://chatgpt.com/backend-api/codex" },
 		metadata: { usageCostDisplay: "hide" },
 	},
