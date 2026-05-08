@@ -9,17 +9,17 @@
  * at runtime, so it has zero dependencies beyond Node builtins.
  *
  * CLI usage:
- *   cp examples/plugins/typescript-lsp-plugin/index.ts ~/.cline/plugins/typescript-lsp.ts
+ *   cp examples/plugins/typescript-lsp/index.ts ~/.cline/plugins/typescript-lsp.ts
  *   cline -i "Find where createTool is defined"
  *
  * Direct demo usage:
- *   ANTHROPIC_API_KEY=sk-... bun run examples/plugins/typescript-lsp-plugin/index.ts
+ *   ANTHROPIC_API_KEY=sk-... bun run examples/plugins/typescript-lsp/index.ts
  */
 
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
-import { type AgentPlugin, ClineCore, createTool } from "@cline/core";
+import { type AgentPlugin, createTool } from "@cline/core";
 
 // ---------------------------------------------------------------------------
 // TypeScript Language Service setup
@@ -294,48 +294,5 @@ const plugin: AgentPlugin = {
 	},
 };
 
-// ---------------------------------------------------------------------------
-// Standalone demo
-// ---------------------------------------------------------------------------
-
-async function runDemo(): Promise<void> {
-	const sessionManager = await ClineCore.create({ backendMode: "local" });
-
-	try {
-		const result = await sessionManager.start({
-			config: {
-				providerId: "anthropic",
-				modelId: "claude-sonnet-4-6",
-				apiKey: process.env.ANTHROPIC_API_KEY ?? "",
-				cwd: process.cwd(),
-				enableTools: true,
-				enableSpawnAgent: false,
-				enableAgentTeams: false,
-				systemPrompt:
-					"You are a helpful assistant. Use the goto_definition tool to navigate TypeScript code.",
-				extensions: [plugin],
-				extensionContext: {
-					workspace: {
-						rootPath: process.cwd(),
-						cwd: process.cwd(),
-					},
-				},
-			},
-			prompt:
-				"Use goto_definition to find where createTool is defined. " +
-				"Start from packages/shared/src/tools/create.ts line 42.",
-			interactive: false,
-		});
-
-		console.log(`\n${result.result?.text ?? ""}`);
-	} finally {
-		await sessionManager.dispose();
-	}
-}
-
-if (import.meta.main) {
-	await runDemo();
-}
-
-export { plugin, runDemo };
+export { plugin };
 export default plugin;

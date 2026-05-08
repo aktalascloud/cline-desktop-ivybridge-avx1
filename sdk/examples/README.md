@@ -27,7 +27,7 @@ cp examples/plugins/weather-plugin.example.ts ~/.cline/plugins/weather-metrics.t
 cline -i "What's the weather like in Tokyo and Paris?"
 ```
 
-### [`../../examples/plugins/typescript-lsp-plugin/`](../../examples/plugins/typescript-lsp-plugin)
+### [`../../examples/plugins/typescript-lsp/`](../../examples/plugins/typescript-lsp)
 
 TypeScript LSP plugin that gives the agent a `goto_definition` tool powered by the TypeScript Language Service API. Resolves through imports, re-exports, and type aliases -- much more precise than text search.
 
@@ -37,11 +37,11 @@ TypeScript LSP plugin that gives the agent a `goto_definition` tool powered by t
 - Zero extra dependencies -- resolves `typescript` from the target project
 
 ```bash
-cp examples/plugins/typescript-lsp-plugin/index.ts ~/.cline/plugins/typescript-lsp.ts
+cp examples/plugins/typescript-lsp/index.ts ~/.cline/plugins/typescript-lsp.ts
 cline -i "Find where createTool is defined"
 ```
 
-### [`../../examples/plugins/subagent-plugin/`](../../examples/plugins/subagent-plugin)
+### [`../../examples/plugins/agents-squad/`](../../examples/plugins/agents-squad)
 
 **Portable subagent plugin** that adds background agent orchestration tools to the CLI and SDK:
 
@@ -60,7 +60,7 @@ Skills available:
 
 ```bash
 mkdir -p ~/.cline/plugins
-cp examples/plugins/subagent-plugin/index.ts ~/.cline/plugins/portable-subagents.ts
+cp examples/plugins/agents-squad/index.ts ~/.cline/plugins/portable-subagents.ts
 cline -i "Use subagents to inspect this repository and report back."
 ```
 
@@ -146,8 +146,8 @@ Current SDK layering:
 
 **Building plugins?**
 - Start with [`../../examples/plugins/`](../../examples/plugins/) for basic tool and event patterns
-- Explore [`../../examples/plugins/typescript-lsp-plugin/`](../../examples/plugins/typescript-lsp-plugin) for integration with language services
-- See [`../../examples/plugins/subagent-plugin/`](../../examples/plugins/subagent-plugin) for advanced agent orchestration
+- Explore [`../../examples/plugins/typescript-lsp/`](../../examples/plugins/typescript-lsp) for integration with language services
+- See [`../../examples/plugins/agents-squad/`](../../examples/plugins/agents-squad) for advanced agent orchestration
 
 **Building integrations?**
 - Review [`../../examples/cron/`](../../examples/cron) for automation and event-driven workflows

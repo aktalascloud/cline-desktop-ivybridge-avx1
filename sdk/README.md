@@ -78,7 +78,7 @@ Explore full working examples in [`examples/`](examples) and app examples in [`a
 | Example | Description |
 |---------|-------------|
 | [Plugins](examples/plugins) | Custom tools with workspace-aware context, lifecycle hooks, and branch-level safety policies |
-| [Subagent Orchestration](examples/plugins/subagent-plugin) | Spawn and manage background agents with presets, skills, and cross-agent handoffs |
+| [Subagent Orchestration](examples/plugins/agents-squad) | Spawn and manage background agents with presets, skills, and cross-agent handoffs |
 | [Hooks](examples/hooks) | File-based and runtime hooks for logging, review gates, context injection, and lifecycle automation |
 | [Cron Automations](examples/cron) | Recurring and event-driven automation specs for scheduled quality checks and PR workflows |
 | [Desktop App](apps/examples/desktop-app) | Tauri desktop shell with a Bun sidecar backend and Next.js UI |

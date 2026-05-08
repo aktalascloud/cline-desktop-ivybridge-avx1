@@ -1,8 +1,8 @@
 {
-	"name": "cline-sdk-portable-agents",
+	"name": "cline-agent-squad-plugin",
 	"version": "0.1.0",
 	"private": true,
-	"description": "SDK-native background subagents plugin for the Cline SDK",
+	"description": "Background Subagents Plugin for Cline",
 	"type": "module",
 	"scripts": {
 		"typecheck": "tsc --noEmit",
