@@ -56,6 +56,7 @@ import { hydrateSessionMessages } from "./utils/hydrate-messages";
 import { isProviderConfigured } from "./utils/provider-configured";
 import { createSelectionCopyHandler } from "./utils/selection-copy";
 import type { LocalSlashCommandInvocation } from "./utils/skill-command-input";
+import { deriveTerminalTitle } from "./utils/terminal-title";
 import { ChatView } from "./views/chat-view";
 import { HomeView } from "./views/home-view";
 import { type OnboardingResult, OnboardingView } from "./views/onboarding";
@@ -84,6 +85,15 @@ function App(props: TuiProps) {
 
 	const workspaceRoot = props.config.workspaceRoot?.trim() || props.config.cwd;
 	const canForkSession = session.hasSubmitted || session.entries.length > 0;
+	const terminalTitle = useMemo(
+		() =>
+			deriveTerminalTitle({
+				appView,
+				entries: session.entries,
+				initialPrompt: props.initialPrompt,
+			}),
+		[appView, props.initialPrompt, session.entries],
+	);
 
 	const {
 		registry: slashCommandRegistry,
@@ -402,6 +412,16 @@ function App(props: TuiProps) {
 			renderer.off("selection", handleSelection);
 		};
 	}, [renderer, showToast]);
+
+	useEffect(() => {
+		renderer.setTerminalTitle(terminalTitle);
+	}, [renderer, terminalTitle]);
+
+	useEffect(() => {
+		return () => {
+			renderer.setTerminalTitle("");
+		};
+	}, [renderer]);
 
 	useEffect(() => {
 		return () => {
