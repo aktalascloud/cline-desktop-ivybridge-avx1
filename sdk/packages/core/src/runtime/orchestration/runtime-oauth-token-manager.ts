@@ -1,5 +1,5 @@
 import {
-	DEFAULT_CLINE_API_BASE_URL,
+	getClineEnvironmentConfig,
 	type ITelemetryService,
 	isOAuthProviderId,
 	type OAuthProviderId,
@@ -247,7 +247,8 @@ export class RuntimeOAuthTokenManager {
 			return getValidClineCredentials(
 				currentCredentials,
 				{
-					apiBaseUrl: settings.baseUrl?.trim() || DEFAULT_CLINE_API_BASE_URL,
+					apiBaseUrl:
+						settings.baseUrl?.trim() || getClineEnvironmentConfig().apiBaseUrl,
 					telemetry: this.telemetry,
 				},
 				{ forceRefresh },

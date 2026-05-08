@@ -5,7 +5,7 @@ import {
 	saveLocalProviderOAuthCredentials,
 	startClineDeviceAuth,
 } from "@cline/core";
-import { DEFAULT_CLINE_API_BASE_URL } from "@cline/shared";
+import { getClineEnvironmentConfig } from "@cline/shared";
 import open from "open";
 
 export type OnboardingOAuthProviderId = "cline" | "oca" | "openai-codex";
@@ -74,7 +74,8 @@ export function runDeviceCodeAuthFlow(input: {
 	const existing = input.providerSettingsManager.getProviderSettings(
 		input.providerId,
 	);
-	const apiBaseUrl = existing?.baseUrl?.trim() || DEFAULT_CLINE_API_BASE_URL;
+	const apiBaseUrl =
+		existing?.baseUrl?.trim() || getClineEnvironmentConfig().apiBaseUrl;
 
 	startClineDeviceAuth()
 		.then((result) => {

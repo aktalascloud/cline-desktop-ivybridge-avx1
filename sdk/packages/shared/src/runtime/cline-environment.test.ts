@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_CLINE_API_BASE_URL } from "../llms/requests";
 import {
 	CLINE_ENVIRONMENT_ENV,
 	CLINE_ENVIRONMENT_OVERRIDE_ENV,
@@ -91,15 +90,6 @@ describe("getClineEnvironmentConfig", () => {
 });
 
 describe("CLINE_ENVIRONMENTS catalog", () => {
-	it("has a production apiBaseUrl that matches DEFAULT_CLINE_API_BASE_URL", () => {
-		// Guard against the two constants drifting apart — the legacy
-		// constant is now derived from this catalog, so this asserts the
-		// derivation contract.
-		expect(CLINE_ENVIRONMENTS.production.apiBaseUrl).toBe(
-			DEFAULT_CLINE_API_BASE_URL,
-		);
-	});
-
 	it("exposes an environment field that matches its key", () => {
 		for (const [key, config] of Object.entries(CLINE_ENVIRONMENTS)) {
 			expect(config.environment).toBe(key);

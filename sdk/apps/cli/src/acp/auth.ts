@@ -1,5 +1,5 @@
 import type { ProviderSettings, ProviderSettingsManager } from "@cline/core";
-import { DEFAULT_CLINE_API_BASE_URL } from "@cline/shared";
+import { getClineEnvironmentConfig } from "@cline/shared";
 import type { OAuthCredentials } from "../commands/auth";
 import {
 	getPersistedProviderApiKey,
@@ -85,7 +85,8 @@ async function performOAuthLogin(
 	if (providerId === "cline") {
 		return coreOAuth.loginClineOAuth({
 			apiBaseUrl:
-				existingSettings?.baseUrl?.trim() || DEFAULT_CLINE_API_BASE_URL,
+				existingSettings?.baseUrl?.trim() ||
+				getClineEnvironmentConfig().apiBaseUrl,
 			callbacks,
 			useWorkOSDeviceAuth: true,
 		});

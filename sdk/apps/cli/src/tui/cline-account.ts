@@ -8,7 +8,7 @@ import {
 	type ProviderSettings,
 	ProviderSettingsManager,
 } from "@cline/core";
-import { DEFAULT_CLINE_API_BASE_URL } from "@cline/shared";
+import { getClineEnvironmentConfig } from "@cline/shared";
 import { formatCreditBalance, normalizeCreditBalance } from "../utils/output";
 import { toProviderApiKey } from "../utils/provider-auth";
 import type { Config } from "../utils/types";
@@ -50,7 +50,7 @@ function resolveAccountApiBaseUrl(input: {
 	if (configuredBaseUrl) {
 		return configuredBaseUrl;
 	}
-	return DEFAULT_CLINE_API_BASE_URL;
+	return getClineEnvironmentConfig().apiBaseUrl;
 }
 
 function resolveClineAccountAuthToken(input: {

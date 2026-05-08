@@ -11,7 +11,11 @@ import {
 	resolveLocalClineAuthToken,
 	type SessionMessagesArtifactUploader,
 } from "@cline/core";
-import { DEFAULT_CLINE_API_BASE_URL, type RemoteConfigBundle, RemoteConfigSchema } from "@cline/shared";
+import {
+	getClineEnvironmentConfig,
+	type RemoteConfigBundle,
+	RemoteConfigSchema,
+} from "@cline/shared";
 import { getCliTelemetryService } from "./telemetry";
 
 const initializedRemoteConfigKeys = new Set<string>();
@@ -41,7 +45,8 @@ async function loadCliRemoteConfigBundleUncached(): Promise<
 	}
 
 	const service = new ClineAccountService({
-		apiBaseUrl: settings?.baseUrl?.trim() || DEFAULT_CLINE_API_BASE_URL,
+		apiBaseUrl:
+			settings?.baseUrl?.trim() || getClineEnvironmentConfig().apiBaseUrl,
 		getAuthToken: async () => authToken,
 	});
 	const response = await service.fetchRemoteConfig().catch(() => null);

@@ -46,7 +46,7 @@ import {
 	setDisabledTools,
 	toggleDisabledTool,
 } from "@cline/core";
-import { DEFAULT_CLINE_API_BASE_URL } from "@cline/shared";
+import { getClineEnvironmentConfig } from "@cline/shared";
 import { broadcastEvent, resolveSidecarAskQuestion } from "./context";
 import {
 	findArtifactUnderDir,
@@ -927,7 +927,8 @@ export async function handleCommand(
 		const manager = new ProviderSettingsManager();
 		const settings = manager.getProviderSettings("cline");
 		const accountService = new ClineAccountService({
-			apiBaseUrl: settings?.baseUrl?.trim() || DEFAULT_CLINE_API_BASE_URL,
+			apiBaseUrl:
+				settings?.baseUrl?.trim() || getClineEnvironmentConfig().apiBaseUrl,
 			getAuthToken: async () => resolveLocalClineAuthToken(settings),
 		});
 		return await executeClineAccountAction(

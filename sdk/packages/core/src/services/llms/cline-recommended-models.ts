@@ -1,4 +1,4 @@
-import { DEFAULT_CLINE_API_BASE_URL } from "@cline/shared";
+import { getClineEnvironmentConfig } from "@cline/shared";
 import { ProviderSettingsManager } from "../storage/provider-settings-manager";
 
 export interface ClineRecommendedModel {
@@ -23,7 +23,6 @@ export interface FetchClineRecommendedModelsOptions {
 	timeoutMs?: number;
 }
 
-const DEFAULT_API_BASE_URL = DEFAULT_CLINE_API_BASE_URL;
 const DEFAULT_REQUEST_TIMEOUT_MS = 5_000;
 
 export const FALLBACK_CLINE_RECOMMENDED_MODELS: ClineRecommendedModelsData = {
@@ -121,13 +120,14 @@ function getConfiguredApiBaseUrl(
 	const explicitBaseUrl = options.baseUrl?.trim();
 	if (explicitBaseUrl) return explicitBaseUrl;
 
+	const fallbackBaseUrl = getClineEnvironmentConfig().apiBaseUrl;
 	try {
 		const manager =
 			options.providerSettingsManager ?? new ProviderSettingsManager();
 		const settings = manager.getProviderSettings("cline");
-		return settings?.baseUrl?.trim() || DEFAULT_API_BASE_URL;
+		return settings?.baseUrl?.trim() || fallbackBaseUrl;
 	} catch {
-		return DEFAULT_API_BASE_URL;
+		return fallbackBaseUrl;
 	}
 }
 
