@@ -204,6 +204,47 @@ describe("ai-sdk usage normalization", () => {
 	});
 
 	describe("field mapping across providers", () => {
+		it("maps AI SDK v3 usage token details", () => {
+			const normalized = normalizeUsage({
+				inputTokens: {
+					total: 4605,
+					noCache: 1000,
+					cacheRead: 3605,
+					cacheWrite: undefined,
+				},
+				outputTokens: {
+					total: 120,
+					text: 120,
+					reasoning: 0,
+				},
+				raw: {
+					promptTokenCount: 4605,
+					candidatesTokenCount: 120,
+					cachedContentTokenCount: 3605,
+				},
+			} as Record<string, unknown>);
+
+			expect(normalized.inputTokens).toBe(4605);
+			expect(normalized.outputTokens).toBe(120);
+			expect(normalized.cacheReadTokens).toBe(3605);
+			expect(normalized.cacheWriteTokens).toBe(0);
+		});
+
+		it("falls back to raw Gemini usage metadata", () => {
+			const normalized = normalizeUsage({
+				raw: {
+					promptTokenCount: 4605,
+					candidatesTokenCount: 120,
+					cachedContentTokenCount: 3605,
+				},
+			} as Record<string, unknown>);
+
+			expect(normalized.inputTokens).toBe(4605);
+			expect(normalized.outputTokens).toBe(120);
+			expect(normalized.cacheReadTokens).toBe(3605);
+			expect(normalized.cacheWriteTokens).toBe(0);
+		});
+
 		it("maps camelCase inputTokens from multiple naming conventions", () => {
 			const inputs = [
 				{ inputTokens: 100 }, // Already camelCase

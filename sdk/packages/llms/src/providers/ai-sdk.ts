@@ -343,7 +343,7 @@ function getNestedUsageValue(
 		}
 		current = (current as Record<string, unknown>)[key];
 	}
-	return typeof current === "number" && Number.isFinite(current) ? current : 0;
+	return getNumericValue(current) ?? 0;
 }
 
 function extractProviderNestedUsage(
@@ -466,19 +466,21 @@ export function normalizeUsage(
 			? baseCost + upstreamInferenceCost
 			: (baseCost ?? upstreamInferenceCost));
 	const normalizedUsage = {
-		inputTokens: getUsageValue(
-			usage,
-			"inputTokens",
-			"input_tokens",
-			"prompt_tokens",
-		),
-		outputTokens: getUsageValue(
-			usage,
-			"outputTokens",
-			"output_tokens",
-			"completion_tokens",
-		),
+		inputTokens:
+			getNestedUsageValue(usage, "inputTokens", "total") ||
+			getUsageValue(usage, "inputTokens", "input_tokens", "prompt_tokens") ||
+			getUsageValue(rawUsage, "promptTokenCount", "prompt_token_count"),
+		outputTokens:
+			getNestedUsageValue(usage, "outputTokens", "total") ||
+			getUsageValue(
+				usage,
+				"outputTokens",
+				"output_tokens",
+				"completion_tokens",
+			) ||
+			getUsageValue(rawUsage, "candidatesTokenCount", "candidates_token_count"),
 		cacheReadTokens:
+			getNestedUsageValue(usage, "inputTokens", "cacheRead") ||
 			getNestedUsageValue(usage, "inputTokenDetails", "cacheReadTokens") ||
 			getUsageValue(
 				usage,
@@ -488,6 +490,7 @@ export function normalizeUsage(
 				"cache_read_input_tokens",
 			) ||
 			getNestedUsageValue(usage, "prompt_tokens_details", "cached_tokens") ||
+			getUsageValue(rawUsage, "cachedContentTokenCount") ||
 			getUsageValue(
 				providerUsage ?? {},
 				"cachedInputTokens",
@@ -496,6 +499,7 @@ export function normalizeUsage(
 				"cache_read_input_tokens",
 			),
 		cacheWriteTokens:
+			getNestedUsageValue(usage, "inputTokens", "cacheWrite") ||
 			getNestedUsageValue(usage, "inputTokenDetails", "cacheWriteTokens") ||
 			getUsageValue(
 				usage,

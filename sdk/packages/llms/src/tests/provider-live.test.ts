@@ -38,8 +38,10 @@ const DEFAULT_CACHE_PROBE_PROMPT = [
 	"Answer with one word: OK.",
 	"Use only the provided context below; do not call tools.",
 	"Context:",
-	"Section A: ".repeat(400),
-	"Section B: ".repeat(400),
+	// Keep this comfortably above Gemini's implicit-cache floor to avoid
+	// provider-side cache misses making the live cache assertion flaky.
+	"Section A: ".repeat(1600),
+	"Section B: ".repeat(1600),
 ].join("\n");
 
 interface LiveExpectations {
