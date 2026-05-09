@@ -14,7 +14,7 @@ export const GENERATED_PROVIDER_MODELS: {
 	version: number;
 	providers: Record<string, Record<string, ModelInfo>>;
 } = {
-	version: 1778177941141,
+	version: 1778284066400,
 	providers: {
 		aihubmix: {
 			"deepseek-v4-flash": {
@@ -3579,6 +3579,29 @@ export const GENERATED_PROVIDER_MODELS: {
 			},
 		},
 		gemini: {
+			"gemini-3.1-flash-lite": {
+				id: "gemini-3.1-flash-lite",
+				name: "Gemini 3.1 Flash Lite",
+				contextWindow: 1048576,
+				maxTokens: 65536,
+				capabilities: [
+					"images",
+					"files",
+					"tools",
+					"reasoning",
+					"structured_output",
+					"temperature",
+					"prompt-cache",
+				],
+				pricing: {
+					input: 0.25,
+					output: 1.5,
+					cacheRead: 0.025,
+					cacheWrite: 1,
+				},
+				releaseDate: "2026-05-07",
+				family: "gemini-flash-lite",
+			},
 			"gemma-4-26b-a4b-it": {
 				id: "gemma-4-26b-a4b-it",
 				name: "Gemma 4 26B",
@@ -9022,6 +9045,27 @@ export const GENERATED_PROVIDER_MODELS: {
 			},
 		},
 		nebius: {
+			"deepseek-ai/DeepSeek-V4-Pro": {
+				id: "deepseek-ai/DeepSeek-V4-Pro",
+				name: "DeepSeek V4 Pro",
+				contextWindow: 1000000,
+				maxTokens: 384000,
+				capabilities: [
+					"tools",
+					"reasoning",
+					"structured_output",
+					"temperature",
+					"prompt-cache",
+				],
+				pricing: {
+					input: 1.75,
+					output: 3.5,
+					cacheRead: 0.15,
+					cacheWrite: 0,
+				},
+				releaseDate: "2026-04-24",
+				family: "deepseek-thinking",
+			},
 			"nvidia/nemotron-3-super-120b-a12b": {
 				id: "nvidia/nemotron-3-super-120b-a12b",
 				name: "Nemotron-3-Super-120B-A12B",
@@ -11196,6 +11240,21 @@ export const GENERATED_PROVIDER_MODELS: {
 				},
 				releaseDate: "2026-04-20",
 				family: "kimi",
+			},
+			"tencent/hy3-preview": {
+				id: "tencent/hy3-preview",
+				name: "Hy3 preview",
+				contextWindow: 256000,
+				maxTokens: 64000,
+				capabilities: ["tools", "reasoning", "temperature", "prompt-cache"],
+				pricing: {
+					input: 0.066,
+					output: 0.26,
+					cacheRead: 0.029,
+					cacheWrite: 0.029,
+				},
+				releaseDate: "2026-04-20",
+				family: "Hy",
 			},
 			"anthropic/claude-opus-4.7": {
 				id: "anthropic/claude-opus-4.7",

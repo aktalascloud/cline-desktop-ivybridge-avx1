@@ -1,6 +1,4 @@
-import {
-	CLINE_ENVIRONMENT_ENV, CLINE_ENVIRONMENTS
-} from "@cline/shared";
+import { CLINE_ENVIRONMENT_ENV, CLINE_ENVIRONMENTS } from "@cline/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { BUILTIN_SPECS } from "./builtins";
 
@@ -25,7 +23,6 @@ describe("cline builtin spec defaults.baseUrl", () => {
 		} else {
 			process.env[CLINE_ENVIRONMENT_ENV] = originalEnvironment;
 		}
-		
 	});
 
 	it("re-resolves baseUrl when CLINE_ENVIRONMENT changes between reads", () => {
