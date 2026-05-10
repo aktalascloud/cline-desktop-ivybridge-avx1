@@ -1,5 +1,23 @@
 import { formatFileContentBlock } from "../prompt/format";
 
+/**
+ * Sanitizes unpaired/lone Unicode surrogates in text content.
+ *
+ * Lone surrogates (high surrogates without matching low surrogates, or vice versa)
+ * can cause JSON serialization issues and downstream processing errors when sending
+ * text to LLM providers. This function replaces them with the Unicode replacement
+ * character (U+FFFD).
+ *
+ * @param content - The string to sanitize
+ * @returns The string with lone surrogates replaced by U+FFFD
+ */
+export function sanitizeSurrogates(content: string): string {
+	return content.replace(
+		/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
+		"\uFFFD",
+	);
+}
+
 export type AiSdkFormatterMessageRole = "user" | "assistant" | "tool";
 
 export type AiSdkFormatterPart =
@@ -147,6 +165,25 @@ function stripImagesFromOutput(
 	return out;
 }
 
+/** Sanitize all string values deeply nested inside an arbitrary object/array. */
+function sanitizeDeepStrings(value: unknown): unknown {
+	if (typeof value === "string") {
+		return sanitizeSurrogates(value);
+	}
+	if (Array.isArray(value)) {
+		return value.map((item) => sanitizeDeepStrings(item));
+	}
+	if (value !== null && typeof value === "object") {
+		const obj = value as Record<string, unknown>;
+		const out: Record<string, unknown> = {};
+		for (const [k, v] of Object.entries(obj)) {
+			out[k] = sanitizeDeepStrings(v);
+		}
+		return out;
+	}
+	return value;
+}
+
 export function toAiSdkToolResultOutput(
 	output: unknown,
 	isError = false,
@@ -154,7 +191,7 @@ export function toAiSdkToolResultOutput(
 	if (typeof output === "string") {
 		return {
 			type: isError ? "error-text" : "text",
-			value: output,
+			value: sanitizeSurrogates(output),
 		};
 	}
 
@@ -174,7 +211,7 @@ export function toAiSdkToolResultOutput(
 							data: block.data,
 							mediaType: block.mediaType,
 						}
-					: { type: "text", text: block.text },
+					: { type: "text", text: sanitizeSurrogates(block.text) },
 			),
 		};
 	}
@@ -192,7 +229,9 @@ export function toAiSdkToolResultOutput(
 		const stripped = stripImagesFromOutput(output, images);
 		if (images.length > 0) {
 			const headerText =
-				typeof stripped === "string" ? stripped : JSON.stringify(stripped);
+				typeof stripped === "string"
+					? sanitizeSurrogates(stripped)
+					: JSON.stringify(sanitizeDeepStrings(stripped));
 			return {
 				type: "content",
 				value: [
@@ -215,13 +254,13 @@ export function toAiSdkToolResultOutput(
 	) {
 		return {
 			type: isError ? "error-json" : "json",
-			value: output,
+			value: sanitizeDeepStrings(output),
 		};
 	}
 
 	return {
 		type: isError ? "error-text" : "text",
-		value: String(output),
+		value: sanitizeSurrogates(String(output)),
 	};
 }
 
@@ -237,14 +276,23 @@ export function formatMessagesForAiSdk(
 		(typeof systemContent === "string" && systemContent.trim().length > 0) ||
 		(Array.isArray(systemContent) && systemContent.length > 0)
 	) {
-		result.push({ role: "system", content: systemContent });
+		result.push({
+			role: "system",
+			content:
+				typeof systemContent === "string"
+					? sanitizeSurrogates(systemContent)
+					: systemContent,
+		});
 	}
 
 	for (const message of messages) {
 		const contentParts = message.content;
 
 		if (typeof contentParts === "string") {
-			result.push({ role: message.role, content: contentParts });
+			result.push({
+				role: message.role,
+				content: sanitizeSurrogates(contentParts),
+			});
 			continue;
 		}
 
@@ -253,12 +301,15 @@ export function formatMessagesForAiSdk(
 		for (const part of contentParts) {
 			switch (part.type) {
 				case "text":
-					messageParts.push({ type: "text", text: part.text });
+					messageParts.push({
+						type: "text",
+						text: sanitizeSurrogates(part.text),
+					});
 					break;
 				case "reasoning":
 					messageParts.push({
 						type: "reasoning",
-						text: part.text,
+						text: sanitizeSurrogates(part.text),
 						...(part.providerOptions
 							? { providerOptions: part.providerOptions }
 							: {}),
@@ -274,7 +325,10 @@ export function formatMessagesForAiSdk(
 				case "file":
 					messageParts.push({
 						type: "text",
-						text: formatFileContentBlock(part.path, part.content),
+						text: formatFileContentBlock(
+							part.path,
+							sanitizeSurrogates(part.content),
+						),
 					});
 					break;
 				case "tool-call":

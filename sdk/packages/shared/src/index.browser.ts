@@ -87,6 +87,7 @@ export type {
 } from "./llms/ai-sdk-format";
 export {
 	formatMessagesForAiSdk,
+	sanitizeSurrogates,
 	toAiSdkToolResultOutput,
 } from "./llms/ai-sdk-format";
 export type * from "./llms/gateway";

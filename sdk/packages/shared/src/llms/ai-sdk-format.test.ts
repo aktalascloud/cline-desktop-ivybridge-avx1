@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	formatMessagesForAiSdk,
+	sanitizeSurrogates,
 	toAiSdkToolResultOutput,
 } from "./ai-sdk-format";
 
@@ -270,6 +271,40 @@ describe("formatMessagesForAiSdk", () => {
 				],
 			},
 		]);
+	});
+
+	it("sanitizes nested strings before stringifying extracted image metadata", () => {
+		const output = toAiSdkToolResultOutput({
+			query: "bad\uD800name.jpg",
+			result: [
+				{ type: "text", text: "Successfully read image" },
+				{
+					type: "image",
+					data: "BASE64DATA",
+					mediaType: "image/jpeg",
+				},
+			],
+			success: true,
+		});
+
+		expect(output).toEqual({
+			type: "content",
+			value: [
+				{
+					type: "text",
+					text: JSON.stringify({
+						query: "bad\uFFFDname.jpg",
+						result: ["Successfully read image"],
+						success: true,
+					}),
+				},
+				{
+					type: "image-data",
+					data: "BASE64DATA",
+					mediaType: "image/jpeg",
+				},
+			],
+		});
 	});
 
 	it("extracts every nested image block from a multi-file read_files tool result", () => {
@@ -614,5 +649,181 @@ describe("formatMessagesForAiSdk", () => {
 			type: "text",
 			value: "contents",
 		});
+	});
+});
+
+describe("sanitizeSurrogates", () => {
+	it("replaces lone high surrogates with replacement character", () => {
+		const lone = "\uD83D";
+		const sanitized = sanitizeSurrogates(lone);
+		expect(sanitized.charCodeAt(0)).not.toBe(lone.charCodeAt(0));
+		expect(sanitized).toBe("\uFFFD");
+	});
+
+	it("preserves valid surrogate pairs (emoji)", () => {
+		const valid = "🚀";
+		expect(sanitizeSurrogates(valid)).toBe(valid);
+	});
+
+	it("replaces lone surrogates but preserves valid ones in mixed text", () => {
+		const lone = "\uD83D";
+		const valid = "🚀";
+		const text = `text ${lone} and ${valid}`;
+		const expected = `text \uFFFD and ${valid}`;
+		expect(sanitizeSurrogates(text)).toBe(expected);
+	});
+});
+
+describe("formatMessagesForAiSdk - surrogate sanitization", () => {
+	it("sanitizes system content with lone surrogates", () => {
+		const lone = "\uD83D";
+		const valid = "🚀";
+		const system = `system ${lone}`;
+		const expectedSystem = `system \uFFFD`;
+
+		const messages = formatMessagesForAiSdk(system, [
+			{ role: "user", content: [{ type: "text", text: `hey ${valid}` }] },
+		]);
+
+		expect(messages[0]!.role).toBe("system");
+		expect(messages[0]!.content).toBe(expectedSystem);
+	});
+
+	it("sanitizes string message content", () => {
+		const lone = "\uD83D";
+		const messages = formatMessagesForAiSdk(undefined, [
+			{ role: "user", content: `text ${lone}` },
+		]);
+
+		expect(messages[0]!.content).toBe("text \uFFFD");
+	});
+
+	it("sanitizes text parts in user messages", () => {
+		const lone = "\uD83D";
+		const messages = formatMessagesForAiSdk(undefined, [
+			{ role: "user", content: [{ type: "text", text: `text ${lone}` }] },
+		]);
+
+		const userContent = messages[0]!.content as Array<{
+			type: string;
+			text: string;
+		}>;
+		expect(userContent[0]!.text).toBe("text \uFFFD");
+	});
+
+	it("sanitizes text parts in assistant messages", () => {
+		const lone = "\uD83D";
+		const messages = formatMessagesForAiSdk(undefined, [
+			{ role: "assistant", content: [{ type: "text", text: `text ${lone}` }] },
+		]);
+
+		const content = messages[0]!.content as Array<{
+			type: string;
+			text: string;
+		}>;
+		expect(content[0]!.text).toBe("text \uFFFD");
+	});
+
+	it("sanitizes reasoning parts in assistant messages", () => {
+		const lone = "\uD83D";
+		const messages = formatMessagesForAiSdk(undefined, [
+			{
+				role: "assistant",
+				content: [{ type: "reasoning", text: `think ${lone}` }],
+			},
+		]);
+
+		const content = messages[0]!.content as Array<{
+			type: string;
+			text: string;
+		}>;
+		expect(content[0]!.text).toBe("think \uFFFD");
+	});
+
+	it("sanitizes tool result string output", () => {
+		const lone = "\uD83D";
+		const messages = formatMessagesForAiSdk(undefined, [
+			{
+				role: "user",
+				content: [
+					{
+						type: "tool-result",
+						toolCallId: "call_1",
+						toolName: "test",
+						output: `result ${lone}`,
+					},
+				],
+			},
+		]);
+
+		const content = messages[0]!.content as Array<{
+			type: string;
+			output: { type: string; value: string };
+		}>;
+		expect(content[0]!.output.value).toBe("result \uFFFD");
+	});
+
+	it("sanitizes tool result text content blocks", () => {
+		const lone = "\uD83D";
+		const messages = formatMessagesForAiSdk(undefined, [
+			{
+				role: "user",
+				content: [
+					{
+						type: "tool-result",
+						toolCallId: "call_1",
+						toolName: "test",
+						output: [{ type: "text", text: `content ${lone}` }],
+					},
+				],
+			},
+		]);
+
+		const content = messages[0]!.content as Array<{
+			type: string;
+			output: { type: string; value: Array<{ type: string; text: string }> };
+		}>;
+		expect(content[0]!.output.value[0]!.text).toBe("content \uFFFD");
+	});
+
+	it("sanitizes deeply nested strings in json tool output", () => {
+		const lone = "\uD83D";
+		const messages = formatMessagesForAiSdk(undefined, [
+			{
+				role: "user",
+				content: [
+					{
+						type: "tool-result",
+						toolCallId: "call_1",
+						toolName: "test",
+						output: { nested: `value ${lone}` },
+					},
+				],
+			},
+		]);
+
+		const content = messages[0]!.content as Array<{
+			type: string;
+			output: { type: string; value: { nested: string } };
+		}>;
+		expect(content[0]!.output.value.nested).toBe("value \uFFFD");
+	});
+
+	it("sanitizes file content", () => {
+		const lone = "\uD83D";
+		const messages = formatMessagesForAiSdk(undefined, [
+			{
+				role: "user",
+				content: [
+					{ type: "file", path: "/tmp/test.txt", content: `file ${lone}` },
+				],
+			},
+		]);
+
+		const content = messages[0]!.content as Array<{
+			type: string;
+			text: string;
+		}>;
+		expect(content[0]!.text).toContain("file \uFFFD");
 	});
 });

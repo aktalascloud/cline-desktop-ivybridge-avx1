@@ -11,6 +11,7 @@ import {
 	type AiSdkFormatterMessage,
 	type AiSdkFormatterPart,
 	formatMessagesForAiSdk,
+	sanitizeSurrogates,
 } from "@cline/shared";
 import { jsonSchema, streamText } from "ai";
 import { nanoid } from "nanoid";
@@ -91,7 +92,7 @@ function toAiSdkMessages(
 		const content: AiSdkFormatterPart[] = [];
 		for (const part of message.content) {
 			if (part.type === "text") {
-				content.push({ type: "text", text: part.text });
+				content.push({ type: "text", text: sanitizeSurrogates(part.text) });
 				continue;
 			}
 
@@ -101,7 +102,7 @@ function toAiSdkMessages(
 				const redactedData = metadata?.redactedData;
 				content.push({
 					type: "reasoning",
-					text: part.text,
+					text: sanitizeSurrogates(part.text),
 					...(typeof signature === "string" || typeof redactedData === "string"
 						? {
 								providerOptions: {
