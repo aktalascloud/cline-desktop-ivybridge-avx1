@@ -1,6 +1,10 @@
 import "opentui-spinner/react";
 import type { ReactNode } from "react";
 import {
+	CODEX_CLI_INSTALL_URL,
+	type CodexCliStatus,
+} from "../../../utils/codex-cli";
+import {
 	ClineModelPicker,
 	type ClineModelPickerEntry,
 } from "../../components/model-selector/cline-model-picker";
@@ -299,6 +303,63 @@ export function OnboardingProviderConfigScreen(props: {
 						{visibleFields.length > 1
 							? "Tab to switch fields, Enter to save, Esc to go back, Ctrl+C to exit"
 							: "Enter to save, Esc to go back, Ctrl+C to exit"}
+					</em>
+				</text>
+			</box>
+		</OnboardingFrame>
+	);
+}
+
+export function OnboardingCodexCliScreen(props: {
+	activeProviderName: string;
+	checking: boolean;
+	compact: boolean;
+	contentWidth: number;
+	mouse: MouseTrackerState;
+	status?: CodexCliStatus;
+}) {
+	const defaultFg = useDefaultFg();
+	const installedStatus =
+		props.status?.installed === true ? props.status : undefined;
+	return (
+		<OnboardingFrame
+			compact={props.compact}
+			contentWidth={props.contentWidth}
+			mouse={props.mouse}
+		>
+			<box flexDirection="column" gap={1} alignItems="center">
+				<text fg={defaultFg}>{props.activeProviderName}</text>
+
+				{props.checking && (
+					<box flexDirection="row" gap={1}>
+						<spinner name="dots" color="gray" />
+						<text fg="gray">Checking for Codex CLI...</text>
+					</box>
+				)}
+
+				{installedStatus && (
+					<box flexDirection="column" gap={1} alignItems="center">
+						<text fg={palette.success}>{"\u25cf"} Codex CLI installed</text>
+						<text fg="gray">{installedStatus.version}</text>
+					</box>
+				)}
+
+				{props.status && !props.status.installed && (
+					<box flexDirection="column" gap={1} width={props.contentWidth}>
+						<text fg="yellow">Codex CLI was not found</text>
+						<text fg="gray">{props.status.reason}</text>
+						<text fg="gray">Install Codex CLI from:</text>
+						<text fg="cyan" selectable>
+							{CODEX_CLI_INSTALL_URL}
+						</text>
+					</box>
+				)}
+
+				<text fg="gray">
+					<em>
+						{installedStatus
+							? "Enter to continue, R to recheck, Esc to go back, Ctrl+C to exit"
+							: "R to recheck, Esc to go back, Ctrl+C to exit"}
 					</em>
 				</text>
 			</box>

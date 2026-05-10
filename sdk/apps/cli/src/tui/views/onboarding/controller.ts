@@ -8,10 +8,12 @@ import {
 	resolveProviderConfig,
 	saveLocalProviderSettings,
 } from "@cline/core";
-
-type ByoFieldKey = "apiKey" | "baseUrl";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+	type CodexCliStatus,
+	checkCodexCliInstalled,
+	isOpenAICodexCliProvider,
+} from "../../../utils/codex-cli";
 import { getPersistedProviderApiKey } from "../../../utils/provider-auth";
 import {
 	buildClineModelEntries,
@@ -42,6 +44,8 @@ import {
 	toProviderEntry,
 } from "./model";
 
+type ByoFieldKey = "apiKey" | "baseUrl";
+
 const CUSTOM_MODEL_ID_ACTION = "__custom_model_id__";
 
 export interface OnboardingControllerProps {
@@ -70,6 +74,10 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 	const [byoApiKey, setByoApiKey] = useState("");
 	const [byoBaseUrl, setByoBaseUrl] = useState("");
 	const [byoFocusedField, setByoFocusedField] = useState<ByoFieldKey>("apiKey");
+	const [codexCliStatus, setCodexCliStatus] = useState<
+		CodexCliStatus | undefined
+	>();
+	const [codexCliChecking, setCodexCliChecking] = useState(false);
 	const authAbortRef = useRef(false);
 
 	// Device code flow
@@ -97,7 +105,11 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 			providers.map((p) => ({
 				key: p.id,
 				label: p.name,
-				detail: p.isOAuth ? "(OAuth)" : undefined,
+				detail: p.isOAuth
+					? "(OAuth)"
+					: p.isLocalAuth
+						? "(local CLI)"
+						: undefined,
 				searchText: `${p.name} ${p.id}`,
 				rightLabel: p.hasAuth ? "\u25cf" : undefined,
 				rightLabelColor: palette.success,
@@ -303,6 +315,20 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 		],
 	);
 
+	const refreshCodexCliStatus = useCallback(() => {
+		setCodexCliStatus(undefined);
+		setCodexCliChecking(true);
+		checkCodexCliInstalled()
+			.then(setCodexCliStatus)
+			.catch((error: unknown) => {
+				setCodexCliStatus({
+					installed: false,
+					reason: error instanceof Error ? error.message : String(error),
+				});
+			})
+			.finally(() => setCodexCliChecking(false));
+	}, []);
+
 	const selectProvider = useCallback(
 		(providerId: string) => {
 			const provider = providers.find((p) => p.id === providerId);
@@ -311,6 +337,14 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 				if (isOnboardingOAuthProviderId(provider.id)) {
 					startOAuthFlow(provider.id);
 				}
+				return;
+			}
+			if (provider.isLocalAuth || isOpenAICodexCliProvider(provider.id)) {
+				setActiveProviderId(provider.id);
+				setActiveProviderName(provider.name);
+				setCodexCliStatus(undefined);
+				setStep("codex_cli_setup");
+				refreshCodexCliStatus();
 				return;
 			}
 			const config = getProviderConfigFields(provider.id);
@@ -330,8 +364,23 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 			setByoFocusedField(config.fields.baseUrl ? "baseUrl" : "apiKey");
 			setStep("byo_apikey");
 		},
-		[providers, startOAuthFlow, providerSettingsManager],
+		[providers, startOAuthFlow, refreshCodexCliStatus, providerSettingsManager],
 	);
+
+	const saveCodexCliConfig = useCallback(() => {
+		if (!codexCliStatus?.installed) {
+			return;
+		}
+		saveLocalProviderSettings(providerSettingsManager, {
+			providerId: activeProviderId,
+		});
+		transitionToModelPicker(activeProviderId);
+	}, [
+		activeProviderId,
+		codexCliStatus,
+		providerSettingsManager,
+		transitionToModelPicker,
+	]);
 
 	const saveByoConfig = useCallback(() => {
 		// No required-field validation. If credentials are missing or wrong,
@@ -505,11 +554,13 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 			deviceAbortRef.current = true;
 		},
 		resetAuth,
+		refreshCodexCliStatus,
 		startOAuthFlow,
 		startDeviceCodeFlow,
 		selectProvider,
 		loadModelsForProvider,
 		saveClineModelSelection,
+		saveCodexCliConfig,
 		saveModelSelection,
 		saveThinkingLevel,
 	});
@@ -523,6 +574,8 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 		byoBaseUrl,
 		byoFields,
 		byoFocusedField,
+		codexCliChecking,
+		codexCliStatus,
 		clineEntries,
 		clineKnownModels,
 		clineModelSelected,
@@ -548,6 +601,7 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 		providersLoading,
 		recommendedLoading: recommended.loading,
 		saveByoConfig,
+		saveCodexCliConfig,
 		saveCustomModelId,
 		selectedModelName,
 		step,

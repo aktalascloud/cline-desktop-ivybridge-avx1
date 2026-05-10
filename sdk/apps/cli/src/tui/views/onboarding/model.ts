@@ -1,3 +1,4 @@
+import { isOpenAICodexCliProvider } from "../../../utils/codex-cli";
 import { isOAuthProvider } from "../../../utils/provider-auth";
 
 export type OnboardingStep =
@@ -6,6 +7,7 @@ export type OnboardingStep =
 	| "device_code"
 	| "byo_provider"
 	| "byo_apikey"
+	| "codex_cli_setup"
 	| "cline_model"
 	| "model_picker"
 	| "custom_model_id"
@@ -67,6 +69,7 @@ export interface ProviderEntry {
 	id: string;
 	name: string;
 	isOAuth: boolean;
+	isLocalAuth: boolean;
 	hasAuth: boolean;
 	models: number | null;
 	defaultModelId?: string;
@@ -103,6 +106,7 @@ export function toProviderEntry(provider: ProviderCatalogItem): ProviderEntry {
 		id: provider.id,
 		name: provider.name,
 		isOAuth: isOAuthProvider(provider.id),
+		isLocalAuth: isOpenAICodexCliProvider(provider.id),
 		hasAuth:
 			Boolean(provider.apiKey) || provider.oauthAccessTokenPresent === true,
 		models: provider.models,

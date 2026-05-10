@@ -12,6 +12,12 @@ import type { ChoiceContext } from "@opentui-ui/dialog";
 import { useDialogKeyboard } from "@opentui-ui/dialog/react";
 import open from "open";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+	CODEX_CLI_INSTALL_URL,
+	type CodexCliStatus,
+	checkCodexCliInstalled,
+	isOpenAICodexCliProvider,
+} from "../../../utils/codex-cli";
 import { isOAuthProvider } from "../../../utils/provider-auth";
 import { palette } from "../../palette";
 
@@ -21,6 +27,7 @@ interface ProviderItem {
 	models: number | null;
 	isConfigured: boolean;
 	isOAuth: boolean;
+	isLocalAuth: boolean;
 }
 
 const MAX_VISIBLE = 10;
@@ -52,6 +59,7 @@ export function ProviderPickerContent(
 						// just a model id and base URL) still render as configured.
 						isConfigured: p.enabled === true,
 						isOAuth: isOAuthProvider(p.id),
+						isLocalAuth: isOpenAICodexCliProvider(p.id),
 					})),
 				);
 				const idx = list.findIndex((p) => p.id === currentProviderId);
@@ -161,6 +169,14 @@ export function ProviderPickerContent(
 										flexShrink={0}
 									>
 										(OAuth)
+									</text>
+								)}
+								{p.isLocalAuth && (
+									<text
+										fg={isSel ? palette.textOnSelection : "gray"}
+										flexShrink={0}
+									>
+										(local CLI)
 									</text>
 								)}
 								{authed && (
@@ -285,8 +301,8 @@ export interface ProviderConfigInputFields {
 /**
  * Single-purpose configure dialog: collects API key and (when applicable)
  * base URL. Model selection happens separately in the standard model picker
- * after this dialog resolves. No fields are required — the dialog accepts
- * blanks. If credentials are missing or wrong the API call surfaces the
+ * after this dialog resolves. No fields are required. The dialog accepts
+ * blanks. If credentials are missing or wrong, the API call surfaces the
  * provider's own error to the user.
  */
 export function ProviderConfigInputContent(
@@ -402,6 +418,84 @@ export function ProviderConfigInputContent(
 					{fieldKeys.length > 1
 						? "Tab to switch fields, Enter to save, Esc to go back"
 						: "Enter to save, Esc to go back"}
+				</em>
+			</text>
+		</box>
+	);
+}
+
+export function CodexCliStatusContent(
+	props: ChoiceContext<boolean> & {
+		providerName: string;
+	},
+) {
+	const { resolve, dismiss, dialogId, providerName } = props;
+	const [status, setStatus] = useState<CodexCliStatus | undefined>();
+	const [checking, setChecking] = useState(false);
+
+	const refresh = useCallback(() => {
+		setStatus(undefined);
+		setChecking(true);
+		checkCodexCliInstalled()
+			.then(setStatus)
+			.catch((error: unknown) => {
+				setStatus({
+					installed: false,
+					reason: error instanceof Error ? error.message : String(error),
+				});
+			})
+			.finally(() => setChecking(false));
+	}, []);
+
+	useEffect(() => {
+		refresh();
+	}, [refresh]);
+
+	useDialogKeyboard((key) => {
+		if (key.name === "escape") {
+			dismiss();
+			return;
+		}
+		if (key.name === "r") {
+			refresh();
+			return;
+		}
+		if (key.name === "return" && status?.installed) {
+			resolve(true);
+		}
+	}, dialogId);
+
+	return (
+		<box flexDirection="column" paddingX={1} gap={1}>
+			<text fg="cyan">
+				<strong>{providerName}</strong>
+			</text>
+
+			{checking && <text fg="gray">Checking for Codex CLI...</text>}
+
+			{status?.installed && (
+				<box flexDirection="column" gap={1}>
+					<text fg={palette.success}>{"\u25cf"} Codex CLI installed</text>
+					<text fg="gray">{status.version}</text>
+				</box>
+			)}
+
+			{status && !status.installed && (
+				<box flexDirection="column" gap={1}>
+					<text fg="yellow">Codex CLI was not found</text>
+					<text fg="gray">{status.reason}</text>
+					<text fg="gray">Install Codex CLI from:</text>
+					<text fg="cyan" selectable>
+						{CODEX_CLI_INSTALL_URL}
+					</text>
+				</box>
+			)}
+
+			<text fg="gray">
+				<em>
+					{status?.installed
+						? "Enter to continue, R to recheck, Esc to go back"
+						: "R to recheck, Esc to go back"}
 				</em>
 			</text>
 		</box>

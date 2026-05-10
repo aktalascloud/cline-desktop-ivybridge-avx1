@@ -21,6 +21,7 @@ describe("onboarding model helpers", () => {
 			id: "cline",
 			name: "Cline",
 			isOAuth: true,
+			isLocalAuth: false,
 			hasAuth: true,
 			models: 12,
 			defaultModelId: "openai/gpt-5.3-codex",
@@ -38,8 +39,23 @@ describe("onboarding model helpers", () => {
 		).toMatchObject({
 			id: "anthropic",
 			isOAuth: false,
+			isLocalAuth: false,
 			hasAuth: true,
 			models: null,
+		});
+	});
+
+	it("marks the OpenAI Codex CLI provider as local auth", () => {
+		expect(
+			toProviderEntry({
+				id: "openai-codex-cli",
+				name: "OpenAI Codex CLI",
+				models: null,
+			}),
+		).toMatchObject({
+			id: "openai-codex-cli",
+			isOAuth: false,
+			isLocalAuth: true,
 		});
 	});
 

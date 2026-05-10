@@ -6,6 +6,7 @@ import { useOnboardingController } from "./controller";
 import { getOAuthProviderLabel, type OnboardingResult } from "./model";
 import {
 	OnboardingClineModelScreen,
+	OnboardingCodexCliScreen,
 	OnboardingCustomModelIdScreen,
 	OnboardingDeviceCodeScreen,
 	OnboardingDoneScreen,
@@ -78,6 +79,19 @@ export function OnboardingView(props: OnboardingViewProps) {
 				onApiKeyInput={state.handleByoApiKeyInput}
 				onBaseUrlInput={state.handleByoBaseUrlInput}
 				onSubmit={state.saveByoConfig}
+			/>
+		);
+	}
+
+	if (state.step === "codex_cli_setup") {
+		return (
+			<OnboardingCodexCliScreen
+				activeProviderName={state.activeProviderName}
+				checking={state.codexCliChecking}
+				compact={compact}
+				contentWidth={contentWidth}
+				mouse={mouse}
+				status={state.codexCliStatus}
 			/>
 		);
 	}

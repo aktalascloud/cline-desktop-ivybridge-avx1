@@ -148,7 +148,7 @@ describe("models registry parsing", () => {
 });
 
 // ===========================================================================
-// extractModelIdsFromPayload — tested indirectly via addLocalProvider
+// extractModelIdsFromPayload is tested indirectly via addLocalProvider
 // ===========================================================================
 
 describe("addLocalProvider – model ID parsing via modelsSourceUrl", () => {
@@ -1341,6 +1341,12 @@ describe("getProviderConfigFields", () => {
 	it("returns oauth auth with no fields for openai-codex", () => {
 		const result = getProviderConfigFields("openai-codex");
 		expect(result.authMethod).toBe("oauth");
+		expect(result.fields).toEqual({});
+	});
+
+	it("returns local auth with no fields for openai-codex-cli", () => {
+		const result = getProviderConfigFields("openai-codex-cli");
+		expect(result.authMethod).toBe("local");
 		expect(result.fields).toEqual({});
 	});
 

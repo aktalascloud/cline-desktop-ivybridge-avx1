@@ -36,11 +36,13 @@ export function useOnboardingKeyboard(input: {
 	abortOAuth: () => void;
 	abortDeviceCode: () => void;
 	resetAuth: () => void;
+	refreshCodexCliStatus: () => void;
 	startOAuthFlow: (providerId: OnboardingOAuthProviderId) => void;
 	startDeviceCodeFlow: (providerId: OnboardingOAuthProviderId) => void;
 	selectProvider: (providerId: string) => void;
 	loadModelsForProvider: (providerId: string) => void;
 	saveClineModelSelection: (modelId: string, modelName: string) => void;
+	saveCodexCliConfig: () => void;
 	saveModelSelection: () => void;
 	saveThinkingLevel: (level: ThinkingLevel) => void;
 }) {
@@ -78,6 +80,10 @@ export function useOnboardingKeyboard(input: {
 			if (input.step === "byo_provider") {
 				input.setStep("menu");
 				input.setMenuSelected(0);
+				return;
+			}
+			if (input.step === "codex_cli_setup") {
+				input.setStep("byo_provider");
 				return;
 			}
 			if (input.step === "cline_model") {
@@ -155,6 +161,17 @@ export function useOnboardingKeyboard(input: {
 			if (key.name === "return") {
 				const item = input.providerList.selectedItem;
 				if (item) input.selectProvider(item.key);
+			}
+			return;
+		}
+
+		if (input.step === "codex_cli_setup") {
+			if (key.name === "r") {
+				input.refreshCodexCliStatus();
+				return;
+			}
+			if (key.name === "return") {
+				input.saveCodexCliConfig();
 			}
 			return;
 		}

@@ -63,6 +63,10 @@ export function isProviderSettingsUsable(
 	if (isOAuthProvider(normalizedProviderId)) {
 		return false;
 	}
+	const fields = getProviderConfigFields(normalizedProviderId);
+	if (fields.authMethod === "local") {
+		return true;
+	}
 	if (normalizedProviderId === "bedrock") {
 		return hasAwsCredentials(settings);
 	}
@@ -75,8 +79,7 @@ export function isProviderSettingsUsable(
 	if (normalizedProviderId === "sapaicore") {
 		return hasSapCredentials(settings);
 	}
-	const fields = getProviderConfigFields(normalizedProviderId).fields;
-	if (!fields.baseUrl) {
+	if (!fields.fields.baseUrl) {
 		return false;
 	}
 	return (

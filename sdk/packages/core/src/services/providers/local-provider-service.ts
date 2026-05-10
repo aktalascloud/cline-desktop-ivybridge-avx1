@@ -760,7 +760,7 @@ export interface ProviderConfigFieldRequirement {
 
 export interface ProviderConfigFields {
 	providerId: string;
-	authMethod: "api-key" | "oauth";
+	authMethod: "api-key" | "oauth" | "local";
 	fields: Partial<
 		Record<ProviderConfigFieldKey, ProviderConfigFieldRequirement>
 	>;
@@ -784,7 +784,7 @@ function shouldExposeBaseUrlField(
 /**
  * Project a provider into the inputs a configure-dialog should render.
  *
- * No fields are marked "required" — `llms` no longer pre-flights credentials,
+ * No fields are marked "required". `llms` no longer pre-flights credentials,
  * so a missing API key surfaces as the provider's own auth error rather than
  * a synthetic SDK failure. UIs may still require fields client-side if they
  * want, but the runtime does not.
@@ -792,6 +792,8 @@ function shouldExposeBaseUrlField(
  * - OAuth providers (`cline`, `oca`, `openai-codex`) return `authMethod:
  *   "oauth"` with no fields; the configure UI should route to the OAuth
  *   login flow instead.
+ * - Local auth providers return `authMethod: "local"` with no fields. The
+ *   configure UI should show provider-specific local readiness instead.
  * - All other providers return `apiKey`. Built-in local/proxy-style providers
  *   with user-supplied endpoints, plus user-added providers with saved
  *   endpoints, also return a pre-filled `baseUrl` field.
@@ -809,6 +811,9 @@ export function getProviderConfigFields(
 	}
 
 	const collection = LlmsModels.MODEL_COLLECTIONS_BY_PROVIDER_ID[id];
+	if (collection?.provider.capabilities?.includes("local-auth")) {
+		return { providerId: id, authMethod: "local", fields: {} };
+	}
 	const defaultBaseUrl = collection?.provider.baseUrl;
 	const fields: ProviderConfigFields["fields"] = { apiKey: {} };
 	if (shouldExposeBaseUrlField(id, collection)) {

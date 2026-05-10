@@ -43,6 +43,14 @@ describe("provider readiness", () => {
 		).toBe(true);
 	});
 
+	it("accepts saved local auth providers without an API key", () => {
+		expect(
+			isProviderSettingsUsable("openai-codex-cli", {
+				provider: "openai-codex-cli",
+			} satisfies ProviderSettings),
+		).toBe(true);
+	});
+
 	it("accepts keyless local providers with a resolved endpoint and model", () => {
 		expect(
 			isProviderSettingsUsable(

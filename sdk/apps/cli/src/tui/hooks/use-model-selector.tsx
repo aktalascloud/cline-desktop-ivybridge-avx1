@@ -9,6 +9,7 @@ import {
 import type { ChoiceContext } from "@opentui-ui/dialog";
 import type { DialogActions } from "@opentui-ui/dialog/react";
 import { useCallback } from "react";
+import { isOpenAICodexCliProvider } from "../../utils/codex-cli";
 import {
 	getPersistedProviderApiKey,
 	isOAuthProvider,
@@ -16,6 +17,7 @@ import {
 } from "../../utils/provider-auth";
 import type { Config } from "../../utils/types";
 import {
+	CodexCliStatusContent,
 	type ExistingProviderAction,
 	OAuthLoginContent,
 	ProviderConfigInputContent,
@@ -114,6 +116,20 @@ async function runProviderChange(
 					/>
 				),
 			});
+		} else if (isOpenAICodexCliProvider(newProviderId)) {
+			saved = await dialog.choice<boolean>({
+				style: { maxHeight: termHeight - 2 },
+				closeOnEscape: false,
+				content: (ctx: ChoiceContext<boolean>) => (
+					<CodexCliStatusContent {...ctx} providerName={displayName} />
+				),
+			});
+			if (saved) {
+				manager.saveProviderSettings({
+					...(existingSettings ?? {}),
+					provider: newProviderId,
+				});
+			}
 		} else {
 			const { fields } = getProviderConfigFields(newProviderId);
 			saved = await dialog.choice<boolean>({
