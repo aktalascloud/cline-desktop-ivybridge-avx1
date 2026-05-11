@@ -122,7 +122,14 @@ describe("compactInteractiveMessages", () => {
 		];
 		const config = createConfig();
 		config.compaction = {
-			maxInputTokens: 80,
+			compact: () => ({
+				messages: [
+					{
+						role: "user",
+						content: "same count but content should be trimmed",
+					},
+				],
+			}),
 		};
 
 		const result = await compactInteractiveMessages({

@@ -9,8 +9,10 @@ import {
 	findLastAssistantIndex,
 	findLastTurnStartIndex,
 	isCompactionSummaryMessage,
+	isTurnStartMessage,
 	MIN_TRUNCATED_MESSAGE_TOKENS,
 	truncateText,
+	truncateToolResultContentForCompaction,
 } from "./compaction-shared";
 
 interface BasicCompactionCandidate {
@@ -43,7 +45,14 @@ function sanitizeMessageForBasic(
 	return {
 		...message,
 		content: kept.map((block) =>
-			block.type === "text" ? { ...block, text: block.text.trim() } : block,
+			block.type === "text"
+				? { ...block, text: block.text.trim() }
+				: block.type === "tool_result"
+					? {
+							...block,
+							content: truncateToolResultContentForCompaction(block.content),
+						}
+					: block,
 		),
 	};
 }
@@ -119,6 +128,82 @@ function updateCandidate(
 	candidate.estimatedTokens = estimateMessageTokens(message);
 }
 
+function collectToolUseIds(message: MessageWithMetadata): Set<string> {
+	const ids = new Set<string>();
+	if (!Array.isArray(message.content)) {
+		return ids;
+	}
+	for (const block of message.content) {
+		if (block.type === "tool_use") {
+			ids.add(block.id);
+		}
+	}
+	return ids;
+}
+
+function collectToolResultIds(message: MessageWithMetadata): Set<string> {
+	const ids = new Set<string>();
+	if (!Array.isArray(message.content)) {
+		return ids;
+	}
+	for (const block of message.content) {
+		if (block.type === "tool_result") {
+			ids.add(block.tool_use_id);
+		}
+	}
+	return ids;
+}
+
+function collectToolPairIds(candidate: BasicCompactionCandidate): Set<string> {
+	return new Set([
+		...collectToolUseIds(candidate.message),
+		...collectToolResultIds(candidate.message),
+	]);
+}
+
+function buildToolPairCandidateIndex(
+	candidates: BasicCompactionCandidate[],
+): Map<string, Set<number>> {
+	const indexByToolUseId = new Map<string, Set<number>>();
+	for (let index = 0; index < candidates.length; index += 1) {
+		for (const id of collectToolPairIds(candidates[index])) {
+			const existing = indexByToolUseId.get(id);
+			if (existing) {
+				existing.add(index);
+			} else {
+				indexByToolUseId.set(id, new Set([index]));
+			}
+		}
+	}
+	return indexByToolUseId;
+}
+
+function collectAtomicRemovalIndexes(
+	candidates: BasicCompactionCandidate[],
+	startIndex: number,
+): Set<number> {
+	const pairIndex = buildToolPairCandidateIndex(candidates);
+	const removalIndexes = new Set<number>();
+	const queue = [startIndex];
+
+	while (queue.length > 0) {
+		const index = queue.shift();
+		if (index === undefined || removalIndexes.has(index)) {
+			continue;
+		}
+		removalIndexes.add(index);
+		for (const id of collectToolPairIds(candidates[index])) {
+			for (const linkedIndex of pairIndex.get(id) ?? []) {
+				if (!removalIndexes.has(linkedIndex)) {
+					queue.push(linkedIndex);
+				}
+			}
+		}
+	}
+
+	return removalIndexes;
+}
+
 function removeCandidatesByPredicate(
 	candidates: BasicCompactionCandidate[],
 	predicate: (candidate: BasicCompactionCandidate) => boolean,
@@ -137,8 +222,16 @@ function removeCandidatesByPredicate(
 			index += 1;
 			continue;
 		}
-		totalTokens -= candidates[index].estimatedTokens;
-		candidates.splice(index, 1);
+		const removalIndexes = collectAtomicRemovalIndexes(candidates, index);
+		totalTokens -= Array.from(removalIndexes).reduce(
+			(total, removalIndex) => total + candidates[removalIndex].estimatedTokens,
+			0,
+		);
+		for (const removalIndex of Array.from(removalIndexes).sort(
+			(left, right) => right - left,
+		)) {
+			candidates.splice(removalIndex, 1);
+		}
 	}
 }
 
@@ -214,6 +307,23 @@ function haveMessagesChanged(
 	return JSON.stringify(original) !== JSON.stringify(next);
 }
 
+function splitLatestTurn(messages: MessageWithMetadata[]): {
+	compactable: MessageWithMetadata[];
+	protectedTail: MessageWithMetadata[];
+} {
+	const lastTurnStartIndex = findLastTurnStartIndex(messages);
+	if (
+		lastTurnStartIndex < 0 ||
+		(lastTurnStartIndex === 0 && !isTurnStartMessage(messages[0]))
+	) {
+		return { compactable: messages, protectedTail: [] };
+	}
+	return {
+		compactable: messages.slice(0, lastTurnStartIndex),
+		protectedTail: messages.slice(lastTurnStartIndex),
+	};
+}
+
 export function runBasicCompaction(options: {
 	context: CoreCompactionContext;
 	estimateMessageTokens: EstimateMessageTokens;
@@ -223,8 +333,14 @@ export function runBasicCompaction(options: {
 		1,
 		Math.min(options.context.triggerTokens, options.context.maxInputTokens),
 	);
-	const candidates = buildBasicCandidates(
+	const { compactable, protectedTail } = splitLatestTurn(
 		options.context.messages,
+	);
+	if (compactable.length === 0) {
+		return undefined;
+	}
+	const candidates = buildBasicCandidates(
+		compactable,
 		options.estimateMessageTokens,
 	);
 	if (candidates.length === 0) {
@@ -270,13 +386,19 @@ export function runBasicCompaction(options: {
 		options.estimateMessageTokens,
 	);
 
-	const nextMessages = candidates.map((candidate) => candidate.message);
+	const nextMessages = [
+		...candidates.map((candidate) => candidate.message),
+		...protectedTail,
+	];
 	if (!haveMessagesChanged(options.context.messages, nextMessages)) {
 		return undefined;
 	}
 
 	const beforeTokens = getTotalTokens(
-		options.context.messages.map((m) => sanitizeMessageForBasic(m) ?? m),
+		[
+			...compactable.map((m) => sanitizeMessageForBasic(m) ?? m),
+			...protectedTail,
+		],
 		options.estimateMessageTokens,
 	);
 	const afterTokens = getTotalTokens(

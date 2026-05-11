@@ -1,5 +1,7 @@
 import type { ToolResultContent } from "@cline/llms";
-import type { MessageWithMetadata } from "@cline/shared";
+import { estimateTokens, type MessageWithMetadata } from "@cline/shared";
+
+export { estimateTokens };
 import type {
 	CoreCompactionContext,
 	CoreCompactionSummarizerConfig,
@@ -7,7 +9,7 @@ import type {
 import type { ProviderConfig } from "../../types/provider-settings";
 
 export const DEFAULT_MAX_INPUT_TOKENS = 200_000;
-export const DEFAULT_THRESHOLD_RATIO = 0.95;
+export const DEFAULT_THRESHOLD_RATIO = 0.9;
 export const DEFAULT_RESERVE_TOKENS = 16_384;
 export const DEFAULT_PRESERVE_RECENT_TOKENS = 20_000;
 export const DEFAULT_SUMMARY_MAX_OUTPUT_TOKENS = 1_024;
@@ -30,10 +32,6 @@ export interface CompactionSummaryMetadata {
 
 export type EstimateMessageTokens = (message: MessageWithMetadata) => number;
 
-export function estimateTokens(text: string): number {
-	return Math.max(1, Math.ceil(text.length / 4));
-}
-
 export function truncateText(text: string, limit: number): string {
 	if (text.length <= limit) {
 		return text;
@@ -44,16 +42,17 @@ export function truncateText(text: string, limit: number): string {
 export function flattenToolResultContent(
 	content: ToolResultContent["content"],
 ): string {
-	if (typeof content === "string") {
-		return truncateText(content, TOOL_RESULT_CHAR_LIMIT);
+	const truncated = truncateToolResultContentForCompaction(content);
+	if (typeof truncated === "string") {
+		return truncated;
 	}
-	return content
+	return truncated
 		.map((block) => {
 			switch (block.type) {
 				case "text":
 					return block.text;
 				case "file":
-					return `<file path="${block.path}">\n${truncateText(block.content, FILE_CONTENT_CHAR_LIMIT)}\n</file>`;
+					return `<file path="${block.path}">\n${block.content}\n</file>`;
 				case "image":
 					return `[image:${block.mediaType}]`;
 				default:
@@ -61,6 +60,32 @@ export function flattenToolResultContent(
 			}
 		})
 		.join("\n");
+}
+
+export function truncateToolResultContentForCompaction(
+	content: ToolResultContent["content"],
+): ToolResultContent["content"] {
+	if (typeof content === "string") {
+		return truncateText(content, TOOL_RESULT_CHAR_LIMIT);
+	}
+	return content.map((block) => {
+		switch (block.type) {
+			case "text":
+				return {
+					...block,
+					text: truncateText(block.text, TOOL_RESULT_CHAR_LIMIT),
+				};
+			case "file":
+				return {
+					...block,
+					content: truncateText(block.content, FILE_CONTENT_CHAR_LIMIT),
+				};
+			case "image":
+				return block;
+			default:
+				return block;
+		}
+	});
 }
 
 export function formatToolInput(input: Record<string, unknown>): string {
@@ -122,7 +147,13 @@ export function createTokenEstimator(): EstimateMessageTokens {
 		if (typeof cached === "number") {
 			return cached;
 		}
-		const value = estimateTokens(serializeMessage(message));
+		let serialized: string;
+		try {
+			serialized = JSON.stringify(message);
+		} catch {
+			serialized = serializeMessage(message);
+		}
+		const value = estimateTokens(serialized.length);
 		cache.set(ref, value);
 		return value;
 	};
@@ -258,7 +289,17 @@ export function findCutIndex(
 		return 0;
 	}
 
-	return Math.min(candidate, lastTurnStartIndex);
+	// Snap to a turn-start boundary so the cut never splits a
+	// tool_use/tool_result pair (or any other intra-turn block).
+	// Everything before the cut gets summarized; everything from
+	// the cut forward is preserved. Both halves of any pair must
+	// land on the same side or the provider will see an orphaned
+	// tool_result (or tool_use) and reject the request.
+	let cut = Math.min(candidate, lastTurnStartIndex);
+	while (cut > 0 && !isTurnStartMessage(messages[cut])) {
+		cut -= 1;
+	}
+	return cut;
 }
 
 export function collectPaths(value: unknown): string[] {
@@ -409,18 +450,29 @@ export function resolveSummarizerConfig(options: {
 	summarizer?: CoreCompactionSummarizerConfig;
 }): ProviderConfig {
 	const summarizer = options.summarizer;
-	if (!summarizer) {
+	const withSummarizerDefaults = (config: ProviderConfig): ProviderConfig => {
+		if (config.providerId === "openai-codex") {
+			const { maxOutputTokens: _maxOutputTokens, ...rest } = config;
+			return {
+				...rest,
+				thinking: false,
+			};
+		}
 		return {
-			...options.activeProviderConfig,
-			maxOutputTokens: DEFAULT_SUMMARY_MAX_OUTPUT_TOKENS,
+			...config,
+			maxOutputTokens:
+				config.maxOutputTokens ?? DEFAULT_SUMMARY_MAX_OUTPUT_TOKENS,
 			thinking: false,
 		};
+	};
+	if (!summarizer) {
+		return withSummarizerDefaults(options.activeProviderConfig);
 	}
 	const baseProviderConfig =
 		summarizer.providerConfig?.providerId === summarizer.providerId
 			? summarizer.providerConfig
 			: undefined;
-	return {
+	return withSummarizerDefaults({
 		...(baseProviderConfig ?? {}),
 		providerId: summarizer.providerId,
 		modelId: summarizer.modelId,
@@ -430,8 +482,7 @@ export function resolveSummarizerConfig(options: {
 		knownModels: summarizer.knownModels ?? baseProviderConfig?.knownModels,
 		maxOutputTokens:
 			summarizer.maxOutputTokens ?? DEFAULT_SUMMARY_MAX_OUTPUT_TOKENS,
-		thinking: false,
-	};
+	});
 }
 
 export function buildSummaryMessage(options: {

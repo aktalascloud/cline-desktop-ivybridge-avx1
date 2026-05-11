@@ -23,7 +23,7 @@ import type {
 	ToolApprovalResult,
 	ToolPolicy,
 } from "@cline/shared";
-import { captureSdkError } from "@cline/shared";
+import { captureSdkError, estimateTokens } from "@cline/shared";
 import { nanoid } from "nanoid";
 
 // Local `createUID` helper. The clinee source imports this from
@@ -121,6 +121,73 @@ interface InvalidToolCall {
 	toolName?: string;
 	input: Record<string, unknown>;
 	reason: "missing_name" | "missing_arguments" | "invalid_arguments";
+}
+
+function safeJsonSize(value: unknown): number {
+	try {
+		return JSON.stringify(value).length;
+	} catch {
+		return String(value).length;
+	}
+}
+
+function getOutputSize(output: unknown): number {
+	if (typeof output === "string") {
+		return output.length;
+	}
+	return safeJsonSize(output);
+}
+
+function summarizeModelRequest(
+	request: AgentModelRequest,
+): Record<string, unknown> {
+	let textChars = request.systemPrompt?.length ?? 0;
+	let toolResultCount = 0;
+	let toolResultChars = 0;
+	let maxToolResultChars = 0;
+	for (const message of request.messages) {
+		for (const part of message.content) {
+			switch (part.type) {
+				case "text":
+					textChars += part.text.length;
+					break;
+				case "reasoning":
+					textChars += part.text.length;
+					break;
+				case "file":
+					textChars += part.content.length;
+					break;
+				case "tool-call":
+					textChars += safeJsonSize(part.input);
+					break;
+				case "tool-result": {
+					const outputChars = getOutputSize(part.output);
+					toolResultCount += 1;
+					toolResultChars += outputChars;
+					maxToolResultChars = Math.max(maxToolResultChars, outputChars);
+					textChars += outputChars;
+					break;
+				}
+			}
+		}
+	}
+
+	return {
+		messageCount: request.messages.length,
+		toolSchemaCount: request.tools.length,
+		systemPromptChars: request.systemPrompt?.length ?? 0,
+		requestJsonChars: safeJsonSize({
+			systemPrompt: request.systemPrompt,
+			messages: request.messages,
+			tools: request.tools,
+			options: request.options,
+		}),
+		visibleTextChars: textChars,
+		estimatedTextTokens: estimateTokens(textChars),
+		toolResultCount,
+		toolResultChars,
+		maxToolResultChars,
+	};
 }
 
 interface PreparedToolExecution {
@@ -670,13 +737,13 @@ export class AgentRuntime {
 			options: this.config.modelOptions,
 		};
 
-		request = await this.prepareTurnForModelRequest(request);
-
 		if (this.state.iteration > 1) {
 			if (await this.consumePendingUserMessage()) {
 				request = { ...request, messages: cloneMessages(this.state.messages) };
 			}
 		}
+
+		request = await this.prepareTurnForModelRequest(request);
 
 		for (const hook of this.hooks.beforeModel) {
 			const result = (await hook({
@@ -697,6 +764,20 @@ export class AgentRuntime {
 				};
 			}
 		}
+
+		this.config.logger?.debug("Agent model request diagnostics", {
+			iteration: this.state.iteration,
+			providerId:
+				"providerId" in this.config &&
+				typeof this.config.providerId === "string"
+					? this.config.providerId
+					: undefined,
+			modelId:
+				"modelId" in this.config && typeof this.config.modelId === "string"
+					? this.config.modelId
+					: undefined,
+			...summarizeModelRequest(request),
+		});
 
 		const stream = await this.config.model.stream(request);
 		const content: AgentMessagePart[] = [];

@@ -12,6 +12,7 @@ import {
 	createTokenEstimator,
 	DEFAULT_MAX_INPUT_TOKENS,
 	DEFAULT_PRESERVE_RECENT_TOKENS,
+	DEFAULT_RESERVE_TOKENS,
 	DEFAULT_THRESHOLD_RATIO,
 } from "./compaction-shared";
 
@@ -62,6 +63,46 @@ export interface ContextCompactionPrepareTurnOptions {
 	manualTargetRatio?: number;
 }
 
+function safeJsonSize(value: unknown): number {
+	try {
+		return JSON.stringify(value).length;
+	} catch {
+		return String(value).length;
+	}
+}
+
+function summarizeToolResults(messages: CoreCompactionContext["messages"]): {
+	toolResultCount: number;
+	toolResultSerializedChars: number;
+	maxToolResultSerializedChars: number;
+} {
+	let toolResultCount = 0;
+	let toolResultSerializedChars = 0;
+	let maxToolResultSerializedChars = 0;
+	for (const message of messages) {
+		if (!Array.isArray(message.content)) {
+			continue;
+		}
+		for (const block of message.content) {
+			if (block.type !== "tool_result") {
+				continue;
+			}
+			const size = safeJsonSize(block.content);
+			toolResultCount += 1;
+			toolResultSerializedChars += size;
+			maxToolResultSerializedChars = Math.max(
+				maxToolResultSerializedChars,
+				size,
+			);
+		}
+	}
+	return {
+		toolResultCount,
+		toolResultSerializedChars,
+		maxToolResultSerializedChars,
+	};
+}
+
 const BUILTIN_COMPACTION_STRATEGIES = {
 	basic: ({ context, estimateMessageTokens, logger }) =>
 		runBasicCompaction({
@@ -103,6 +144,22 @@ function resolveTriggerState(input: {
 	if (typeof input.config.reserveTokens === "number") {
 		const reserveTokens = Math.max(0, input.config.reserveTokens);
 		const triggerTokens = Math.max(0, input.maxInputTokens - reserveTokens);
+		return {
+			shouldCompact: input.inputTokens > triggerTokens,
+			triggerTokens,
+			thresholdRatio:
+				input.maxInputTokens > 0 ? triggerTokens / input.maxInputTokens : 0,
+		};
+	}
+
+	if (typeof input.config.thresholdRatio !== "number") {
+		const triggerTokens = Math.max(
+			0,
+			Math.min(
+				input.maxInputTokens - DEFAULT_RESERVE_TOKENS,
+				input.maxInputTokens * DEFAULT_THRESHOLD_RATIO,
+			),
+		);
 		return {
 			shouldCompact: input.inputTokens > triggerTokens,
 			triggerTokens,
@@ -199,6 +256,22 @@ export function createContextCompactionPrepareTurn(
 				reserveTokens: userCompaction?.reserveTokens,
 				thresholdRatio: userCompaction?.thresholdRatio,
 			},
+		});
+		config.logger?.debug("Context compaction diagnostics", {
+			mode,
+			strategy,
+			iteration: context.iteration,
+			providerId: config.providerId,
+			modelId: config.modelId,
+			inputTokens,
+			maxInputTokens,
+			triggerTokens: triggerState.triggerTokens,
+			thresholdRatio: triggerState.thresholdRatio,
+			shouldCompact: triggerState.shouldCompact,
+			messageCount: context.messages.length,
+			apiMessageCount: context.apiMessages.length,
+			apiMessagesJsonChars: safeJsonSize(context.apiMessages),
+			...summarizeToolResults(context.apiMessages),
 		});
 		if (mode === "auto" && !triggerState.shouldCompact) {
 			return undefined;

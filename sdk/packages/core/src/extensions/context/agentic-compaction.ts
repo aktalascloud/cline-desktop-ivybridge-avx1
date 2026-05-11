@@ -1,4 +1,4 @@
-import { createHandler } from "@cline/llms";
+import { createHandlerAsync } from "@cline/llms";
 import type { BasicLogger } from "@cline/shared";
 import type {
 	CoreCompactionContext,
@@ -11,6 +11,7 @@ import {
 	buildSummaryRequest,
 	type EstimateMessageTokens,
 	ensureFilesSection,
+	estimateTokens,
 	extractFileOps,
 	findCutIndex,
 	findLatestSummaryIndex,
@@ -24,7 +25,7 @@ async function generateSummary(options: {
 	request: string;
 	logger?: BasicLogger;
 }): Promise<string> {
-	const handler = createHandler(options.providerConfig);
+	const handler = await createHandlerAsync(options.providerConfig);
 	let text = "";
 	for await (const chunk of handler.createMessage(
 		"Summarize the provided coding session into a concise continuation note with detailed next steps.",
@@ -44,6 +45,14 @@ async function generateSummary(options: {
 		providerId: options.providerConfig.providerId,
 	});
 	return text.trim();
+}
+
+function safeJsonSize(value: unknown): number {
+	try {
+		return JSON.stringify(value).length;
+	} catch {
+		return String(value).length;
+	}
 }
 
 export async function runAgenticCompaction(options: {
@@ -85,16 +94,29 @@ export async function runAgenticCompaction(options: {
 
 	const fileOps = extractFileOps(messagesToSummarize);
 	const conversationText = serializeConversation(newMessagesToFold);
+	const summaryRequest = buildSummaryRequest({
+		previousSummary,
+		conversationText,
+		fileOps,
+	});
+	options.logger?.debug("Agentic compaction summarizer diagnostics", {
+		messagesToSummarize: messagesToSummarize.length,
+		newMessagesToFold: newMessagesToFold.length,
+		preservedMessages: messages.length - cutIndex,
+		previousSummaryChars: previousSummary?.length ?? 0,
+		conversationTextChars: conversationText.length,
+		summaryRequestChars: summaryRequest.length,
+		summaryRequestEstimatedTokens: estimateTokens(summaryRequest.length),
+		newMessagesJsonChars: safeJsonSize(newMessagesToFold),
+		maxInputTokens: options.context.maxInputTokens,
+		triggerTokens: options.context.triggerTokens,
+	});
 	const rawSummary = await generateSummary({
 		providerConfig: resolveSummarizerConfig({
 			activeProviderConfig: options.providerConfig,
 			summarizer: options.summarizer,
 		}),
-		request: buildSummaryRequest({
-			previousSummary,
-			conversationText,
-			fileOps,
-		}),
+		request: summaryRequest,
 		logger: options.logger,
 	});
 	if (!rawSummary.trim()) {

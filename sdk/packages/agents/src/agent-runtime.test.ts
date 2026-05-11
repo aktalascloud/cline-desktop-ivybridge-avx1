@@ -171,8 +171,8 @@ describe("AgentRuntime", () => {
 		).toBe(true);
 	});
 
-	it("injects pending user messages after prepareTurn rewrites the transcript", async () => {
-		const consumePendingUserMessage = vi.fn(() => "steer after prepare");
+	it("injects pending user messages before prepareTurn rewrites the transcript", async () => {
+		const consumePendingUserMessage = vi.fn(() => "steer before prepare");
 		const prepareTurn = vi.fn(
 			(context: { messages: readonly AgentMessage[] }) => ({
 				messages: context.messages.slice(),
@@ -191,7 +191,7 @@ describe("AgentRuntime", () => {
 			(request) => {
 				expect(request.messages.at(-1)).toMatchObject({
 					role: "user",
-					content: [{ type: "text", text: "steer after prepare" }],
+					content: [{ type: "text", text: "steer before prepare" }],
 				});
 				return [
 					{ type: "text-delta", text: "done" },
@@ -218,6 +218,81 @@ describe("AgentRuntime", () => {
 			"user",
 			"assistant",
 		]);
+		const secondPrepareMessages = prepareTurn.mock.calls[1]?.[0].messages;
+		expect(secondPrepareMessages.at(-1)).toMatchObject({
+			role: "user",
+			content: [{ type: "text", text: "steer before prepare" }],
+		});
+	});
+
+	it("lets prepareTurn compact tool results after pending user input is added", async () => {
+		const consumePendingUserMessage = vi.fn(() => "latest steering");
+		const hugeToolOutput = "x".repeat(100_000);
+		const prepareTurn = vi.fn(
+			(context: { messages: readonly AgentMessage[] }) => {
+				const latest = context.messages.at(-1);
+				if (
+					latest?.role === "user" &&
+					latest.content.some(
+						(part) => part.type === "text" && part.text === "latest steering",
+					)
+				) {
+					return {
+						messages: context.messages.filter(
+							(message) => message.role !== "tool",
+						),
+					};
+				}
+				return { messages: context.messages.slice() };
+			},
+		);
+		const model = new ScriptedModel([
+			() => [
+				{
+					type: "tool-call-delta",
+					toolCallId: "call_large",
+					toolName: "large",
+					inputText: "{}",
+				},
+				{ type: "finish", reason: "tool-calls" },
+			],
+			(request) => {
+				expect(JSON.stringify(request.messages)).not.toContain(hugeToolOutput);
+				expect(request.messages.at(-1)).toMatchObject({
+					role: "user",
+					content: [{ type: "text", text: "latest steering" }],
+				});
+				return [
+					{ type: "text-delta", text: "compacted" },
+					{ type: "finish", reason: "stop" },
+				];
+			},
+		]);
+		const runtime = new AgentRuntime({
+			model,
+			tools: [
+				{
+					name: "large",
+					description: "Large output",
+					inputSchema: { type: "object" },
+					execute: async () => hugeToolOutput,
+				},
+			],
+			prepareTurn,
+			consumePendingUserMessage,
+		});
+
+		const result = await runtime.run("Start");
+
+		expect(result.status).toBe("completed");
+		expect(result.outputText).toBe("compacted");
+		expect(prepareTurn).toHaveBeenCalledTimes(2);
+		const secondPrepareMessages = prepareTurn.mock.calls[1]?.[0].messages;
+		expect(JSON.stringify(secondPrepareMessages)).toContain(hugeToolOutput);
+		expect(secondPrepareMessages.at(-1)).toMatchObject({
+			role: "user",
+			content: [{ type: "text", text: "latest steering" }],
+		});
 	});
 
 	it("continues when completionGuard rejects a no-tool response", async () => {

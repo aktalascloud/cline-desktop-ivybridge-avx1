@@ -19,6 +19,7 @@
  */
 
 import type { AgentPlugin } from "@cline/core";
+import { estimateTokens as estimateTokensFromChars } from "@cline/shared";
 
 type PluginHooks = NonNullable<AgentPlugin["hooks"]>;
 type BeforeModelHook = NonNullable<PluginHooks["beforeModel"]>;
@@ -26,13 +27,13 @@ type BeforeModelContext = Parameters<BeforeModelHook>[0];
 type AgentMessage = BeforeModelContext["request"]["messages"][number];
 type AgentMessagePart = AgentMessage["content"][number];
 
-const CONTEXT_WINDOW_TOKENS = 120_000;
+const MAX_INPUT_TOKENS = 120_000;
 const COMPACT_AT_RATIO = 0.75;
 const PRESERVE_RECENT_TOKENS = 24_000;
 const SUMMARY_PREVIEW_CHARS = 800;
 
 function estimateTokens(text: string): number {
-	return Math.max(1, Math.ceil(text.length / 4));
+	return estimateTokensFromChars(text.length);
 }
 
 function preview(text: string, limit = SUMMARY_PREVIEW_CHARS): string {
@@ -207,7 +208,7 @@ const plugin: AgentPlugin = {
 				(total, message) => total + estimateMessageTokens(message),
 				0,
 			);
-			if (totalTokens < CONTEXT_WINDOW_TOKENS * COMPACT_AT_RATIO) {
+			if (totalTokens < MAX_INPUT_TOKENS * COMPACT_AT_RATIO) {
 				return undefined;
 			}
 
