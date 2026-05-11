@@ -42,6 +42,7 @@ export interface BuiltinSpec {
 	protocol?: ProviderProtocol;
 	client?: ProviderClient;
 	capabilities?: ProviderCapability[];
+	popular?: number;
 	modelsProviderId?: string;
 	defaultModelId?: string;
 	modelsFactory?: () => Record<string, ModelInfo>;
@@ -59,6 +60,29 @@ function cloneModels(
 	return Object.fromEntries(
 		Object.entries(models).map(([id, info]) => [id, { ...info }]),
 	);
+}
+
+function uniqueCapabilities(
+	capabilities: readonly ProviderCapability[] | undefined,
+): ProviderCapability[] | undefined {
+	if (!capabilities?.length) return undefined;
+	return [...new Set(capabilities)];
+}
+
+function getProviderCapabilities(
+	spec: BuiltinSpec,
+): ProviderCapability[] | undefined {
+	return uniqueCapabilities([
+		...(spec.capabilities ?? []),
+		...(spec.popular !== undefined ? (["popular"] as const) : []),
+	]);
+}
+
+function getProviderMetadata(
+	spec: BuiltinSpec,
+): GatewayProviderMetadata | undefined {
+	if (spec.popular === undefined) return spec.metadata;
+	return { ...spec.metadata, popularRank: spec.popular };
 }
 
 function generatedModels(providerId: string): Record<string, ModelInfo> {
@@ -213,6 +237,7 @@ const OPENAI_COMPATIBLE_SPECS: BuiltinSpec[] = [
 		name: "Cline",
 		description: "Cline API endpoint",
 		family: "openai-compatible",
+		popular: 1,
 		capabilities: ["reasoning", "prompt-cache", "tools", "oauth"],
 		modelsProviderId: "openrouter",
 		defaultModelId: "anthropic/claude-sonnet-4.6",
@@ -229,6 +254,7 @@ const OPENAI_COMPATIBLE_SPECS: BuiltinSpec[] = [
 		name: "DeepSeek",
 		description: "Advanced AI models with reasoning capabilities",
 		family: "openai-compatible",
+		popular: 3,
 		capabilities: ["reasoning", "prompt-cache"],
 		defaultModelId: "deepseek-v4-flash",
 		apiKeyEnv: ["DEEPSEEK_API_KEY"],
@@ -325,6 +351,7 @@ const OPENAI_COMPATIBLE_SPECS: BuiltinSpec[] = [
 		description: "Self-hosted LLM proxy",
 		family: "openai-compatible",
 		protocol: "openai-responses",
+		popular: 8,
 		capabilities: ["prompt-cache"],
 		defaultModelId: "gpt-5.4",
 		apiKeyEnv: ["LITELLM_API_KEY"],
@@ -513,6 +540,7 @@ const OPENAI_COMPATIBLE_SPECS: BuiltinSpec[] = [
 		name: "OpenRouter",
 		description: "OpenRouter AI platform",
 		family: "openai-compatible",
+		popular: 5,
 		capabilities: ["reasoning", "prompt-cache"],
 		defaultModelId: "anthropic/claude-sonnet-4.6",
 		apiKeyEnv: ["OPENROUTER_API_KEY"],
@@ -526,6 +554,7 @@ const OPENAI_COMPATIBLE_SPECS: BuiltinSpec[] = [
 		name: "Ollama",
 		description: "Ollama Cloud and local LLM hosting",
 		family: "openai-compatible",
+		popular: 6,
 		defaultModelId: "",
 		apiKeyEnv: ["OLLAMA_API_KEY"],
 		defaults: { baseUrl: "http://localhost:11434/v1" },
@@ -598,6 +627,7 @@ export const BUILTIN_SPECS: BuiltinSpec[] = [
 		description:
 			"OpenAI ChatGPT subscription access uses an OAuth device code flow.",
 		family: "openai",
+		popular: 2,
 		capabilities: ["reasoning", "oauth"],
 		defaultModelId: "gpt-5.4",
 		modelsFactory: buildOpenAICodexModels,
@@ -620,6 +650,7 @@ export const BUILTIN_SPECS: BuiltinSpec[] = [
 		name: "Anthropic",
 		description: "Creator of Claude, the AI assistant",
 		family: "anthropic",
+		popular: 4,
 		capabilities: ["reasoning", "prompt-cache"],
 		defaultModelId: "claude-sonnet-4-6",
 		apiKeyEnv: ["ANTHROPIC_API_KEY"],
@@ -642,6 +673,7 @@ export const BUILTIN_SPECS: BuiltinSpec[] = [
 		name: "Google Gemini",
 		description: "Google Gemini API",
 		family: "google",
+		popular: 9,
 		capabilities: ["reasoning", "prompt-cache"],
 		defaultModelId: "gemma-4-26b",
 		apiKeyEnv: ["GOOGLE_GENERATIVE_AI_API_KEY", "GEMINI_API_KEY"],
@@ -670,6 +702,7 @@ export const BUILTIN_SPECS: BuiltinSpec[] = [
 		name: "AWS Bedrock",
 		description: "Amazon Bedrock managed foundation models",
 		family: "bedrock",
+		popular: 7,
 		capabilities: ["reasoning", "prompt-cache"],
 		defaultModelId: "minimax.minimax-m2.5",
 		apiKeyEnv: [
@@ -738,6 +771,8 @@ function getModels(spec: BuiltinSpec): Record<string, ModelInfo> {
 
 function toModelCollection(spec: BuiltinSpec): ModelCollection {
 	const sourceModels = getModels(spec);
+	const capabilities = getProviderCapabilities(spec);
+	const metadata = getProviderMetadata(spec);
 	const models =
 		Object.keys(sourceModels).length > 0
 			? sourceModels
@@ -761,11 +796,11 @@ function toModelCollection(spec: BuiltinSpec): ModelCollection {
 			baseUrl: spec.defaults?.baseUrl,
 			modelsSourceUrl: spec.modelsSourceUrl,
 			defaultModelId,
-			capabilities: spec.capabilities,
+			capabilities,
 			env: spec.apiKeyEnv ? [...spec.apiKeyEnv] : undefined,
 			client: spec.client ?? inferClient(spec),
 			source: "system",
-			metadata: spec.metadata,
+			metadata,
 		},
 		models,
 	};
@@ -773,6 +808,8 @@ function toModelCollection(spec: BuiltinSpec): ModelCollection {
 
 export function toManifest(spec: BuiltinSpec): GatewayProviderManifest {
 	const collection = toModelCollection(spec);
+	const capabilities = getProviderCapabilities(spec);
+	const metadata = getProviderMetadata(spec);
 	const models = Object.values(collection.models).map((info) =>
 		modelInfoToGateway(spec.id, info),
 	);
@@ -795,12 +832,12 @@ export function toManifest(spec: BuiltinSpec): GatewayProviderManifest {
 		defaultModelId:
 			collection.provider.defaultModelId || resolvedModels[0]?.id || "default",
 		models: resolvedModels,
-		capabilities: spec.capabilities,
+		capabilities,
 		env: spec.env ?? ["browser", "node"],
 		api: spec.defaults?.baseUrl,
 		apiKeyEnv: spec.apiKeyEnv,
 		docsUrl: spec.docsUrl,
-		metadata: spec.metadata,
+		metadata,
 	};
 }
 

@@ -1,6 +1,7 @@
 import { CLINE_ENVIRONMENT_ENV, CLINE_ENVIRONMENTS } from "@cline/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { BUILTIN_SPECS } from "./builtins";
+import { getProvider } from "./model-registry";
 
 function findClineSpec() {
 	const spec = BUILTIN_SPECS.find((s) => s.id === "cline");
@@ -46,5 +47,17 @@ describe("cline builtin spec defaults.baseUrl", () => {
 		expect(spec.defaults?.baseUrl).toBe(
 			`${CLINE_ENVIRONMENTS.production.apiBaseUrl}/api/v1`,
 		);
+	});
+});
+
+describe("built-in provider metadata", () => {
+	it("marks popular providers with a provider capability and rank", async () => {
+		await expect(getProvider("cline")).resolves.toMatchObject({
+			capabilities: expect.arrayContaining(["popular"]),
+			metadata: { popularRank: 1 },
+		});
+		await expect(getProvider("zai")).resolves.not.toMatchObject({
+			capabilities: expect.arrayContaining(["popular"]),
+		});
 	});
 });

@@ -164,6 +164,7 @@ export const ProviderSettingsSchema = z.object({
 				"vision",
 				"computer-use",
 				"oauth",
+				"popular",
 			]),
 		)
 		.optional(),

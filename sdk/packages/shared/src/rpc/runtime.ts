@@ -162,6 +162,7 @@ export interface ProviderListItem {
 	defaultModelId?: string;
 	protocol?: ProviderProtocol;
 	client?: ProviderClient;
+	capabilities?: ProviderCapability[];
 	authDescription: string;
 	baseUrlDescription: string;
 	modelList?: ProviderModel[];
@@ -195,6 +196,8 @@ export const ProviderCapabilitySchema = z.enum([
 	"computer-use",
 	// Authenticate provider through local credentials store
 	"local-auth",
+	// Recommended as a common provider choice in picker UIs
+	"popular",
 ]);
 
 export type ProviderCapability = z.infer<typeof ProviderCapabilitySchema>;

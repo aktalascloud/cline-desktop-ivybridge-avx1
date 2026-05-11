@@ -20,6 +20,11 @@ import {
 } from "../../../utils/codex-cli";
 import { isOAuthProvider } from "../../../utils/provider-auth";
 import { palette } from "../../palette";
+import { getProviderSection } from "../../utils/provider-sections";
+import {
+	getSearchableListRowsWindow,
+	type SearchableItem,
+} from "../searchable-list";
 
 interface ProviderItem {
 	id: string;
@@ -28,6 +33,7 @@ interface ProviderItem {
 	isConfigured: boolean;
 	isOAuth: boolean;
 	isLocalAuth: boolean;
+	capabilities?: readonly string[];
 }
 
 const MAX_VISIBLE = 10;
@@ -49,20 +55,20 @@ export function ProviderPickerContent(
 		const manager = new ProviderSettingsManager();
 		listLocalProviders(manager)
 			.then(({ providers: list }) => {
-				setProviders(
-					list.map((p) => ({
-						id: p.id,
-						name: p.name,
-						models: p.models,
-						// `enabled` is true whenever the provider has any persisted
-						// settings, so keyless local configs (e.g. Ollama saved with
-						// just a model id and base URL) still render as configured.
-						isConfigured: p.enabled === true,
-						isOAuth: isOAuthProvider(p.id),
-						isLocalAuth: isOpenAICodexCliProvider(p.id),
-					})),
-				);
-				const idx = list.findIndex((p) => p.id === currentProviderId);
+				const providerItems = list.map((p) => ({
+					id: p.id,
+					name: p.name,
+					models: p.models,
+					// `enabled` is true whenever the provider has any persisted
+					// settings, so keyless local configs (e.g. Ollama saved with
+					// just a model id and base URL) still render as configured.
+					isConfigured: p.enabled === true,
+					isOAuth: isOAuthProvider(p.id),
+					isLocalAuth: isOpenAICodexCliProvider(p.id),
+					capabilities: p.capabilities,
+				}));
+				setProviders(providerItems);
+				const idx = providerItems.findIndex((p) => p.id === currentProviderId);
 				if (idx >= 0) setSelected(idx);
 			})
 			.catch(() => {})
@@ -78,6 +84,15 @@ export function ProviderPickerContent(
 	}, [providers, search]);
 
 	const safeSelected = Math.min(selected, Math.max(0, filtered.length - 1));
+	const rowItems: SearchableItem[] = useMemo(
+		() =>
+			filtered.map((p) => ({
+				key: p.id,
+				label: p.name,
+				section: getProviderSection(p),
+			})),
+		[filtered],
+	);
 
 	useDialogKeyboard((key) => {
 		if (key.name === "escape") {
@@ -90,22 +105,20 @@ export function ProviderPickerContent(
 			return;
 		}
 		if (key.name === "up") {
-			setSelected((s) => (s <= 0 ? filtered.length - 1 : s - 1));
+			setSelected((s) =>
+				filtered.length === 0 ? 0 : s <= 0 ? filtered.length - 1 : s - 1,
+			);
 			return;
 		}
 		if (key.name === "down") {
-			setSelected((s) => (s >= filtered.length - 1 ? 0 : s + 1));
+			setSelected((s) =>
+				filtered.length === 0 ? 0 : s >= filtered.length - 1 ? 0 : s + 1,
+			);
 		}
 	}, dialogId);
 
-	const halfWindow = Math.floor(MAX_VISIBLE / 2);
-	let start = Math.max(0, safeSelected - halfWindow);
-	if (start + MAX_VISIBLE > filtered.length) {
-		start = Math.max(0, filtered.length - MAX_VISIBLE);
-	}
-	const visible = filtered.slice(start, start + MAX_VISIBLE);
-	const aboveCount = start;
-	const belowCount = Math.max(0, filtered.length - start - MAX_VISIBLE);
+	const { visibleRows, aboveCount, belowCount, showAbove, showBelow } =
+		getSearchableListRowsWindow(rowItems, safeSelected, MAX_VISIBLE);
 
 	return (
 		<box flexDirection="column" gap={1}>
@@ -129,16 +142,24 @@ export function ProviderPickerContent(
 				<text fg="gray">No providers match</text>
 			) : (
 				<box flexDirection="column">
-					{aboveCount > 0 && (
+					{showAbove && (
 						<box paddingX={1} justifyContent="center">
 							<text fg="gray">
 								{"\u25b2"} {aboveCount} more
 							</text>
 						</box>
 					)}
-					{visible.map((p, i) => {
-						const absIdx = start + i;
-						const isSel = absIdx === safeSelected;
+					{visibleRows.map((row) => {
+						if (row.kind === "header") {
+							return (
+								<box key={row.key} paddingX={1} height={1}>
+									<text fg="gray">{row.label}</text>
+								</box>
+							);
+						}
+						const p = filtered[row.itemIndex];
+						if (!p) return null;
+						const isSel = row.itemIndex === safeSelected;
 						const isCurrent = p.id === currentProviderId;
 						// Configured = any persisted settings exist for this provider,
 						// which covers keyless local configs (Ollama / LM Studio with
@@ -198,7 +219,7 @@ export function ProviderPickerContent(
 							</box>
 						);
 					})}
-					{belowCount > 0 && (
+					{showBelow && (
 						<box paddingX={1} justifyContent="center">
 							<text fg="gray">
 								{"\u25bc"} {belowCount} more

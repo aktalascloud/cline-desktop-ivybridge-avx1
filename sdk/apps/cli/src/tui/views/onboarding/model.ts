@@ -71,6 +71,7 @@ export interface ProviderEntry {
 	isOAuth: boolean;
 	isLocalAuth: boolean;
 	hasAuth: boolean;
+	capabilities?: readonly string[];
 	models: number | null;
 	defaultModelId?: string;
 }
@@ -86,6 +87,7 @@ export interface ProviderCatalogItem {
 	name: string;
 	apiKey?: string;
 	oauthAccessTokenPresent?: boolean;
+	capabilities?: readonly string[];
 	models: number | null;
 	defaultModelId?: string;
 }
@@ -109,6 +111,7 @@ export function toProviderEntry(provider: ProviderCatalogItem): ProviderEntry {
 		isLocalAuth: isOpenAICodexCliProvider(provider.id),
 		hasAuth:
 			Boolean(provider.apiKey) || provider.oauthAccessTokenPresent === true,
+		...(provider.capabilities ? { capabilities: provider.capabilities } : {}),
 		models: provider.models,
 		defaultModelId: provider.defaultModelId,
 	};

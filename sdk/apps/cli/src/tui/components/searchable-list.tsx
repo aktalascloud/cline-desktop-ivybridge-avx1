@@ -5,6 +5,7 @@ import { getDefaultForeground, palette } from "../palette";
 export interface SearchableItem {
 	key: string;
 	label: string;
+	section?: string;
 	detail?: string;
 	tag?: string;
 	tagColor?: string;
@@ -62,6 +63,104 @@ function scoreItem(item: SearchableItem, query: string): number {
 	return best;
 }
 
+function createSectionOrder(items: SearchableItem[]): Map<string, number> {
+	const order = new Map<string, number>();
+	for (const item of items) {
+		if (!item.section || order.has(item.section)) continue;
+		order.set(item.section, order.size);
+	}
+	return order;
+}
+
+export type SearchableListRow =
+	| { kind: "header"; key: string; label: string }
+	| { kind: "item"; key: string; item: SearchableItem; itemIndex: number };
+
+export function buildSearchableListRows(
+	items: SearchableItem[],
+): SearchableListRow[] {
+	const rows: SearchableListRow[] = [];
+	let previousSection: string | undefined;
+	for (const [itemIndex, item] of items.entries()) {
+		if (item.section && item.section !== previousSection) {
+			rows.push({
+				kind: "header",
+				key: `section-${item.section}-${itemIndex}`,
+				label: item.section,
+			});
+		}
+		rows.push({ kind: "item", key: item.key, item, itemIndex });
+		previousSection = item.section;
+	}
+	return rows;
+}
+
+function countItemRows(rows: SearchableListRow[]): number {
+	return rows.reduce((count, row) => count + (row.kind === "item" ? 1 : 0), 0);
+}
+
+export function getSearchableListRowsWindow(
+	items: SearchableItem[],
+	selected: number,
+	maxVisible: number,
+): {
+	visibleRows: SearchableListRow[];
+	aboveCount: number;
+	belowCount: number;
+	showAbove: boolean;
+	showBelow: boolean;
+} {
+	const rows = buildSearchableListRows(items);
+	if (rows.length === 0) {
+		return {
+			visibleRows: [],
+			aboveCount: 0,
+			belowCount: 0,
+			showAbove: false,
+			showBelow: false,
+		};
+	}
+
+	const selectedRowIndex = Math.max(
+		0,
+		rows.findIndex((row) => row.kind === "item" && row.itemIndex === selected),
+	);
+	let visibleLimit = maxVisible;
+	let start = 0;
+	let end = rows.length;
+
+	for (let i = 0; i < 3; i++) {
+		const showAbove = start > 0;
+		const showBelow = end < rows.length;
+		visibleLimit = Math.max(
+			1,
+			maxVisible - (showAbove ? 1 : 0) - (showBelow ? 1 : 0),
+		);
+		start = Math.max(0, selectedRowIndex - Math.floor(visibleLimit / 2));
+		if (start + visibleLimit > rows.length) {
+			start = Math.max(0, rows.length - visibleLimit);
+		}
+		end = Math.min(rows.length, start + visibleLimit);
+	}
+
+	if (start > 0 && countItemRows(rows.slice(0, start)) === 0) {
+		start = 0;
+		const showBelow = rows.length > maxVisible;
+		visibleLimit = Math.max(1, maxVisible - (showBelow ? 1 : 0));
+		end = Math.min(rows.length, visibleLimit);
+	}
+
+	const aboveCount = countItemRows(rows.slice(0, start));
+	const belowCount = countItemRows(rows.slice(end));
+	return {
+		visibleRows: rows.slice(start, end),
+		aboveCount,
+		belowCount,
+		showAbove: aboveCount > 0,
+		showBelow: belowCount > 0,
+	};
+}
+
 export function useSearchableList(
 	items: SearchableItem[],
 	createItem?: CreateSearchableItem,
@@ -73,10 +172,22 @@ export function useSearchableList(
 		const baseItems = (() => {
 			if (!search) return items;
 			const q = search.toLowerCase();
+			const sectionOrder = createSectionOrder(items);
 			const scored = items
 				.map((item) => ({ item, score: scoreItem(item, q) }))
 				.filter((r) => r.score > 0);
-			scored.sort((a, b) => b.score - a.score);
+			scored.sort((a, b) => {
+				if (sectionOrder.size > 0) {
+					const aRank = a.item.section
+						? (sectionOrder.get(a.item.section) ?? Number.MAX_SAFE_INTEGER)
+						: Number.MAX_SAFE_INTEGER;
+					const bRank = b.item.section
+						? (sectionOrder.get(b.item.section) ?? Number.MAX_SAFE_INTEGER)
+						: Number.MAX_SAFE_INTEGER;
+					if (aRank !== bRank) return aRank - bRank;
+				}
+				return b.score - a.score;
+			});
 			return scored.map((r) => r.item);
 		})();
 		const created = createItem?.(search, baseItems);
@@ -131,20 +242,8 @@ export function SearchableList(props: {
 	} = props;
 
 	const safeSelected = Math.min(selected, Math.max(0, items.length - 1));
-
-	const halfWindow = Math.floor(MAX_VISIBLE / 2);
-	let start = Math.max(0, safeSelected - halfWindow);
-	if (start + MAX_VISIBLE > items.length) {
-		start = Math.max(0, items.length - MAX_VISIBLE);
-	}
-
-	const showAbove = start > 0;
-	const showBelow = start + MAX_VISIBLE < items.length;
-	const itemSlots = MAX_VISIBLE - (showAbove ? 1 : 0) - (showBelow ? 1 : 0);
-	const itemStart = showAbove ? start + 1 : start;
-	const visible = items.slice(itemStart, itemStart + itemSlots);
-	const aboveCount = itemStart;
-	const belowCount = items.length - (itemStart + itemSlots);
+	const { visibleRows, aboveCount, belowCount, showAbove, showBelow } =
+		getSearchableListRowsWindow(items, safeSelected, MAX_VISIBLE);
 
 	return (
 		<box flexDirection="column" gap={1}>
@@ -173,9 +272,16 @@ export function SearchableList(props: {
 							</text>
 						</box>
 					)}
-					{visible.map((item, i) => {
-						const absIdx = itemStart + i;
-						const isSel = absIdx === safeSelected;
+					{visibleRows.map((row) => {
+						if (row.kind === "header") {
+							return (
+								<box key={row.key} paddingX={1} height={1}>
+									<text fg="gray">{row.label}</text>
+								</box>
+							);
+						}
+						const item = row.item;
+						const isSel = row.itemIndex === safeSelected;
 						return (
 							<box
 								key={item.key}

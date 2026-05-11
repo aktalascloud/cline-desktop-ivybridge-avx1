@@ -25,6 +25,7 @@ import {
 	useSearchableList,
 } from "../../components/searchable-list";
 import { palette } from "../../palette";
+import { getProviderSection } from "../../utils/provider-sections";
 import {
 	isOnboardingOAuthProviderId,
 	type OnboardingOAuthProviderId,
@@ -105,6 +106,7 @@ export function useOnboardingController(props: OnboardingControllerProps) {
 			providers.map((p) => ({
 				key: p.id,
 				label: p.name,
+				section: getProviderSection(p),
 				detail: p.isOAuth
 					? "(OAuth)"
 					: p.isLocalAuth

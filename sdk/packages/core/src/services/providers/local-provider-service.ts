@@ -139,6 +139,30 @@ function uniqueTrimmed(values?: string[]): string[] {
 	return [...new Set((values ?? []).map((v) => v.trim()).filter(Boolean))];
 }
 
+function uniqueCapabilities(
+	values: readonly ProviderCapability[] | undefined,
+): ProviderCapability[] | undefined {
+	if (!values?.length) return undefined;
+	return [...new Set(values)];
+}
+
+function resolveProviderCapabilities(
+	infoCapabilities: readonly ProviderCapability[] | undefined,
+	settingsCapabilities: readonly ProviderCapability[] | undefined,
+): ProviderCapability[] | undefined {
+	return uniqueCapabilities([
+		...(infoCapabilities ?? []),
+		...(settingsCapabilities ?? []),
+	]);
+}
+
+function getPopularRank(metadata: Record<string, unknown> | undefined): number {
+	const value = metadata?.popularRank;
+	return typeof value === "number" && Number.isFinite(value)
+		? value
+		: Number.MAX_SAFE_INTEGER;
+}
+
 function normalizeHeaders(
 	headers: Record<string, string> | null | undefined,
 ): Record<string, string> | undefined {
@@ -509,40 +533,59 @@ export async function listLocalProviders(
 	manager: ProviderSettingsManager,
 ): Promise<{ providers: ProviderListItem[]; settingsPath: string }> {
 	const state = manager.read();
-	const ids = LlmsModels.getProviderIds().sort((a, b) => a.localeCompare(b));
+	const ids = LlmsModels.getProviderIds();
 
-	const providers = await Promise.all(
-		ids.map(async (id): Promise<ProviderListItem> => {
-			const [info, registeredModels] = await Promise.all([
-				LlmsModels.getProvider(id),
-				LlmsModels.getModelsForProvider(id),
-			]);
-			const modelList = toSortedProviderModels(registeredModels);
-			const persistedSettings = state.providers[id]?.settings;
-			const name = info?.name ?? titleCaseFromId(id);
-			return {
-				id,
-				name,
-				models: modelList.length,
-				color: stableColor(id),
-				letter: createLetter(name),
-				enabled: Boolean(persistedSettings),
-				apiKey: persistedSettings
-					? resolveVisibleApiKey(persistedSettings)
-					: undefined,
-				oauthAccessTokenPresent: persistedSettings
-					? hasOAuthAccessToken(persistedSettings)
-					: undefined,
-				baseUrl: persistedSettings?.baseUrl ?? info?.baseUrl,
-				defaultModelId: info?.defaultModelId,
-				protocol: persistedSettings?.protocol ?? info?.protocol,
-				client: persistedSettings?.client ?? info?.client,
-				authDescription: "This provider uses API keys for authentication.",
-				baseUrlDescription: "The base endpoint to use for provider requests.",
-				modelList,
-			};
-		}),
+	const providerEntries = await Promise.all(
+		ids.map(
+			async (id): Promise<{ provider: ProviderListItem; rank: number }> => {
+				const [info, registeredModels] = await Promise.all([
+					LlmsModels.getProvider(id),
+					LlmsModels.getModelsForProvider(id),
+				]);
+				const modelList = toSortedProviderModels(registeredModels);
+				const persistedSettings = state.providers[id]?.settings;
+				const name = info?.name ?? titleCaseFromId(id);
+				const capabilities = resolveProviderCapabilities(
+					info?.capabilities,
+					persistedSettings?.capabilities,
+				);
+				return {
+					provider: {
+						id,
+						name,
+						models: modelList.length,
+						color: stableColor(id),
+						letter: createLetter(name),
+						enabled: Boolean(persistedSettings),
+						apiKey: persistedSettings
+							? resolveVisibleApiKey(persistedSettings)
+							: undefined,
+						oauthAccessTokenPresent: persistedSettings
+							? hasOAuthAccessToken(persistedSettings)
+							: undefined,
+						baseUrl: persistedSettings?.baseUrl ?? info?.baseUrl,
+						defaultModelId: info?.defaultModelId,
+						protocol: persistedSettings?.protocol ?? info?.protocol,
+						client: persistedSettings?.client ?? info?.client,
+						capabilities,
+						authDescription: "This provider uses API keys for authentication.",
+						baseUrlDescription:
+							"The base endpoint to use for provider requests.",
+						modelList,
+					},
+					rank: getPopularRank(info?.metadata),
+				};
+			},
+		),
 	);
+	providerEntries.sort((a, b) => {
+		if (a.rank !== b.rank) return a.rank - b.rank;
+		return (
+			a.provider.name.localeCompare(b.provider.name) ||
+			a.provider.id.localeCompare(b.provider.id)
+		);
+	});
+	const providers = providerEntries.map((entry) => entry.provider);
 
 	return { providers, settingsPath: manager.getFilePath() };
 }
