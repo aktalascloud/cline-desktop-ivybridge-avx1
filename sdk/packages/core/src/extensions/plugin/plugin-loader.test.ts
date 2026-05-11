@@ -179,6 +179,41 @@ describe("plugin-loader", () => {
 			"utf8",
 		);
 
+		const packagedTypeOnlyDir = join(copyDir, "packaged-type-only-imports");
+		await mkdir(packagedTypeOnlyDir, { recursive: true });
+		await writeFile(
+			join(packagedTypeOnlyDir, "package.json"),
+			JSON.stringify({
+				name: "packaged-type-only-imports",
+				type: "module",
+				cline: {
+					plugins: ["index.ts"],
+				},
+			}),
+			"utf8",
+		);
+		await writeFile(
+			join(packagedTypeOnlyDir, "index.ts"),
+			[
+				"import type { MissingStaticType } from 'missing-static-type';",
+				"type MissingImportType = import('missing-import-type').Foo;",
+				"type MissingTypeQuery = typeof import('missing-type-query');",
+				"type TypeBag = { value: MissingStaticType; imported: MissingImportType; query: MissingTypeQuery };",
+				"function acceptsTypeOnly(input: import('missing-param-type').Foo): TypeBag | undefined {",
+				"  void input;",
+				"  return undefined;",
+				"}",
+				"const value = {} as import('missing-assertion-type').Foo;",
+				"void value;",
+				"void acceptsTypeOnly;",
+				"export default {",
+				"  name: 'type-only-imports-ok',",
+				"  manifest: { capabilities: ['tools'] },",
+				"};",
+			].join("\n"),
+			"utf8",
+		);
+
 		await writeFile(
 			join(dir, "invalid-plugin.mjs"),
 			"export default { name: 'invalid-plugin' };",
@@ -295,6 +330,17 @@ describe("plugin-loader", () => {
 			},
 		);
 		expect(plugin.name).toBe("sdk-subpath-ok");
+	});
+
+	it("allows package-based TypeScript plugins to reference type-only packages", async () => {
+		const plugin = await loadAgentPluginFromPath(
+			join(copyDir, "packaged-type-only-imports", "index.ts"),
+			{
+				cwd: join(copyDir, "packaged-type-only-imports"),
+				useCache: true,
+			},
+		);
+		expect(plugin.name).toBe("type-only-imports-ok");
 	});
 
 	it("rejects invalid plugin export missing manifest", async () => {

@@ -323,7 +323,7 @@ function findHostPackageRoot(packageName: string): string | null {
 
 function isPackageBasedPlugin(pluginFilePath: string): boolean {
 	// Walk up from the plugin file looking for a package.json with a `cline`
-	// manifest.  Stop at the first package.json we encounter — if it doesn't
+	// manifest. Stop at the first package.json we encounter; if it doesn't
 	// declare `cline` we've left the plugin boundary (e.g. hit the workspace
 	// root).  Also cap the traversal so we never wander far from the plugin
 	// search root (.cline/plugins).
@@ -397,6 +397,12 @@ function collectStaticModuleSpecifiers(source: string): string[] {
 	return [...specifiers];
 }
 
+function shouldPreflightBareDependencies(pluginPath: string): boolean {
+	// TypeScript source can contain type-only import syntax that is not runtime
+	// dependency evidence. Let jiti and Node report real runtime load failures.
+	return extname(pluginPath) !== ".ts";
+}
+
 function assertPluginDependenciesInstalled(
 	pluginPath: string,
 	preferHostRuntimeDependencies: boolean,
@@ -412,11 +418,15 @@ function assertPluginDependenciesInstalled(
 	}
 
 	const source = readFileSync(pluginPath, "utf8");
+	const preflightBareDependencies = shouldPreflightBareDependencies(pluginPath);
 	for (const specifier of collectStaticModuleSpecifiers(source)) {
 		if (specifier.startsWith("node:") || BUILTIN_MODULES.has(specifier)) {
 			continue;
 		}
 		if (isBareSpecifier(specifier)) {
+			if (!preflightBareDependencies) {
+				continue;
+			}
 			if (
 				Object.hasOwn(WORKSPACE_ALIASES, specifier) ||
 				Object.hasOwn(WORKSPACE_ALIASES, getPackageName(specifier)) ||
