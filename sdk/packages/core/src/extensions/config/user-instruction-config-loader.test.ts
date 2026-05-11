@@ -63,6 +63,7 @@ describe("user instruction config loader", () => {
 		);
 		const paths = resolveWorkflowsConfigSearchPaths(workspacePath);
 		expect(paths).toContain(join(workspacePath, ".clinerules", "workflows"));
+		expect(paths).toContain(join(workspacePath, ".cline", "workflows"));
 		expect(
 			paths.some(
 				(p) =>
@@ -71,7 +72,7 @@ describe("user instruction config loader", () => {
 					p.includes("Workflows"),
 			),
 		).toBe(true);
-		expect(resolveWorkflowsConfigSearchPaths(workspacePath)).not.toContain(
+		expect(paths).not.toContain(
 			join(process.env.HOME ?? "~", ".cline", "data", "workflows"),
 		);
 	});
@@ -249,6 +250,49 @@ Use the security review checklist.`,
 					skill.item.instructions.includes("security review checklist"),
 				),
 			).toBe(true);
+		} finally {
+			watcher.stop();
+		}
+	});
+
+	it("lets workspace .cline workflows override legacy .clinerules workflows with the same name", async () => {
+		const tempRoot = await mkdtemp(
+			join(tmpdir(), "core-user-instructions-workflow-precedence-"),
+		);
+		tempRoots.push(tempRoot);
+
+		await mkdir(join(tempRoot, ".clinerules", "workflows"), {
+			recursive: true,
+		});
+		await mkdir(join(tempRoot, ".cline", "workflows"), { recursive: true });
+		await writeFile(
+			join(tempRoot, ".clinerules", "workflows", "release.md"),
+			`---
+name: release
+---
+Legacy release workflow.`,
+		);
+		await writeFile(
+			join(tempRoot, ".cline", "workflows", "release.md"),
+			`---
+name: release
+---
+New release workflow.`,
+		);
+
+		const watcher = createUserInstructionConfigWatcher({
+			workflows: { workspacePath: tempRoot },
+		});
+
+		try {
+			await watcher.start();
+			const workflows = watcher.getSnapshot("workflow");
+			const release = workflows.get("release");
+
+			expect(release?.item.instructions).toBe("New release workflow.");
+			expect(release?.filePath).toBe(
+				join(tempRoot, ".cline", "workflows", "release.md"),
+			);
 		} finally {
 			watcher.stop();
 		}

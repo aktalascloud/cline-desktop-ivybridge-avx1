@@ -378,6 +378,10 @@ export function resolveWorkflowsConfigSearchPaths(
 			? join(workspacePath, ".clinerules", WORKFLOWS_CONFIG_DIRECTORY_NAME)
 			: "",
 		resolveDocumentsExtensionPath("Workflows"),
+		join(resolveClineDir(), WORKFLOWS_CONFIG_DIRECTORY_NAME),
+		workspacePath
+			? join(workspacePath, ".cline", WORKFLOWS_CONFIG_DIRECTORY_NAME)
+			: "",
 	]);
 }
 

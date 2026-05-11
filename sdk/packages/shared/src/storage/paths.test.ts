@@ -15,6 +15,7 @@ import {
 	resolveRulesConfigSearchPaths,
 	resolveSessionDataDir,
 	resolveTeamDataDir,
+	resolveWorkflowsConfigSearchPaths,
 } from "./paths";
 
 type EnvSnapshot = {
@@ -158,5 +159,20 @@ describe("storage path resolution", () => {
 		expect(resolveRulesConfigSearchPaths()).not.toContain(
 			join("/tmp/home", ".cline", "data", RULES_CONFIG_DIRECTORY_NAME),
 		);
+	});
+
+	it("resolves legacy and new workflow paths, with .cline paths later for duplicate-name precedence", () => {
+		snapshot = captureEnv();
+		process.env.CLINE_DIR = "/tmp/home/.cline";
+		const workspacePath = "/repo/demo";
+
+		const paths = resolveWorkflowsConfigSearchPaths(workspacePath);
+
+		expect(paths).toEqual([
+			join(workspacePath, ".clinerules", "workflows"),
+			expect.stringContaining(join("Documents", "Cline", "Workflows")),
+			join("/tmp/home", ".cline", "workflows"),
+			join(workspacePath, ".cline", "workflows"),
+		]);
 	});
 });
