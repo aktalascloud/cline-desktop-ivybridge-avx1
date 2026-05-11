@@ -1,6 +1,7 @@
 import {
 	type AgentEvent,
 	type CheckpointEntry,
+	type PendingPromptMutationResult,
 	readSessionCheckpointHistory,
 	SessionSource,
 	type TeamEvent,
@@ -295,6 +296,29 @@ export function createInteractiveSessionRuntime(input: {
 		});
 	};
 
+	const updatePendingPrompt = async (input: {
+		promptId: string;
+		prompt?: string;
+		delivery?: "queue" | "steer";
+	}): Promise<PendingPromptMutationResult> => {
+		if (!sessionManager) {
+			throw startupError instanceof Error
+				? startupError
+				: new Error("interactive session manager is unavailable");
+		}
+		const result = await sessionManager.pendingPrompts.update({
+			sessionId: activeSessionId,
+			...input,
+		});
+		return {
+			sessionId: result.sessionId,
+			prompts: result.prompts,
+			prompt: result.prompt,
+			updated: result.updated,
+			removed: result.removed,
+		};
+	};
+
 	const getAccumulatedUsage = async (
 		fallback: NonNullable<CurrentTurnResult>["usage"],
 	) => {
@@ -506,6 +530,7 @@ export function createInteractiveSessionRuntime(input: {
 	return {
 		ensureReady,
 		sendCurrentTurn,
+		updatePendingPrompt,
 		getAccumulatedUsage,
 		readCurrentMessages,
 		restartEmpty,

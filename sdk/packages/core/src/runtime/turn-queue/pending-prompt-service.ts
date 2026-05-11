@@ -283,13 +283,19 @@ export class PendingPromptsController {
 
 	async drain(sessionId: string): Promise<void> {
 		const session = this.deps.getSession(sessionId);
-		if (!session || session.aborting || session.drainingPendingPrompts) return;
-		if (!session.agent.canStartRun()) return;
+		if (!session) return;
+		if (session.aborting || session.drainingPendingPrompts) {
+			return;
+		}
+		if (!session.agent.canStartRun()) {
+			return;
+		}
 		const { entry: next } = this.service.shiftNext(session);
 		if (!next) return;
 		this.emitPrompts(session);
 		this.emitSubmitted(session, next);
 		session.drainingPendingPrompts = true;
+		let continueDrain = true;
 		try {
 			await this.deps.send({
 				sessionId,
@@ -297,17 +303,14 @@ export class PendingPromptsController {
 				userImages: next.userImages,
 				userFiles: next.userFiles,
 			});
-		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			if (message.includes("already in progress")) {
-				this.service.requeueFront(session, next);
-				this.emitPrompts(session);
-			} else {
-				throw error;
-			}
+		} catch {
+			continueDrain = false;
+			this.service.requeueFront(session, next);
+			this.emitPrompts(session);
 		} finally {
 			session.drainingPendingPrompts = false;
 			if (
+				continueDrain &&
 				session.pendingPrompts.length > 0 &&
 				session.status !== "failed" &&
 				session.status !== "cancelled"

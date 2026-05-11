@@ -31,6 +31,7 @@ export function HomeView(props: {
 	onContentChange: (text: string) => void;
 	onImagePaste: (dataUrl: string) => string;
 	onLargeTextPaste: (text: string) => string;
+	onInputFocusRequest?: () => void;
 	repoStatus: {
 		branch: string | null;
 		diffStats: {
@@ -122,6 +123,7 @@ export function HomeView(props: {
 					onVisualCursorChange={setInputCursor}
 					onImagePaste={onImagePaste}
 					onLargeTextPaste={onLargeTextPaste}
+					onFocusRequest={props.onInputFocusRequest}
 					textareaRef={props.textareaRef}
 				/>
 

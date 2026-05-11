@@ -1970,8 +1970,8 @@ describe("LocalRuntimeHost", () => {
 		expect(consumed).toBe('<user_input mode="plan">steer this</user_input>');
 	});
 
-	it("drops and ignores queued prompts once a session is aborting", async () => {
-		const sessionId = "sess-abort-pending";
+	it("clears pending prompts after an interactive abort", async () => {
+		const sessionId = "sess-abort-clears-prompts";
 		const manifest = createManifest(sessionId);
 		const sessionService = {
 			ensureSessionsDir: vi.fn().mockReturnValue("/tmp/sessions"),
@@ -1995,8 +1995,28 @@ describe("LocalRuntimeHost", () => {
 				shutdown: vi.fn(),
 			}),
 		};
+		let activeRun = false;
+		let rejectRun: ((error: Error) => void) | undefined;
+		let markRunStarted: (() => void) | undefined;
+		const runStarted = new Promise<void>((resolve) => {
+			markRunStarted = resolve;
+		});
+		const run = vi
+			.fn()
+			.mockImplementationOnce(
+				() =>
+					new Promise<AgentResult>((_resolve, reject) => {
+						activeRun = true;
+						rejectRun = (error) => {
+							activeRun = false;
+							reject(error);
+						};
+						markRunStarted?.();
+					}),
+			)
+			.mockResolvedValueOnce(createResult({ text: "queued result" }));
 		const agent = {
-			run: vi.fn().mockResolvedValue(createResult()),
+			run,
 			continue: vi.fn().mockResolvedValue(createResult()),
 			abort: vi.fn(),
 			subscribeEvents: vi.fn().mockReturnValue(() => {}),
@@ -2004,8 +2024,11 @@ describe("LocalRuntimeHost", () => {
 			getConversationId: vi.fn().mockReturnValue("conv-root-1"),
 			shutdown: vi.fn().mockResolvedValue(undefined),
 			getMessages: vi.fn().mockReturnValue([]),
-			canStartRun: vi.fn().mockReturnValue(false),
+			canStartRun: vi.fn(() => !activeRun),
 		};
+		agent.abort.mockImplementation(() => {
+			rejectRun?.(new Error("user cancelled"));
+		});
 
 		const manager = new RuntimeHostUnderTest({
 			distinctId,
@@ -2017,29 +2040,57 @@ describe("LocalRuntimeHost", () => {
 		await manager.startSession(
 			normalizeStartInput({
 				config: createConfig({ sessionId }),
-				prompt: "hello",
 				interactive: true,
 			}),
 		);
 
-		const harness = createPluginEventHarness(manager);
-		await harness.handlePluginEvent(sessionId, {
-			name: "queue_message",
-			payload: { prompt: "queued before abort" },
+		const events: unknown[] = [];
+		manager.subscribe((event) => events.push(event));
+		const firstTurn = manager.runTurn({ sessionId, prompt: "slow" });
+		await runStarted;
+		await manager.runTurn({
+			sessionId,
+			prompt: "queued prompt",
+			delivery: "queue",
 		});
-		expect(harness.getPendingPrompts(sessionId)).toEqual([
-			{ prompt: "queued before abort", delivery: "queue" },
+		await manager.runTurn({
+			sessionId,
+			prompt: "steered prompt",
+			delivery: "steer",
+		});
+		expect(
+			(await manager.pendingPrompts.list({ sessionId })).map((prompt) => ({
+				prompt: prompt.prompt,
+				delivery: prompt.delivery,
+			})),
+		).toEqual([
+			{ prompt: "steered prompt", delivery: "steer" },
+			{ prompt: "queued prompt", delivery: "queue" },
 		]);
 
 		await manager.abort(sessionId, new Error("test abort"));
 		expect(agent.abort).toHaveBeenCalledTimes(1);
-		expect(harness.getPendingPrompts(sessionId)).toEqual([]);
-
-		await harness.handlePluginEvent(sessionId, {
-			name: "queue_message",
-			payload: { prompt: "queued after abort" },
+		await expect(firstTurn).resolves.toMatchObject({
+			finishReason: "aborted",
 		});
-		expect(harness.getPendingPrompts(sessionId)).toEqual([]);
+		expect(events).toContainEqual(
+			expect.objectContaining({
+				type: "agent_event",
+				payload: expect.objectContaining({
+					event: expect.objectContaining({
+						type: "done",
+						reason: "aborted",
+					}),
+				}),
+			}),
+		);
+		expect(run).toHaveBeenCalledTimes(1);
+		expect(
+			(await manager.pendingPrompts.list({ sessionId })).map((prompt) => ({
+				prompt: prompt.prompt,
+				delivery: prompt.delivery,
+			})),
+		).toEqual([]);
 	});
 
 	it("preserves per-turn metadata on prior assistant messages across turns", async () => {

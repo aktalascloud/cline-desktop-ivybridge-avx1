@@ -316,12 +316,20 @@ export class AgentRuntime {
 		return this.execute(input);
 	}
 
-	abort(reason?: string): void {
+	abort(reason?: unknown): void {
 		if (!this.abortController) {
 			return;
 		}
-		this.state.lastError = reason ?? "Run aborted";
-		this.abortController.abort(new Error(reason ?? "Run aborted"));
+		const message =
+			typeof reason === "string"
+				? reason
+				: reason instanceof Error
+					? reason.message
+					: reason === undefined
+						? undefined
+						: String(reason);
+		this.state.lastError = message ?? "Run aborted";
+		this.abortController.abort(new Error(this.state.lastError));
 	}
 
 	subscribe(listener: AgentEventListener): () => void {

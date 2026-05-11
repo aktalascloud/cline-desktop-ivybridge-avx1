@@ -31,6 +31,7 @@ export function ChatView(props: {
 	onContentChange: (text: string) => void;
 	onImagePaste: (dataUrl: string) => string;
 	onLargeTextPaste: (text: string) => string;
+	onInputFocusRequest?: () => void;
 	repoStatus: {
 		branch: string | null;
 		diffStats: {
@@ -43,6 +44,9 @@ export function ChatView(props: {
 	transcriptScrollRef?: React.Ref<TranscriptScrollHandle>;
 	autocomplete?: AutocompleteDropdownProps;
 	queuedPrompts?: QueuedPromptItem[];
+	selectedQueuedPromptId?: string | null;
+	editingQueuedPrompt?: QueuedPromptItem;
+	onQueuedPromptEditConfirm: (id: string, prompt: string) => void;
 	onToggleMode: () => void;
 }) {
 	const {
@@ -81,7 +85,12 @@ export function ChatView(props: {
 				)}
 
 				{props.queuedPrompts && props.queuedPrompts.length > 0 && (
-					<QueuedPrompts items={props.queuedPrompts} />
+					<QueuedPrompts
+						items={props.queuedPrompts}
+						selectedId={props.selectedQueuedPromptId ?? null}
+						editingId={props.editingQueuedPrompt?.id ?? null}
+						onEditConfirm={props.onQueuedPromptEditConfirm}
+					/>
 				)}
 
 				<box marginBottom={1}>
@@ -97,6 +106,7 @@ export function ChatView(props: {
 						onContentChange={onContentChange}
 						onImagePaste={onImagePaste}
 						onLargeTextPaste={onLargeTextPaste}
+						onFocusRequest={props.onInputFocusRequest}
 						textareaRef={props.textareaRef}
 					/>
 				</box>

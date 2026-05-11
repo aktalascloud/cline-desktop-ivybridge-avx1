@@ -111,6 +111,7 @@ export function SessionProvider(props: {
 
 	const setIsRunning = useCallback((v: boolean) => {
 		_setIsRunning(v);
+		setAbortRequested(false);
 		onRunningChangeRef.current(v);
 	}, []);
 

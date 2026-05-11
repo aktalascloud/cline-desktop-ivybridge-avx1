@@ -4,10 +4,12 @@ import type { Dispatch, SetStateAction } from "react";
 import { useRef } from "react";
 import type { TranscriptScrollHandle } from "../components/chat-message-list";
 import { useSession } from "../contexts/session-context";
-import type { AppView } from "../types";
+import type { AppView, QueuedPromptItem } from "../types";
+import { shouldHandleInputHistory } from "./root-keyboard-routing";
 import { matchTranscriptKeybind } from "./transcript-keybinds";
 import type { AutocompleteOption, useAutocomplete } from "./use-autocomplete";
 import type { useInputHistory } from "./use-input-history";
+import { resolveQueuedPromptSelection } from "./use-queued-prompts";
 
 type TranscriptKey = {
 	name: string;
@@ -38,6 +40,15 @@ export function useRootKeyboard(input: {
 	inputValueRef: { current: string };
 	selectRef: { current: (option: AutocompleteOption) => void };
 	submitRef: { current: (delivery?: "queue" | "steer") => void };
+	queuedPromptSelection: {
+		items: QueuedPromptItem[];
+		selectedId: string | null;
+		editingId: string | null;
+		select: (id: string | null) => void;
+		beginEdit: (id: string) => void;
+		cancelEdit: () => void;
+		promote: (id: string) => void;
+	};
 	syncInputFromTextarea: () => void;
 	getCurrentInputText: () => string;
 	setInputKey: Dispatch<SetStateAction<number>>;
@@ -138,7 +149,67 @@ export function useRootKeyboard(input: {
 			return;
 		}
 
-		if (key.name === "up" && !session.isRunning) {
+		const queuedSelection = input.queuedPromptSelection;
+		const hasQueuedPrompts = queuedSelection.items.length > 0;
+		const selectedQueuedPromptId = queuedSelection.selectedId;
+		const canHandleInputHistory = shouldHandleInputHistory({
+			isRunning: session.isRunning,
+			hasQueuedPrompts,
+		});
+
+		if (queuedSelection.editingId && key.name !== "escape") {
+			return;
+		}
+
+		if (hasQueuedPrompts && key.name === "up") {
+			key.preventDefault();
+			if (input.autocomplete.mode) {
+				input.autocomplete.close();
+			}
+			queuedSelection.select(
+				resolveQueuedPromptSelection({
+					items: queuedSelection.items,
+					selectedId: selectedQueuedPromptId,
+					direction: "up",
+				}),
+			);
+			return;
+		}
+
+		if (hasQueuedPrompts && selectedQueuedPromptId && key.name === "down") {
+			key.preventDefault();
+			queuedSelection.select(
+				resolveQueuedPromptSelection({
+					items: queuedSelection.items,
+					selectedId: selectedQueuedPromptId,
+					direction: "down",
+				}),
+			);
+			return;
+		}
+
+		if (
+			selectedQueuedPromptId &&
+			!queuedSelection.editingId &&
+			key.name === "tab" &&
+			!key.shift
+		) {
+			key.preventDefault();
+			queuedSelection.beginEdit(selectedQueuedPromptId);
+			return;
+		}
+
+		if (
+			selectedQueuedPromptId &&
+			!queuedSelection.editingId &&
+			(key.name === "enter" || key.name === "return")
+		) {
+			key.preventDefault();
+			queuedSelection.promote(selectedQueuedPromptId);
+			return;
+		}
+
+		if (key.name === "up" && canHandleInputHistory) {
 			if (
 				input.inputHistory.navigateHistory("up", input.inputValueRef.current)
 			) {
@@ -146,7 +217,7 @@ export function useRootKeyboard(input: {
 			}
 			return;
 		}
-		if (key.name === "down" && !session.isRunning) {
+		if (key.name === "down" && canHandleInputHistory) {
 			if (
 				input.inputHistory.navigateHistory("down", input.inputValueRef.current)
 			) {
@@ -156,10 +227,17 @@ export function useRootKeyboard(input: {
 		}
 
 		if (key.name === "escape") {
-			if (session.isRunning) {
-				if (!session.abortRequested && input.onAbort()) {
+			if (queuedSelection.editingId) {
+				key.preventDefault();
+				queuedSelection.cancelEdit();
+			} else if (session.isRunning) {
+				const abortStarted = input.onAbort();
+				if (abortStarted) {
 					session.setAbortRequested(true);
 				}
+			} else if (selectedQueuedPromptId) {
+				queuedSelection.select(null);
+				input.setInputKey((k) => k + 1);
 			} else {
 				const now = Date.now();
 				if (now - lastEscapeRef.current < 300) {

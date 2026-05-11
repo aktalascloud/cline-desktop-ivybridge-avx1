@@ -924,12 +924,20 @@ export class LocalRuntimeHost implements RuntimeHost {
 	): Promise<AgentResult> {
 		const endedAt = new Date();
 		const messages = session.agent.getMessages();
+		const usage = createInitialAccumulatedUsage();
 		session.persistedMessages = messages;
 		session.started = session.started || messages.length > 0;
+		this.eventBridge.dispatchAgentEvent(session.sessionId, session.config, {
+			type: "done",
+			reason: "aborted",
+			text: "",
+			iterations: 0,
+			usage,
+		});
 		await this.completeInteractiveTurn(session, "aborted");
 		return {
 			text: "",
-			usage: createInitialAccumulatedUsage(),
+			usage,
 			messages,
 			toolCalls: [],
 			iterations: 0,

@@ -1,7 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { CoreSessionEvent } from "../../types/events";
+import type { ActiveSession } from "../../types/session";
 import {
 	type PendingPromptQueueState,
 	PendingPromptService,
+	PendingPromptsController,
 } from "./pending-prompt-service";
 
 function createState(): PendingPromptQueueState {
@@ -115,5 +118,51 @@ describe("PendingPromptService", () => {
 				prompt: "   ",
 			}),
 		).toThrow("prompt cannot be empty");
+	});
+
+	it("requeues a drained prompt when send fails", async () => {
+		const sessionId = "sess-drain-failure";
+		const session = {
+			sessionId,
+			pendingPrompts: [
+				{
+					id: "pending-1",
+					prompt: "try later",
+					delivery: "steer",
+				},
+			],
+			aborting: false,
+			drainingPendingPrompts: false,
+			status: "completed",
+			agent: {
+				canStartRun: () => true,
+			},
+		} as unknown as ActiveSession;
+		const events: CoreSessionEvent[] = [];
+		const controller = new PendingPromptsController({
+			getSession: () => session,
+			emit: (event) => events.push(event),
+			send: vi.fn().mockRejectedValue(new Error("send failed")),
+		});
+
+		await controller.drain(sessionId);
+
+		expect(controller.list(sessionId).map((prompt) => prompt.prompt)).toEqual([
+			"try later",
+		]);
+		expect(
+			events.some(
+				(event) =>
+					event.type === "pending_prompts" &&
+					event.payload.prompts.length === 0,
+			),
+		).toBe(true);
+		expect(
+			events.some(
+				(event) =>
+					event.type === "pending_prompts" &&
+					event.payload.prompts.some((prompt) => prompt.prompt === "try later"),
+			),
+		).toBe(true);
 	});
 });

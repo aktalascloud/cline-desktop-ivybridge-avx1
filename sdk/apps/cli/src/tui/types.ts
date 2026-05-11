@@ -88,6 +88,15 @@ export interface QueuedPromptItem {
 	id: string;
 	prompt: string;
 	steer: boolean;
+	attachmentCount: number;
+}
+
+export interface PendingPromptMutationResult {
+	sessionId: string;
+	prompts: QueuedPromptItem[];
+	prompt?: QueuedPromptItem;
+	updated?: boolean;
+	removed?: boolean;
 }
 
 export type AppView = "onboarding" | "home" | "chat";
@@ -120,6 +129,11 @@ export interface TuiProps {
 		delivery?: "queue" | "steer",
 		attachments?: UserInputAttachments,
 	) => Promise<InteractiveTurnResult>;
+	onUpdatePendingPrompt: (input: {
+		promptId: string;
+		prompt?: string;
+		delivery?: "queue" | "steer";
+	}) => Promise<PendingPromptMutationResult>;
 	onAbort: () => boolean;
 	onExit: () => void;
 	onRunningChange: (isRunning: boolean) => void;

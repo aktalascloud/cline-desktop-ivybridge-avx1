@@ -72,6 +72,12 @@ function App(props: TuiProps) {
 		props.initialRepoStatus ?? { branch: null, diffStats: null },
 	);
 	const { queuedPrompts, handlePendingPrompts } = useQueuedPrompts();
+	const [selectedQueuedPromptId, setSelectedQueuedPromptId] = useState<
+		string | null
+	>(null);
+	const [editingQueuedPromptId, setEditingQueuedPromptId] = useState<
+		string | null
+	>(null);
 	const [appView, setAppView] = useState<AppView>(() => {
 		if (process.env.CLINE_FORCE_ONBOARDING === "1") return "onboarding";
 		if (!isProviderConfigured(props.config)) return "onboarding";
@@ -127,6 +133,13 @@ function App(props: TuiProps) {
 		(invocation: LocalSlashCommandInvocation) => void
 	>(() => {});
 	const transcriptScrollRef = useRef<TranscriptScrollHandle | null>(null);
+	const editingQueuedPrompt = useMemo(
+		() =>
+			editingQueuedPromptId
+				? queuedPrompts.find((item) => item.id === editingQueuedPromptId)
+				: undefined,
+		[editingQueuedPromptId, queuedPrompts],
+	);
 
 	const clearToastTimeout = useCallback(() => {
 		if (toastTimeoutRef.current) {
@@ -428,6 +441,60 @@ function App(props: TuiProps) {
 			clearToastTimeout();
 		};
 	}, [clearToastTimeout]);
+
+	useEffect(() => {
+		const selectedPromptMissing =
+			selectedQueuedPromptId &&
+			!queuedPrompts.some((item) => item.id === selectedQueuedPromptId);
+		const editingPromptMissing =
+			editingQueuedPromptId &&
+			!queuedPrompts.some((item) => item.id === editingQueuedPromptId);
+
+		if (selectedPromptMissing) {
+			setSelectedQueuedPromptId(null);
+		}
+		if (editingPromptMissing) {
+			setEditingQueuedPromptId(null);
+		}
+		if (selectedPromptMissing || editingPromptMissing) {
+			refocusTextareaRef.current();
+		}
+	}, [editingQueuedPromptId, queuedPrompts, selectedQueuedPromptId]);
+
+	const selectQueuedPrompt = useCallback((promptId: string | null) => {
+		setSelectedQueuedPromptId(promptId);
+	}, []);
+
+	const beginQueuedPromptEdit = useCallback(
+		(promptId: string) => {
+			const item = queuedPrompts.find((queued) => queued.id === promptId);
+			if (!item) return;
+			setSelectedQueuedPromptId(promptId);
+			setEditingQueuedPromptId(promptId);
+		},
+		[queuedPrompts],
+	);
+
+	const cancelQueuedPromptEdit = useCallback(() => {
+		setEditingQueuedPromptId(null);
+		setSelectedQueuedPromptId(null);
+		refocusTextareaRef.current();
+	}, []);
+
+	const promoteQueuedPrompt = useCallback(
+		(promptId: string) => {
+			void props
+				.onUpdatePendingPrompt({ promptId, delivery: "steer" })
+				.catch((error) => {
+					showToast(
+						`Could not steer queued message: ${error instanceof Error ? error.message : String(error)}`,
+						"error",
+					);
+				});
+		},
+		[props, showToast],
+	);
+
 	const {
 		appendEntry: appendSessionEntry,
 		replaceEntries: replaceSessionEntries,
@@ -610,6 +677,52 @@ function App(props: TuiProps) {
 	removeLocalCommandInvocationRef.current = (invocation) => {
 		promptInput.removeLocalCommandInvocation(invocation);
 	};
+	const saveQueuedPromptEdit = useCallback(
+		async (promptId: string, text: string) => {
+			if (!promptId) return;
+			const prompt = text.trim();
+			if (!prompt) {
+				showToast("Queued message cannot be empty", "error");
+				return;
+			}
+			try {
+				await props.onUpdatePendingPrompt({ promptId, prompt });
+				setEditingQueuedPromptId(null);
+				setSelectedQueuedPromptId(null);
+				refocusTextareaRef.current();
+			} catch (error) {
+				showToast(
+					`Could not update queued message: ${error instanceof Error ? error.message : String(error)}`,
+					"error",
+				);
+			}
+		},
+		[props, showToast],
+	);
+	const submitFromInput = useCallback(() => {
+		if (editingQueuedPromptId) {
+			return;
+		}
+		if (selectedQueuedPromptId) {
+			promoteQueuedPrompt(selectedQueuedPromptId);
+			return;
+		}
+		promptInput.handleSubmit();
+	}, [
+		editingQueuedPromptId,
+		promoteQueuedPrompt,
+		promptInput,
+		selectedQueuedPromptId,
+	]);
+	const focusPromptInput = useCallback(() => {
+		if (editingQueuedPromptId || selectedQueuedPromptId) {
+			setEditingQueuedPromptId(null);
+			setSelectedQueuedPromptId(null);
+			refocusTextareaRef.current();
+			return;
+		}
+		promptInput.focusTextarea();
+	}, [editingQueuedPromptId, promptInput, selectedQueuedPromptId]);
 	const initialPromptSubmittedRef = useRef(false);
 
 	useEffect(() => {
@@ -638,6 +751,15 @@ function App(props: TuiProps) {
 		inputValueRef: promptInput.inputValueRef,
 		selectRef: promptInput.selectRef,
 		submitRef: promptInput.submitRef,
+		queuedPromptSelection: {
+			items: queuedPrompts,
+			selectedId: selectedQueuedPromptId,
+			editingId: editingQueuedPromptId,
+			select: selectQueuedPrompt,
+			beginEdit: beginQueuedPromptEdit,
+			cancelEdit: cancelQueuedPromptEdit,
+			promote: promoteQueuedPrompt,
+		},
 		syncInputFromTextarea: promptInput.syncInputFromTextarea,
 		getCurrentInputText: promptInput.getCurrentInputText,
 		setInputKey: promptInput.setInputKey,
@@ -675,14 +797,20 @@ function App(props: TuiProps) {
 		config: props.config,
 		inputValue: promptInput.inputValue,
 		inputKey: promptInput.inputKey,
-		onSubmit: promptInput.handleSubmit,
+		onSubmit: submitFromInput,
 		onContentChange: promptInput.handleContentChange,
 		onImagePaste: promptInput.handleImagePaste,
 		onLargeTextPaste: promptInput.handleLargeTextPaste,
+		onInputFocusRequest: focusPromptInput,
 		repoStatus,
 		textareaRef: promptInput.textareaRef,
 		transcriptScrollRef,
 		queuedPrompts,
+		selectedQueuedPromptId,
+		editingQueuedPrompt,
+		onQueuedPromptEditConfirm: (id: string, prompt: string) => {
+			void saveQueuedPromptEdit(id, prompt);
+		},
 		onToggleMode: toggleMode,
 		autocomplete: {
 			mode: autocomplete.mode,

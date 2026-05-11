@@ -44,6 +44,7 @@ export interface InputBarProps {
 		visualCol: number;
 		visualRow: number;
 	}) => void;
+	onFocusRequest?: () => void;
 	textareaRef?: React.MutableRefObject<TextareaHandle | null>;
 }
 
@@ -199,6 +200,7 @@ export function InputBar(props: InputBarProps) {
 			backgroundColor={inputBackground}
 			paddingX={2}
 			paddingY={1}
+			onMouseDown={props.onFocusRequest}
 		>
 			<text fg={accent}>
 				<strong>{">"}</strong>

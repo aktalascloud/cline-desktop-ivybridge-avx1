@@ -16,6 +16,7 @@ import {
 	resolveClineWelcomeLine,
 } from "../tui/interactive-welcome";
 import { disableOpenTuiGraphicsProbe } from "../tui/opentui-env";
+import type { QueuedPromptItem } from "../tui/types";
 import { type ChatCommandState, chatCommandHost } from "../utils/chat-commands";
 import {
 	prepareTerminalForPostTuiOutput,
@@ -241,6 +242,17 @@ export async function runInteractive(
 		}
 		return data;
 	};
+	const toQueuedPromptItem = (prompt: {
+		id: string;
+		prompt: string;
+		delivery: "queue" | "steer";
+		attachmentCount: number;
+	}): QueuedPromptItem => ({
+		id: prompt.id,
+		prompt: prompt.prompt,
+		steer: prompt.delivery === "steer",
+		attachmentCount: prompt.attachmentCount,
+	});
 
 	process.on("SIGINT", handleSigint);
 	process.on("SIGTERM", handleSigterm);
@@ -426,6 +438,17 @@ export async function runInteractive(
 				}
 			}
 		},
+		onUpdatePendingPrompt: async (update) => {
+			await sessionRuntime.ensureReady();
+			const result = await sessionRuntime.updatePendingPrompt(update);
+			return {
+				sessionId: result.sessionId,
+				prompts: result.prompts.map(toQueuedPromptItem),
+				prompt: result.prompt ? toQueuedPromptItem(result.prompt) : undefined,
+				updated: result.updated,
+				removed: result.removed,
+			};
+		},
 		onAbort: () => {
 			return sessionRuntime.abortAll();
 		},
@@ -435,6 +458,7 @@ export async function runInteractive(
 		onRunningChange: (running) => {
 			isRunning = running;
 			if (!running) {
+				sessionRuntime.resetAbortRequest();
 				refreshInteractiveSessionPoliciesIfPending();
 			}
 		},
