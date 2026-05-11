@@ -43,7 +43,7 @@ export function isAnthropicCompatibleModel(options: {
 	const family =
 		typeof options.family === "string" ? options.family.trim() : "";
 	if (family) {
-		return family.toLowerCase().includes("claude");
+		return hasAnthropicLineage(family);
 	}
 
 	return isAnthropicCompatibleModelId(options.modelId);
@@ -56,12 +56,39 @@ export function isAnthropicCompatibleModelId(
 		return false;
 	}
 
-	const normalized = modelId.toLowerCase();
-	const hasAnthropicVendor = normalized.includes("anthropic");
-	const hasClaudeLineage = normalized.includes("claude");
-	const hasQwenLineage = normalized.includes("qwen");
+	return hasAnthropicLineage(modelId);
+}
 
-	return hasAnthropicVendor || hasClaudeLineage || hasQwenLineage;
+export function isAnthropicPromptCacheCompatibleModel(options: {
+	modelId?: string;
+	family?: string;
+}): boolean {
+	const family =
+		typeof options.family === "string" ? options.family.trim() : "";
+	if (family) {
+		return hasAnthropicLineage(family) || hasQwenLineage(family);
+	}
+
+	return isAnthropicPromptCacheCompatibleModelId(options.modelId);
+}
+
+export function isAnthropicPromptCacheCompatibleModelId(
+	modelId: string | undefined,
+): boolean {
+	if (!modelId) {
+		return false;
+	}
+
+	return hasAnthropicLineage(modelId) || hasQwenLineage(modelId);
+}
+
+function hasAnthropicLineage(value: string): boolean {
+	const normalized = value.toLowerCase();
+	return normalized.includes("anthropic") || normalized.includes("claude");
+}
+
+function hasQwenLineage(value: string): boolean {
+	return value.toLowerCase().includes("qwen");
 }
 
 export function createPromptCacheProviderOptions(
@@ -136,7 +163,7 @@ export function shouldUseAnthropicPromptCache(
 	context: GatewayProviderContext,
 ): boolean {
 	return (
-		isAnthropicCompatibleModel({
+		isAnthropicPromptCacheCompatibleModel({
 			modelId: request.modelId,
 			family: resolveModelFamily(context),
 		}) && resolvePromptCacheStrategy(context.provider) === "anthropic-automatic"

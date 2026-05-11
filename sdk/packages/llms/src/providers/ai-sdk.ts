@@ -492,6 +492,7 @@ export function normalizeUsage(
 			) ||
 			getNestedUsageValue(usage, "prompt_tokens_details", "cached_tokens") ||
 			getUsageValue(rawUsage, "cachedContentTokenCount") ||
+			getNestedUsageValue(rawUsage, "prompt_tokens_details", "cached_tokens") ||
 			getUsageValue(
 				providerUsage ?? {},
 				"cachedInputTokens",
@@ -513,6 +514,11 @@ export function normalizeUsage(
 				"cacheWriteTokens",
 				"cache_write_tokens",
 				"cache_creation_input_tokens",
+			) ||
+			getNestedUsageValue(
+				rawUsage,
+				"prompt_tokens_details",
+				"cache_write_tokens",
 			) ||
 			getUsageValue(
 				providerUsage ?? {},

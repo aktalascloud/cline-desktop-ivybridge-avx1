@@ -24,6 +24,7 @@ export type AiSdkFormatterPart =
 	| {
 			type: "text";
 			text: string;
+			providerOptions?: Record<string, Record<string, unknown>>;
 	  }
 	| {
 			type: "reasoning";
@@ -304,6 +305,9 @@ export function formatMessagesForAiSdk(
 					messageParts.push({
 						type: "text",
 						text: sanitizeSurrogates(part.text),
+						...(part.providerOptions
+							? { providerOptions: part.providerOptions }
+							: {}),
 					});
 					break;
 				case "reasoning":

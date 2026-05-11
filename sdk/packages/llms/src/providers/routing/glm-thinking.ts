@@ -27,18 +27,6 @@ export function isNativeZaiProvider(providerId: string): boolean {
 	return providerId === "zai" || providerId === "zai-coding-plan";
 }
 
-export function shouldSuppressGenericCompatibleThinking(
-	request: GatewayStreamRequest,
-	context: GatewayProviderContext,
-): boolean {
-	return (
-		(isNativeZaiProvider(request.providerId) &&
-			request.reasoning?.enabled !== undefined &&
-			!isGlmModel(request, context)) ||
-		(isGlmModel(request, context) && !isNativeZaiProvider(request.providerId))
-	);
-}
-
 function buildNativeZaiThinkingOptions(request: GatewayStreamRequest) {
 	if (request.reasoning?.enabled === undefined) {
 		return undefined;
@@ -72,6 +60,7 @@ export function buildGlmThinkingProviderOptionsPatch(
 	request: GatewayStreamRequest,
 	context: GatewayProviderContext,
 	providerOptionsKey: string,
+	options?: { includeProviderBuckets?: boolean },
 ): ProviderOptionsPatch | undefined {
 	if (isNativeZaiProvider(request.providerId)) {
 		if (!isGlmModel(request, context)) {
@@ -100,9 +89,13 @@ export function buildGlmThinkingProviderOptionsPatch(
 
 	return {
 		openaiCompatible: routed,
-		[request.providerId]: routed,
-		...(providerOptionsKey !== request.providerId
-			? { [providerOptionsKey]: routed }
-			: {}),
+		...(options?.includeProviderBuckets === false
+			? {}
+			: {
+					[request.providerId]: routed,
+					...(providerOptionsKey !== request.providerId
+						? { [providerOptionsKey]: routed }
+						: {}),
+				}),
 	};
 }

@@ -1707,8 +1707,7 @@ describe("sdk-gateway", () => {
 					openrouter: expect.objectContaining({
 						cache_control: { type: "ephemeral" },
 						reasoning: expect.objectContaining({
-							enabled: true,
-							max_tokens: expect.any(Number),
+							effort: "high",
 						}),
 					}),
 					anthropic: expect.objectContaining({
@@ -1718,6 +1717,63 @@ describe("sdk-gateway", () => {
 				}),
 			}),
 		);
+	});
+
+	it("keeps OpenRouter Qwen prompt cache on a content part", async () => {
+		streamTextSpy.mockReturnValue({
+			fullStream: makeStreamParts([
+				{ type: "finish", usage: { inputTokens: 1, outputTokens: 1 } },
+			]),
+		});
+
+		const gateway = createGateway({
+			providerConfigs: [
+				{
+					providerId: "openrouter",
+					apiKey: "openrouter-key",
+					models: [
+						{
+							id: "alibaba/qwen3.6-plus",
+							name: "Qwen 3.6 Plus",
+							metadata: {
+								family: "qwen",
+							},
+						},
+					],
+				},
+			],
+		});
+
+		await collect(
+			await gateway.stream({
+				providerId: "openrouter",
+				modelId: "alibaba/qwen3.6-plus",
+				messages: baseMessages,
+			}),
+		);
+
+		const call = streamTextSpy.mock.calls.at(-1)?.[0] as
+			| { messages?: Array<{ role: string; content: unknown }> }
+			| undefined;
+		const userMessage = call?.messages?.find(
+			(message) => message.role === "user",
+		);
+		expect(Array.isArray(userMessage?.content)).toBe(true);
+		expect(userMessage?.content).toEqual([
+			expect.objectContaining({
+				type: "text",
+				text: "Hello",
+				providerOptions: expect.objectContaining({
+					openrouter: expect.objectContaining({
+						cache_control: { type: "ephemeral" },
+					}),
+					openaiCompatible: expect.objectContaining({
+						cache_control: { type: "ephemeral" },
+					}),
+				}),
+			}),
+		]);
+		expect(userMessage?.content).not.toBe("Hello");
 	});
 
 	it("does not apply anthropic prompt-cache shaping for non-remapped providers", async () => {

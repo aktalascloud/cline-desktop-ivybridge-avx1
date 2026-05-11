@@ -19,6 +19,7 @@ type ContextOverrides = {
 	modelId?: string;
 	family?: string;
 	capabilities?: GatewayProviderContext["model"]["capabilities"];
+	providerMetadata?: GatewayProviderContext["provider"]["metadata"];
 };
 
 function makeContext(options?: ContextOverrides): GatewayProviderContext {
@@ -29,6 +30,7 @@ function makeContext(options?: ContextOverrides): GatewayProviderContext {
 			id: providerId,
 			name: providerId,
 			defaultModelId: modelId,
+			metadata: options?.providerMetadata,
 			models: [
 				{ id: modelId, name: modelId, providerId, capabilities: ["text"] },
 			],
@@ -479,6 +481,67 @@ describe("composeAiSdkProviderOptions: Anthropic thinking precedence", () => {
 
 describe("composeAiSdkProviderOptions: family/provider thinking patches", () => {
 	runCases([
+		{
+			name: "openrouter reasoning budgetTokens -> reasoning.max_tokens",
+			request: {
+				providerId: "openrouter",
+				modelId: "openai/gpt-oss-120b",
+				reasoning: { budgetTokens: 1024 },
+			},
+			expect: [
+				{
+					bucket: "openrouter",
+					has: { reasoning: { max_tokens: 1024 } },
+					lacks: ["thinking", "effort", "reasoningEffort"],
+				},
+				{
+					bucket: "openaiCompatible",
+					lacks: ["thinking", "reasoning", "effort", "reasoningEffort"],
+				},
+			],
+		},
+		{
+			name: "openrouter reasoning enabled-only -> reasoning.enabled",
+			request: {
+				providerId: "openrouter",
+				modelId: "openai/gpt-oss-120b",
+				reasoning: { enabled: true },
+			},
+			expect: [
+				{
+					bucket: "openrouter",
+					has: { reasoning: { enabled: true } },
+					lacks: ["thinking", "effort", "reasoningEffort"],
+				},
+				{
+					bucket: "openaiCompatible",
+					lacks: ["thinking", "reasoning", "effort", "reasoningEffort"],
+				},
+			],
+		},
+		{
+			name: "openrouter Qwen family -> prompt cache buckets without Anthropic thinking",
+			request: {
+				providerId: "openrouter",
+				modelId: "alibaba/qwen3.6-plus",
+			},
+			context: {
+				family: "qwen",
+				providerMetadata: { promptCacheStrategy: "anthropic-automatic" },
+			},
+			expect: [
+				{
+					bucket: "openrouter",
+					has: { cache_control: { type: "ephemeral" } },
+					lacks: ["thinking", "effort", "reasoning"],
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { cache_control: { type: "ephemeral" } },
+					lacks: ["thinking", "effort", "reasoning"],
+				},
+			],
+		},
 		// GLM/Z.AI routed reasoning — enabled
 		{
 			name: "openrouter GLM thinking-enabled -> routed reasoning, no thinking leak",
@@ -491,6 +554,46 @@ describe("composeAiSdkProviderOptions: family/provider thinking patches", () => 
 				{
 					bucket: "openrouter",
 					has: { reasoning: { enabled: true } },
+					lacks: ["thinking"],
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { reasoning: { enabled: true } },
+					lacks: ["thinking"],
+				},
+			],
+		},
+		{
+			name: "openrouter GLM budgetTokens -> OpenRouter max_tokens is not overwritten by routed GLM",
+			request: {
+				providerId: "openrouter",
+				modelId: "z-ai/glm-4.7",
+				reasoning: { enabled: true, budgetTokens: 1024 },
+			},
+			expect: [
+				{
+					bucket: "openrouter",
+					has: { reasoning: { max_tokens: 1024 } },
+					lacks: ["thinking"],
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { reasoning: { enabled: true } },
+					lacks: ["thinking"],
+				},
+			],
+		},
+		{
+			name: "openrouter GLM effort -> OpenRouter effort is not overwritten by routed GLM",
+			request: {
+				providerId: "openrouter",
+				modelId: "z-ai/glm-4.7",
+				reasoning: { enabled: true, effort: "medium" },
+			},
+			expect: [
+				{
+					bucket: "openrouter",
+					has: { reasoning: { effort: "medium" } },
 					lacks: ["thinking"],
 				},
 				{
@@ -546,6 +649,26 @@ describe("composeAiSdkProviderOptions: family/provider thinking patches", () => 
 				{ bucket: "vercelAiGateway", has: { reasoning: { exclude: true } } },
 			],
 		},
+		{
+			name: "cline GLM thinking-disabled -> routed reasoning only, no thinking leak",
+			request: {
+				providerId: "cline",
+				modelId: "z-ai/glm-4.7",
+				reasoning: { enabled: false },
+			},
+			expect: [
+				{
+					bucket: "cline",
+					has: { reasoning: { exclude: true } },
+					lacks: ["thinking"],
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { reasoning: { exclude: true } },
+					lacks: ["thinking"],
+				},
+			],
+		},
 		// Native Z.AI uses a real thinking shape, not the routed reasoning shape
 		{
 			name: "native zai thinking -> thinking.type=enabled, no routed reasoning",
@@ -594,7 +717,48 @@ describe("composeAiSdkProviderOptions: family/provider thinking patches", () => 
 			],
 		},
 		{
-			name: "openrouter Kimi K2.6 family reasoning.enabled=false -> thinking.type=disabled",
+			name: "cline generic reasoning.enabled=false -> gateway reasoning only, no thinking patch",
+			request: {
+				providerId: "cline",
+				modelId: "gpt-5.4",
+				reasoning: { enabled: false },
+			},
+			expect: [
+				{
+					bucket: "cline",
+					has: { reasoning: { enabled: false } },
+					lacks: ["thinking"],
+				},
+				{
+					bucket: "openaiCompatible",
+					lacks: ["thinking", "reasoning"],
+				},
+			],
+		},
+		{
+			name: "cline non-K2.6 Moonshot Kimi reasoning.enabled=false -> thinking.type=disabled",
+			request: {
+				providerId: "cline",
+				modelId: "moonshotai/kimi-k2.5",
+				reasoning: { enabled: false },
+			},
+			context: { family: "kimi-k2.5" },
+			expect: [
+				{
+					bucket: "cline",
+					has: {
+						reasoning: { enabled: false },
+						thinking: { type: "disabled" },
+					},
+				},
+				{
+					bucket: "openaiCompatible",
+					has: { thinking: { type: "disabled" } },
+				},
+			],
+		},
+		{
+			name: "openrouter Kimi K2.6 family reasoning.enabled=false -> reasoning.exclude",
 			request: {
 				providerId: "openrouter",
 				modelId: "moonshotai/kimi-k2.6",
@@ -602,11 +766,12 @@ describe("composeAiSdkProviderOptions: family/provider thinking patches", () => 
 			},
 			context: { family: "kimi-k2.6" },
 			expect: [
-				{ bucket: "openrouter", has: { thinking: { type: "disabled" } } },
 				{
-					bucket: "openaiCompatible",
-					has: { thinking: { type: "disabled" } },
+					bucket: "openrouter",
+					has: { reasoning: { exclude: true } },
+					lacks: ["thinking"],
 				},
+				{ bucket: "openaiCompatible", lacks: ["thinking"] },
 			],
 		},
 		{
@@ -662,20 +827,21 @@ describe("composeAiSdkProviderOptions: family/provider thinking patches", () => 
 			context: { family: "kimi-k2.6" },
 			expect: [{ bucket: "cline", has: { reasoning: { enabled: false } } }],
 		},
-		// Non-K2.6 Moonshot still routes through the disable patch
+		// OpenRouter owns the reasoning object regardless of Moonshot family.
 		{
-			name: "non-K2.6 Moonshot Kimi reasoning.enabled=false -> thinking.type=disabled",
+			name: "openrouter non-K2.6 Moonshot Kimi reasoning.enabled=false -> reasoning.exclude",
 			request: {
 				providerId: "openrouter",
 				modelId: "moonshotai/kimi-k2.5",
 				reasoning: { enabled: false },
 			},
 			expect: [
-				{ bucket: "openrouter", has: { thinking: { type: "disabled" } } },
 				{
-					bucket: "openaiCompatible",
-					has: { thinking: { type: "disabled" } },
+					bucket: "openrouter",
+					has: { reasoning: { exclude: true } },
+					lacks: ["thinking"],
 				},
+				{ bucket: "openaiCompatible", lacks: ["thinking"] },
 			],
 		},
 		// DeepSeek family — direct provider id and openai-compatible via family

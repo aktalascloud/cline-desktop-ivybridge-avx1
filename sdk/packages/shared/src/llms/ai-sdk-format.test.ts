@@ -38,6 +38,38 @@ describe("formatMessagesForAiSdk", () => {
 		]);
 	});
 
+	it("preserves providerOptions on text parts", () => {
+		const messages = formatMessagesForAiSdk(undefined, [
+			{
+				role: "user",
+				content: [
+					{
+						type: "text",
+						text: "cache this",
+						providerOptions: {
+							openrouter: { cache_control: { type: "ephemeral" } },
+						},
+					},
+				],
+			},
+		]);
+
+		expect(messages).toEqual([
+			{
+				role: "user",
+				content: [
+					{
+						type: "text",
+						text: "cache this",
+						providerOptions: {
+							openrouter: { cache_control: { type: "ephemeral" } },
+						},
+					},
+				],
+			},
+		]);
+	});
+
 	it("emits tool results as tool-role messages", () => {
 		const messages = formatMessagesForAiSdk(undefined, [
 			{

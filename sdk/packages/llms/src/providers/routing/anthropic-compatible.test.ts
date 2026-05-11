@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 import {
 	isAnthropicCompatibleModel,
 	isAnthropicCompatibleModelId,
+	isAnthropicPromptCacheCompatibleModel,
+	isAnthropicPromptCacheCompatibleModelId,
 	resolvePromptCacheStrategy,
 	shouldUseAnthropicPromptCache,
 } from "./anthropic-compatible";
@@ -84,6 +86,23 @@ describe("anthropic-compatible routing helpers", () => {
 		);
 	});
 
+	it("keeps Qwen out of Anthropic reasoning compatibility", () => {
+		expect(isAnthropicCompatibleModel({ family: "qwen" })).toBe(false);
+		expect(isAnthropicCompatibleModelId("qwen/qwen3-coder-plus")).toBe(false);
+	});
+
+	it("matches Qwen for Anthropic-style prompt cache compatibility", () => {
+		expect(isAnthropicPromptCacheCompatibleModel({ family: "qwen" })).toBe(
+			true,
+		);
+		expect(isAnthropicPromptCacheCompatibleModel({ family: "qwen3.6" })).toBe(
+			true,
+		);
+		expect(
+			isAnthropicPromptCacheCompatibleModelId("qwen/qwen3-coder-plus"),
+		).toBe(true);
+	});
+
 	it("resolves only the supported prompt cache strategy", () => {
 		expect(
 			resolvePromptCacheStrategy(
@@ -131,5 +150,18 @@ describe("anthropic-compatible routing helpers", () => {
 				makeContext(undefined, { promptCacheStrategy: "anthropic-automatic" }),
 			),
 		).toBe(false);
+	});
+
+	it("uses prompt cache for Qwen family metadata when the provider opts in", () => {
+		expect(
+			shouldUseAnthropicPromptCache(
+				{
+					providerId: "test-provider",
+					modelId: "alibaba/qwen3.6-plus",
+					messages: [],
+				},
+				makeContext("qwen", { promptCacheStrategy: "anthropic-automatic" }),
+			),
+		).toBe(true);
 	});
 });
