@@ -120,9 +120,11 @@ export async function runInteractive(
 		autoApproveAllRef,
 		askQuestionRef: tuiAskQuestion,
 	});
+	const providerSettingsManager = new ProviderSettingsManager();
 
 	const sessionRuntime = createInteractiveSessionRuntime({
 		config,
+		providerSettingsManager,
 		userInstructionService,
 		resumeSessionId,
 		chatCommandState,
@@ -523,11 +525,12 @@ export async function runInteractive(
 		},
 		onModelChange: async () => {
 			await sessionRuntime.ensureReady();
-			const manager = new ProviderSettingsManager();
-			const existing = manager.getProviderSettings(config.providerId) ?? {
+			const existing = providerSettingsManager.getProviderSettings(
+				config.providerId,
+			) ?? {
 				provider: config.providerId,
 			};
-			manager.saveProviderSettings({
+			providerSettingsManager.saveProviderSettings({
 				...existing,
 				model: config.modelId,
 				reasoning: config.reasoningEffort

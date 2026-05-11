@@ -1,11 +1,55 @@
-import { createContextCompactionPrepareTurn } from "@cline/core";
+import {
+	createContextCompactionPrepareTurn,
+	type ProviderConfig,
+	type ProviderSettings,
+	type ProviderSettingsManager,
+	type ReasoningSettings,
+	toProviderConfig,
+} from "@cline/core";
 import type { Message } from "@cline/shared";
 import type { Config } from "../../utils/types";
 
 const FALLBACK_MANUAL_COMPACTION_MAX_INPUT_TOKENS = 64_000;
 
+function resolveCompactionReasoningSettings(
+	config: Config,
+	stored: ProviderSettings | undefined,
+): ReasoningSettings | undefined {
+	if (config.reasoningEffort) {
+		return { enabled: true, effort: config.reasoningEffort };
+	}
+	return stored?.reasoning;
+}
+
+export function resolveCompactionProviderConfig(
+	config: Config,
+	providerSettingsManager: ProviderSettingsManager,
+): ProviderConfig {
+	const stored = providerSettingsManager.getProviderSettings(config.providerId);
+	const providerConfig = toProviderConfig({
+		...(stored ?? {}),
+		provider: config.providerId,
+		model: config.modelId,
+		apiKey: config.apiKey || stored?.apiKey,
+		baseUrl: config.baseUrl ?? stored?.baseUrl,
+		headers: config.headers ?? stored?.headers,
+		reasoning: resolveCompactionReasoningSettings(config, stored),
+	} satisfies ProviderSettings);
+	const base = {
+		...providerConfig,
+		...(config.providerConfig ?? {}),
+	};
+	return {
+		...base,
+		providerId: base.providerId ?? config.providerId,
+		modelId: base.modelId ?? config.modelId,
+		knownModels: base.knownModels ?? config.knownModels,
+	};
+}
+
 export async function compactInteractiveMessages(input: {
 	config: Config;
+	providerSettingsManager: ProviderSettingsManager;
 	sessionId: string;
 	messages: Message[];
 }): Promise<{ compacted: boolean; messages: Message[] }> {
@@ -17,7 +61,10 @@ export async function compactInteractiveMessages(input: {
 		FALLBACK_MANUAL_COMPACTION_MAX_INPUT_TOKENS;
 	const compact = createContextCompactionPrepareTurn(
 		{
-			providerConfig: input.config.providerConfig,
+			providerConfig: resolveCompactionProviderConfig(
+				input.config,
+				input.providerSettingsManager,
+			),
 			providerId: input.config.providerId,
 			modelId: input.config.modelId,
 			compaction: {
@@ -27,7 +74,10 @@ export async function compactInteractiveMessages(input: {
 			logger: input.config.logger,
 		},
 		{ mode: "manual" },
-	)!;
+	);
+	if (!compact) {
+		return { compacted: false, messages: input.messages };
+	}
 	const result = await compact({
 		agentId: "cli",
 		conversationId: input.sessionId,

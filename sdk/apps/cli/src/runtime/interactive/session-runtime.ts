@@ -2,6 +2,7 @@ import {
 	type AgentEvent,
 	type CheckpointEntry,
 	type PendingPromptMutationResult,
+	type ProviderSettingsManager,
 	readSessionCheckpointHistory,
 	SessionSource,
 	type TeamEvent,
@@ -49,6 +50,7 @@ type AskQuestionRef = {
 
 export function createInteractiveSessionRuntime(input: {
 	config: Config;
+	providerSettingsManager: ProviderSettingsManager;
 	userInstructionService?: UserInstructionConfigService;
 	resumeSessionId?: string;
 	chatCommandState: ChatCommandState;
@@ -389,6 +391,7 @@ export function createInteractiveSessionRuntime(input: {
 		}
 		const result = await compactInteractiveMessages({
 			config: input.config,
+			providerSettingsManager: input.providerSettingsManager,
 			sessionId: activeSessionId,
 			messages,
 		});

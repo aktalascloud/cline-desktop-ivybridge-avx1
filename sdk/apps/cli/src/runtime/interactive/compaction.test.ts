@@ -1,7 +1,16 @@
-import type { CoreCompactionContext } from "@cline/core";
-import { describe, expect, it, vi } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import {
+	type CoreCompactionContext,
+	ProviderSettingsManager,
+} from "@cline/core";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Config } from "../../utils/types";
-import { compactInteractiveMessages } from "./compaction";
+import {
+	compactInteractiveMessages,
+	resolveCompactionProviderConfig,
+} from "./compaction";
 
 function createConfig(): Config {
 	return {
@@ -26,7 +35,69 @@ function createConfig(): Config {
 	};
 }
 
+const providerSettingsTempDirs: string[] = [];
+
+function createProviderSettingsManager(): ProviderSettingsManager {
+	const tempDir = mkdtempSync(join(tmpdir(), "cline-cli-compact-"));
+	providerSettingsTempDirs.push(tempDir);
+	return new ProviderSettingsManager({
+		filePath: join(tempDir, "providers.json"),
+	});
+}
+
+afterEach(() => {
+	for (const tempDir of providerSettingsTempDirs.splice(0)) {
+		rmSync(tempDir, { force: true, recursive: true });
+	}
+});
+
 describe("compactInteractiveMessages", () => {
+	it("resolves manual compaction provider config from persisted OAuth settings", () => {
+		const manager = createProviderSettingsManager();
+		manager.saveProviderSettings({
+			provider: "openai-native",
+			model: "old-model",
+			auth: {
+				accessToken: "stored-access-token",
+				refreshToken: "stored-refresh-token",
+				accountId: "acct-1",
+			},
+			baseUrl: "https://stored.example.com/v1",
+			headers: {
+				"x-stored": "yes",
+			},
+		});
+		const config = createConfig();
+		config.providerId = "openai-native";
+		config.modelId = "gpt-test";
+
+		const providerConfig = resolveCompactionProviderConfig(config, manager);
+
+		expect(providerConfig.providerId).toBe("openai-native");
+		expect(providerConfig.modelId).toBe("gpt-test");
+		expect(providerConfig.apiKey).toBe("stored-access-token");
+		expect(providerConfig.accessToken).toBe("stored-access-token");
+		expect(providerConfig.refreshToken).toBe("stored-refresh-token");
+		expect(providerConfig.accountId).toBe("acct-1");
+		expect(providerConfig.baseUrl).toBe("https://stored.example.com/v1");
+		expect(providerConfig.headers).toEqual({ "x-stored": "yes" });
+	});
+
+	it("prefers active CLI reasoning effort over persisted provider reasoning settings", () => {
+		const manager = createProviderSettingsManager();
+		manager.saveProviderSettings({
+			provider: "anthropic",
+			model: "old-model",
+			reasoning: { enabled: true, effort: "low" },
+		});
+		const config = createConfig();
+		config.reasoningEffort = "high";
+
+		const providerConfig = resolveCompactionProviderConfig(config, manager);
+
+		expect(providerConfig.reasoningEffort).toBe("high");
+	});
+
 	it("passes the selected model context window to manual compaction", async () => {
 		const longText = "x".repeat(16_000);
 		const messages = Array.from({ length: 10 }, (_, index) => ({
@@ -48,6 +119,7 @@ describe("compactInteractiveMessages", () => {
 
 		const result = await compactInteractiveMessages({
 			config,
+			providerSettingsManager: createProviderSettingsManager(),
 			sessionId: "sess-compact",
 			messages,
 		});
@@ -78,6 +150,7 @@ describe("compactInteractiveMessages", () => {
 
 		const result = await compactInteractiveMessages({
 			config,
+			providerSettingsManager: createProviderSettingsManager(),
 			sessionId: "sess-compact",
 			messages,
 		});
@@ -96,6 +169,7 @@ describe("compactInteractiveMessages", () => {
 
 		const result = await compactInteractiveMessages({
 			config: createConfig(),
+			providerSettingsManager: createProviderSettingsManager(),
 			sessionId: "sess-compact",
 			messages,
 		});
@@ -134,6 +208,7 @@ describe("compactInteractiveMessages", () => {
 
 		const result = await compactInteractiveMessages({
 			config,
+			providerSettingsManager: createProviderSettingsManager(),
 			sessionId: "sess-compact",
 			messages,
 		});
