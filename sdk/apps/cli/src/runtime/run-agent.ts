@@ -92,8 +92,8 @@ function printRunStats(
 	if (config.outputMode !== "text") {
 		return;
 	}
-	writeln();
 	if (config.verbose) {
+		writeln();
 		const parts: string[] = [];
 		parts.push(`${((performance.now() - startTime) / 1000).toFixed(2)}s`);
 		const tokenParts: string[] = [
@@ -117,11 +117,11 @@ function printRunStats(
 			parts.push(`${result.iterations} iterations`);
 		}
 		writeln(`${c.dim}[${parts.join(" | ")}]${c.reset}`);
-	}
-	if (config.thinking) {
-		writeln(
-			`${c.dim}[thinking] chunks=${reasoningChunkCount} redacted=${redactedReasoningChunkCount}${c.reset}`,
-		);
+		if (config.thinking) {
+			writeln(
+				`${c.dim}[thinking] chunks=${reasoningChunkCount} redacted=${redactedReasoningChunkCount}${c.reset}`,
+			);
+		}
 	}
 }
 
