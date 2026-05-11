@@ -28,6 +28,7 @@ test.describe("root flag descriptions", () => {
 			"Output messages as JSON",
 			"ACP",
 			"Check for updates and install if available",
+			"Run the kanban app",
 		]);
 	});
 

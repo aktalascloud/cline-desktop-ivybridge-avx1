@@ -292,6 +292,7 @@ Runtime note:
 | `--json` | Output NDJSON instead of styled text |
 | `--data-dir <path>` | Use isolated local state at `<path>` instead of `~/.cline` (enables sandbox mode automatically) |
 | `--auto-approve [true\|false]` | Set tool auto-approval for all tools |
+| `--kanban` | Run the external `kanban` app |
 | `-y, --yolo` | Skip tool approval prompts, enable `submit_and_exit`, and disable spawn/team tools by default |
 | `-z, --zen` | Dispatch the task to the background hub and exit the CLI immediately (see "Zen mode" below) |
 | `--team-name <name>` | Override the runtime team state name |
@@ -306,7 +307,7 @@ Top-level commands:
 - `cline config` - Open the interactive config view
 - `cline history|h [options]` - List session history or manage saved sessions
 - `cline version` - Show CLI version
-- `cline update [options]` - Reserved command; currently prints a not-implemented message
+- `cline update [options]` - Check for CLI and kanban updates
 - `cline auth <provider>` - Authenticate or seed provider credentials
 - `cline connect <adapter>` - Run a chat connector bridge (`telegram`, `gchat`, `whatsapp`)
 - `cline connect --stop [adapter]` - Stop connector bridge processes and their sessions
@@ -316,7 +317,7 @@ Top-level commands:
 - `cline doctor log` - Open the CLI runtime log file
 - `cline hook` - Handle a hook payload from stdin
 - `cline hub` - Manage the local hub daemon
-- `cline kanban` - Launch the external `kanban` app and exit (requires `npm i -g kanban`)
+- `cline kanban` - Run the external `kanban` app, installing it first when needed
 
 Connector shortcuts:
 

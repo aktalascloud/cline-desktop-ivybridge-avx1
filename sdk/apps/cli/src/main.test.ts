@@ -1,5 +1,6 @@
 import { fstatSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { CliMigrationNotice } from "./kanban-migration/notice";
 
 /** Real `fstatSync`: used when tests stub only stdin (fd 0); throwing for every fd breaks imports and session I/O. */
 const fsActual = vi.hoisted(() => ({
@@ -13,6 +14,7 @@ vi.mock("node:fs", async () => {
 
 const originalArgv = [...process.argv];
 const originalStdinIsTTY = process.stdin.isTTY;
+const originalStdoutIsTTY = process.stdout.isTTY;
 const mockState = vi.hoisted(() => ({
 	runAgentImports: 0,
 	runInteractiveImports: 0,
@@ -50,9 +52,16 @@ const promptMocks = vi.hoisted(() => ({
 const kanbanMocks = vi.hoisted(() => ({
 	launchKanban: vi.fn(),
 }));
+const migrationNoticeMocks = vi.hoisted(() => ({
+	getClineCliMigrationNotice: vi.fn<() => CliMigrationNotice | undefined>(
+		() => undefined,
+	),
+	markClineCliMigrationNoticeShown: vi.fn(),
+}));
 const updateMocks = vi.hoisted(() => ({
 	autoUpdateOnStartup: vi.fn(),
 	checkForUpdates: vi.fn(async () => 0),
+	getPreferredKanbanInstaller: vi.fn(() => undefined),
 }));
 const runtimeMocks = vi.hoisted(() => ({
 	runAgent: vi.fn(async () => {
@@ -151,6 +160,7 @@ vi.mock("./runtime/prompt", () => ({
 	resolveSystemPrompt: promptMocks.resolveSystemPrompt,
 }));
 vi.mock("./commands/kanban", () => kanbanMocks);
+vi.mock("./kanban-migration/notice", () => migrationNoticeMocks);
 vi.mock("./commands/update", () => updateMocks);
 vi.mock("./commands/history", () => historyMocks);
 vi.mock("./logging/adapter", () => loggingMocks);
@@ -207,9 +217,14 @@ describe("runCli lightweight command dispatch", () => {
 		providerSettingsMocks.saveProviderSettings.mockReset();
 		kanbanMocks.launchKanban.mockReset();
 		kanbanMocks.launchKanban.mockResolvedValue(0);
+		migrationNoticeMocks.getClineCliMigrationNotice.mockReset();
+		migrationNoticeMocks.getClineCliMigrationNotice.mockReturnValue(undefined);
+		migrationNoticeMocks.markClineCliMigrationNoticeShown.mockReset();
 		updateMocks.autoUpdateOnStartup.mockReset();
 		updateMocks.checkForUpdates.mockReset();
 		updateMocks.checkForUpdates.mockResolvedValue(0);
+		updateMocks.getPreferredKanbanInstaller.mockReset();
+		updateMocks.getPreferredKanbanInstaller.mockReturnValue(undefined);
 		telemetryMocks.captureCliExtensionActivated.mockReset();
 		telemetryMocks.identifyCliTelemetryAccount.mockReset();
 		telemetryMocks.getCliTelemetryService.mockReset();
@@ -229,6 +244,10 @@ describe("runCli lightweight command dispatch", () => {
 		process.argv = [...originalArgv];
 		Object.defineProperty(process.stdin, "isTTY", {
 			value: originalStdinIsTTY,
+			configurable: true,
+		});
+		Object.defineProperty(process.stdout, "isTTY", {
+			value: originalStdoutIsTTY,
 			configurable: true,
 		});
 		vi.restoreAllMocks();
@@ -271,6 +290,36 @@ describe("runCli lightweight command dispatch", () => {
 		expect(updateMocks.checkForUpdates).toHaveBeenCalledWith({
 			verbose: true,
 		});
+		expect(mockState.runAgentImports).toBe(0);
+		expect(mockState.runInteractiveImports).toBe(0);
+	});
+
+	it("does not load runtime modules for root kanban flag", async () => {
+		mockState.runAgentImports = 0;
+		mockState.runInteractiveImports = 0;
+
+		process.argv = ["bun", "src/index.ts", "--kanban"];
+
+		const { runCli } = await import("./main");
+
+		await expect(runCli()).resolves.toBeUndefined();
+		expect(process.exitCode).toBe(0);
+		expect(kanbanMocks.launchKanban).toHaveBeenCalledTimes(1);
+		expect(mockState.runAgentImports).toBe(0);
+		expect(mockState.runInteractiveImports).toBe(0);
+	});
+
+	it("rejects root kanban with a prompt", async () => {
+		mockState.runAgentImports = 0;
+		mockState.runInteractiveImports = 0;
+
+		process.argv = ["bun", "src/index.ts", "--kanban", "hello"];
+
+		const { runCli } = await import("./main");
+
+		await expect(runCli()).resolves.toBeUndefined();
+		expect(process.exitCode).toBe(1);
+		expect(kanbanMocks.launchKanban).not.toHaveBeenCalled();
 		expect(mockState.runAgentImports).toBe(0);
 		expect(mockState.runInteractiveImports).toBe(0);
 	});
@@ -336,6 +385,40 @@ describe("runCli lightweight command dispatch", () => {
 				initialView: undefined,
 			}),
 		);
+	});
+
+	it("passes the migration notice marker into interactive mode", async () => {
+		const notice = {
+			id: "cline-cli-tui-default",
+			title: "Welcome to the new Cline CLI",
+		};
+		migrationNoticeMocks.getClineCliMigrationNotice.mockReturnValue(notice);
+		Object.defineProperty(process.stdout, "isTTY", {
+			value: true,
+			configurable: true,
+		});
+		process.argv = ["bun", "src/index.ts"];
+
+		const { runCli } = await import("./main");
+
+		await expect(runCli()).resolves.toBeUndefined();
+		expect(runtimeMocks.runInteractive).toHaveBeenCalledWith(
+			expect.any(Object),
+			expect.anything(),
+			undefined,
+			expect.objectContaining({
+				initialNotice: notice,
+				onInitialNoticeShown: expect.any(Function),
+			}),
+		);
+		expect(
+			migrationNoticeMocks.markClineCliMigrationNoticeShown,
+		).not.toHaveBeenCalled();
+		const options = runtimeMocks.runInteractive.mock.calls[0]?.[3];
+		await options?.onInitialNoticeShown?.(notice);
+		expect(
+			migrationNoticeMocks.markClineCliMigrationNoticeShown,
+		).toHaveBeenCalledTimes(1);
 	});
 
 	it("does not start OAuth before onboarding in interactive mode", async () => {
@@ -560,7 +643,7 @@ describe("runCli lightweight command dispatch", () => {
 		);
 	});
 
-	it("launches kanban and exits before loading runtime modules", async () => {
+	it("runs kanban before loading runtime modules", async () => {
 		process.argv = ["bun", "src/index.ts", "kanban"];
 
 		const { runCli } = await import("./main");
