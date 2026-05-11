@@ -236,7 +236,7 @@ const wrapperPackageJson = {
 	license: license || "Apache-2.0",
 	...(sourceRepository ? { repository: sourceRepository } : {}),
 	bin: {
-		clite: "./bin/clite",
+		cline: "./bin/cline",
 	},
 	scripts: {
 		postinstall: "node ./postinstall.mjs || true",

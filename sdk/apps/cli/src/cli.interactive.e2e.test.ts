@@ -188,7 +188,7 @@ describe("cli interactive e2e", () => {
 		expect(output).toContain("/ for commands · @ for files");
 	});
 
-	it("launches config view directly with `clite config`", () => {
+	it("launches config view directly with `cline config`", () => {
 		const result = runInteractiveCli(
 			[{ delaySeconds: INITIAL_RENDER_DELAY_SECONDS, input: "" }],
 			{

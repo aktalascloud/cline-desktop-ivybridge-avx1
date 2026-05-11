@@ -142,7 +142,7 @@ function listStaleCliPids(): number[] {
 	const patterns = [
 		"/apps/cli/src/index.ts",
 		"/apps/cli/dist/index.js",
-		"/dist/clite",
+		"/dist/cline",
 	];
 	const records = new Map<number, ProcessRecord>();
 	for (const pattern of patterns) {

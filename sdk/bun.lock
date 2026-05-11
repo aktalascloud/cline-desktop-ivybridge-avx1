@@ -21,7 +21,7 @@
       "name": "@cline/cli",
       "version": "0.0.13",
       "bin": {
-        "clite": "src/index.ts",
+        "cline": "src/index.ts",
       },
       "dependencies": {
         "@agentclientprotocol/sdk": "^0.16.1",

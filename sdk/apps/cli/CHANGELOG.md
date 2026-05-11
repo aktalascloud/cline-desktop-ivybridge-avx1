@@ -97,7 +97,7 @@
 - Pasting 5+ lines into the input shows a compact preview marker instead of flooding the textarea. The full content is still submitted.
 - Arrow-key history navigation respects cursor position so you don't lose your place when scrolling through previous prompts.
 - The TUI renders immediately instead of blocking while the hub daemon boots. Hub readiness and session hydration happen in the background.
-- Listing previous sessions no longer hydrates every full session, making `clite history` and the history picker snappy even with hundreds of sessions.
+- Listing previous sessions no longer hydrates every full session, making `cline history` and the history picker snappy even with hundreds of sessions.
 - Updating the CLI no longer leaves you connected to a stale hub daemon. Incompatible versions are detected and replaced automatically, eliminating the "Unsupported hub schedule command" class of errors.
 - Schedules can now trigger on external events (webhooks, GitHub events, plugin-emitted signals) in addition to cron intervals, with deduplication, filtering, and retry policies.
 - Plugins can register automation event types that feed into the scheduling system, enabling custom triggers from any source.
@@ -113,7 +113,7 @@
 
 - Rewritten TUI from Ink to OpenTUI with streaming markdown, syntax-highlighted diffs, scrollable chat, and mouse support
 - Dialog system for model picker, tool approval, settings browser, session history, and onboarding
-- Interactive setup wizards: `clite connect`, `clite schedule`, `clite mcp`
+- Interactive setup wizards: `cline connect`, `cline schedule`, `cline mcp`
 - Plan/Act mode toggle with system prompt and tool rebuilding on switch
 - Input autocomplete for slash commands and file mentions
 - Message queuing and steer messages during running turns

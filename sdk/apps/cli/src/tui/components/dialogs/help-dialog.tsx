@@ -221,19 +221,19 @@ const HELP_ROWS: HelpRow[] = [
 	{
 		kind: "entry",
 		id: "w-connect",
-		key: "clite connect",
+		key: "cline connect",
 		desc: "Set up messaging platform integrations",
 	},
 	{
 		kind: "entry",
 		id: "w-schedule",
-		key: "clite schedule",
+		key: "cline schedule",
 		desc: "Create and manage scheduled cron tasks",
 	},
 	{
 		kind: "entry",
 		id: "w-mcp",
-		key: "clite mcp",
+		key: "cline mcp",
 		desc: "Add, remove, and manage MCP servers",
 	},
 ];

@@ -435,7 +435,7 @@ class GoogleChatConnector extends ConnectorBase<
 				formatBackgroundStartMessage: (pid) =>
 					`[gchat] starting background connector pid=${pid} user=${options.userName}`,
 				foregroundHint:
-					"[gchat] use `clite connect gchat -i ...` to run in the foreground",
+					"[gchat] use `cline connect gchat -i ...` to run in the foreground",
 				launchFailureMessage:
 					"failed to launch Google Chat connector in background",
 			})

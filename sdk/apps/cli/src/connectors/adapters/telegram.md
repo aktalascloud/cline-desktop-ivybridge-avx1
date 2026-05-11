@@ -14,26 +14,26 @@ Create a bot with `@BotFather`:
 Start the connector:
 
 ```bash
-clite connect telegram -m my_bot -k "$TELEGRAM_BOT_TOKEN"
+cline connect telegram -m my_bot -k "$TELEGRAM_BOT_TOKEN"
 ```
 
 Useful variants:
 
 ```bash
 # Keep logs in the active terminal while debugging.
-clite connect telegram -i -m my_bot -k "$TELEGRAM_BOT_TOKEN"
+cline connect telegram -i -m my_bot -k "$TELEGRAM_BOT_TOKEN"
 
 # Read credentials from env vars.
-TELEGRAM_BOT_USERNAME=my_bot TELEGRAM_BOT_TOKEN=123456:ABCDEF... clite connect telegram
+TELEGRAM_BOT_USERNAME=my_bot TELEGRAM_BOT_TOKEN=123456:ABCDEF... cline connect telegram
 
 # Override the workspace and model used for Telegram sessions.
-clite connect telegram -m my_bot -k "$TELEGRAM_BOT_TOKEN" --cwd /path/to/repo --provider cline --model openai/gpt-5.3-codex
+cline connect telegram -m my_bot -k "$TELEGRAM_BOT_TOKEN" --cwd /path/to/repo --provider cline --model openai/gpt-5.3-codex
 
 # Disable tools for untrusted Telegram surfaces.
-clite connect telegram -m my_bot -k "$TELEGRAM_BOT_TOKEN" --no-tools
+cline connect telegram -m my_bot -k "$TELEGRAM_BOT_TOKEN" --no-tools
 
 # Stop Telegram connector processes and sessions.
-clite connect --stop telegram
+cline connect --stop telegram
 ```
 
 After the connector starts, send `/help` or `/start` to the bot in Telegram.
@@ -69,12 +69,12 @@ Tools are enabled by default for Telegram sessions. That means anyone who can su
 Use `--no-tools` when the Telegram surface is not trusted:
 
 ```bash
-clite connect telegram -m my_bot -k "$TELEGRAM_BOT_TOKEN" --no-tools
+cline connect telegram -m my_bot -k "$TELEGRAM_BOT_TOKEN" --no-tools
 ```
 
 When the connector starts with `--no-tools`, chat commands such as `/tools on` and `/yolo on` cannot re-enable tools for that connector run.
 
-For participant restrictions, run the interactive connector wizard with `clite connect` or pass a `--hook-command` that returns `{"action":"deny"}` for unauthorized `session.authorize` events. If no hook is configured, messages are allowed.
+For participant restrictions, run the interactive connector wizard with `cline connect` or pass a `--hook-command` that returns `{"action":"deny"}` for unauthorized `session.authorize` events. If no hook is configured, messages are allowed.
 
 ## Message Delivery
 
@@ -100,7 +100,7 @@ Schedules created this way automatically target the current Telegram thread for 
 If you are creating the schedule outside Telegram, first send `/whereami` in Telegram to get the thread id, then pass the delivery metadata to the CLI:
 
 ```bash
-clite schedule create "Daily summary" \
+cline schedule create "Daily summary" \
   --cron "0 9 * * *" \
   --prompt "Summarize yesterday's activity in this workspace." \
   --workspace /path/to/repo \

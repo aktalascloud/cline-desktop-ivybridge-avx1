@@ -142,7 +142,7 @@ describe("ensureDetachedHubServer", () => {
 		try {
 			const textFileBusy = Object.assign(
 				new Error(
-					"ETXTBSY: text file is busy, posix_spawn '/usr/local/bin/clite'",
+					"ETXTBSY: text file is busy, posix_spawn '/usr/local/bin/cline'",
 				),
 				{ code: "ETXTBSY" },
 			);
@@ -223,7 +223,7 @@ describe("ensureDetachedHubServer", () => {
 		try {
 			const textFileBusy = Object.assign(
 				new Error(
-					"ETXTBSY: text file is busy, posix_spawn '/usr/local/bin/clite'",
+					"ETXTBSY: text file is busy, posix_spawn '/usr/local/bin/cline'",
 				),
 				{ code: "ETXTBSY" },
 			);

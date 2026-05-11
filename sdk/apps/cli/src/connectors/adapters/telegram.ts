@@ -500,7 +500,7 @@ class TelegramConnector extends ConnectorBase<
 				formatBackgroundStartMessage: (pid) =>
 					`[telegram] starting background connector pid=${pid} bot=@${options.botUsername}`,
 				foregroundHint:
-					"[telegram] use `clite connect telegram -i ...` to run in the foreground",
+					"[telegram] use `cline connect telegram -i ...` to run in the foreground",
 				launchFailureMessage:
 					"failed to launch Telegram connector in background",
 			})

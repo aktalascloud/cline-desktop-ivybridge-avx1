@@ -109,10 +109,10 @@ async function buildCompiledBinary(input: {
 	// Build to /tmp first so Bun's temp-file rename stays on one filesystem
 	// layer in containerized environments (virtiofs, overlayfs).
 	const entrypoint = join(cliDir, "src/index.ts");
-	const tmpDir = join("/tmp", `clite-build-${input.dirName}`);
+	const tmpDir = join("/tmp", `cline-build-${input.dirName}`);
 	const tmpOutfile = join(
 		tmpDir,
-		input.outfile.endsWith(".exe") ? "clite.exe" : "clite",
+		input.outfile.endsWith(".exe") ? "cline.exe" : "cline",
 	);
 	mkdirSync(tmpDir, { recursive: true });
 
@@ -150,7 +150,7 @@ for (const item of targets) {
 	const displayOs = item.os === "win32" ? "windows" : item.os;
 	const name = `@cline/cli-${displayOs}-${item.arch}`;
 	const dirName = `cli-${displayOs}-${item.arch}`;
-	const binaryName = item.os === "win32" ? "clite.exe" : "clite";
+	const binaryName = item.os === "win32" ? "cline.exe" : "cline";
 	const bunTarget = getBunTarget(item);
 
 	console.log(`\nBuilding ${name} (target: ${bunTarget})...`);
@@ -203,7 +203,7 @@ for (const item of targets) {
 				cpu: [item.arch],
 				...(repository ? { repository } : {}),
 				bin: {
-					clite: `bin/${binaryName}`,
+					cline: `bin/${binaryName}`,
 				},
 			},
 			null,

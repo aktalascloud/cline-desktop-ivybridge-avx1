@@ -697,7 +697,7 @@ export function RoutineSchedulesContent() {
 				<p className="mb-6 text-xs text-muted-foreground">
 					Routines run through the hub schedule service (same backend as
 					<code className="mx-1 rounded bg-muted px-1 py-0.5">
-						clite schedule
+						cline schedule
 					</code>
 					).
 				</p>

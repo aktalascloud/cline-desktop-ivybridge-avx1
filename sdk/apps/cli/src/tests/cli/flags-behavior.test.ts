@@ -16,7 +16,7 @@ import { clineEnv } from "../helpers/env.js";
 import { waitForChatReady } from "../helpers/page-objects/chat.js";
 import { expectVisible } from "../helpers/terminal.js";
 
-test.describe("clite --model (interactive mode, flag ignored)", () => {
+test.describe("cline --model (interactive mode, flag ignored)", () => {
 	test.use({
 		program: {
 			file: CLINE_BIN,
@@ -32,7 +32,7 @@ test.describe("clite --model (interactive mode, flag ignored)", () => {
 	});
 });
 
-test.describe("clite --cwd <dir>", () => {
+test.describe("cline --cwd <dir>", () => {
 	test.use({
 		program: { file: CLINE_BIN, args: ["--cwd", "/tmp"] },
 		...TERMINAL_WIDE,
@@ -58,7 +58,7 @@ test.describe("cline -c <dir> (short alias)", () => {
 	});
 });
 
-test.describe("clite --config (claude-sonnet-4.6)", () => {
+test.describe("cline --config (claude-sonnet-4.6)", () => {
 	test.use({
 		program: {
 			file: CLINE_BIN,
@@ -76,10 +76,10 @@ test.describe("clite --config (claude-sonnet-4.6)", () => {
 });
 
 // ---------------------------------------------------------------------------
-// clite --json --yolo "prompt"
+// cline --json --yolo "prompt"
 // Starts cline in headless yolo mode with all output conforming to JSON
 // ---------------------------------------------------------------------------
-test.describe("clite --json (headless yolo mode)", () => {
+test.describe("cline --json (headless yolo mode)", () => {
 	test.use({
 		program: { file: CLINE_BIN, args: ["--json", "--yolo", "tell me a joke"] },
 		...TERMINAL_WIDE,

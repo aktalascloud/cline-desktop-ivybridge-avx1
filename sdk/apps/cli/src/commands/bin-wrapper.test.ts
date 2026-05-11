@@ -12,21 +12,21 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const sourceWrapperPath = fileURLToPath(
-	new URL("../../bin/clite", import.meta.url),
+	new URL("../../bin/cline", import.meta.url),
 );
 
 function createWrapperCopy(): string {
-	const dir = mkdtempSync(join(tmpdir(), "clite-bin-package-"));
+	const dir = mkdtempSync(join(tmpdir(), "cline-bin-package-"));
 	const binDir = join(dir, "bin");
 	mkdirSync(binDir, { recursive: true });
-	const wrapperPath = join(binDir, "clite");
+	const wrapperPath = join(binDir, "cline");
 	copyFileSync(sourceWrapperPath, wrapperPath);
 	chmodSync(wrapperPath, 0o755);
 	return wrapperPath;
 }
 
 function createExecutableScript(contents: string): string {
-	const dir = mkdtempSync(join(tmpdir(), "clite-bin-wrapper-"));
+	const dir = mkdtempSync(join(tmpdir(), "cline-bin-wrapper-"));
 	const scriptPath = join(dir, "child.js");
 	writeFileSync(scriptPath, `#!/usr/bin/env node\n${contents}`);
 	chmodSync(scriptPath, 0o755);
@@ -38,13 +38,13 @@ function runWrapper(target: string, args: string[] = []) {
 	return spawnSync(process.execPath, [wrapperPath, ...args], {
 		env: {
 			...process.env,
-			CLITE_BIN_PATH: target,
+			CLINE_BIN_PATH: target,
 		},
 		encoding: "utf8",
 	});
 }
 
-describe("bin/clite wrapper", () => {
+describe("bin/cline wrapper", () => {
 	it("preserves the child process exit status", () => {
 		const target = createExecutableScript(`
 process.exit(Number(process.argv[2] ?? "0"));
@@ -59,14 +59,14 @@ process.exit(Number(process.argv[2] ?? "0"));
 
 	it("passes the wrapper path to the compiled binary", () => {
 		const target = createExecutableScript(`
-console.log(process.env.CLITE_WRAPPER_PATH ?? "");
+console.log(process.env.CLINE_WRAPPER_PATH ?? "");
 `);
 
 		const result = runWrapper(target);
 
 		expect(result.error).toBeUndefined();
 		expect(result.status).toBe(0);
-		expect(result.stdout.trim()).toMatch(/bin[/\\]clite$/);
+		expect(result.stdout.trim()).toMatch(/bin[/\\]cline$/);
 	});
 
 	it.skipIf(process.platform === "win32")(

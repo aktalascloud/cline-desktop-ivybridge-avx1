@@ -46,7 +46,7 @@ export function formatCheckpointDetail(
 		typeof latest.runCount === "number" && Number.isFinite(latest.runCount)
 			? ` run ${latest.runCount}`
 			: "";
-	return `Checkpoint ${shortRef}${latestRun} created ${created}. ${count} total. Restore with: clite checkpoint restore latest --session-id ${row.sessionId}`;
+	return `Checkpoint ${shortRef}${latestRun} created ${created}. ${count} total. Restore with: cline checkpoint restore latest --session-id ${row.sessionId}`;
 }
 
 function formatUtcDate(date: Date): string {

@@ -227,7 +227,7 @@ mkdir -p ~/.cline/plugins
 cp examples/plugins/automation-events.ts ~/.cline/plugins/
 
 # Run CLI with automation enabled; the plugin emits events
-clite --enable-automation -i "Test automation events"
+cline --enable-automation -i "Test automation events"
 ```
 
 ## 🚀 Getting Started
@@ -273,7 +273,7 @@ const cline = await ClineCore.create({
 
 **In the CLI:**
 ```bash
-clite --enable-automation
+cline --enable-automation
 ```
 
 ### 5. Monitor runs

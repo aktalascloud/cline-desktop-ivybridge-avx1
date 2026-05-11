@@ -26,7 +26,7 @@ export class HubScheduleClient {
 		payload?: Record<string, unknown>,
 	): Promise<Record<string, unknown>> {
 		const reply = await sendHubCommand(this.endpoint, {
-			clientId: "clite-schedule",
+			clientId: "cline-schedule",
 			command: command as never,
 			payload,
 		});
@@ -108,7 +108,7 @@ export class LocalScheduleClient {
 	): Promise<Record<string, unknown>> {
 		const reply = await this.commands.handleCommand({
 			version: "v1",
-			clientId: "clite-schedule-local",
+			clientId: "cline-schedule-local",
 			command: command as never,
 			payload,
 		});

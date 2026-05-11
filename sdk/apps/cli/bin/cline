@@ -7,8 +7,8 @@
 // has Bun embedded, so users don't need Bun installed.
 //
 // Resolution order:
-// 1. CLITE_BIN_PATH env var override
-// 2. Cached binary at bin/.clite (created by postinstall)
+// 1. CLINE_BIN_PATH env var override
+// 2. Cached binary at bin/.cline (created by postinstall)
 // 3. Walk up node_modules to find the platform-specific package
 
 const childProcess = require("child_process");
@@ -20,7 +20,7 @@ const scriptPath = fs.realpathSync(__filename);
 const scriptDir = path.dirname(scriptPath);
 const childEnv = {
 	...process.env,
-	CLITE_WRAPPER_PATH: scriptPath,
+	CLINE_WRAPPER_PATH: scriptPath,
 };
 
 function run(target) {
@@ -43,13 +43,13 @@ function run(target) {
 }
 
 // 1. Check env var override
-const envPath = process.env.CLITE_BIN_PATH;
+const envPath = process.env.CLINE_BIN_PATH;
 if (envPath) {
 	run(envPath);
 }
 
 // 2. Check cached binary
-const cached = path.join(scriptDir, ".clite");
+const cached = path.join(scriptDir, ".cline");
 if (fs.existsSync(cached)) {
 	run(cached);
 }
@@ -75,7 +75,7 @@ if (!arch) {
 }
 
 const base = "@cline/cli-" + platform + "-" + arch;
-const binary = platform === "windows" ? "clite.exe" : "clite";
+const binary = platform === "windows" ? "cline.exe" : "cline";
 
 // Build fallback chain of package names to try
 const names = [base];

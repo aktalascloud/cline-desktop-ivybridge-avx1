@@ -1,6 +1,6 @@
 # CLI Distribution
 
-The Cline CLI (`clite`) is distributed as compiled binaries via npm. Users run `npm i -g @cline/cli` and get a working `clite` command without needing Bun, Zig, or any other runtime installed.
+The Cline CLI (`cline`) is distributed as compiled binaries via npm. Users run `npm i -g @cline/cli` and get a working `cline` command without needing Bun, Zig, or any other runtime installed.
 
 ## Why Compiled Binaries?
 
@@ -35,7 +35,7 @@ Each platform package contains a compiled binary and a minimal `package.json` wi
   "os": ["darwin"],
   "cpu": ["arm64"],
   "bin": {
-    "clite": "bin/clite"
+    "cline": "bin/cline"
   }
 }
 ```
@@ -49,7 +49,7 @@ The main `@cline/cli` wrapper package contains no binary -- just the resolver sc
   "name": "@cline/cli",
   "version": "0.1.0",
   "bin": {
-    "clite": "./bin/clite"
+    "cline": "./bin/cline"
   },
   "scripts": {
     "postinstall": "node ./postinstall.mjs || true"
@@ -65,14 +65,14 @@ The main `@cline/cli` wrapper package contains no binary -- just the resolver sc
 }
 ```
 
-After installing, users run `clite`:
+After installing, users run `cline`:
 
 ```bash
 npm i -g @cline/cli
 
-clite              # interactive mode
-clite "prompt"     # single-prompt mode
-clite auth         # authenticate a provider
+cline              # interactive mode
+cline "prompt"     # single-prompt mode
+cline auth         # authenticate a provider
 ```
 
 ## How to Publish
@@ -156,12 +156,12 @@ postinstall script runs:
   - Creates a cached hard link for fast startup
   |
   v
-User runs: clite
+User runs: cline
   |
   v
-bin/clite (Node.js resolver) executes:
-  1. Check CLITE_BIN_PATH env var override
-  2. Check cached binary at bin/.clite
+bin/cline (Node.js resolver) executes:
+  1. Check CLINE_BIN_PATH env var override
+  2. Check cached binary at bin/.cline
   3. Walk up node_modules for the platform package
   4. Execute the compiled binary
 ```
@@ -171,7 +171,7 @@ bin/clite (Node.js resolver) executes:
 ```
 apps/cli/
   bin/
-    clite                   # Node.js resolver script (npm entry point)
+    cline                   # Node.js resolver script (npm entry point)
   script/
     build.ts                # Cross-compile for all platforms
     publish-npm.ts          # npm publish orchestration
@@ -199,7 +199,7 @@ Cross-compiles the CLI for all target platforms:
 3. For each target platform:
    - Runs `bun build --compile --target bun-{os}-{arch}` to create a standalone executable
    - Generates a `package.json` with `os` and `cpu` fields for npm platform filtering
-   - Runs a smoke test on the current platform's binary (`clite --version`)
+   - Runs a smoke test on the current platform's binary (`cline --version`)
    - Copies the plugin sandbox bootstrap file if present
 
 Flags:
@@ -215,7 +215,7 @@ Orchestrates publishing all packages to npm:
 1. Reads built packages from `dist/`
 2. Publishes all 6 platform packages in parallel (`@cline/cli-darwin-arm64`, etc.)
 3. Generates a clean main package (`@cline/cli`) with:
-   - `bin.clite` pointing to the resolver script
+   - `bin.cline` pointing to the resolver script
    - `postinstall` running the binary caching script
    - `optionalDependencies` listing all platform packages
 4. Publishes the main package
@@ -224,20 +224,20 @@ Platform packages must be published before the main package because npm validate
 
 The publish script generates a separate `package.json` for the published main package. The development `package.json` (with `bin` pointing to `src/index.ts` for `bun link`) is never published directly.
 
-## Binary Resolver (`bin/clite`)
+## Binary Resolver (`bin/cline`)
 
-A Node.js script that serves as the entry point when users run `clite`. It finds and executes the correct platform-specific binary.
+A Node.js script that serves as the entry point when users run `cline`. It finds and executes the correct platform-specific binary.
 
 The shebang is `#!/usr/bin/env node` because Node.js is guaranteed to be available wherever npm is. The resolver uses only CommonJS (`require`) and Node.js APIs -- no `bun:` imports or Bun-specific APIs. It then spawns the compiled binary which has Bun embedded.
 
 Resolution chain:
-1. `CLITE_BIN_PATH` env var (for development or custom deployments)
-2. `bin/.clite` cached hard link (created by postinstall for fast startup)
+1. `CLINE_BIN_PATH` env var (for development or custom deployments)
+2. `bin/.cline` cached hard link (created by postinstall for fast startup)
 3. Walk up `node_modules` from the script directory to find the platform package
 
 ## Postinstall (`script/postinstall.mjs`)
 
-Runs after `npm install @cline/cli`. Creates a hard link from the platform binary to `bin/.clite` for fast startup on subsequent runs. Falls back to file copy if hard linking fails (NFS, cross-device, network-mounted filesystems).
+Runs after `npm install @cline/cli`. Creates a hard link from the platform binary to `bin/.cline` for fast startup on subsequent runs. Falls back to file copy if hard linking fails (NFS, cross-device, network-mounted filesystems).
 
 The postinstall is defensive: it wraps everything in try/catch and always exits 0 (the `|| true` in the npm script). If postinstall fails, the resolver script has its own fallback logic to find the binary at runtime, so the cached binary is just an optimization.
 
@@ -250,8 +250,8 @@ During development, `bin` in package.json points to `src/index.ts` for `bun link
 | Mode | bin target | Runtime | Needs Bun? |
 |---|---|---|---|
 | `bun run dev` | src/index.ts | Bun (source) | Yes |
-| `bun link` + `clite` | src/index.ts | Bun (source) | Yes |
-| `npm i -g @cline/cli` | bin/clite resolver | Compiled binary | No |
+| `bun link` + `cline` | src/index.ts | Bun (source) | Yes |
+| `npm i -g @cline/cli` | bin/cline resolver | Compiled binary | No |
 
 ## Gotchas
 

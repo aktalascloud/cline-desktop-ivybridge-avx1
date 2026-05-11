@@ -246,7 +246,7 @@ describe("runHistoryExport", () => {
 	});
 
 	it("writes standalone html from a persisted messages artifact", async () => {
-		tempDir = await mkdtemp(join(tmpdir(), "clite-history-export-"));
+		tempDir = await mkdtemp(join(tmpdir(), "cline-history-export-"));
 		const outputPath = join(tempDir, "export.html");
 		const artifact = {
 			version: 1,

@@ -79,7 +79,7 @@ describe("runScheduleCommand list output", () => {
 		expect(mockSendHubCommand).toHaveBeenCalledWith(
 			{ host: "127.0.0.1", port: 25463, pathname: "/hub" },
 			{
-				clientId: "clite-schedule",
+				clientId: "cline-schedule",
 				command: "schedule.list",
 				payload: {
 					limit: 100,
@@ -138,7 +138,7 @@ describe("runScheduleCommand import", () => {
 
 		const sourcePath = join(
 			tmpdir(),
-			`clite-schedule-import-${Date.now()}.json`,
+			`cline-schedule-import-${Date.now()}.json`,
 		);
 		await writeFile(
 			sourcePath,
@@ -175,7 +175,7 @@ describe("runScheduleCommand import", () => {
 		expect(mockSendHubCommand).toHaveBeenCalledWith(
 			{ host: "127.0.0.1", port: 25463, pathname: "/hub" },
 			{
-				clientId: "clite-schedule",
+				clientId: "cline-schedule",
 				command: "schedule.create",
 				payload: expect.objectContaining({
 					provider: "anthropic",
@@ -210,7 +210,7 @@ describe("runScheduleCommand export", () => {
 
 		const targetPath = join(
 			tmpdir(),
-			`clite-schedule-export-${Date.now()}-${Math.random()
+			`cline-schedule-export-${Date.now()}-${Math.random()
 				.toString(36)
 				.slice(2)}.json`,
 		);
@@ -246,7 +246,7 @@ describe("runScheduleCommand export", () => {
 			expect(mockSendHubCommand).toHaveBeenCalledWith(
 				{ host: "127.0.0.1", port: 25463, pathname: "/hub" },
 				{
-					clientId: "clite-schedule",
+					clientId: "cline-schedule",
 					command: "schedule.get",
 					payload: { scheduleId: "sched_abc" },
 				},
@@ -273,7 +273,7 @@ describe("runScheduleCommand export", () => {
 
 		const targetPath = join(
 			tmpdir(),
-			`clite-schedule-export-${Date.now()}-${Math.random()
+			`cline-schedule-export-${Date.now()}-${Math.random()
 				.toString(36)
 				.slice(2)}.yaml`,
 		);

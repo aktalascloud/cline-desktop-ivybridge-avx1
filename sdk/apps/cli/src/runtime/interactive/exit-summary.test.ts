@@ -88,7 +88,7 @@ describe("interactive exit summary", () => {
 		expect(output).toContain("  Messages  2");
 		expect(output).toContain("  Cost      $0.250000");
 		expect(output).toContain("  Continue  ");
-		expect(output).toContain("clite --id sess_123");
+		expect(output).toContain("cline --id sess_123");
 	});
 
 	it("formats an invalid start time without leaking NaN", () => {

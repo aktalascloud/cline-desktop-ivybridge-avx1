@@ -22,13 +22,13 @@
  *
  * Usage:
  *   # Record only inference requests
- *   CLINE_VCR=record CLINE_VCR_CASSETTE=./fixtures/my-test.json clite task "hello"
+ *   CLINE_VCR=record CLINE_VCR_CASSETTE=./fixtures/my-test.json cline task "hello"
  *
  *   # Replay — auth/S3/etc. requests go through normally, only inference is mocked
- *   CLINE_VCR=playback CLINE_VCR_CASSETTE=./fixtures/my-test.json clite task "hello"
+ *   CLINE_VCR=playback CLINE_VCR_CASSETTE=./fixtures/my-test.json cline task "hello"
  *
  *   # Record everything (no filter)
- *   CLINE_VCR=record CLINE_VCR_FILTER="" CLINE_VCR_CASSETTE=./fixtures/all.json clite task "hello"
+ *   CLINE_VCR=record CLINE_VCR_FILTER="" CLINE_VCR_CASSETTE=./fixtures/all.json cline task "hello"
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";

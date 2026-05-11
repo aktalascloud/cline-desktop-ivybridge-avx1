@@ -16,8 +16,8 @@ export const TEST_SUITE_ROOT = new URL("../", import.meta.url).pathname;
 let envCounter = 0;
 
 function createIsolatedClineDir(sourceDir: string): string {
-	const tempRoot = mkdtempSync(path.join(os.tmpdir(), "clite-tui-test-"));
-	const targetDir = path.join(tempRoot, "clite");
+	const tempRoot = mkdtempSync(path.join(os.tmpdir(), "cline-tui-test-"));
+	const targetDir = path.join(tempRoot, "cline");
 	cpSync(sourceDir, targetDir, {
 		recursive: true,
 		errorOnExist: false,

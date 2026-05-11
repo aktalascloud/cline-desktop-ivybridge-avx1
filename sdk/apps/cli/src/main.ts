@@ -318,7 +318,7 @@ export async function runCli(): Promise<void> {
 				ctx.exitCode = await runMcpWizard();
 			} else {
 				writeln(
-					"MCP wizard requires a TTY. Use clite config mcp to list servers.",
+					"MCP wizard requires a TTY. Use cline config mcp to list servers.",
 				);
 			}
 		});

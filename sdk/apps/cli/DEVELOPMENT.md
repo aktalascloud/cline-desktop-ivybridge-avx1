@@ -56,12 +56,12 @@ bun link
 
 The `build:sdk` step is required because `bun link` runs without the `--conditions=development` flag, so Bun resolves workspace packages (`@cline/llms`, `@cline/core`, etc.) via their `package.json` exports which point to `dist/`. Without the build, those dist files don't exist and you'll get "Cannot find module" errors.
 
-After linking, you can run `clite` from any directory:
+After linking, you can run `cline` from any directory:
 
 ```bash
-clite              # interactive mode
-clite "prompt"     # single-prompt mode
-clite auth         # authenticate a provider
+cline              # interactive mode
+cline "prompt"     # single-prompt mode
+cline auth         # authenticate a provider
 ```
 
 If you prefer to skip the build step, use `bun run dev` from `apps/cli/` instead -- it passes `--conditions=development` which resolves packages directly from source.
@@ -74,7 +74,7 @@ If you modify any package in `packages/` (shared, llms, agents, core, etc.), reb
 bun run build:sdk
 ```
 
-If you're using `bun run dev`, you don't need to rebuild after every SDK change -- dev mode resolves packages from source. But if you're using the linked `clite` binary, you do need to rebuild for changes to take effect.
+If you're using `bun run dev`, you don't need to rebuild after every SDK change -- dev mode resolves packages from source. But if you're using the linked `cline` binary, you do need to rebuild for changes to take effect.
 
 ## Monorepo Structure
 

@@ -3,7 +3,7 @@
 // Post-install script for @cline/cli.
 //
 // Creates a hard link (or copy fallback) from the platform-specific binary
-// to bin/.clite for fast startup on subsequent runs.
+// to bin/.cline for fast startup on subsequent runs.
 //
 // This script must use only Node.js APIs (no Bun) since it runs via
 // "node script/postinstall.mjs" in the npm lifecycle.
@@ -32,7 +32,7 @@ function main() {
 	const platform = platformMap[os.platform()] || os.platform();
 	const arch = os.arch();
 	const packageName = `@cline/cli-${platform}-${arch}`;
-	const binaryName = "clite";
+	const binaryName = "cline";
 
 	let binaryPath;
 	try {
@@ -55,7 +55,7 @@ function main() {
 		path.basename(__dirname) === "script"
 			? path.join(__dirname, "..", "bin")
 			: path.join(__dirname, "bin");
-	const target = path.join(binDir, ".clite");
+	const target = path.join(binDir, ".cline");
 
 	// Ensure bin directory exists
 	if (!fs.existsSync(binDir)) {
@@ -76,7 +76,7 @@ function main() {
 	}
 
 	fs.chmodSync(target, 0o755);
-	console.log(`Cached clite binary at ${target}`);
+	console.log(`Cached cline binary at ${target}`);
 }
 
 try {

@@ -86,7 +86,7 @@ export function getInstallationInfo(currentVersion: string): InstallationInfo {
 	const tag = getNpmTag(currentVersion);
 	try {
 		const scriptPath = realpathSync(
-			process.env.CLITE_WRAPPER_PATH || process.argv[1] || "",
+			process.env.CLINE_WRAPPER_PATH || process.argv[1] || "",
 		).replace(/\\/g, "/");
 		const packageName = getPackageNameFromWrapperPath(scriptPath);
 

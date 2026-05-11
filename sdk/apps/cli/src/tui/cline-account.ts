@@ -101,7 +101,7 @@ async function resolveValidClineAccountAuthToken(input: {
 		);
 		if (!credentials) {
 			throw new Error(
-				"Cline account requires re-authentication. Run clite auth cline.",
+				"Cline account requires re-authentication. Run cline auth cline.",
 			);
 		}
 		const nextAccessToken = toProviderApiKey("cline", credentials);

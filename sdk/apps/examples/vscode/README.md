@@ -5,13 +5,13 @@ VS Code extension that opens a chat webview and runs Cline sessions over the RPC
 ## What it does
 
 - Opens a webview panel via `Cline: Open Chat`.
-- Ensures a compatible owner-scoped RPC sidecar by running `clite rpc ensure --json`.
+- Ensures a compatible owner-scoped RPC sidecar by running `cline rpc ensure --json`.
 - Starts/sends/aborts chat turns using RPC runtime methods (`StartRuntimeSession`, `SendRuntimeSession`, `AbortRuntimeSession`).
 - Streams runtime events into the webview for incremental assistant output.
 
 ## Requirements
 
-- `clite` must already be installed and available on `PATH`.
+- `cline` must already be installed and available on `PATH`.
 - A provider/model should be configured in Cline provider settings.
 
 ## Development

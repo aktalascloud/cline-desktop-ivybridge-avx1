@@ -112,7 +112,7 @@ export function McpManagerContent(
 			<text selectable>{settingsPath}</text>
 
 			<text fg="gray" marginTop={1}>
-				Run clite mcp to add, edit, or remove servers.
+				Run cline mcp to add, edit, or remove servers.
 			</text>
 
 			{servers.length > 0 && (
