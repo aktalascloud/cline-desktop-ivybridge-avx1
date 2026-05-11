@@ -879,6 +879,7 @@ describe("HubServerTransport boundaries", () => {
 					payload: {
 						sessionId: string;
 						prompt: string;
+						mode?: string;
 						attachments: { userFiles: string[] };
 					};
 				}) => Promise<{ ok: boolean }>;
@@ -891,6 +892,7 @@ describe("HubServerTransport boundaries", () => {
 			payload: {
 				sessionId: "session-1",
 				prompt: "Use this file",
+				mode: "plan",
 				attachments: { userFiles: ["/tmp/project/note.md"] },
 			},
 		});
@@ -900,6 +902,7 @@ describe("HubServerTransport boundaries", () => {
 			expect.objectContaining({
 				sessionId: "session-1",
 				prompt: "Use this file",
+				mode: "plan",
 				userFiles: ["/tmp/project/note.md"],
 			}),
 		);

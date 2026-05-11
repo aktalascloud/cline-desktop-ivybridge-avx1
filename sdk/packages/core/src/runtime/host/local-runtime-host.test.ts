@@ -1995,12 +1995,17 @@ describe("LocalRuntimeHost", () => {
 
 		await manager.startSession(
 			normalizeStartInput({
-				config: createConfig({ sessionId, mode: "plan" }),
+				config: createConfig({ sessionId, mode: "act" }),
 				interactive: true,
 			}),
 		);
 		await expect(
-			manager.runTurn({ sessionId, prompt: "steer this", delivery: "steer" }),
+			manager.runTurn({
+				sessionId,
+				prompt: "steer this",
+				mode: "plan",
+				delivery: "steer",
+			}),
 		).resolves.toBeUndefined();
 
 		const consumed = await Promise.resolve(
@@ -2473,12 +2478,26 @@ describe("LocalRuntimeHost", () => {
 			}),
 		);
 		const first = await manager.runTurn({ sessionId, prompt: "first" });
-		const second = await manager.runTurn({ sessionId, prompt: "second" });
+		const second = await manager.runTurn({
+			sessionId,
+			prompt: "second",
+			mode: "plan",
+		});
 
 		expect(first?.text).toBe("first");
 		expect(second?.text).toBe("second");
 		expect(run).toHaveBeenCalledTimes(1);
 		expect(continueFn).toHaveBeenCalledTimes(1);
+		expect(run).toHaveBeenCalledWith(
+			'<user_input mode="act">first</user_input>',
+			undefined,
+			undefined,
+		);
+		expect(continueFn).toHaveBeenCalledWith(
+			'<user_input mode="plan">second</user_input>',
+			undefined,
+			undefined,
+		);
 		expect(sessionService.persistSessionMessages).toHaveBeenCalledTimes(2);
 	});
 

@@ -1,4 +1,5 @@
 import type {
+	AgentMode,
 	AgentResult,
 	HubCommandEnvelope,
 	HubReplyEnvelope,
@@ -32,6 +33,11 @@ function errorMessageForResult(result: AgentResult): string | undefined {
 	}
 	const text = result.text.trim();
 	return text || undefined;
+}
+
+function parseTurnMode(mode?: unknown): AgentMode | undefined {
+	// Unknown truthy values flow through and formatModePrompt treats them as act.
+	return mode ? (mode as AgentMode) : undefined;
 }
 
 function parseRunTimeoutMs(
@@ -196,6 +202,7 @@ export async function handleSessionInput(
 			{
 				sessionId,
 				prompt,
+				mode: parseTurnMode(payload.mode),
 				delivery:
 					payload.delivery === "queue" || payload.delivery === "steer"
 						? payload.delivery

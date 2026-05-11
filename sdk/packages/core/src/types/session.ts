@@ -5,7 +5,7 @@ import type { SessionRuntime } from "../runtime/orchestration/session-runtime-or
 import type { SessionRow } from "../session/models/session-row";
 import type { RootSessionArtifacts } from "../session/services/session-service";
 import type { SessionSource, SessionStatus } from "./common";
-import type { CoreSessionConfig } from "./config";
+import type { CoreAgentMode, CoreSessionConfig } from "./config";
 
 export type ActiveSession = {
 	sessionId: string;
@@ -56,6 +56,7 @@ export type ActiveSession = {
 export type PendingPrompt = {
 	id: string;
 	prompt: string;
+	mode?: CoreAgentMode;
 	delivery: "queue" | "steer";
 	userImages?: string[];
 	userFiles?: string[];

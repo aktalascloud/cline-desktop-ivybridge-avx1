@@ -1,5 +1,9 @@
 import type * as LlmsProviders from "@cline/llms";
-import type { AgentResult, RuntimeConfigExtensionKind } from "@cline/shared";
+import type {
+	AgentMode,
+	AgentResult,
+	RuntimeConfigExtensionKind,
+} from "@cline/shared";
 import type { HookEventPayload } from "../../hooks";
 import type { CheckpointEntry } from "../../hooks/checkpoint-hooks";
 import type { ProviderSettings } from "../../services/llms/provider-settings";
@@ -159,6 +163,7 @@ export interface StartSessionResult {
 export interface SendSessionInput {
 	sessionId: string;
 	prompt: string;
+	mode?: AgentMode;
 	userImages?: string[];
 	userFiles?: string[];
 	delivery?: "queue" | "steer";
@@ -194,6 +199,7 @@ export interface PendingPromptsUpdateInput {
 	sessionId: string;
 	promptId: string;
 	prompt?: string;
+	mode?: AgentMode;
 	delivery?: "queue" | "steer";
 }
 

@@ -444,10 +444,13 @@ export class LocalRuntimeHost implements RuntimeHost {
 				configWithProvider.onConsecutiveMistakeLimitReached,
 			completionPolicy: runtime.completionPolicy,
 			consumePendingUserMessage: () => {
-				const prompt = this.pendingPromptsController.consumeSteer(sessionId);
-				return prompt
-					? formatModePrompt(prompt, configWithProvider.mode)
-					: prompt;
+				const entry = this.pendingPromptsController.consumeSteer(sessionId);
+				return entry
+					? formatModePrompt(
+							entry.prompt,
+							entry.mode ?? configWithProvider.mode,
+						)
+					: undefined;
 			},
 			logger: runtime.logger ?? configWithProvider.logger,
 			extensionContext: configWithProvider.extensionContext,
@@ -661,6 +664,7 @@ export class LocalRuntimeHost implements RuntimeHost {
 		if (delivery === "queue" || delivery === "steer") {
 			this.pendingPromptsController.enqueue(input.sessionId, {
 				prompt: input.prompt,
+				mode: input.mode,
 				delivery,
 				userImages: input.userImages,
 				userFiles: input.userFiles,
@@ -670,6 +674,7 @@ export class LocalRuntimeHost implements RuntimeHost {
 		try {
 			const result = await this.executeTurn(session, {
 				prompt: input.prompt,
+				mode: input.mode,
 				userImages: input.userImages,
 				userFiles: input.userFiles,
 			});
@@ -899,6 +904,7 @@ export class LocalRuntimeHost implements RuntimeHost {
 		session: ActiveSession,
 		input: {
 			prompt: string;
+			mode?: SendSessionInput["mode"];
 			userImages?: string[];
 			userFiles?: string[];
 		},
@@ -1142,6 +1148,7 @@ export class LocalRuntimeHost implements RuntimeHost {
 		session: ActiveSession,
 		input: {
 			prompt: string;
+			mode?: SendSessionInput["mode"];
 			userImages?: string[];
 			userFiles?: string[];
 		},
@@ -1165,7 +1172,10 @@ export class LocalRuntimeHost implements RuntimeHost {
 		);
 		emitMentionTelemetry(session.config.telemetry, enriched);
 
-		const prompt = formatModePrompt(enriched.prompt, session.config.mode);
+		const prompt = formatModePrompt(
+			enriched.prompt,
+			input.mode ?? session.config.mode,
+		);
 		const explicitUserFiles = this.resolveAbsoluteFilePaths(
 			session.config.cwd,
 			input.userFiles,

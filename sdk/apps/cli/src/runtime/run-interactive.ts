@@ -142,6 +142,43 @@ export async function runInteractive(
 			uiEvents.emit("pending-prompt-submitted", event);
 		},
 	});
+	let modeChangePromise: Promise<void> | undefined;
+	let modeChangeTarget: "plan" | "act" | undefined;
+
+	const isInteractiveMode = (mode: unknown): mode is "plan" | "act" =>
+		mode === "plan" || mode === "act";
+
+	const applyModeChange = (mode: "plan" | "act"): Promise<void> => {
+		if (modeChangePromise && modeChangeTarget === mode) {
+			return modeChangePromise;
+		}
+		let next: Promise<void>;
+		next = (async () => {
+			if (modeChangePromise) {
+				await modeChangePromise;
+			}
+			await sessionRuntime.ensureReady();
+			await sessionRuntime.applyMode(mode);
+		})().finally(() => {
+			if (modeChangePromise === next) {
+				modeChangePromise = undefined;
+				modeChangeTarget = undefined;
+			}
+		});
+		modeChangePromise = next;
+		modeChangeTarget = mode;
+		return next;
+	};
+
+	const waitForSubmittedMode = async (mode: unknown): Promise<void> => {
+		if (!isInteractiveMode(mode)) return;
+		if (modeChangePromise) {
+			await modeChangePromise;
+		}
+		if (config.mode !== mode) {
+			await applyModeChange(mode);
+		}
+	};
 
 	let isRunning = false;
 	setActiveRuntimeAbort(sessionRuntime.abortAll);
@@ -332,9 +369,10 @@ export async function runInteractive(
 				uiEvents.off("pending-prompt-submitted", onPendingPromptSubmitted);
 			};
 		},
-		onSubmit: async (input, _mode, delivery, attachments) => {
+		onSubmit: async (input, mode, delivery, attachments) => {
 			try {
 				await sessionRuntime.ensureReady();
+				await waitForSubmittedMode(mode);
 				sessionRuntime.resetAbortRequest();
 				if (!delivery) {
 					isRunning = true;
@@ -376,6 +414,7 @@ export async function runInteractive(
 
 				const result = await sessionRuntime.sendCurrentTurn({
 					prompt: userInput,
+					mode,
 					userImages:
 						mergedUserImages.length > 0 ? mergedUserImages : undefined,
 					userFiles: userFiles.length > 0 ? userFiles : undefined,
@@ -468,16 +507,13 @@ export async function runInteractive(
 			void refreshInteractiveSessionPolicies();
 		},
 		onModeChange: async (mode) => {
-			await sessionRuntime.ensureReady();
-			if (mode !== "plan" && mode !== "act") {
-				return;
-			}
+			if (!isInteractiveMode(mode)) return;
 			if (isRunning) {
 				pendingModeChange.current = mode;
 				sessionRuntime.abortAll();
 				return;
 			}
-			await sessionRuntime.applyMode(mode);
+			await applyModeChange(mode);
 		},
 		onModelChange: async () => {
 			await sessionRuntime.ensureReady();

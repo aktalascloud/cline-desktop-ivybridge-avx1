@@ -348,6 +348,7 @@ export class HubSessionClient {
 			"session.send_input",
 			{
 				prompt: request.prompt,
+				mode: request.config.mode,
 				attachments: request.attachments,
 				delivery: request.delivery,
 				timeoutSeconds: request.config.timeoutSeconds,

@@ -1043,6 +1043,7 @@ export class HubRuntimeHost implements RuntimeHost {
 			{
 				sessionId: input.sessionId,
 				input: input.prompt,
+				mode: input.mode,
 				attachments:
 					(input.userImages?.length ?? 0) > 0 ||
 					(input.userFiles?.length ?? 0) > 0

@@ -1,4 +1,4 @@
-import { normalizeUserInput } from "@cline/shared";
+import { type AgentMode, normalizeUserInput } from "@cline/shared";
 import { nanoid } from "nanoid";
 import type {
 	CoreSessionEvent,
@@ -16,6 +16,7 @@ export type PendingPromptDelivery = "queue" | "steer";
 export interface PendingPromptEntry {
 	id: string;
 	prompt: string;
+	mode?: AgentMode;
 	delivery: PendingPromptDelivery;
 	userImages?: string[];
 	userFiles?: string[];
@@ -31,6 +32,7 @@ export interface PendingPromptsControllerDeps {
 	send(input: {
 		sessionId: string;
 		prompt: string;
+		mode?: AgentMode;
 		userImages?: string[];
 		userFiles?: string[];
 	}): Promise<unknown>;
@@ -38,6 +40,7 @@ export interface PendingPromptsControllerDeps {
 
 export interface PendingPromptEnqueueInput {
 	prompt: string;
+	mode?: AgentMode;
 	delivery: PendingPromptDelivery;
 	userImages?: string[];
 	userFiles?: string[];
@@ -88,7 +91,12 @@ export class PendingPromptService {
 			throw new Error("prompt cannot be empty");
 		}
 		const delivery = input.delivery ?? existing.delivery;
-		const next: PendingPromptEntry = { ...existing, prompt, delivery };
+		const next: PendingPromptEntry = {
+			...existing,
+			prompt,
+			mode: input.mode ?? existing.mode,
+			delivery,
+		};
 		state.pendingPrompts.splice(index, 1);
 		insertUpdatedPrompt(state, next, index, existing.delivery);
 		return {
@@ -130,7 +138,7 @@ export class PendingPromptService {
 		state: PendingPromptQueueState,
 		input: PendingPromptEnqueueInput,
 	): SessionPendingPrompt[] {
-		const { prompt, delivery, userImages, userFiles } = input;
+		const { prompt, mode, delivery, userImages, userFiles } = input;
 		const existingIndex = state.pendingPrompts.findIndex(
 			(queued) => queued.prompt === prompt,
 		);
@@ -139,6 +147,7 @@ export class PendingPromptService {
 			const next: PendingPromptEntry = {
 				...existing,
 				prompt,
+				mode: mode ?? existing.mode,
 				userImages: userImages ?? existing.userImages,
 				userFiles: userFiles ?? existing.userFiles,
 			};
@@ -151,6 +160,7 @@ export class PendingPromptService {
 			const newEntry: PendingPromptEntry = {
 				id: `pending_${Date.now()}_${nanoid(5)}`,
 				prompt,
+				mode,
 				delivery,
 				userImages,
 				userFiles,
@@ -229,6 +239,7 @@ export class PendingPromptsController {
 		sessionId: string,
 		entry: {
 			prompt: string;
+			mode?: AgentMode;
 			delivery: "queue" | "steer";
 			userImages?: string[];
 			userFiles?: string[];
@@ -241,14 +252,14 @@ export class PendingPromptsController {
 		this.scheduleDrain(sessionId, session);
 	}
 
-	consumeSteer(sessionId: string): string | undefined {
+	consumeSteer(sessionId: string): PendingPromptEntry | undefined {
 		const session = this.deps.getSession(sessionId);
 		if (!session) return undefined;
 		const { entry: steer } = this.service.consumeSteer(session);
 		if (!steer) return undefined;
 		this.emitPrompts(session);
 		this.emitSubmitted(session, steer);
-		return steer.prompt;
+		return steer;
 	}
 
 	clearAborted(session: ActiveSession): void {
@@ -300,6 +311,7 @@ export class PendingPromptsController {
 			await this.deps.send({
 				sessionId,
 				prompt: next.prompt,
+				...(next.mode ? { mode: next.mode } : {}),
 				userImages: next.userImages,
 				userFiles: next.userFiles,
 			});

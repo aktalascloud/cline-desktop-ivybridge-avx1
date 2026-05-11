@@ -211,6 +211,7 @@ describe("HubRuntimeHost", () => {
 		const sent = await host.runTurn({
 			sessionId: "sess-1",
 			prompt: "Hey",
+			mode: "plan",
 			delivery: "queue",
 		});
 
@@ -222,6 +223,7 @@ describe("HubRuntimeHost", () => {
 			{
 				sessionId: "sess-1",
 				input: "Hey",
+				mode: "plan",
 				attachments: undefined,
 				delivery: "queue",
 			},
