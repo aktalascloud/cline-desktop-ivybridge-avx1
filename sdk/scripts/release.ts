@@ -47,9 +47,7 @@ if (!target || !["sdk", "cli"].includes(target)) {
 	console.error("");
 	console.error("Targets:");
 	console.error("  sdk   Publish @cline/{shared,llms,agents,core,sdk} to npm");
-	console.error(
-		"  cli   Publish @cline/cli from an existing cli-vX.Y.Z git tag",
-	);
+	console.error("  cli   Publish cline from an existing cli-vX.Y.Z git tag");
 	console.error("");
 	console.error("Options:");
 	console.error(
@@ -487,7 +485,7 @@ async function releaseCLI(version: string): Promise<number> {
 		console.log(`  CLI v${version} published to npm.`);
 		console.log("");
 		console.log("  Install via npm:");
-		console.log("    npm install -g @cline/cli");
+		console.log("    npm install -g cline");
 	}
 	console.log(`${"═".repeat(60)}\n`);
 

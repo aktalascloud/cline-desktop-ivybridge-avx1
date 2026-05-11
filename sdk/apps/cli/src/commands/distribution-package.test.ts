@@ -47,7 +47,7 @@ describe("CLI distribution package shape", () => {
 				join(packageDir, "package.json"),
 				`${JSON.stringify(
 					{
-						name: "@cline/cli",
+						name: "cline",
 						version: "1.2.3",
 						description: "CLI test package",
 						license: "Apache-2.0",

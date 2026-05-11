@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-// Publishes @cline/cli and all platform-specific binary packages to npm.
+// Publishes cline and all platform-specific binary packages to npm.
 //
 // Usage:
 //   bun script/publish-npm.ts                 # publish with "latest" tag
@@ -30,6 +30,7 @@ const { values } = parseArgs({
 
 const dryRun = values["dry-run"] ?? false;
 const npmTag = values.tag ?? "latest";
+const wrapperPackageName = "cline";
 
 const expectedPlatformPackages = [
 	"@cline/cli-darwin-arm64",
@@ -175,7 +176,7 @@ if (sourceVersion !== version) {
 const sourceRepository =
 	"repository" in sourcePkgRecord ? sourcePkgRecord.repository : undefined;
 
-console.log(`Publishing @cline/cli v${version}`);
+console.log(`Publishing ${wrapperPackageName} v${version}`);
 console.log(`  Tag: ${npmTag}`);
 console.log(`  Dry run: ${dryRun}`);
 console.log(`  Platform packages: ${Object.keys(binaries).length}`);
@@ -230,7 +231,7 @@ const license =
 		? mainPkgRecord.license
 		: undefined;
 const wrapperPackageJson = {
-	name: "@cline/cli",
+	name: wrapperPackageName,
 	version,
 	description: description || "Cline CLI",
 	license: license || "Apache-2.0",
@@ -251,46 +252,21 @@ await Bun.write(
 
 if (dryRun) {
 	console.log(
-		`  [dry-run] Would publish @cline/cli@${version} with tag ${npmTag}`,
-	);
-	console.log(
-		`  [dry-run] Would publish @clinebot/cli@${version} with tag ${npmTag}`,
+		`  [dry-run] Would publish ${wrapperPackageName}@${version} with tag ${npmTag}`,
 	);
 	console.log("\nDry run complete. No packages were published.");
 } else {
 	await publishPackage({
-		name: "@cline/cli",
+		name: wrapperPackageName,
 		version,
 		dir: mainPkgDir,
 		tag: npmTag,
 		dryRun: false,
 	});
-	console.log(`\nPublished @cline/cli@${version} with tag ${npmTag}`);
-
-	// Publish mirror wrapper under the legacy @clinebot scope so existing
-	// users who installed via `npm i -g @clinebot/cli` continue receiving
-	// updates. The wrapper is identical except for the package name; it
-	// references the same @cline/cli-* platform packages.
-	console.log("\nPreparing @clinebot/cli mirror package...");
-	const mirrorPkgDir = join(cliDir, "dist", "cli-mirror");
-	await $`rm -rf ${mirrorPkgDir}`;
-	await $`cp -r ${mainPkgDir} ${mirrorPkgDir}`;
-
-	const mirrorPackageJson = { ...wrapperPackageJson, name: "@clinebot/cli" };
-	await Bun.write(
-		join(mirrorPkgDir, "package.json"),
-		`${JSON.stringify(mirrorPackageJson, null, 2)}\n`,
+	console.log(
+		`\nPublished ${wrapperPackageName}@${version} with tag ${npmTag}`,
 	);
 
-	await publishPackage({
-		name: "@clinebot/cli",
-		version,
-		dir: mirrorPkgDir,
-		tag: npmTag,
-		dryRun: false,
-	});
-	console.log(`Published @clinebot/cli@${version} with tag ${npmTag}`);
-
 	console.log("\nInstall with:");
-	console.log(`  npm install -g @cline/cli`);
+	console.log(`  npm install -g ${wrapperPackageName}`);
 }

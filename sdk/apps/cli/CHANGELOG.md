@@ -1,5 +1,10 @@
 # Cline CLI Changelog
 
+## 3.0.0 (2026-05-11)
+
+- Publish the SDK CLI as `cline` for the public package handoff
+- Keep platform-specific binaries under `@cline/cli-*` and resolve them from the `cline` wrapper package
+
 ## 0.0.13 (2026-05-07)
 
 - Detect prompt-cache support from cache write pricing so providers with write-only caching are represented correctly in the model catalog

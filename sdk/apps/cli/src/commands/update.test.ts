@@ -34,54 +34,26 @@ describe("getInstallationInfo", () => {
 	});
 
 	it("detects npm installs from the wrapper path passed to the compiled binary", () => {
-		const wrapperPath = createTempFile("lib/node_modules/@cline/cli/bin/cline");
+		const wrapperPath = createTempFile("lib/node_modules/cline/bin/cline");
 		process.env.CLINE_WRAPPER_PATH = wrapperPath;
 		process.argv = ["bun", "/$bunfs/root/cline", "update", "--verbose"];
 
 		expect(getInstallationInfo("1.2.3")).toEqual({
 			packageManager: PackageManager.NPM,
-			packageName: "@cline/cli",
-			updateCommand: "npm install -g @cline/cli@latest",
-		});
-	});
-
-	it("updates the legacy package when launched from the @clinebot wrapper", () => {
-		const wrapperPath = createTempFile(
-			"lib/node_modules/@clinebot/cli/bin/cline",
-		);
-		process.env.CLINE_WRAPPER_PATH = wrapperPath;
-		process.argv = ["bun", "/$bunfs/root/cline", "update", "--verbose"];
-
-		expect(getInstallationInfo("1.2.3")).toEqual({
-			packageManager: PackageManager.NPM,
-			packageName: "@clinebot/cli",
-			updateCommand: "npm install -g @clinebot/cli@latest",
+			packageName: "cline",
+			updateCommand: "npm install -g cline@latest",
 		});
 	});
 
 	it("uses the nightly tag when the current CLI version is nightly", () => {
-		const wrapperPath = createTempFile("lib/node_modules/@cline/cli/bin/cline");
+		const wrapperPath = createTempFile("lib/node_modules/cline/bin/cline");
 		process.env.CLINE_WRAPPER_PATH = wrapperPath;
 		process.argv = ["bun", "/$bunfs/root/cline", "update", "--verbose"];
 
 		expect(getInstallationInfo("1.2.3-nightly.456")).toEqual({
 			packageManager: PackageManager.NPM,
-			packageName: "@cline/cli",
-			updateCommand: "npm install -g @cline/cli@nightly",
-		});
-	});
-
-	it("uses the nightly tag for legacy wrapper updates", () => {
-		const wrapperPath = createTempFile(
-			"lib/node_modules/@clinebot/cli/bin/cline",
-		);
-		process.env.CLINE_WRAPPER_PATH = wrapperPath;
-		process.argv = ["bun", "/$bunfs/root/cline", "update", "--verbose"];
-
-		expect(getInstallationInfo("1.2.3-nightly.456")).toEqual({
-			packageManager: PackageManager.NPM,
-			packageName: "@clinebot/cli",
-			updateCommand: "npm install -g @clinebot/cli@nightly",
+			packageName: "cline",
+			updateCommand: "npm install -g cline@nightly",
 		});
 	});
 
@@ -91,7 +63,7 @@ describe("getInstallationInfo", () => {
 
 		expect(getInstallationInfo("1.2.3")).toEqual({
 			packageManager: PackageManager.UNKNOWN,
-			packageName: "@cline/cli",
+			packageName: "cline",
 		});
 	});
 });

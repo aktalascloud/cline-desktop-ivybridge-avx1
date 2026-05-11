@@ -13,12 +13,10 @@ Detailed CLI command/feature reference is centralized in [`DOC.md`](./DOC.md).
 
 ## Installation
 
-> NOTE: The package is not published yet, so the CLI is not available on npm. To use the CLI, you can clone the repository and link the package locally with `bun link` from the `@cline/cli` workspace. Global installation from npm will be available after the initial release.
-
 ```bash
-npm i -g @cline/cli
+npm i -g cline
 # or
-bun i -g @cline/cli
+bun i -g cline
 ```
 
 ## Development

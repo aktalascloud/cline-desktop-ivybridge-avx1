@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Post-install script for @cline/cli.
+// Post-install script for Cline CLI.
 //
 // Creates a hard link (or copy fallback) from the platform-specific binary
 // to bin/.cline for fast startup on subsequent runs.

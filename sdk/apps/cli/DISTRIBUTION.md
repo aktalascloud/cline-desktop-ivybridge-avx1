@@ -1,6 +1,6 @@
 # CLI Distribution
 
-The Cline CLI (`cline`) is distributed as compiled binaries via npm. Users run `npm i -g @cline/cli` and get a working `cline` command without needing Bun, Zig, or any other runtime installed.
+The Cline CLI (`cline`) is distributed as compiled binaries via npm. Users run `npm i -g cline` and get a working `cline` command without needing Bun, Zig, or any other runtime installed.
 
 ## Why Compiled Binaries?
 
@@ -24,7 +24,7 @@ Publishing the CLI publishes 7 packages to npm:
 | `@cline/cli-linux-x64` | Linux x64 binary |
 | `@cline/cli-windows-x64` | Windows x64 binary |
 | `@cline/cli-windows-arm64` | Windows ARM binary |
-| `@cline/cli` | Wrapper package (pulls the right binary via `optionalDependencies`) |
+| `cline` | Wrapper package (pulls the right binary via `optionalDependencies`) |
 
 Each platform package contains a compiled binary and a minimal `package.json` with `os` and `cpu` fields:
 
@@ -42,11 +42,11 @@ Each platform package contains a compiled binary and a minimal `package.json` wi
 
 The `os` and `cpu` fields tell npm to skip this package on non-matching platforms. A macOS ARM user gets ~30-60MB, not ~200MB of binaries for every platform.
 
-The main `@cline/cli` wrapper package contains no binary -- just the resolver script, postinstall script, and `optionalDependencies` pointing to all platform packages:
+The `cline` wrapper package contains no binary -- just the resolver script, postinstall script, and `optionalDependencies` pointing to all platform packages:
 
 ```json
 {
-  "name": "@cline/cli",
+  "name": "cline",
   "version": "0.1.0",
   "bin": {
     "cline": "./bin/cline"
@@ -68,7 +68,7 @@ The main `@cline/cli` wrapper package contains no binary -- just the resolver sc
 After installing, users run `cline`:
 
 ```bash
-npm i -g @cline/cli
+npm i -g cline
 
 cline              # interactive mode
 cline "prompt"     # single-prompt mode
@@ -80,7 +80,7 @@ cline auth         # authenticate a provider
 Every release starts by preparing one release commit from the code you want to publish:
 
 1. Draft user-facing release notes from the commits since the last `cli-vX.Y.Z` tag.
-2. Choose the release version.
+2. Choose the release version. Because this publishes over the existing `cline` package, the version must be greater than the current published `cline` version. The handoff release is `3.0.0`.
 3. Update `apps/cli/package.json`.
 4. Add the approved notes to `apps/cli/CHANGELOG.md`.
 5. Run checks.
@@ -115,9 +115,9 @@ bun release cli
 gh release create cli-vX.Y.Z --verify-tag --title "CLI vX.Y.Z" --notes "Paste the approved release notes here."
 ```
 
-The release helper checks the working tree, verifies the tag points at `HEAD` locally and on `origin`, runs tests, builds all platform packages, and publishes the platform packages plus wrapper package to npm. The package version and tag must match.
+The release helper checks the working tree, verifies the tag points at `HEAD` locally and on `origin`, runs tests, builds all platform packages, and publishes the platform packages plus the generated `cline` wrapper package to npm. The package version and tag must match.
 
-By default, `bun release cli` publishes with the npm dist-tag `latest` (what users get with `npm i -g @cline/cli`). To publish under a different dist-tag like `next`, pass `--tag`:
+By default, `bun release cli` publishes with the npm dist-tag `latest` (what users get with `npm i -g cline`). To publish under a different dist-tag like `next`, pass `--tag`:
 
 ```bash
 bun release cli --tag next
@@ -132,15 +132,15 @@ The GitHub workflow at `.github/workflows/publish-cli.yaml` automates publishing
 - Nightly releases run on a schedule or manually with `publish_target=nightly`.
 - Nightly releases publish `X.Y.Z-nightly.TIMESTAMP` to npm with the `nightly` dist-tag and skip if there were no commits in the last 24 hours unless forced.
 
-CI publishing uses npm trusted publishing. Configure npm trusted publishers for the wrapper package and every platform package before relying on the workflow.
+CI publishing uses npm trusted publishing. Configure npm trusted publishers for the `cline` wrapper package and every platform package before relying on the workflow.
 
 ## How It Works Under the Hood
 
 ```
-User runs: npm i -g @cline/cli
+User runs: npm i -g cline
   |
   v
-npm installs @cline/cli (wrapper package)
+npm installs cline (wrapper package)
   + optionalDependencies (only the matching platform gets installed):
     - @cline/cli-darwin-arm64
     - @cline/cli-darwin-x64
@@ -214,15 +214,15 @@ Orchestrates publishing all packages to npm:
 
 1. Reads built packages from `dist/`
 2. Publishes all 6 platform packages in parallel (`@cline/cli-darwin-arm64`, etc.)
-3. Generates a clean main package (`@cline/cli`) with:
+3. Generates a clean main package (`cline`) with:
    - `bin.cline` pointing to the resolver script
    - `postinstall` running the binary caching script
    - `optionalDependencies` listing all platform packages
-4. Publishes the main package
+4. Publishes the generated `cline` wrapper package
 
-Platform packages must be published before the main package because npm validates that `optionalDependencies` exist.
+Platform packages must be published before the generated `cline` wrapper package because npm validates that `optionalDependencies` exist.
 
-The publish script generates a separate `package.json` for the published main package. The development `package.json` (with `bin` pointing to `src/index.ts` for `bun link`) is never published directly.
+The publish script generates a separate `package.json` for the published `cline` wrapper package. The development `package.json` (with `bin` pointing to `src/index.ts` for `bun link`) is never published directly.
 
 ## Binary Resolver (`bin/cline`)
 
@@ -237,7 +237,7 @@ Resolution chain:
 
 ## Postinstall (`script/postinstall.mjs`)
 
-Runs after `npm install @cline/cli`. Creates a hard link from the platform binary to `bin/.cline` for fast startup on subsequent runs. Falls back to file copy if hard linking fails (NFS, cross-device, network-mounted filesystems).
+Runs after `npm install cline`. Creates a hard link from the platform binary to `bin/.cline` for fast startup on subsequent runs. Falls back to file copy if hard linking fails (NFS, cross-device, network-mounted filesystems).
 
 The postinstall is defensive: it wraps everything in try/catch and always exits 0 (the `|| true` in the npm script). If postinstall fails, the resolver script has its own fallback logic to find the binary at runtime, so the cached binary is just an optimization.
 
@@ -251,7 +251,7 @@ During development, `bin` in package.json points to `src/index.ts` for `bun link
 |---|---|---|---|
 | `bun run dev` | src/index.ts | Bun (source) | Yes |
 | `bun link` + `cline` | src/index.ts | Bun (source) | Yes |
-| `npm i -g @cline/cli` | bin/cline resolver | Compiled binary | No |
+| `npm i -g cline` | bin/cline resolver | Compiled binary | No |
 
 ## Gotchas
 
@@ -262,7 +262,7 @@ When building for a different platform (e.g., compiling for Linux on a Mac), Bun
 All 7 packages (6 platform + 1 wrapper) must have the same version. The build script reads the version from `apps/cli/package.json`. The publish script verifies that the built package versions match each other and `apps/cli/package.json`.
 
 ### Package naming and scoping
-All packages are published under the `@cline` scope. The npm org must have the right permissions for all 7 package names.
+Platform packages are published under the `@cline` scope. The generated wrapper package is published as `cline`, so npm trusted publishing must be configured for all 7 package names.
 
 ### postinstall reliability
 The postinstall script runs in diverse environments (CI, Docker, restricted permissions, network-mounted filesystems where hard links fail). It always wraps operations in try/catch and exits 0. The resolver script is the ultimate fallback.

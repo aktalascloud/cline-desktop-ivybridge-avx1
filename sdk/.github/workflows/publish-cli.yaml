@@ -33,7 +33,7 @@ permissions:
 
 jobs:
   publish-main:
-    name: Publish @cline/cli
+    name: Publish cline
     permissions:
       contents: write
       id-token: write
@@ -182,13 +182,13 @@ jobs:
           gh release create "$TAG" \
             --verify-tag \
             --title "CLI v${VERSION}" \
-            --notes "Published @cline/cli@${VERSION} to npm."
+            --notes "Published cline@${VERSION} to npm."
 
       - name: Summary
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "Published @cline/cli@${VERSION} to npm with dist-tag 'latest'"
-          echo "Install with: npm install -g @cline/cli"
+          echo "Published cline@${VERSION} to npm with dist-tag 'latest'"
+          echo "Install with: npm install -g cline"
 
       - name: Post release to Slack
         uses: slackapi/slack-github-action@v3.0.1
@@ -206,10 +206,10 @@ jobs:
               - type: "context"
                 elements:
                   - type: "mrkdwn"
-                    text: "<https://www.npmjs.com/package/@cline/cli/v/${{ steps.version.outputs.version }}|View on npm>"
+                    text: "<https://www.npmjs.com/package/cline/v/${{ steps.version.outputs.version }}|View on npm>"
 
   publish-nightly:
-    name: Publish @cline/cli nightly
+    name: Publish cline nightly
     permissions:
       contents: read
       id-token: write
@@ -365,5 +365,5 @@ jobs:
         if: steps.check_commits.outputs.skip != 'true'
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          echo "Published @cline/cli@${VERSION} to npm with dist-tag 'nightly'"
-          echo "Install with: npm install -g @cline/cli@nightly"
+          echo "Published cline@${VERSION} to npm with dist-tag 'nightly'"
+          echo "Install with: npm install -g cline@nightly"

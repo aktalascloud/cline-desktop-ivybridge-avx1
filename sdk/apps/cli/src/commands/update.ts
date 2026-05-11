@@ -11,10 +11,9 @@ import { version } from "../../package.json";
 import { ensureCliHubServer } from "../utils/hub-runtime";
 import { c, writeErr, writeln } from "../utils/output";
 
-const DEFAULT_PACKAGE_NAME = "@cline/cli";
-const LEGACY_PACKAGE_NAME = "@clinebot/cli";
+const DEFAULT_PACKAGE_NAME = "cline";
 
-type CliPackageName = typeof DEFAULT_PACKAGE_NAME | typeof LEGACY_PACKAGE_NAME;
+type CliPackageName = typeof DEFAULT_PACKAGE_NAME;
 
 export enum PackageManager {
 	NPM = "npm",
@@ -75,23 +74,18 @@ function compareVersions(v1: string, v2: string): number {
 	return 0;
 }
 
-function getPackageNameFromWrapperPath(scriptPath: string): CliPackageName {
-	if (scriptPath.includes(`/node_modules/${LEGACY_PACKAGE_NAME}/`)) {
-		return LEGACY_PACKAGE_NAME;
-	}
-	return DEFAULT_PACKAGE_NAME;
-}
-
 export function getInstallationInfo(currentVersion: string): InstallationInfo {
 	const tag = getNpmTag(currentVersion);
 	try {
 		const scriptPath = realpathSync(
 			process.env.CLINE_WRAPPER_PATH || process.argv[1] || "",
 		).replace(/\\/g, "/");
-		const packageName = getPackageNameFromWrapperPath(scriptPath);
 
 		if (scriptPath.includes("/.npm/_npx") || scriptPath.includes("/npm/_npx")) {
-			return { packageManager: PackageManager.NPX, packageName };
+			return {
+				packageManager: PackageManager.NPX,
+				packageName: DEFAULT_PACKAGE_NAME,
+			};
 		}
 		if (
 			scriptPath.includes("/.pnpm/global") ||
@@ -99,29 +93,29 @@ export function getInstallationInfo(currentVersion: string): InstallationInfo {
 		) {
 			return {
 				packageManager: PackageManager.PNPM,
-				packageName,
-				updateCommand: `pnpm add -g ${packageName}@${tag}`,
+				packageName: DEFAULT_PACKAGE_NAME,
+				updateCommand: `pnpm add -g ${DEFAULT_PACKAGE_NAME}@${tag}`,
 			};
 		}
 		if (scriptPath.includes("/.yarn/") || scriptPath.includes("/yarn/global")) {
 			return {
 				packageManager: PackageManager.YARN,
-				packageName,
-				updateCommand: `yarn global add ${packageName}@${tag}`,
+				packageName: DEFAULT_PACKAGE_NAME,
+				updateCommand: `yarn global add ${DEFAULT_PACKAGE_NAME}@${tag}`,
 			};
 		}
 		if (scriptPath.includes("/.bun/bin")) {
 			return {
 				packageManager: PackageManager.BUN,
-				packageName,
-				updateCommand: `bun add -g ${packageName}@${tag}`,
+				packageName: DEFAULT_PACKAGE_NAME,
+				updateCommand: `bun add -g ${DEFAULT_PACKAGE_NAME}@${tag}`,
 			};
 		}
 		if (scriptPath.includes("/node_modules/")) {
 			return {
 				packageManager: PackageManager.NPM,
-				packageName,
-				updateCommand: `npm install -g ${packageName}@${tag}`,
+				packageName: DEFAULT_PACKAGE_NAME,
+				updateCommand: `npm install -g ${DEFAULT_PACKAGE_NAME}@${tag}`,
 			};
 		}
 	} catch {

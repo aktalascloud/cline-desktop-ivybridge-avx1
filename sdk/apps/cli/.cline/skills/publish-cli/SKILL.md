@@ -5,7 +5,7 @@ description: Use when preparing, tagging, and publishing an apps/cli npm release
 
 # CLI Release
 
-Use this skill when the user asks to release the CLI, publish `@cline/cli`, bump the CLI version, draft release notes, create a `cli-vX.Y.Z` tag, or trigger the CLI publish workflow.
+Use this skill when the user asks to release the CLI, publish `cline`, bump the CLI version, draft release notes, create a `cli-vX.Y.Z` tag, or trigger the CLI publish workflow.
 
 The CLI is npm-only. Do not add alternate distribution or signing steps.
 
