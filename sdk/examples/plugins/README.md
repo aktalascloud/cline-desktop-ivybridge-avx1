@@ -18,6 +18,7 @@ What a plugin can do:
 | [custom-compaction.ts](./custom-compaction.ts) | Provider-message compaction via `registerMessageBuilder` |
 | [background-terminal.ts](./background-terminal.ts) | Detached shell jobs with persisted logs and session steering |
 | [automation-events.ts](./automation-events.ts) | Plugin-emitted automation events |
+| [web-search.ts](./web-search.ts) | `web_search` tool backed by an Exa API key |
 | [typescript-lsp/](./typescript-lsp/) | `goto_definition` tool powered by the TypeScript Language Service |
 | [agents-squad/](./agents-squad/) | Multi-agent team — spin up subagents with their own models and personalities |
 
@@ -41,6 +42,26 @@ For a plugin that lives in a directory (with its own `package.json`), use `cline
 ```bash
 cline plugin install ./examples/plugins/agents-squad
 ```
+
+To add web search through a normal plugin tool:
+
+```bash
+mkdir -p .cline/plugins
+cp examples/plugins/web-search.ts .cline/plugins/web-search.ts
+
+export EXA_API_KEY=...
+export OPENROUTER_API_KEY=...
+
+cline auth --provider openrouter --apikey "$OPENROUTER_API_KEY" --modelid anthropic/claude-sonnet-4.6
+cline -P openrouter -m anthropic/claude-sonnet-4.6 "Search the web for recent Bun release notes, then fetch the most relevant page"
+```
+
+The plugin registers `web_search`, which returns normalized search results from
+Exa. It is intentionally separate from `fetch_web_content`: use `web_search` to
+discover relevant URLs, then use `fetch_web_content` when the agent needs to
+inspect a specific page. `EXA_API_KEY` only authenticates the search backend;
+the CLI still needs a normal model provider key or saved provider auth for
+inference.
 
 ## Run a demo directly
 
