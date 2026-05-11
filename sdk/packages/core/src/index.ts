@@ -262,6 +262,8 @@ export {
 	registerMcpServersFromSettingsFile,
 	resolveDefaultMcpSettingsPath,
 	resolveMcpServerRegistrations,
+	type SetMcpServerDisabledOptions,
+	setMcpServerDisabled,
 } from "./extensions/mcp";
 export {
 	type AgentTask,

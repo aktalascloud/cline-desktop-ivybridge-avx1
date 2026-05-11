@@ -31,9 +31,11 @@ describe("config detail dialog helpers", () => {
 
 	it("toggles detail status on Space only for toggleable rows", () => {
 		const skill = createItem({ kind: "skill" });
+		const mcp = createItem({ kind: "mcp" });
 		const workflow = createItem({ kind: "workflow" });
 
 		expect(shouldToggleExtDetailForKey("space", skill)).toBe(true);
+		expect(shouldToggleExtDetailForKey("space", mcp)).toBe(true);
 		expect(shouldToggleExtDetailForKey("return", skill)).toBe(false);
 		expect(shouldToggleExtDetailForKey("space", workflow)).toBe(false);
 	});

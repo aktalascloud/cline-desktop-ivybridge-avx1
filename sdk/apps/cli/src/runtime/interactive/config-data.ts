@@ -55,6 +55,20 @@ export function createInteractiveConfigDataLoader(input: {
 			return await loadConfigData();
 		}
 
+		if (item.kind === "mcp" && typeof item.enabled === "boolean") {
+			await settings.toggle({
+				type: "mcp",
+				id: item.id,
+				path: item.path,
+				name: item.name,
+				enabled: !item.enabled,
+				cwd: input.config.cwd,
+				workspaceRoot: workspaceRoot(),
+				availabilityContext: availabilityContext(),
+			});
+			return await loadConfigData();
+		}
+
 		if (
 			item.kind !== "tool" ||
 			(item.source !== "builtin" &&

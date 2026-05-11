@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -7,6 +7,7 @@ import {
 	loadMcpSettingsFile,
 	registerMcpServersFromSettingsFile,
 	resolveMcpServerRegistrations,
+	setMcpServerDisabled,
 } from "./config-loader";
 
 describe("mcp config loader", () => {
@@ -234,5 +235,49 @@ describe("mcp config loader", () => {
 				metadata: undefined,
 			},
 		]);
+	});
+
+	it("updates disabled state while preserving legacy server shape and top-level settings", async () => {
+		const tempRoot = await mkdtemp(join(tmpdir(), "core-mcp-config-loader-"));
+		tempRoots.push(tempRoot);
+		const filePath = join(tempRoot, "cline_mcp_settings.json");
+		await writeFile(
+			filePath,
+			JSON.stringify(
+				{
+					otherSetting: true,
+					mcpServers: {
+						docs: {
+							command: "node",
+							args: ["server.js"],
+						},
+					},
+				},
+				null,
+				2,
+			),
+			"utf8",
+		);
+
+		setMcpServerDisabled({ filePath, name: "docs", disabled: true });
+		const disabled = JSON.parse(await readFile(filePath, "utf8")) as {
+			otherSetting?: boolean;
+			mcpServers?: Record<
+				string,
+				{ command?: string; args?: string[]; disabled?: boolean }
+			>;
+		};
+		expect(disabled.otherSetting).toBe(true);
+		expect(disabled.mcpServers?.docs).toEqual({
+			command: "node",
+			args: ["server.js"],
+			disabled: true,
+		});
+
+		setMcpServerDisabled({ filePath, name: "docs", disabled: false });
+		const enabled = JSON.parse(await readFile(filePath, "utf8")) as {
+			mcpServers?: Record<string, { disabled?: boolean }>;
+		};
+		expect(enabled.mcpServers?.docs?.disabled).toBeUndefined();
 	});
 });

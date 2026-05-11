@@ -79,6 +79,7 @@ const SETTINGS_TYPES = new Set<CoreSettingsType>([
 	"workflows",
 	"rules",
 	"tools",
+	"mcp",
 ]);
 
 function isPayloadObject(value: unknown): value is Record<string, unknown> {
@@ -139,7 +140,7 @@ function parseSettingsToggleInput(payload: unknown): CoreSettingsToggleInput {
 		!SETTINGS_TYPES.has(type as CoreSettingsType)
 	) {
 		throw new Error(
-			"settings.toggle payload 'type' must be one of: skills, workflows, rules, tools.",
+			"settings.toggle payload 'type' must be one of: skills, workflows, rules, tools, mcp.",
 		);
 	}
 	return {

@@ -1,9 +1,19 @@
 import type { UserInstructionConfigService } from "../extensions/config";
 import type { BuiltinToolAvailabilityContext } from "../extensions/tools";
 
-export type CoreSettingsType = "skills" | "workflows" | "rules" | "tools";
+export type CoreSettingsType =
+	| "skills"
+	| "workflows"
+	| "rules"
+	| "tools"
+	| "mcp";
 
-export type CoreSettingsItemKind = "skill" | "workflow" | "rule" | "tool";
+export type CoreSettingsItemKind =
+	| "skill"
+	| "workflow"
+	| "rule"
+	| "tool"
+	| "mcp";
 
 export type CoreSettingsItemSource =
 	| "global"
@@ -28,6 +38,7 @@ export interface CoreSettingsSnapshot {
 	rules: CoreSettingsItem[];
 	skills: CoreSettingsItem[];
 	tools: CoreSettingsItem[];
+	mcp: CoreSettingsItem[];
 }
 
 export interface CoreSettingsListInput {

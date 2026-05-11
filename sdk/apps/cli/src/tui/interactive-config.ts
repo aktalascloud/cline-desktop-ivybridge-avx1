@@ -75,6 +75,7 @@ export function isToggleableInteractiveConfigItem(
 	return (
 		item.kind === "skill" ||
 		item.kind === "plugin" ||
+		item.kind === "mcp" ||
 		item.source === "builtin" ||
 		item.source === "workspace-plugin" ||
 		item.source === "global-plugin"

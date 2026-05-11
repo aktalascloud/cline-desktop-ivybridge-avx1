@@ -225,7 +225,10 @@ export async function runInteractive(
 	const shouldRefreshInteractiveSessionForConfigItem = (
 		item: InteractiveConfigItem,
 	): boolean =>
-		item.kind === "tool" || item.kind === "plugin" || item.kind === "skill";
+		item.kind === "tool" ||
+		item.kind === "plugin" ||
+		item.kind === "skill" ||
+		item.kind === "mcp";
 
 	const onToggleConfigItem = async (
 		item: InteractiveConfigItem,

@@ -93,6 +93,8 @@ primitive vocabulary.
 The package also exports storage and settings helpers such as:
 
 - `ProviderSettingsManager`
+- `CoreSettingsService` and `createCoreSettingsService`
+- MCP settings helpers such as `setMcpServerDisabled`
 - `SqliteTeamStore`
 - SQLite-backed local session stores and artifacts through `@cline/core`
 

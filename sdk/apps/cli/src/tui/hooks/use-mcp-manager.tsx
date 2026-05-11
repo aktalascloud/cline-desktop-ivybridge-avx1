@@ -13,6 +13,7 @@ import {
 function toMcpEntries(items: InteractiveConfigItem[]): McpEntry[] {
 	return items.map((item) => ({
 		name: item.name,
+		path: item.path,
 		enabled: item.enabled,
 	}));
 }

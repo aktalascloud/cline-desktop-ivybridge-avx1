@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { resolveMcpSettingsPath } from "@cline/shared/storage";
 import { z } from "zod";
 import type { McpManager, McpServerRegistration } from "./types";
@@ -143,7 +144,7 @@ const mcpSettingsSchema = z
 	.object({
 		mcpServers: z.record(z.string(), mcpRegistrationBodySchema),
 	})
-	.strict();
+	.passthrough();
 
 export interface McpSettingsFile {
 	mcpServers: Record<string, Omit<McpServerRegistration, "name">>;
@@ -157,8 +158,31 @@ export interface RegisterMcpServersFromSettingsOptions {
 	filePath?: string;
 }
 
+export interface SetMcpServerDisabledOptions {
+	filePath?: string;
+	name: string;
+	disabled: boolean;
+}
+
 export function resolveDefaultMcpSettingsPath(): string {
 	return resolveMcpSettingsPath();
+}
+
+function readJsonObject(filePath: string): Record<string, unknown> {
+	const raw = readFileSync(filePath, "utf8");
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(raw);
+	} catch (error) {
+		const details = error instanceof Error ? error.message : String(error);
+		throw new Error(
+			`Failed to parse MCP settings JSON at "${filePath}": ${details}`,
+		);
+	}
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		throw new Error(`Invalid MCP settings at "${filePath}": expected object.`);
+	}
+	return parsed as Record<string, unknown>;
 }
 
 export function loadMcpSettingsFile(
@@ -205,6 +229,44 @@ export function resolveMcpServerRegistrations(
 		disabled: value.disabled,
 		metadata: value.metadata,
 	}));
+}
+
+export function setMcpServerDisabled(
+	options: SetMcpServerDisabledOptions,
+): void {
+	const filePath = options.filePath ?? resolveDefaultMcpSettingsPath();
+	const name = options.name.trim();
+	if (!name) {
+		throw new Error("MCP server settings toggle requires a server name.");
+	}
+	const settings = readJsonObject(filePath);
+	const serversValue = settings.mcpServers;
+	if (
+		!serversValue ||
+		typeof serversValue !== "object" ||
+		Array.isArray(serversValue)
+	) {
+		throw new Error(
+			`Invalid MCP settings at "${filePath}": mcpServers must be an object.`,
+		);
+	}
+	const servers = { ...(serversValue as Record<string, unknown>) };
+	const current = servers[name];
+	if (!current || typeof current !== "object" || Array.isArray(current)) {
+		throw new Error(`Unknown MCP server: ${name}`);
+	}
+	const next = { ...(current as Record<string, unknown>) };
+	if (options.disabled) {
+		next.disabled = true;
+	} else {
+		delete next.disabled;
+	}
+	servers[name] = next;
+	mkdirSync(dirname(filePath), { recursive: true });
+	writeFileSync(
+		filePath,
+		`${JSON.stringify({ ...settings, mcpServers: servers }, null, 2)}\n`,
+	);
 }
 
 export async function registerMcpServersFromSettingsFile(

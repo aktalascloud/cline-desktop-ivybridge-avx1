@@ -3,6 +3,7 @@ export type {
 	LoadMcpSettingsOptions,
 	McpSettingsFile,
 	RegisterMcpServersFromSettingsOptions,
+	SetMcpServerDisabledOptions,
 } from "./config-loader";
 export {
 	hasMcpSettingsFile,
@@ -10,6 +11,7 @@ export {
 	registerMcpServersFromSettingsFile,
 	resolveDefaultMcpSettingsPath,
 	resolveMcpServerRegistrations,
+	setMcpServerDisabled,
 } from "./config-loader";
 export { InMemoryMcpManager } from "./manager";
 export type {

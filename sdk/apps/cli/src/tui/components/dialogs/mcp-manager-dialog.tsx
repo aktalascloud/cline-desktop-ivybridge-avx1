@@ -1,34 +1,52 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
-import { resolveDefaultMcpSettingsPath } from "@cline/core";
+import {
+	resolveDefaultMcpSettingsPath,
+	setMcpServerDisabled,
+} from "@cline/core";
 import type { ChoiceContext } from "@opentui-ui/dialog";
 import { useDialogKeyboard } from "@opentui-ui/dialog/react";
 import { useState } from "react";
+import { palette } from "../../palette";
 
 export interface McpEntry {
 	name: string;
+	path: string;
 	enabled?: boolean;
 }
 
-function removeMcpServer(name: string): boolean {
-	const settingsPath = resolveDefaultMcpSettingsPath();
-	if (!existsSync(settingsPath)) return false;
+export type McpServerToggleResult =
+	| { ok: true; server: McpEntry }
+	| { ok: false; message: string };
+
+function stringifyError(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
+export function getMcpManagerFooterText(hasServers: boolean): string {
+	return hasServers
+		? "Space toggle selected, Esc to go back"
+		: "Esc to go back";
+}
+
+export function toggleMcpServer(server: McpEntry): McpServerToggleResult {
 	try {
-		const raw = readFileSync(settingsPath, "utf-8");
-		const parsed = JSON.parse(raw) as {
-			mcpServers?: Record<string, unknown>;
+		const currentlyEnabled = server.enabled !== false;
+		setMcpServerDisabled({
+			filePath: server.path,
+			name: server.name,
+			disabled: currentlyEnabled,
+		});
+		return {
+			ok: true,
+			server: {
+				...server,
+				enabled: !currentlyEnabled,
+			},
 		};
-		const servers = parsed.mcpServers ?? {};
-		if (!(name in servers)) return false;
-		delete servers[name];
-		mkdirSync(dirname(settingsPath), { recursive: true });
-		writeFileSync(
-			settingsPath,
-			`${JSON.stringify({ mcpServers: servers }, null, 2)}\n`,
-		);
-		return true;
-	} catch {
-		return false;
+	} catch (error) {
+		return {
+			ok: false,
+			message: `Unable to toggle MCP server "${server.name}": ${stringifyError(error)}`,
+		};
 	}
 }
 
@@ -39,14 +57,15 @@ export function McpManagerContent(
 ) {
 	const [selected, setSelected] = useState(0);
 	const [servers, setServers] = useState(props.servers);
-	const [deleted, setDeleted] = useState(false);
+	const [changed, setChanged] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-	const settingsPath = resolveDefaultMcpSettingsPath();
+	const settingsPath = servers[0]?.path ?? resolveDefaultMcpSettingsPath();
 	const itemCount = servers.length;
 
 	useDialogKeyboard((key) => {
 		if (key.name === "escape") {
-			if (deleted) {
+			if (changed) {
 				props.resolve(true);
 			} else {
 				props.dismiss();
@@ -55,22 +74,28 @@ export function McpManagerContent(
 		}
 		if (itemCount > 0) {
 			if (key.name === "up") {
+				setError(null);
 				setSelected((s) => (s > 0 ? s - 1 : itemCount - 1));
 				return;
 			}
 			if (key.name === "down") {
+				setError(null);
 				setSelected((s) => (s < itemCount - 1 ? s + 1 : 0));
 				return;
 			}
-			if (key.name === "d" || key.name === "backspace") {
+			if (key.name === "space") {
 				const target = servers[selected];
-				if (target && removeMcpServer(target.name)) {
-					const next = servers.filter((_, i) => i !== selected);
-					setServers(next);
-					setDeleted(true);
-					if (selected >= next.length && next.length > 0) {
-						setSelected(next.length - 1);
-					}
+				const result = target ? toggleMcpServer(target) : undefined;
+				if (result?.ok) {
+					setServers((current) =>
+						current.map((server, index) =>
+							index === selected ? result.server : server,
+						),
+					);
+					setChanged(true);
+					setError(null);
+				} else if (result) {
+					setError(result.message);
 				}
 				return;
 			}
@@ -94,19 +119,23 @@ export function McpManagerContent(
 				<box flexDirection="column" marginTop={1}>
 					{servers.map((srv, i) => {
 						const isSel = i === selected;
+						const enabled =
+							typeof srv.enabled === "boolean" ? srv.enabled : true;
+						const enabledIcon =
+							typeof srv.enabled === "boolean" ? (enabled ? "● " : "○ ") : "";
+						const rowColor =
+							enabled && typeof srv.enabled === "boolean"
+								? palette.success
+								: isSel
+									? "cyan"
+									: "gray";
 						return (
-							<box
-								key={srv.name}
-								flexDirection="row"
-								justifyContent="space-between"
-							>
-								<text fg={isSel ? "cyan" : "gray"}>
+							<box key={srv.name} flexDirection="row">
+								<text fg={rowColor}>
 									{isSel ? "\u25b8 " : "  "}
+									{enabledIcon}
 									{srv.name}
 								</text>
-								{typeof srv.enabled === "boolean" && !srv.enabled && (
-									<text fg="red">disabled</text>
-								)}
 							</box>
 						);
 					})}
@@ -119,12 +148,14 @@ export function McpManagerContent(
 				</text>
 			)}
 
+			{error && (
+				<text fg={palette.error} marginTop={1}>
+					{error}
+				</text>
+			)}
+
 			<text fg="gray" marginTop={1}>
-				<em>
-					{servers.length > 0
-						? "D to delete selected, Esc to go back"
-						: "Esc to go back"}
-				</em>
+				<em>{getMcpManagerFooterText(servers.length > 0)}</em>
 			</text>
 		</box>
 	);

@@ -32,11 +32,13 @@ describe("interactive config data loader", () => {
 	const tempRoots: string[] = [];
 	const envSnapshot = {
 		CLINE_GLOBAL_SETTINGS_PATH: process.env.CLINE_GLOBAL_SETTINGS_PATH,
+		CLINE_MCP_SETTINGS_PATH: process.env.CLINE_MCP_SETTINGS_PATH,
 	};
 
 	afterEach(async () => {
 		process.env.CLINE_GLOBAL_SETTINGS_PATH =
 			envSnapshot.CLINE_GLOBAL_SETTINGS_PATH;
+		process.env.CLINE_MCP_SETTINGS_PATH = envSnapshot.CLINE_MCP_SETTINGS_PATH;
 		await Promise.all(
 			tempRoots.map((dir) => rm(dir, { recursive: true, force: true })),
 		);
@@ -237,6 +239,50 @@ Use this skill.`,
 		const plugin = data.plugins.find((item) => item.path === pluginPath);
 
 		expect(plugin?.name).toBe("cline-sdk-portable-agents");
+	});
+
+	it("toggles MCP server enabled state through core settings", async () => {
+		const tempRoot = await mkdtemp(join(tmpdir(), "cli-config-data-"));
+		tempRoots.push(tempRoot);
+		const settingsPath = join(tempRoot, "cline_mcp_settings.json");
+		process.env.CLINE_MCP_SETTINGS_PATH = settingsPath;
+		await writeFile(
+			settingsPath,
+			`${JSON.stringify(
+				{
+					otherSetting: true,
+					mcpServers: {
+						docs: {
+							transport: {
+								type: "stdio",
+								command: "node",
+							},
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+		);
+		const loader = createInteractiveConfigDataLoader({
+			config: createConfig(tempRoot),
+		});
+
+		const data = await loader.loadConfigData();
+		const item = data.mcp.find((candidate) => candidate.name === "docs");
+		expect(item?.enabled).toBe(true);
+
+		const nextData = item ? await loader.onToggleConfigItem(item) : undefined;
+		const settings = JSON.parse(await readFile(settingsPath, "utf8")) as {
+			otherSetting?: boolean;
+			mcpServers?: Record<string, { disabled?: boolean }>;
+		};
+
+		expect(settings.otherSetting).toBe(true);
+		expect(settings.mcpServers?.docs?.disabled).toBe(true);
+		expect(
+			nextData?.mcp.find((candidate) => candidate.name === "docs")?.enabled,
+		).toBe(false);
 	});
 
 	it("does not toggle workflow items", async () => {

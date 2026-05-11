@@ -48,6 +48,10 @@ describe("config view helpers", () => {
 		expect(isToggleableConfigItem(createItem({ kind: "plugin" }))).toBe(true);
 	});
 
+	it("treats MCP rows as toggleable", () => {
+		expect(isToggleableConfigItem(createItem({ kind: "mcp" }))).toBe(true);
+	});
+
 	it("resolves Enter/Tab on a skill row to details", () => {
 		const skill = createItem({
 			kind: "skill",
@@ -85,6 +89,7 @@ describe("config view helpers", () => {
 	it("handles toggle actions inline so the settings dialog stays open", () => {
 		const skill = createItem({ kind: "skill", name: "review" });
 		const plugin = createItem({ kind: "plugin", name: "workspace-plugin" });
+		const mcp = createItem({ kind: "mcp", name: "docs" });
 		const builtinTool = createItem({
 			kind: "tool",
 			name: "read_file",
@@ -100,6 +105,7 @@ describe("config view helpers", () => {
 		expect(isInlineConfigAction(resolveConfigItemSelectAction(plugin))).toBe(
 			true,
 		);
+		expect(isInlineConfigAction(resolveConfigItemSelectAction(mcp))).toBe(true);
 		expect(
 			isInlineConfigAction(resolveConfigItemSelectAction(builtinTool)),
 		).toBe(true);

@@ -20,6 +20,7 @@ describe("hub settings commands", () => {
 				},
 			],
 			tools: [],
+			mcp: [],
 		};
 		const settingsService = {
 			toggle: vi.fn().mockResolvedValue({

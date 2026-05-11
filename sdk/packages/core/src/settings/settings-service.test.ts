@@ -9,11 +9,13 @@ describe("CoreSettingsService", () => {
 	const tempRoots: string[] = [];
 	const envSnapshot = {
 		CLINE_GLOBAL_SETTINGS_PATH: process.env.CLINE_GLOBAL_SETTINGS_PATH,
+		CLINE_MCP_SETTINGS_PATH: process.env.CLINE_MCP_SETTINGS_PATH,
 	};
 
 	afterEach(async () => {
 		process.env.CLINE_GLOBAL_SETTINGS_PATH =
 			envSnapshot.CLINE_GLOBAL_SETTINGS_PATH;
+		process.env.CLINE_MCP_SETTINGS_PATH = envSnapshot.CLINE_MCP_SETTINGS_PATH;
 		await Promise.all(
 			tempRoots.map((dir) => rm(dir, { recursive: true, force: true })),
 		);
@@ -101,6 +103,106 @@ Use this skill.`,
 				}),
 			]),
 		);
+	});
+
+	it("lists and toggles MCP server disabled state", async () => {
+		const tempRoot = await mkdtemp(join(tmpdir(), "core-settings-"));
+		tempRoots.push(tempRoot);
+		const settingsPath = join(tempRoot, "cline_mcp_settings.json");
+		process.env.CLINE_MCP_SETTINGS_PATH = settingsPath;
+		await writeFile(
+			settingsPath,
+			`${JSON.stringify(
+				{
+					otherSetting: true,
+					mcpServers: {
+						docs: {
+							transport: {
+								type: "stdio",
+								command: "node",
+							},
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+		);
+		const service = new CoreSettingsService();
+
+		const snapshot = await service.list({ cwd: tempRoot });
+		expect(snapshot.mcp).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					id: "docs",
+					name: "docs",
+					path: settingsPath,
+					kind: "mcp",
+					enabled: true,
+					toggleable: true,
+				}),
+			]),
+		);
+
+		const result = await service.toggle({
+			type: "mcp",
+			name: "docs",
+			path: settingsPath,
+			enabled: false,
+			cwd: tempRoot,
+		});
+		const disabledSettings = JSON.parse(
+			await readFile(settingsPath, "utf8"),
+		) as {
+			otherSetting?: boolean;
+			mcpServers?: Record<string, { disabled?: boolean }>;
+		};
+		expect(result.changedTypes).toEqual(["mcp"]);
+		expect(result.snapshot.mcp[0]?.enabled).toBe(false);
+		expect(disabledSettings.otherSetting).toBe(true);
+		expect(disabledSettings.mcpServers?.docs?.disabled).toBe(true);
+
+		await service.toggle({
+			type: "mcp",
+			name: "docs",
+			path: settingsPath,
+			enabled: true,
+			cwd: tempRoot,
+		});
+		const enabledSettings = JSON.parse(
+			await readFile(settingsPath, "utf8"),
+		) as {
+			mcpServers?: Record<string, { disabled?: boolean }>;
+		};
+		expect(enabledSettings.mcpServers?.docs?.disabled).toBeUndefined();
+
+		await service.toggle({
+			type: "mcp",
+			name: "docs",
+			path: settingsPath,
+			cwd: tempRoot,
+		});
+		const implicitlyDisabledSettings = JSON.parse(
+			await readFile(settingsPath, "utf8"),
+		) as {
+			mcpServers?: Record<string, { disabled?: boolean }>;
+		};
+		expect(implicitlyDisabledSettings.mcpServers?.docs?.disabled).toBe(true);
+
+		await service.toggle({
+			type: "mcp",
+			name: "docs",
+			path: settingsPath,
+			cwd: tempRoot,
+		});
+		const implicitlyEnabledSettings = JSON.parse(
+			await readFile(settingsPath, "utf8"),
+		) as {
+			mcpServers?: Record<string, { disabled?: boolean }>;
+		};
+		expect(
+			implicitlyEnabledSettings.mcpServers?.docs?.disabled,
+		).toBeUndefined();
 	});
 
 	it("requires an explicit enabled value when skill state cannot be resolved", async () => {

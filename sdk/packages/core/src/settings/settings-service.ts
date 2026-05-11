@@ -9,6 +9,12 @@ import {
 } from "../extensions/config";
 import { toggleSkillFrontmatter } from "../extensions/config/skill-frontmatter-toggle";
 import {
+	hasMcpSettingsFile,
+	resolveDefaultMcpSettingsPath,
+	resolveMcpServerRegistrations,
+	setMcpServerDisabled,
+} from "../extensions/mcp";
+import {
 	setToolDisabledGlobally,
 	toggleDisabledTool,
 } from "../services/global-settings";
@@ -117,6 +123,7 @@ export class CoreSettingsService {
 			const rules: CoreSettingsItem[] = [];
 			const skills: CoreSettingsItem[] = [];
 			const tools: CoreSettingsItem[] = [];
+			const mcp: CoreSettingsItem[] = [];
 
 			if (service) {
 				for (const record of service.listRecords<WorkflowConfig>("workflow")) {
@@ -185,11 +192,35 @@ export class CoreSettingsService {
 				}
 			}
 
+			const mcpSettingsPath = resolveDefaultMcpSettingsPath();
+			if (hasMcpSettingsFile({ filePath: mcpSettingsPath })) {
+				try {
+					for (const registration of resolveMcpServerRegistrations({
+						filePath: mcpSettingsPath,
+					})) {
+						mcp.push({
+							id: registration.name,
+							name: registration.name,
+							path: mcpSettingsPath,
+							enabled: registration.disabled !== true,
+							kind: "mcp",
+							source: detectSource(mcpSettingsPath, workspaceRoot),
+							description: registration.transport.type,
+							toggleable: true,
+						});
+					}
+				} catch {
+					// Settings listing is best-effort; unreadable MCP settings should
+					// not hide rules, skills, workflows, or tools.
+				}
+			}
+
 			return {
 				workflows: toSorted(workflows.filter((item) => existsSync(item.path))),
 				rules: toSorted(rules.filter((item) => existsSync(item.path))),
 				skills: toSorted(skills.filter((item) => existsSync(item.path))),
 				tools: toSorted(tools),
+				mcp: toSorted(mcp.filter((item) => existsSync(item.path))),
 			};
 		});
 	}
@@ -242,6 +273,33 @@ export class CoreSettingsService {
 			return {
 				snapshot: await this.list(input),
 				changedTypes: ["tools"],
+			};
+		}
+
+		if (input.type === "mcp") {
+			const name = input.name?.trim() || input.id?.trim();
+			if (!name) {
+				throw new Error("MCP server settings toggle requires a server name.");
+			}
+			const filePath = input.path?.trim() || resolveDefaultMcpSettingsPath();
+			let targetEnabled = input.enabled;
+			if (targetEnabled === undefined) {
+				const current = resolveMcpServerRegistrations({ filePath }).find(
+					(registration) => registration.name === name,
+				);
+				if (!current) {
+					throw new Error(`Unknown MCP server: ${name}`);
+				}
+				targetEnabled = current.disabled === true;
+			}
+			setMcpServerDisabled({
+				filePath,
+				name,
+				disabled: !targetEnabled,
+			});
+			return {
+				snapshot: await this.list(input),
+				changedTypes: ["mcp"],
 			};
 		}
 
