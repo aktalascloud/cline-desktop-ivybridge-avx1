@@ -98,6 +98,7 @@ function toGatewayModelDefinition(
 		description: model.description,
 		providerId,
 		contextWindow: model.contextWindow,
+		maxInputTokens: model.maxInputTokens,
 		maxOutputTokens: model.maxTokens,
 		capabilities: toGatewayCapabilities(model.capabilities),
 		metadata: {

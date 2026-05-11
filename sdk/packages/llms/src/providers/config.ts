@@ -116,8 +116,8 @@ export interface ModelConfig {
  * Token limits configuration
  */
 export interface TokenConfig {
-	/** Maximum context window tokens (overrides model default) */
-	maxContextTokens?: number;
+	/** Maximum input tokens (overrides model default) */
+	maxInputTokens?: number;
 	/** Maximum output tokens (overrides model default) */
 	maxOutputTokens?: number;
 }
@@ -414,7 +414,7 @@ export type ProviderSpecificConfig = Pick<
 	| "azure"
 	| "sap"
 	| "oca"
-	| "maxContextTokens"
+	| "maxInputTokens"
 	| "apiLine"
 	| "oauthPath"
 	| "openRouterProviderSorting"

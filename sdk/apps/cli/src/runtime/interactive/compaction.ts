@@ -2,7 +2,7 @@ import { createContextCompactionPrepareTurn } from "@cline/core";
 import type { Message } from "@cline/shared";
 import type { Config } from "../../utils/types";
 
-const FALLBACK_MANUAL_COMPACTION_CONTEXT_WINDOW_TOKENS = 64_000;
+const FALLBACK_MANUAL_COMPACTION_MAX_INPUT_TOKENS = 64_000;
 
 export async function compactInteractiveMessages(input: {
 	config: Config;
@@ -10,10 +10,11 @@ export async function compactInteractiveMessages(input: {
 	messages: Message[];
 }): Promise<{ compacted: boolean; messages: Message[] }> {
 	const modelInfo = input.config.knownModels?.[input.config.modelId];
-	const contextWindowTokens =
-		input.config.compaction?.contextWindowTokens ??
+	const maxInputTokens =
+		input.config.compaction?.maxInputTokens ??
+		modelInfo?.maxInputTokens ??
 		modelInfo?.contextWindow ??
-		FALLBACK_MANUAL_COMPACTION_CONTEXT_WINDOW_TOKENS;
+		FALLBACK_MANUAL_COMPACTION_MAX_INPUT_TOKENS;
 	const compact = createContextCompactionPrepareTurn(
 		{
 			providerConfig: input.config.providerConfig,
@@ -43,7 +44,7 @@ export async function compactInteractiveMessages(input: {
 			info: {
 				...(modelInfo ?? {}),
 				id: modelInfo?.id ?? input.config.modelId,
-				contextWindow: contextWindowTokens,
+				maxInputTokens: maxInputTokens,
 			},
 		},
 	});

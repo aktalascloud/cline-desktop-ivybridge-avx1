@@ -156,6 +156,7 @@ function modelInfoToGateway(
 		providerId,
 		description: info.description,
 		contextWindow: info.contextWindow,
+		maxInputTokens: info.maxInputTokens,
 		maxOutputTokens: info.maxTokens,
 		capabilities: [...capabilities],
 		metadata: Object.keys(metadata).length > 0 ? metadata : undefined,

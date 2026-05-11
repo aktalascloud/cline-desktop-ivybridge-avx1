@@ -512,7 +512,7 @@ describe("SessionRuntime message preparation", () => {
 				knownModels: {
 					"claude-3-5-sonnet": {
 						id: "claude-3-5-sonnet",
-						contextWindow: 200_000,
+						maxInputTokens: 200_000,
 					},
 				},
 			}),
@@ -578,7 +578,7 @@ describe("SessionRuntime message preparation", () => {
 					provider: "anthropic",
 					info: {
 						id: "claude-3-5-sonnet",
-						contextWindow: 200_000,
+						maxInputTokens: 200_000,
 					},
 				},
 			}),

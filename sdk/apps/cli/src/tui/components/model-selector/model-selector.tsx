@@ -9,7 +9,7 @@ import { ProviderRow } from "./provider-row";
 export interface ModelOption {
 	key: string;
 	name: string;
-	contextWindow?: number;
+	maxInputTokens?: number;
 	family?: string;
 	supportsReasoning: boolean;
 }
@@ -46,7 +46,7 @@ function fuzzyScore(model: ModelOption, query: string): number {
 	return 0;
 }
 
-function formatContextWindow(tokens: number): string {
+function formatTokenCount(tokens: number): string {
 	if (tokens >= 1_000_000)
 		return `${(tokens / 1_000_000).toFixed(tokens % 1_000_000 === 0 ? 0 : 1)}M`;
 	if (tokens >= 1_000) return `${Math.round(tokens / 1_000)}K`;
@@ -497,9 +497,9 @@ function ModelRow(props: {
 			<text fg={isSelected ? palette.textOnSelection : undefined}>
 				{model.name}
 			</text>
-			{model.contextWindow && (
+			{model.maxInputTokens && (
 				<text fg={isSelected ? palette.textOnSelection : "gray"} flexShrink={0}>
-					{formatContextWindow(model.contextWindow)}
+					{formatTokenCount(model.maxInputTokens)}
 				</text>
 			)}
 			{isCurrent && (
@@ -524,7 +524,7 @@ export function buildModelOptions(
 		.map(([key, info]) => ({
 			key,
 			name: info.name ?? key,
-			contextWindow: info.contextWindow,
+			maxInputTokens: info.maxInputTokens ?? info.contextWindow,
 			family: info.family,
 			supportsReasoning: info.capabilities?.includes("reasoning") ?? false,
 		}))

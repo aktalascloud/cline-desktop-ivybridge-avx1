@@ -58,7 +58,7 @@ export interface CoreCompactionContext {
 		provider: string;
 		info?: ModelInfo;
 	};
-	contextWindowTokens: number;
+	maxInputTokens: number;
 	triggerTokens: number;
 	thresholdRatio: number;
 	utilizationRatio: number;
@@ -87,7 +87,7 @@ export interface CoreCompactionConfig {
 	thresholdRatio?: number;
 	reserveTokens?: number;
 	preserveRecentTokens?: number;
-	contextWindowTokens?: number;
+	maxInputTokens?: number;
 	summarizer?: CoreCompactionSummarizerConfig;
 	compact?: (
 		context: CoreCompactionContext,

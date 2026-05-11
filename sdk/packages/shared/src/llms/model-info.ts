@@ -66,6 +66,7 @@ export const ModelInfoSchema = z.object({
 	description: z.string().optional(),
 	maxTokens: z.number().optional(),
 	contextWindow: z.number().optional(),
+	maxInputTokens: z.number().optional(),
 	capabilities: z.array(ModelCapabilitySchema).optional(),
 	apiFormat: ApiFormatSchema.optional(),
 	systemRole: z.enum(["system", "developer"]).optional(),

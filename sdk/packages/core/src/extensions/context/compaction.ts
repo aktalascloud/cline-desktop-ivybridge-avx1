@@ -10,7 +10,7 @@ import { runAgenticCompaction } from "./agentic-compaction";
 import { runBasicCompaction } from "./basic-compaction";
 import {
 	createTokenEstimator,
-	DEFAULT_CONTEXT_WINDOW_TOKENS,
+	DEFAULT_MAX_INPUT_TOKENS,
 	DEFAULT_PRESERVE_RECENT_TOKENS,
 	DEFAULT_THRESHOLD_RATIO,
 } from "./compaction-shared";
@@ -97,27 +97,22 @@ const BUILTIN_COMPACTION_STRATEGIES = {
 
 function resolveTriggerState(input: {
 	inputTokens: number;
-	contextWindowTokens: number;
+	maxInputTokens: number;
 	config: CoreCompactionConfig;
 }): { shouldCompact: boolean; triggerTokens: number; thresholdRatio: number } {
 	if (typeof input.config.reserveTokens === "number") {
 		const reserveTokens = Math.max(0, input.config.reserveTokens);
-		const triggerTokens = Math.max(
-			0,
-			input.contextWindowTokens - reserveTokens,
-		);
+		const triggerTokens = Math.max(0, input.maxInputTokens - reserveTokens);
 		return {
 			shouldCompact: input.inputTokens > triggerTokens,
 			triggerTokens,
 			thresholdRatio:
-				input.contextWindowTokens > 0
-					? triggerTokens / input.contextWindowTokens
-					: 0,
+				input.maxInputTokens > 0 ? triggerTokens / input.maxInputTokens : 0,
 		};
 	}
 
 	const thresholdRatio = input.config.thresholdRatio ?? DEFAULT_THRESHOLD_RATIO;
-	const triggerTokens = input.contextWindowTokens * thresholdRatio;
+	const triggerTokens = input.maxInputTokens * thresholdRatio;
 	return {
 		shouldCompact: input.inputTokens > triggerTokens,
 		triggerTokens,
@@ -127,7 +122,7 @@ function resolveTriggerState(input: {
 
 function resolveManualTargetState(input: {
 	inputTokens: number;
-	contextWindowTokens: number;
+	maxInputTokens: number;
 	autoTriggerTokens: number;
 	manualTargetRatio: number | undefined;
 }): { triggerTokens: number; thresholdRatio: number } {
@@ -148,9 +143,7 @@ function resolveManualTargetState(input: {
 	return {
 		triggerTokens: targetTokens,
 		thresholdRatio:
-			input.contextWindowTokens > 0
-				? targetTokens / input.contextWindowTokens
-				: 0,
+			input.maxInputTokens > 0 ? targetTokens / input.maxInputTokens : 0,
 	};
 }
 
@@ -186,21 +179,22 @@ export function createContextCompactionPrepareTurn(
 			(total: number, message) => total + estimateMessageTokens(message),
 			0,
 		);
-		const contextWindowTokens =
-			userCompaction?.contextWindowTokens ??
+		const maxInputTokens =
+			userCompaction?.maxInputTokens ??
+			context.model.info?.maxInputTokens ??
 			context.model.info?.contextWindow ??
-			DEFAULT_CONTEXT_WINDOW_TOKENS;
+			DEFAULT_MAX_INPUT_TOKENS;
 		if (
-			typeof contextWindowTokens !== "number" ||
-			!Number.isFinite(contextWindowTokens) ||
-			contextWindowTokens <= 0
+			typeof maxInputTokens !== "number" ||
+			!Number.isFinite(maxInputTokens) ||
+			maxInputTokens <= 0
 		) {
 			return undefined;
 		}
 
 		const triggerState = resolveTriggerState({
 			inputTokens,
-			contextWindowTokens,
+			maxInputTokens,
 			config: {
 				reserveTokens: userCompaction?.reserveTokens,
 				thresholdRatio: userCompaction?.thresholdRatio,
@@ -213,7 +207,7 @@ export function createContextCompactionPrepareTurn(
 			mode === "manual"
 				? resolveManualTargetState({
 						inputTokens,
-						contextWindowTokens,
+						maxInputTokens,
 						autoTriggerTokens: triggerState.triggerTokens,
 						manualTargetRatio: options.manualTargetRatio,
 					})
@@ -226,11 +220,10 @@ export function createContextCompactionPrepareTurn(
 			iteration: context.iteration,
 			messages: context.messages,
 			model: context.model,
-			contextWindowTokens,
+			maxInputTokens,
 			triggerTokens: targetState.triggerTokens,
 			thresholdRatio: targetState.thresholdRatio,
-			utilizationRatio:
-				contextWindowTokens > 0 ? inputTokens / contextWindowTokens : 0,
+			utilizationRatio: maxInputTokens > 0 ? inputTokens / maxInputTokens : 0,
 		};
 
 		const statusReason =
@@ -242,7 +235,7 @@ export function createContextCompactionPrepareTurn(
 				reason: statusReason,
 				iteration: context.iteration,
 				triggerTokens: targetState.triggerTokens,
-				contextWindowTokens,
+				maxInputTokens,
 			},
 		);
 
@@ -270,12 +263,12 @@ export function createContextCompactionPrepareTurn(
 			config.logger?.log("Context compaction completed", {
 				severity: "info",
 				strategy: strategy,
-				contextWindowTokens,
+				maxInputTokens,
 				inputTokens,
 				afterTokens,
 				tokensSaved: inputTokens - afterTokens,
-				utilizationBefore: `${((inputTokens / contextWindowTokens) * 100).toFixed(1)}%`,
-				utilizationAfter: `${((afterTokens / contextWindowTokens) * 100).toFixed(1)}%`,
+				utilizationBefore: `${((inputTokens / maxInputTokens) * 100).toFixed(1)}%`,
+				utilizationAfter: `${((afterTokens / maxInputTokens) * 100).toFixed(1)}%`,
 				thresholdTrigger: `${(targetState.thresholdRatio * 100).toFixed(1)}%`,
 				messagesBefore: beforeMessageCount,
 				messagesAfter: result.messages.length,

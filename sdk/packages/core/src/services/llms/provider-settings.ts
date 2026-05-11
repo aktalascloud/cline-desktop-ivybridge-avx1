@@ -255,7 +255,7 @@ export function toProviderConfig(
 		headers: settings.headers,
 		timeoutMs: settings.timeout,
 		maxOutputTokens: settings.maxTokens,
-		maxContextTokens: settings.contextWindow,
+		maxInputTokens: settings.contextWindow,
 		thinking: settings.reasoning?.enabled,
 		reasoningEffort,
 		thinkingBudgetTokens: settings.reasoning?.budgetTokens,

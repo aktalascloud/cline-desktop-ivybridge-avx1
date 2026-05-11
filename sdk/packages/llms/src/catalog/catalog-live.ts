@@ -11,6 +11,7 @@ export interface ModelsDevModel {
 	family?: string;
 	limit?: {
 		context?: number;
+		input?: number;
 		output?: number;
 	};
 	cost?: {
@@ -32,7 +33,7 @@ interface ModelsDevProviderPayload {
 export type ModelsDevPayload = Record<string, ModelsDevProviderPayload>;
 export type ModelsDevProviderKeyMap = Record<string, string>;
 
-const DEFAULT_CONTEXT_WINDOW = 4096;
+const DEFAULT_MAX_INPUT_TOKENS = 4096;
 const DEFAULT_MAX_TOKENS = 4096;
 
 function parseReleaseDate(value: string | undefined): number {
@@ -100,18 +101,32 @@ function toStatus(status: string | undefined): ModelInfo["status"] {
 	return undefined;
 }
 
+export function resolveMaxInputTokens(
+	limit: ModelsDevModel["limit"] | undefined,
+): number {
+	const contextLimit = limit?.context;
+	const inputLimit = limit?.input;
+	if (typeof contextLimit === "number" && typeof inputLimit === "number") {
+		return Math.min(contextLimit, inputLimit);
+	}
+	return inputLimit ?? contextLimit ?? DEFAULT_MAX_INPUT_TOKENS;
+}
+
 function toModelInfo(modelId: string, model: ModelsDevModel): ModelInfo {
-	// If context or output limits are missing, default to DEFAULT_CONTEXT_WINDOW and DEFAULT_MAX_TOKENS respectively.
+	// If context or output limits are missing, default to DEFAULT_MAX_INPUT_TOKENS and DEFAULT_MAX_TOKENS respectively.
 	// If context and max are the same value, assume max tokens should be 5% of that value to avoid overallocation.
-	const contextWindow = model.limit?.context ?? DEFAULT_CONTEXT_WINDOW;
+	const maxInputTokens = resolveMaxInputTokens(model.limit);
 	const outputToken = model.limit?.output ?? DEFAULT_MAX_TOKENS;
+	const rawContextLimit = model.limit?.context;
+	const discountContextLimit = rawContextLimit ?? DEFAULT_MAX_INPUT_TOKENS;
 	const discounted =
-		contextWindow === outputToken ? outputToken * 0.05 : outputToken;
+		discountContextLimit === outputToken ? outputToken * 0.05 : outputToken;
 
 	return {
 		id: modelId,
 		name: model.name || modelId,
-		contextWindow,
+		contextWindow: rawContextLimit,
+		maxInputTokens,
 		maxTokens: Math.floor(discounted),
 		capabilities: toCapabilities(model),
 		pricing: {

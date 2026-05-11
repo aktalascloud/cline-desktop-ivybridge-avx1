@@ -45,6 +45,7 @@ export interface GatewayModelDefinition {
 	providerId: string;
 	description?: string;
 	contextWindow?: number;
+	maxInputTokens?: number;
 	maxOutputTokens?: number;
 	capabilities?: readonly GatewayModelCapability[];
 	metadata?: Record<string, JsonValue | undefined>;

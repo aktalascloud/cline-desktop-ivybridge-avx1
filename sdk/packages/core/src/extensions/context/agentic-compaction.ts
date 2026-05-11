@@ -125,7 +125,7 @@ export async function runAgenticCompaction(options: {
 		messagesPreserved: messages.length - cutIndex,
 		tokensBefore,
 		tokensAfter,
-		contextWindowTokens: options.context.contextWindowTokens,
+		maxInputTokens: options.context.maxInputTokens,
 	});
 	return { messages: resultMessages };
 }

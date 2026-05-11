@@ -292,6 +292,7 @@ function buildModelFromPrivateSource(
 	input: {
 		name?: string;
 		contextWindow?: number;
+		maxInputTokens?: number;
 		maxTokens?: number;
 		supportsImages?: boolean;
 		supportsPromptCache?: boolean;
@@ -318,6 +319,7 @@ function buildModelFromPrivateSource(
 		id,
 		name: input.name ?? id,
 		contextWindow: input.contextWindow,
+		maxInputTokens: input.maxInputTokens,
 		maxTokens: input.maxTokens,
 		capabilities,
 		releaseDate: input.releaseDate,
@@ -386,6 +388,7 @@ async function fetchBasetenPrivateModels(
 		models[id] = buildModelFromPrivateSource(id, {
 			name: id,
 			contextWindow: model.context_length,
+			maxInputTokens: model.context_length,
 			maxTokens: model.max_completion_tokens,
 			supportsReasoning:
 				features.includes("reasoning") || features.includes("reasoning_effort"),
@@ -426,7 +429,7 @@ async function fetchHicapPrivateModels(
 		}
 		models[id] = buildModelFromPrivateSource(id, {
 			name: id,
-			contextWindow: 128_000,
+			maxInputTokens: 128_000,
 			supportsImages: true,
 			supportsPromptCache: true,
 		});
@@ -499,7 +502,7 @@ async function fetchLiteLlmPrivateModels(
 		const converted = buildModelFromPrivateSource(modelId, {
 			name: displayName ?? modelId,
 			maxTokens: info?.max_output_tokens ?? info?.max_tokens,
-			contextWindow: info?.max_input_tokens ?? info?.max_tokens,
+			maxInputTokens: info?.max_input_tokens ?? info?.max_tokens,
 			supportsImages: info?.supports_vision,
 			supportsPromptCache: info?.supports_prompt_caching,
 			supportsReasoning: info?.supports_reasoning,

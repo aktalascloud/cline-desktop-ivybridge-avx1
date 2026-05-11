@@ -221,10 +221,7 @@ export function runBasicCompaction(options: {
 }): CoreCompactionResult | undefined {
 	const targetTokens = Math.max(
 		1,
-		Math.min(
-			options.context.triggerTokens,
-			options.context.contextWindowTokens,
-		),
+		Math.min(options.context.triggerTokens, options.context.maxInputTokens),
 	);
 	const candidates = buildBasicCandidates(
 		options.context.messages,
@@ -293,7 +290,7 @@ export function runBasicCompaction(options: {
 		tokensBefore: beforeTokens,
 		tokensAfter: afterTokens,
 		targetTokens,
-		contextWindowTokens: options.context.contextWindowTokens,
+		maxInputTokens: options.context.maxInputTokens,
 	});
 
 	return { messages: nextMessages };

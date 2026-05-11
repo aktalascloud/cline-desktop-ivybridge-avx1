@@ -138,7 +138,7 @@ export function splitCoreSessionConfig(config: CoreSessionConfig): {
 							thresholdRatio: compaction.thresholdRatio,
 							reserveTokens: compaction.reserveTokens,
 							preserveRecentTokens: compaction.preserveRecentTokens,
-							contextWindowTokens: compaction.contextWindowTokens,
+							maxInputTokens: compaction.maxInputTokens,
 							summarizer: compaction.summarizer,
 						},
 					}

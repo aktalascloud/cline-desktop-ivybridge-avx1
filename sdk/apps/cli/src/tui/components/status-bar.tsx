@@ -80,19 +80,19 @@ export function resolveModelDisplayName(config: {
 	return name;
 }
 
-export function resolveModelContextWindow(config: {
+export function resolveModelMaxInputTokens(config: {
 	modelId: string;
 	knownModels?: Record<string, unknown>;
 }): number | undefined {
 	const info = (lookupModelInfo(config.modelId, config.knownModels) ?? {}) as {
+		maxInputTokens?: number;
 		contextWindow?: number;
-		context_window?: number;
 	};
+	if (typeof info.maxInputTokens === "number" && info.maxInputTokens > 0) {
+		return info.maxInputTokens;
+	}
 	if (typeof info.contextWindow === "number" && info.contextWindow > 0) {
 		return info.contextWindow;
-	}
-	if (typeof info.context_window === "number" && info.context_window > 0) {
-		return info.context_window;
 	}
 	return undefined;
 }
@@ -102,7 +102,7 @@ export interface StatusBarProps {
 	modelId: string;
 	totalTokens: number;
 	totalCost: number;
-	contextWindow?: number;
+	maxInputTokens?: number;
 	uiMode: AgentMode;
 	autoApproveAll: boolean;
 	workspaceName: string;
@@ -121,7 +121,7 @@ export function StatusBar(props: StatusBarProps) {
 		modelId,
 		totalTokens,
 		totalCost,
-		contextWindow,
+		maxInputTokens,
 		uiMode,
 		autoApproveAll,
 		workspaceName,
@@ -134,12 +134,12 @@ export function StatusBar(props: StatusBarProps) {
 	const terminalBg = useTerminalBackground();
 	const defaultFg = getDefaultForeground(terminalBg);
 	const contextBarFilledFg = resolveContextBarFilledForeground(defaultFg);
-	const hasContextWindow =
-		typeof contextWindow === "number" &&
-		Number.isFinite(contextWindow) &&
-		contextWindow > 0;
-	const bar = hasContextWindow
-		? createContextBar(totalTokens, contextWindow)
+	const hasMaxInputTokens =
+		typeof maxInputTokens === "number" &&
+		Number.isFinite(maxInputTokens) &&
+		maxInputTokens > 0;
+	const bar = hasMaxInputTokens
+		? createContextBar(totalTokens, maxInputTokens)
 		: undefined;
 	const showUsageCost = shouldShowCliUsageCost(props.providerId);
 

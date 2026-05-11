@@ -9,8 +9,8 @@ import {
 import { InputBar, type TextareaHandle } from "../components/input-bar";
 import { QueuedPrompts } from "../components/queued-prompts";
 import {
-	resolveModelContextWindow,
 	resolveModelDisplayName,
+	resolveModelMaxInputTokens,
 	StatusBar,
 } from "../components/status-bar";
 import { useSession } from "../contexts/session-context";
@@ -64,7 +64,7 @@ export function ChatView(props: {
 	const placeholder =
 		session.uiMode === "plan" ? "Plan something..." : "Ask anything...";
 	const modelDisplayName = resolveModelDisplayName(config);
-	const contextWindow = resolveModelContextWindow(config);
+	const maxInputTokens = resolveModelMaxInputTokens(config);
 
 	return (
 		<box flexDirection="column" width="100%" height="100%">
@@ -106,7 +106,7 @@ export function ChatView(props: {
 					modelId={modelDisplayName}
 					totalTokens={session.lastTotalTokens}
 					totalCost={session.lastTotalCost}
-					contextWindow={contextWindow}
+					maxInputTokens={maxInputTokens}
 					uiMode={session.uiMode}
 					autoApproveAll={session.autoApproveAll}
 					workspaceName={

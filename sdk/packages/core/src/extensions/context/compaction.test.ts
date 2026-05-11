@@ -121,7 +121,7 @@ describe("createContextCompactionPrepareTurn", () => {
 			model: {
 				id: "mock-model",
 				provider: "anthropic",
-				info: { id: "mock-model", contextWindow: 10 },
+				info: { id: "mock-model", maxInputTokens: 10 },
 			},
 		});
 
@@ -213,7 +213,7 @@ describe("createContextCompactionPrepareTurn", () => {
 			model: {
 				id: "primary-model",
 				provider: "anthropic",
-				info: { id: "primary-model", contextWindow: 10 },
+				info: { id: "primary-model", maxInputTokens: 10 },
 			},
 		});
 
@@ -352,7 +352,7 @@ describe("createContextCompactionPrepareTurn", () => {
 			model: {
 				id: "mock-model",
 				provider: "anthropic",
-				info: { id: "mock-model", contextWindow: 10 },
+				info: { id: "mock-model", maxInputTokens: 10 },
 			},
 		});
 
@@ -415,7 +415,7 @@ describe("createContextCompactionPrepareTurn", () => {
 			model: {
 				id: "mock-model",
 				provider: "anthropic",
-				info: { id: "mock-model", contextWindow: 100 },
+				info: { id: "mock-model", maxInputTokens: 100 },
 			},
 		});
 
@@ -464,13 +464,13 @@ describe("createContextCompactionPrepareTurn", () => {
 			model: {
 				id: "mock-model",
 				provider: "anthropic",
-				info: { id: "mock-model", contextWindow: 100 },
+				info: { id: "mock-model", maxInputTokens: 100 },
 			},
 		});
 
 		expect(compact).toHaveBeenCalledTimes(1);
 		const context = compact.mock.calls[0]?.[0];
-		expect(context?.contextWindowTokens).toBe(100);
+		expect(context?.maxInputTokens).toBe(100);
 		expect(context?.triggerTokens).toBeLessThan(95);
 		expect(result?.messages).toEqual([
 			{ role: "user", content: "Compacted manually" },
@@ -531,7 +531,7 @@ describe("createContextCompactionPrepareTurn", () => {
 			model: {
 				id: "mock-model",
 				provider: "anthropic",
-				info: { id: "mock-model", contextWindow: 10_000 },
+				info: { id: "mock-model", maxInputTokens: 10_000 },
 			},
 		});
 
@@ -566,9 +566,9 @@ describe("createContextCompactionPrepareTurn", () => {
 				model: {
 					id: "mock-model",
 					provider: "anthropic",
-					info: { id: "mock-model", contextWindow: 100 },
+					info: { id: "mock-model", maxInputTokens: 100 },
 				},
-				contextWindowTokens: 100,
+				maxInputTokens: 100,
 				triggerTokens: 100,
 				thresholdRatio: 1,
 				utilizationRatio: 0.1,
@@ -636,7 +636,7 @@ describe("createContextCompactionPrepareTurn", () => {
 			model: {
 				id: "mock-model",
 				provider: "anthropic",
-				info: { id: "mock-model", contextWindow: 100 },
+				info: { id: "mock-model", maxInputTokens: 100 },
 			},
 		});
 

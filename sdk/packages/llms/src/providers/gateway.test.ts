@@ -2555,6 +2555,7 @@ describe("sdk-gateway", () => {
 			id: "gpt-5",
 			name: "GPT-5",
 			contextWindow: 200000,
+			maxInputTokens: 200000,
 			maxTokens: 32000,
 			capabilities: expect.arrayContaining([
 				"tools",

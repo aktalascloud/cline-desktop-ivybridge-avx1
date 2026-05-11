@@ -7,8 +7,8 @@ import {
 } from "../components/autocomplete-dropdown";
 import { InputBar, type TextareaHandle } from "../components/input-bar";
 import {
-	resolveModelContextWindow,
 	resolveModelDisplayName,
+	resolveModelMaxInputTokens,
 	StatusBar,
 } from "../components/status-bar";
 import { TrackedRobot, useMouseTracker } from "../components/tracked-robot";
@@ -70,7 +70,7 @@ export function HomeView(props: {
 	const placeholder =
 		session.uiMode === "plan" ? "Plan something..." : "What can I do for you?";
 	const modelDisplayName = resolveModelDisplayName(config);
-	const contextWindow = resolveModelContextWindow(config);
+	const maxInputTokens = resolveModelMaxInputTokens(config);
 	const hasAutocomplete =
 		props.autocomplete?.mode && props.autocomplete.options.length > 0;
 	const contentWidth = Math.min(width, HOME_VIEW_MAX_WIDTH);
@@ -139,7 +139,7 @@ export function HomeView(props: {
 								modelId={modelDisplayName}
 								totalTokens={session.lastTotalTokens}
 								totalCost={session.lastTotalCost}
-								contextWindow={contextWindow}
+								maxInputTokens={maxInputTokens}
 								uiMode={session.uiMode}
 								autoApproveAll={session.autoApproveAll}
 								workspaceName={

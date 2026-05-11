@@ -58,6 +58,7 @@ export function createAgentModelFromConfig(
 								name: model.name ?? id,
 								description: model.description,
 								contextWindow: model.contextWindow,
+								maxInputTokens: model.maxInputTokens,
 								maxOutputTokens: model.maxTokens,
 							}),
 						)
