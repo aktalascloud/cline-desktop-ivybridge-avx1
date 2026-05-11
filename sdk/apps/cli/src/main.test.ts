@@ -703,6 +703,7 @@ describe("runCli lightweight command dispatch", () => {
 			expect.objectContaining({
 				compaction: {
 					enabled: true,
+					strategy: "basic",
 				},
 				thinking: true,
 				reasoningEffort: "medium",
@@ -763,7 +764,7 @@ describe("runCli lightweight command dispatch", () => {
 		);
 	});
 
-	it("enables compaction by default for prompt runs", async () => {
+	it("enables truncation compaction by default for prompt runs", async () => {
 		mockState.runAgentCalls = 0;
 		runtimeMocks.runAgent.mockClear();
 
@@ -778,10 +779,130 @@ describe("runCli lightweight command dispatch", () => {
 			expect.objectContaining({
 				compaction: {
 					enabled: true,
+					strategy: "basic",
 				},
 			}),
 			expect.anything(),
 		);
+	});
+
+	it("supports basic truncation compaction for prompt runs", async () => {
+		mockState.runAgentCalls = 0;
+		runtimeMocks.runAgent.mockClear();
+
+		forcePromptModeInput();
+		process.argv = ["bun", "src/index.ts", "--compaction", "basic", "hello"];
+
+		const { runCli } = await import("./main");
+
+		await expect(runCli()).resolves.toBeUndefined();
+		expect(runtimeMocks.runAgent).toHaveBeenCalledWith(
+			"hello",
+			expect.objectContaining({
+				compaction: {
+					enabled: true,
+					strategy: "basic",
+				},
+			}),
+			expect.anything(),
+		);
+	});
+
+	it("supports agentic compaction for prompt runs", async () => {
+		mockState.runAgentCalls = 0;
+		runtimeMocks.runAgent.mockClear();
+
+		forcePromptModeInput();
+		process.argv = ["bun", "src/index.ts", "--compaction", "agentic", "hello"];
+
+		const { runCli } = await import("./main");
+
+		await expect(runCli()).resolves.toBeUndefined();
+		expect(runtimeMocks.runAgent).toHaveBeenCalledWith(
+			"hello",
+			expect.objectContaining({
+				compaction: {
+					enabled: true,
+					strategy: "agentic",
+				},
+			}),
+			expect.anything(),
+		);
+	});
+
+	it("rejects the removed llm compaction alias", async () => {
+		mockState.runAgentCalls = 0;
+		runtimeMocks.runAgent.mockClear();
+
+		forcePromptModeInput();
+		process.argv = ["bun", "src/index.ts", "--compaction", "llm", "hello"];
+
+		const { runCli } = await import("./main");
+
+		await expect(runCli()).resolves.toBeUndefined();
+		expect(process.exitCode).toBe(1);
+		expect(runtimeMocks.runAgent).not.toHaveBeenCalled();
+	});
+
+	it("rejects the removed truncation compaction alias", async () => {
+		mockState.runAgentCalls = 0;
+		runtimeMocks.runAgent.mockClear();
+
+		forcePromptModeInput();
+		process.argv = [
+			"bun",
+			"src/index.ts",
+			"--compaction",
+			"truncation",
+			"hello",
+		];
+
+		const { runCli } = await import("./main");
+
+		await expect(runCli()).resolves.toBeUndefined();
+		expect(process.exitCode).toBe(1);
+		expect(runtimeMocks.runAgent).not.toHaveBeenCalled();
+	});
+
+	it("supports disabling compaction for prompt runs", async () => {
+		mockState.runAgentCalls = 0;
+		runtimeMocks.runAgent.mockClear();
+
+		forcePromptModeInput();
+		process.argv = ["bun", "src/index.ts", "--compaction", "off", "hello"];
+
+		const { runCli } = await import("./main");
+
+		await expect(runCli()).resolves.toBeUndefined();
+		expect(runtimeMocks.runAgent).toHaveBeenCalledWith(
+			"hello",
+			expect.objectContaining({
+				compaction: {
+					enabled: false,
+				},
+			}),
+			expect.anything(),
+		);
+	});
+
+	it("rejects invalid compaction modes", async () => {
+		mockState.runAgentCalls = 0;
+		runtimeMocks.runAgent.mockClear();
+
+		forcePromptModeInput();
+		process.argv = [
+			"bun",
+			"src/index.ts",
+			"--compaction",
+			"aggressive",
+			"hello",
+		];
+
+		const { runCli } = await import("./main");
+
+		await expect(runCli()).resolves.toBeUndefined();
+		expect(process.exitCode).toBe(1);
+		expect(runtimeMocks.runAgent).not.toHaveBeenCalled();
 	});
 
 	it("does not fail fast for headless json mode with an OAuth provider", async () => {

@@ -199,7 +199,9 @@ cline config
 # - `/` opens workflow slash command search (arrow keys to move, Enter/Tab to insert)
 # - Ctrl+P opens the command palette for common CLI actions
 # - `/config` (or `/settings`) opens the interactive config browser
-#   with tabs for workflows, rules, skills, hooks, and agents
+#   with general settings plus tabs for workflows, rules, skills, hooks, and agents
+# - Settings > General includes a Compaction row for switching agentic compaction,
+#   basic compaction, or disabling compaction
 # Footer rows mirror the legacy CLI layout:
 # 1) command/file hint + Plan/Act badges (Tab)
 # 2) provider/model + context bar + token/cost
@@ -285,6 +287,7 @@ Runtime note:
 | `--hooks-dir <path>` | Additional hooks directory hint for runtime hook injection |
 | `--acp` | ACP (Agent Client Protocol) mode |
 | `--thinking [none\|low\|medium\|high\|xhigh]` | Set model thinking level when supported. Defaults to `medium` when the flag is provided without a level; thinking is off when the flag is omitted. |
+| `--compaction <agentic\|basic\|off>` | Context compaction mode. Defaults to `basic`; use `agentic` for LLM compaction or `off` to disable. |
 | `--retries <count>` | Maximum consecutive mistakes (retries) before halting (default: `3`) |
 | `--json` | Output NDJSON instead of styled text |
 | `--data-dir <path>` | Use isolated local state at `<path>` instead of `~/.cline` (enables sandbox mode automatically) |

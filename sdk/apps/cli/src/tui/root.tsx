@@ -190,8 +190,10 @@ function App(props: TuiProps) {
 		dialog,
 		config: props.config,
 		sessionUiMode: session.uiMode,
+		compactionMode: session.compactionMode,
 		toggleMode,
 		toggleAutoApprove: () => session.toggleAutoApprove(),
+		setCompactionMode: session.setCompactionMode,
 		termHeight,
 		loadConfigData: props.loadConfigData,
 		onToggleConfigItem: props.onToggleConfigItem,
@@ -899,6 +901,7 @@ export function Root(
 					initialUsage={initialUsage}
 					onRunningChange={props.onRunningChange}
 					onAutoApproveChange={props.onAutoApproveChange}
+					onCompactionModeChange={props.onCompactionModeChange}
 					onExit={props.onExit}
 				>
 					<App {...props} />

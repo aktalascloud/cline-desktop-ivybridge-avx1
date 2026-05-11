@@ -14,7 +14,7 @@ import type {
 	PendingPromptSubmittedEvent,
 } from "../runtime/session-events";
 import type { RepoStatus } from "../utils/repo-status";
-import type { Config } from "../utils/types";
+import type { CliCompactionMode, Config } from "../utils/types";
 import type { ClineAccountSnapshot } from "./cline-account";
 import type {
 	InteractiveConfigData,
@@ -139,6 +139,7 @@ export interface TuiProps {
 	onRunningChange: (isRunning: boolean) => void;
 	onTurnErrorReported: (reported: boolean) => void;
 	onAutoApproveChange: (enabled: boolean) => void;
+	onCompactionModeChange: (mode: CliCompactionMode) => Promise<void>;
 	onModelChange: () => Promise<void>;
 	onModeChange: (mode: AgentMode) => Promise<void>;
 	onSessionRestart: () => Promise<void>;

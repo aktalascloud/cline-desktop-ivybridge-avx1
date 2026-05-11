@@ -7,6 +7,8 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { getCliCompactionMode } from "../../utils/compaction-mode";
+import type { CliCompactionMode } from "../../utils/types";
 import type { ChatEntry, InlineStream, TuiProps } from "../types";
 import { MAX_BUFFERED_LINES } from "../types";
 
@@ -18,6 +20,7 @@ interface SessionContextValue {
 	hasSubmitted: boolean;
 	uiMode: AgentMode;
 	autoApproveAll: boolean;
+	compactionMode: CliCompactionMode;
 	lastTotalTokens: number;
 	lastTotalCost: number;
 	isExitRequested: boolean;
@@ -42,6 +45,7 @@ interface SessionContextValue {
 	setUiMode: (mode: AgentMode) => void;
 	toggleMode: () => void;
 	toggleAutoApprove: () => void;
+	setCompactionMode: (mode: CliCompactionMode) => void;
 	requestExit: () => void;
 	clearEntries: () => void;
 	replaceEntries: (entries: ChatEntry[]) => void;
@@ -64,6 +68,7 @@ export function SessionProvider(props: {
 	};
 	onRunningChange: TuiProps["onRunningChange"];
 	onAutoApproveChange: TuiProps["onAutoApproveChange"];
+	onCompactionModeChange: TuiProps["onCompactionModeChange"];
 	onExit: TuiProps["onExit"];
 	children: React.ReactNode;
 }) {
@@ -73,6 +78,7 @@ export function SessionProvider(props: {
 		initialUsage,
 		onRunningChange,
 		onAutoApproveChange,
+		onCompactionModeChange,
 		onExit,
 	} = props;
 
@@ -93,6 +99,9 @@ export function SessionProvider(props: {
 	const [autoApproveAll, _setAutoApproveAll] = useState(
 		config.toolPolicies["*"]?.autoApprove !== false,
 	);
+	const [compactionMode, _setCompactionMode] = useState<CliCompactionMode>(() =>
+		getCliCompactionMode(config),
+	);
 	const [lastTotalTokens, setLastTotalTokens] = useState(
 		() => initialUsage?.totalTokens ?? 0,
 	);
@@ -102,18 +111,15 @@ export function SessionProvider(props: {
 	const [isExitRequested, setIsExitRequested] = useState(false);
 
 	const activeInlineStreamRef = useRef<InlineStream>(undefined);
-	const onRunningChangeRef = useRef(onRunningChange);
-	onRunningChangeRef.current = onRunningChange;
-	const onAutoApproveChangeRef = useRef(onAutoApproveChange);
-	onAutoApproveChangeRef.current = onAutoApproveChange;
-	const onExitRef = useRef(onExit);
-	onExitRef.current = onExit;
 
-	const setIsRunning = useCallback((v: boolean) => {
-		_setIsRunning(v);
-		setAbortRequested(false);
-		onRunningChangeRef.current(v);
-	}, []);
+	const setIsRunning = useCallback(
+		(v: boolean) => {
+			_setIsRunning(v);
+			setAbortRequested(false);
+			onRunningChange(v);
+		},
+		[onRunningChange],
+	);
 
 	const appendEntry = useCallback((entry: ChatEntry) => {
 		setEntries((prev) => {
@@ -178,15 +184,23 @@ export function SessionProvider(props: {
 	const toggleAutoApprove = useCallback(() => {
 		_setAutoApproveAll((prev) => {
 			const next = !prev;
-			onAutoApproveChangeRef.current(next);
+			onAutoApproveChange(next);
 			return next;
 		});
-	}, []);
+	}, [onAutoApproveChange]);
+
+	const setCompactionMode = useCallback(
+		(mode: CliCompactionMode) => {
+			_setCompactionMode(mode);
+			void onCompactionModeChange(mode);
+		},
+		[onCompactionModeChange],
+	);
 
 	const requestExit = useCallback(() => {
 		setIsExitRequested(true);
-		setTimeout(() => onExitRef.current(), 0);
-	}, []);
+		setTimeout(() => onExit(), 0);
+	}, [onExit]);
 
 	const clearEntries = useCallback(() => {
 		setEntries([]);
@@ -230,6 +244,7 @@ export function SessionProvider(props: {
 		hasSubmitted,
 		uiMode,
 		autoApproveAll,
+		compactionMode,
 		lastTotalTokens,
 		lastTotalCost,
 		isExitRequested,
@@ -248,6 +263,7 @@ export function SessionProvider(props: {
 		setUiMode,
 		toggleMode,
 		toggleAutoApprove,
+		setCompactionMode,
 		requestExit,
 		clearEntries,
 		replaceEntries,

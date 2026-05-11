@@ -7,7 +7,11 @@ import type {
 	InteractiveConfigItem,
 	InteractiveConfigTab,
 } from "../../tui/interactive-config";
-import type { Config } from "../../utils/types";
+import {
+	formatCliCompactionMode,
+	getNextCliCompactionMode,
+} from "../../utils/compaction-mode";
+import type { CliCompactionMode, Config } from "../../utils/types";
 import { resolveModelDisplayName } from "../components/status-bar";
 import { getModeAccent, palette } from "../palette";
 import {
@@ -21,7 +25,6 @@ import {
 	resolveActiveConfigItems,
 	resolveConfigItemSelectAction,
 	resolveConfigItemToggleAction,
-	resolveInitialConfigTab,
 	toTabLabel,
 } from "./config-view-helpers";
 
@@ -105,20 +108,24 @@ function getVisibleWindow<T>(
 	return { items: items.slice(start, end), startIndex: start };
 }
 
+const COMPACTION_MODE_COLORS: Record<CliCompactionMode, string> = {
+	agentic: palette.success,
+	basic: "yellow",
+	off: "gray",
+};
+
 export interface ConfigPanelProps extends ChoiceContext<ConfigAction> {
 	config: Config;
 	configData: InteractiveConfigData;
 	providerDisplayName: string;
 	currentMode: string;
-	initialTab?: InteractiveConfigTab;
-	initialNavPos?: number;
-	onActiveTabChange?: (tab: InteractiveConfigTab) => void;
-	onNavPosChange?: (navPos: number) => void;
+	currentCompactionMode: CliCompactionMode;
 	onToggleConfigItem?: (
 		item: InteractiveConfigItem,
 	) => Promise<InteractiveConfigData | undefined>;
 	onToggleMode: () => void;
 	onToggleAutoApprove: () => void;
+	onSetCompactionMode: (mode: CliCompactionMode) => void;
 }
 
 function groupToolItems(
@@ -232,13 +239,14 @@ export function ConfigPanelContent(props: ConfigPanelProps) {
 		config.toolPolicies["*"]?.autoApprove !== false,
 	);
 	const [verbose, setVerbose] = useState(config.verbose);
-	const [activeTab, setActiveTab] = useState<InteractiveConfigTab>(() =>
-		resolveInitialConfigTab(props.initialTab),
+	const [compactionMode, setCompactionMode] = useState(
+		props.currentCompactionMode,
 	);
+	const [activeTab, setActiveTab] = useState<InteractiveConfigTab>("general");
 	const [configData, setConfigData] = useState(props.configData);
 	const [togglingItemId, setTogglingItemId] = useState<string | null>(null);
 	const [toggleError, setToggleError] = useState<string | undefined>();
-	const [navPos, setNavPos] = useState(props.initialNavPos ?? 0);
+	const [navPos, setNavPos] = useState(0);
 
 	const displayName = resolveModelDisplayName(config);
 
@@ -249,6 +257,7 @@ export function ConfigPanelContent(props: ConfigPanelProps) {
 			r.push({ kind: "provider" });
 			r.push({ kind: "model" });
 			r.push({ kind: "toggle", id: "mode", label: "Mode" });
+			r.push({ kind: "toggle", id: "compaction", label: "Compaction" });
 			r.push({
 				kind: "toggle",
 				id: "auto-approve",
@@ -301,7 +310,6 @@ export function ConfigPanelContent(props: ConfigPanelProps) {
 
 	const setNavPosition = (nextNavPos: number) => {
 		setNavPos(nextNavPos);
-		props.onNavPosChange?.(nextNavPos);
 	};
 
 	const handleInlineToggle = async (item: InteractiveConfigItem) => {
@@ -341,6 +349,12 @@ export function ConfigPanelContent(props: ConfigPanelProps) {
 						setAutoApprove(!autoApprove);
 						props.onToggleAutoApprove();
 						break;
+					case "compaction": {
+						const nextMode = getNextCliCompactionMode(compactionMode);
+						setCompactionMode(nextMode);
+						props.onSetCompactionMode(nextMode);
+						break;
+					}
 					case "verbose":
 						config.verbose = !verbose;
 						setVerbose(!verbose);
@@ -366,7 +380,12 @@ export function ConfigPanelContent(props: ConfigPanelProps) {
 
 	const handleToggleSelected = () => {
 		const row = rows[selectedRowIdx];
-		if (!row || !isToggleableRow(row)) return;
+		if (!row) return;
+		if (row.kind === "toggle") {
+			handleSelect();
+			return;
+		}
+		if (!isToggleableRow(row)) return;
 		const action = resolveConfigItemToggleAction(row.item);
 		if (isInlineConfigAction(action)) {
 			void handleInlineToggle(row.item);
@@ -382,7 +401,6 @@ export function ConfigPanelContent(props: ConfigPanelProps) {
 			const direction = key.name === "left" ? "left" : "right";
 			setActiveTab((tab) => {
 				const nextTab = getAdjacentConfigTab(tab, direction);
-				props.onActiveTabChange?.(nextTab);
 				return nextTab;
 			});
 			setNavPosition(0);
@@ -512,6 +530,9 @@ export function ConfigPanelContent(props: ConfigPanelProps) {
 						} else if (row.id === "auto-approve") {
 							value = autoApprove ? "● on" : "○ off";
 							valueColor = autoApprove ? palette.success : "gray";
+						} else if (row.id === "compaction") {
+							value = formatCliCompactionMode(compactionMode);
+							valueColor = COMPACTION_MODE_COLORS[compactionMode];
 						} else {
 							value = verbose ? "● on" : "○ off";
 							valueColor = verbose ? palette.success : "gray";

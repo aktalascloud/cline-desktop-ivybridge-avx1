@@ -1,13 +1,12 @@
 import { Llms } from "@cline/core";
 import type { ChoiceContext } from "@opentui-ui/dialog";
 import type { DialogActions } from "@opentui-ui/dialog/react";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import type {
 	InteractiveConfigData,
 	InteractiveConfigItem,
-	InteractiveConfigTab,
 } from "../../tui/interactive-config";
-import type { Config } from "../../utils/types";
+import type { CliCompactionMode, Config } from "../../utils/types";
 import { ExtDetailContent } from "../components/dialogs/config-dialogs";
 import { ConfigPanelContent } from "../views/config-view";
 import type { ConfigAction } from "../views/config-view-helpers";
@@ -17,8 +16,10 @@ export function useConfigPanel(opts: {
 	dialog: DialogActions;
 	config: Config;
 	sessionUiMode: string;
+	compactionMode: CliCompactionMode;
 	toggleMode: () => void;
 	toggleAutoApprove: () => void;
+	setCompactionMode: (mode: CliCompactionMode) => void;
 	termHeight: number;
 	loadConfigData: () => Promise<InteractiveConfigData>;
 	onToggleConfigItem?: (
@@ -28,8 +29,6 @@ export function useConfigPanel(opts: {
 	openMcpManager: (options?: { refocus?: boolean }) => Promise<boolean>;
 	refocusTextarea: () => void;
 }) {
-	const activeTabRef = useRef<InteractiveConfigTab>("general");
-	const navPosRef = useRef(0);
 	const emptyConfigData = useMemo(
 		() => ({
 			workflows: [] as InteractiveConfigItem[],
@@ -63,17 +62,11 @@ export function useConfigPanel(opts: {
 						configData={data}
 						providerDisplayName={providerDisplayName}
 						currentMode={opts.sessionUiMode}
-						initialTab={activeTabRef.current}
-						initialNavPos={navPosRef.current}
-						onActiveTabChange={(tab) => {
-							activeTabRef.current = tab;
-						}}
-						onNavPosChange={(navPos) => {
-							navPosRef.current = navPos;
-						}}
+						currentCompactionMode={opts.compactionMode}
 						onToggleConfigItem={opts.onToggleConfigItem}
 						onToggleMode={opts.toggleMode}
 						onToggleAutoApprove={opts.toggleAutoApprove}
+						onSetCompactionMode={opts.setCompactionMode}
 					/>
 				),
 			});

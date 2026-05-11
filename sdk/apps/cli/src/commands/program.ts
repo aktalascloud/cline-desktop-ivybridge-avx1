@@ -1,5 +1,9 @@
 import { Command, CommanderError, Option } from "commander";
 import { version } from "../../package.json";
+import {
+	CLI_COMPACTION_MODE_OPTION_DESCRIPTION,
+	parseCliCompactionMode,
+} from "../utils/compaction-mode";
 import type { ParsedArgs } from "../utils/types";
 
 export { CommanderError };
@@ -31,6 +35,7 @@ export function addRootOptions(cmd: Command): Command {
 				"--thinking <level>",
 				"Set reasoning effort level between none|low|medium|high|xhigh (default: medium)",
 			)
+			.option("--compaction <mode>", CLI_COMPACTION_MODE_OPTION_DESCRIPTION)
 			.option(
 				"-i, --tui",
 				"Open the terminal user interface (TUI) for interactive sessions",
@@ -183,6 +188,16 @@ export function commanderToParsedArgs(program: Command): ParsedArgs {
 			}
 		} else if (effort) {
 			result.invalidThinkingLevel = effort;
+		}
+	}
+
+	if (opts.compaction !== undefined) {
+		const mode = String(opts.compaction).trim().toLowerCase();
+		const compactionMode = parseCliCompactionMode(mode);
+		if (compactionMode) {
+			result.compactionMode = compactionMode;
+		} else if (mode) {
+			result.invalidCompactionMode = mode;
 		}
 	}
 

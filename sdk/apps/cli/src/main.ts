@@ -13,6 +13,10 @@ import {
 import { autoUpdateOnStartup } from "./commands/update";
 import { CLI_DEFAULT_CHECKPOINT_CONFIG } from "./runtime/defaults";
 import {
+	buildCliCompactionConfig,
+	CLI_COMPACTION_MODE_EXPECTED_TEXT,
+} from "./utils/compaction-mode";
+import {
 	configureSandboxEnvironment,
 	normalizeAutoApproveArgs,
 	resolveWorkspaceRoot,
@@ -616,6 +620,13 @@ export async function runCli(): Promise<void> {
 		process.exitCode = 1;
 		return;
 	}
+	if (args.invalidCompactionMode) {
+		writeErr(
+			`invalid compaction mode "${args.invalidCompactionMode}" (expected ${CLI_COMPACTION_MODE_EXPECTED_TEXT})`,
+		);
+		process.exitCode = 1;
+		return;
+	}
 	if (args.invalidAutoApprove) {
 		writeErr(
 			`invalid auto-approve value "${args.invalidAutoApprove}" (expected "true" or "false")`,
@@ -802,9 +813,7 @@ export async function runCli(): Promise<void> {
 				maxConsecutiveMistakes: args.retries ?? 3,
 			},
 			checkpoint: CLI_DEFAULT_CHECKPOINT_CONFIG,
-			compaction: {
-				enabled: true,
-			},
+			compaction: buildCliCompactionConfig(args.compactionMode),
 			timeoutSeconds: args.timeoutSeconds,
 			sandbox: sandboxEnabled,
 			sandboxDataDir,

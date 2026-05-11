@@ -15,6 +15,7 @@ export type CliAgentMode = AgentMode;
 export type CliReasoningEffort = NonNullable<
 	NonNullable<ProviderSettings["reasoning"]>["effort"]
 >;
+export type CliCompactionMode = "agentic" | "basic" | "off";
 
 export interface Config extends Omit<CoreSessionConfig, "apiKey" | "mode"> {
 	apiKey: string;
@@ -77,6 +78,8 @@ export interface ParsedArgs {
 	thinkingExplicitlySet?: boolean;
 	reasoningEffort?: CliReasoningEffort;
 	invalidThinkingLevel?: string;
+	compactionMode?: CliCompactionMode;
+	invalidCompactionMode?: string;
 	invalidAutoApprove?: string;
 	sandbox: boolean;
 	dataDir?: string;

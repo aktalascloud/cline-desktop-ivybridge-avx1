@@ -18,6 +18,7 @@ import {
 import { disableOpenTuiGraphicsProbe } from "../tui/opentui-env";
 import type { QueuedPromptItem } from "../tui/types";
 import { type ChatCommandState, chatCommandHost } from "../utils/chat-commands";
+import { applyCliCompactionMode } from "../utils/compaction-mode";
 import {
 	prepareTerminalForPostTuiOutput,
 	writeErr,
@@ -505,6 +506,11 @@ export async function runInteractive(
 		onAutoApproveChange: (enabled) => {
 			setInteractiveAutoApprove(enabled);
 			void refreshInteractiveSessionPolicies();
+		},
+		onCompactionModeChange: async (mode) => {
+			await sessionRuntime.ensureReady();
+			applyCliCompactionMode(config, mode);
+			await sessionRuntime.restartWithCurrentMessages();
 		},
 		onModeChange: async (mode) => {
 			if (!isInteractiveMode(mode)) return;
