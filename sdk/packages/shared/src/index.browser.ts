@@ -139,19 +139,6 @@ export {
 	type BasicLogMetadata,
 	noopBasicLogger,
 } from "./logging/logger";
-export type {
-	ClineEnvironment,
-	ClineEnvironmentConfig,
-	ResolveClineEnvironmentOptions,
-} from "./runtime/cline-environment";
-export {
-	CLINE_ENVIRONMENT_ENV,
-	CLINE_ENVIRONMENT_OVERRIDE_ENV,
-	CLINE_ENVIRONMENTS,
-	DEFAULT_CLINE_ENVIRONMENT,
-	getClineEnvironmentConfig,
-	resolveClineEnvironment,
-} from "./runtime/cline-environment";
 export {
 	parseJsonStream,
 	safeJsonParse,
@@ -278,6 +265,19 @@ export {
 	TEAM_LIFECYCLE_EVENT_TYPE,
 	TEAM_PROGRESS_EVENT_TYPE,
 } from "./rpc/team-progress";
+export type {
+	ClineEnvironment,
+	ClineEnvironmentConfig,
+	ResolveClineEnvironmentOptions,
+} from "./runtime/cline-environment";
+export {
+	CLINE_ENVIRONMENT_ENV,
+	CLINE_ENVIRONMENT_OVERRIDE_ENV,
+	CLINE_ENVIRONMENTS,
+	DEFAULT_CLINE_ENVIRONMENT,
+	getClineEnvironmentConfig,
+	resolveClineEnvironment,
+} from "./runtime/cline-environment";
 export type {
 	ITelemetryService,
 	OpenTelemetryClientConfig,

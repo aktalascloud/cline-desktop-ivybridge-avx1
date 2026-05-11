@@ -717,8 +717,8 @@ describe("formatMessagesForAiSdk - surrogate sanitization", () => {
 			{ role: "user", content: [{ type: "text", text: `hey ${valid}` }] },
 		]);
 
-		expect(messages[0]!.role).toBe("system");
-		expect(messages[0]!.content).toBe(expectedSystem);
+		expect(messages[0]?.role).toBe("system");
+		expect(messages[0]?.content).toBe(expectedSystem);
 	});
 
 	it("sanitizes string message content", () => {
@@ -727,7 +727,7 @@ describe("formatMessagesForAiSdk - surrogate sanitization", () => {
 			{ role: "user", content: `text ${lone}` },
 		]);
 
-		expect(messages[0]!.content).toBe("text \uFFFD");
+		expect(messages[0]?.content).toBe("text \uFFFD");
 	});
 
 	it("sanitizes text parts in user messages", () => {
@@ -736,11 +736,11 @@ describe("formatMessagesForAiSdk - surrogate sanitization", () => {
 			{ role: "user", content: [{ type: "text", text: `text ${lone}` }] },
 		]);
 
-		const userContent = messages[0]!.content as Array<{
+		const userContent = messages[0]?.content as Array<{
 			type: string;
 			text: string;
 		}>;
-		expect(userContent[0]!.text).toBe("text \uFFFD");
+		expect(userContent[0]?.text).toBe("text \uFFFD");
 	});
 
 	it("sanitizes text parts in assistant messages", () => {
@@ -749,11 +749,11 @@ describe("formatMessagesForAiSdk - surrogate sanitization", () => {
 			{ role: "assistant", content: [{ type: "text", text: `text ${lone}` }] },
 		]);
 
-		const content = messages[0]!.content as Array<{
+		const content = messages[0]?.content as Array<{
 			type: string;
 			text: string;
 		}>;
-		expect(content[0]!.text).toBe("text \uFFFD");
+		expect(content[0]?.text).toBe("text \uFFFD");
 	});
 
 	it("sanitizes reasoning parts in assistant messages", () => {
@@ -765,11 +765,11 @@ describe("formatMessagesForAiSdk - surrogate sanitization", () => {
 			},
 		]);
 
-		const content = messages[0]!.content as Array<{
+		const content = messages[0]?.content as Array<{
 			type: string;
 			text: string;
 		}>;
-		expect(content[0]!.text).toBe("think \uFFFD");
+		expect(content[0]?.text).toBe("think \uFFFD");
 	});
 
 	it("sanitizes tool result string output", () => {
@@ -788,11 +788,11 @@ describe("formatMessagesForAiSdk - surrogate sanitization", () => {
 			},
 		]);
 
-		const content = messages[0]!.content as Array<{
+		const content = messages[0]?.content as Array<{
 			type: string;
 			output: { type: string; value: string };
 		}>;
-		expect(content[0]!.output.value).toBe("result \uFFFD");
+		expect(content[0]?.output.value).toBe("result \uFFFD");
 	});
 
 	it("sanitizes tool result text content blocks", () => {
@@ -811,11 +811,11 @@ describe("formatMessagesForAiSdk - surrogate sanitization", () => {
 			},
 		]);
 
-		const content = messages[0]!.content as Array<{
+		const content = messages[0]?.content as Array<{
 			type: string;
 			output: { type: string; value: Array<{ type: string; text: string }> };
 		}>;
-		expect(content[0]!.output.value[0]!.text).toBe("content \uFFFD");
+		expect(content[0]?.output.value[0]?.text).toBe("content \uFFFD");
 	});
 
 	it("sanitizes deeply nested strings in json tool output", () => {
@@ -834,11 +834,11 @@ describe("formatMessagesForAiSdk - surrogate sanitization", () => {
 			},
 		]);
 
-		const content = messages[0]!.content as Array<{
+		const content = messages[0]?.content as Array<{
 			type: string;
 			output: { type: string; value: { nested: string } };
 		}>;
-		expect(content[0]!.output.value.nested).toBe("value \uFFFD");
+		expect(content[0]?.output.value.nested).toBe("value \uFFFD");
 	});
 
 	it("sanitizes file content", () => {
@@ -852,10 +852,10 @@ describe("formatMessagesForAiSdk - surrogate sanitization", () => {
 			},
 		]);
 
-		const content = messages[0]!.content as Array<{
+		const content = messages[0]?.content as Array<{
 			type: string;
 			text: string;
 		}>;
-		expect(content[0]!.text).toContain("file \uFFFD");
+		expect(content[0]?.text).toContain("file \uFFFD");
 	});
 });

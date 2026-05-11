@@ -4,10 +4,8 @@ import type { AppView, ChatEntry } from "../types";
 const APP_TITLE = "Cline";
 const CHAT_TITLE_PREFIX = "> ";
 const MAX_TERMINAL_TITLE_LENGTH = 80;
-const CONTROL_CHARACTER_PATTERN = new RegExp(
-	"[\\u0000-\\u001f\\u007f-\\u009f]",
-	"g",
-);
+// biome-ignore lint/suspicious/noControlCharactersInRegex: stripping control characters from terminal titles is the purpose of this pattern
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f-\u009f]/g;
 
 function truncateTitle(title: string): string {
 	if (title.length <= MAX_TERMINAL_TITLE_LENGTH) {

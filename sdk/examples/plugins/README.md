@@ -18,6 +18,7 @@ What a plugin can do:
 | [custom-compaction.ts](./custom-compaction.ts) | Provider-message compaction via `registerMessageBuilder` |
 | [background-terminal.ts](./background-terminal.ts) | Detached shell jobs with persisted logs and session steering |
 | [automation-events.ts](./automation-events.ts) | Plugin-emitted automation events |
+| [gitignore-read-files-guard.ts](./gitignore-read-files-guard.ts) | Runtime hook policy for workspace `.gitignore` boundaries |
 | [web-search.ts](./web-search.ts) | `web_search` tool backed by an Exa API key |
 | [typescript-lsp/](./typescript-lsp/) | `goto_definition` tool powered by the TypeScript Language Service |
 | [agents-squad/](./agents-squad/) | Multi-agent team — spin up subagents with their own models and personalities |
@@ -36,6 +37,16 @@ cline -i "What's the weather like in Tokyo and Paris?"
 ```
 
 Swap `weather-metrics.ts` for any other example. Each one ships ready to copy.
+
+To block file access for paths ignored by workspace `.gitignore` files:
+
+```bash
+cp examples/plugins/gitignore-read-files-guard.ts .cline/plugins/
+
+cline -i "Read the ignored .env file"
+```
+
+The guard uses the `beforeTool` runtime hook. When a `read_files`, `editor`, or `apply_patch` call targets an ignored workspace file, the hook returns `{ skip: true }`, so the tool result records a policy error and the file is not accessed.
 
 For a plugin that lives in a directory (with its own `package.json`), use `cline plugin install`:
 
