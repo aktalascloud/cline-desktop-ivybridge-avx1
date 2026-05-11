@@ -90,6 +90,7 @@ describe("resolveProviderConfig", () => {
 			.mockResolvedValue([
 				{ id: "gpt-5.3-codex", name: "GPT-5.3 Codex" },
 				{ id: "gpt-5.4", name: "GPT-5.4" },
+				{ id: "gpt-5.4-mini", name: "gpt-5.4-mini" },
 			]);
 
 		const resolved = await resolveProviderConfig(
@@ -112,7 +113,15 @@ describe("resolveProviderConfig", () => {
 		expect(Object.keys(resolved?.knownModels ?? {}).sort()).toEqual([
 			"gpt-5.3-codex",
 			"gpt-5.4",
+			"gpt-5.4-mini",
 		]);
+		expect(resolved?.knownModels?.["gpt-5.4-mini"]).toEqual(
+			expect.objectContaining({
+				name: "gpt-5.4-mini",
+				maxInputTokens: 272_000,
+				contextWindow: 400_000,
+			}),
+		);
 		expect(resolved?.knownModels?.["gpt-5.4-nano"]).toBeUndefined();
 	});
 });

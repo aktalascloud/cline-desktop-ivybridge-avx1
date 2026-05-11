@@ -1,7 +1,7 @@
 import { CLINE_ENVIRONMENT_ENV, CLINE_ENVIRONMENTS } from "@cline/shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { BUILTIN_SPECS } from "./builtins";
-import { getProvider } from "./model-registry";
+import { getModelsForProvider, getProvider } from "./model-registry";
 
 function findClineSpec() {
 	const spec = BUILTIN_SPECS.find((s) => s.id === "cline");
@@ -59,5 +59,24 @@ describe("built-in provider metadata", () => {
 		await expect(getProvider("zai")).resolves.not.toMatchObject({
 			capabilities: expect.arrayContaining(["popular"]),
 		});
+	});
+
+	it("enriches OpenAI Codex fallback models from the generated OpenAI catalog", async () => {
+		const models = await getModelsForProvider("openai-codex");
+
+		expect(models["gpt-5.4"]).toEqual(
+			expect.objectContaining({
+				name: "GPT-5.4",
+				maxInputTokens: expect.any(Number),
+				contextWindow: expect.any(Number),
+			}),
+		);
+		expect(models["gpt-5.3-codex"]).toEqual(
+			expect.objectContaining({
+				name: "GPT-5.3 Codex",
+				maxInputTokens: expect.any(Number),
+				contextWindow: expect.any(Number),
+			}),
+		);
 	});
 });

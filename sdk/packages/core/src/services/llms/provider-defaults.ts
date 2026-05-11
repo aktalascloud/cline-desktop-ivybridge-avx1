@@ -330,7 +330,8 @@ function buildModelFromPrivateSource(
 function buildOpenAICodexPrivateModelInfo(
 	model: Llms.OpenAICodexListedModel,
 ): ModelInfo {
-	const generated = Llms.getGeneratedModelsForProvider("openai")[model.id];
+	const generated =
+		Llms.getGeneratedModelsForProvider("openai-native")[model.id];
 	if (generated) {
 		return {
 			...generated,

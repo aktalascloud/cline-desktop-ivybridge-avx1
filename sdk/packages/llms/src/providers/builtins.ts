@@ -126,7 +126,7 @@ function buildClaudeCodeModels(): Record<string, ModelInfo> {
 }
 
 function buildOpenAICodexModels(): Record<string, ModelInfo> {
-	const openaiModels = generatedModels("openai");
+	const openaiModels = generatedModels("openai-native");
 	const fallbackIds = ["gpt-5.4", "gpt-5.3-codex"];
 	return Object.fromEntries(
 		fallbackIds.map((id) => [
