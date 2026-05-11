@@ -1,6 +1,9 @@
 import * as p from "@clack/prompts";
+import { authorizeMcpServerOAuth } from "@cline/core";
+import open from "open";
 import {
 	addServer,
+	clearServerOAuth,
 	getSettingsPath,
 	loadServers,
 	type McpServerEntry,
@@ -14,6 +17,16 @@ function isCancel(value: unknown): value is symbol {
 	return p.isCancel(value);
 }
 
+function toErrorMessage(error: unknown): string {
+	if (error instanceof Error) {
+		const message = error.message.trim();
+		if (message.length > 0) {
+			return message;
+		}
+	}
+	return String(error);
+}
+
 function transportLabel(t: McpTransport): string {
 	if (t.type === "stdio") return `stdio: ${t.command}`;
 	return `${t.type}: ${t.url}`;
@@ -21,6 +34,32 @@ function transportLabel(t: McpTransport): string {
 
 function statusLabel(entry: McpServerEntry): string {
 	return entry.disabled ? "disabled" : "enabled";
+}
+
+function authLabel(entry: McpServerEntry): string {
+	if (entry.transport.type === "stdio") return "local";
+	if (entry.oauth?.lastError) return "oauth error";
+	const accessToken = entry.oauth?.tokens?.access_token;
+	if (typeof accessToken === "string" && accessToken.trim().length > 0) {
+		return "oauth authorized";
+	}
+	if (entry.oauth && Object.keys(entry.oauth).length > 0) {
+		return "oauth pending";
+	}
+	if (
+		entry.transport.headers &&
+		Object.keys(entry.transport.headers).length > 0
+	) {
+		return "static headers";
+	}
+	return "no auth";
+}
+
+type RemoteAuthMode = "none" | "headers" | "oauth";
+
+interface UrlServerConfig {
+	transport: McpTransport;
+	authMode: RemoteAuthMode;
 }
 
 export function parseStdioCommand(input: string): string[] {
@@ -113,7 +152,7 @@ async function collectStdioTransport(): Promise<McpTransport | null> {
 
 async function collectUrlTransport(
 	type: "sse" | "streamableHttp",
-): Promise<McpTransport | null> {
+): Promise<UrlServerConfig | null> {
 	const url = await p.text({
 		message: "Server URL",
 		placeholder: "https://example.com/mcp",
@@ -129,8 +168,33 @@ async function collectUrlTransport(
 	});
 	if (isCancel(url)) return null;
 
-	// FIXME: when the SDK adds OAuth support for MCP, add OAuth auth flow here
-	// For now, only static headers are supported for remote servers.
+	const authMode = await p.select({
+		message: "Authentication",
+		options: [
+			{
+				value: "oauth",
+				label: "OAuth",
+				hint: "open a browser and save tokens in MCP settings",
+			},
+			{
+				value: "headers",
+				label: "Static headers",
+				hint: "manually configure request headers",
+			},
+			{
+				value: "none",
+				label: "No auth",
+			},
+		],
+	});
+	if (isCancel(authMode)) return null;
+
+	if (authMode === "oauth" || authMode === "none") {
+		return {
+			transport: { type, url: (url as string).trim() },
+			authMode,
+		};
+	}
 
 	const headersInput = await p.text({
 		message: "Headers (KEY:VALUE, comma-separated)",
@@ -152,7 +216,33 @@ async function collectUrlTransport(
 		}
 	}
 
-	return { type, url: (url as string).trim(), headers };
+	return {
+		transport: { type, url: (url as string).trim(), headers },
+		authMode,
+	};
+}
+
+async function authorizeOAuth(name: string): Promise<void> {
+	p.log.info("Opening browser for MCP OAuth authorization");
+	try {
+		const result = await authorizeMcpServerOAuth({
+			serverName: name,
+			filePath: getSettingsPath(),
+			openUrl: async (url) => {
+				p.log.message(`Authorization URL: ${url}`);
+				await open(url, { wait: false });
+			},
+			onServerListening: (info) => {
+				p.log.message(`Waiting for OAuth callback at ${info.callbackUrl}`);
+			},
+		});
+		p.log.success(result.message);
+	} catch (error) {
+		p.log.error(`OAuth authorization failed: ${toErrorMessage(error)}`);
+		p.log.warn(
+			`Server "${name}" is still saved. Choose "Authorize OAuth" to retry.`,
+		);
+	}
 }
 
 async function actionAdd(): Promise<void> {
@@ -193,15 +283,25 @@ async function actionAdd(): Promise<void> {
 	if (isCancel(type)) return;
 
 	let transport: McpTransport | null;
+	let authMode: RemoteAuthMode = "none";
 	if (type === "stdio") {
 		transport = await collectStdioTransport();
 	} else {
-		transport = await collectUrlTransport(type as "sse" | "streamableHttp");
+		const config = await collectUrlTransport(type as "sse" | "streamableHttp");
+		transport = config?.transport ?? null;
+		authMode = config?.authMode ?? "none";
 	}
 	if (!transport) return;
 
-	addServer((name as string).trim(), transport);
-	p.log.success(`Added "${(name as string).trim()}" to ${getSettingsPath()}`);
+	const serverName = (name as string).trim();
+	addServer(serverName, transport);
+	if (authMode !== "oauth") {
+		clearServerOAuth(serverName);
+	}
+	p.log.success(`Added "${serverName}" to ${getSettingsPath()}`);
+	if (authMode === "oauth") {
+		await authorizeOAuth(serverName);
+	}
 }
 
 async function actionList(): Promise<void> {
@@ -215,6 +315,10 @@ async function actionList(): Promise<void> {
 		const status = s.disabled ? " (disabled)" : "";
 		p.log.info(`${s.name}${status}`);
 		p.log.message(`  ${transportLabel(s.transport)}`);
+		p.log.message(`  auth: ${authLabel(s)}`);
+		if (s.oauth?.lastError) {
+			p.log.message(`  last OAuth error: ${s.oauth.lastError}`);
+		}
 	}
 	p.log.message(`\nSettings file: ${getSettingsPath()}`);
 }
@@ -233,10 +337,17 @@ function pickServer(
 			options: servers.map((s) => ({
 				value: s.name,
 				label: s.name,
-				hint: `${s.transport.type} [${statusLabel(s)}]`,
+				hint: `${s.transport.type} [${statusLabel(s)}, ${authLabel(s)}]`,
 			})),
 		})
 		.then((v) => (isCancel(v) ? null : (v as string)));
+}
+
+async function pickRemoteServer(message: string): Promise<string | null> {
+	const servers = loadServers().filter(
+		(server) => server.transport.type !== "stdio",
+	);
+	return pickServer(servers, message);
 }
 
 async function actionEdit(): Promise<void> {
@@ -273,15 +384,24 @@ async function actionEdit(): Promise<void> {
 	if (isCancel(type)) return;
 
 	let transport: McpTransport | null;
+	let authMode: RemoteAuthMode = "none";
 	if (type === "stdio") {
 		transport = await collectStdioTransport();
 	} else {
-		transport = await collectUrlTransport(type as "sse" | "streamableHttp");
+		const config = await collectUrlTransport(type as "sse" | "streamableHttp");
+		transport = config?.transport ?? null;
+		authMode = config?.authMode ?? "none";
 	}
 	if (!transport) return;
 
 	updateServer(name, transport);
+	if (type === "stdio" || authMode !== "oauth") {
+		clearServerOAuth(name);
+	}
 	p.log.success(`Updated "${name}"`);
+	if (authMode === "oauth") {
+		await authorizeOAuth(name);
+	}
 }
 
 async function actionDelete(): Promise<void> {
@@ -315,6 +435,12 @@ async function actionToggle(): Promise<void> {
 	p.log.success(`${name} is now ${newDisabled ? "disabled" : "enabled"}`);
 }
 
+async function actionAuthorizeOAuth(): Promise<void> {
+	const name = await pickRemoteServer("Select remote server to authorize");
+	if (!name) return;
+	await authorizeOAuth(name);
+}
+
 export async function runMcpWizard(): Promise<number> {
 	p.intro("MCP Servers");
 
@@ -341,6 +467,11 @@ export async function runMcpWizard(): Promise<number> {
 				{
 					value: "toggle",
 					label: "Enable/disable server",
+				},
+				{
+					value: "authorize",
+					label: "Authorize OAuth",
+					hint: "run or rerun browser authorization for a remote server",
 				},
 				{
 					value: "delete",
@@ -371,6 +502,9 @@ export async function runMcpWizard(): Promise<number> {
 					break;
 				case "toggle":
 					await actionToggle();
+					break;
+				case "authorize":
+					await actionAuthorizeOAuth();
 					break;
 				case "delete":
 					await actionDelete();

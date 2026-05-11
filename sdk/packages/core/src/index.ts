@@ -230,6 +230,9 @@ export {
 	WORKFLOWS_CONFIG_DIRECTORY_NAME,
 } from "./extensions/config";
 export {
+	type AuthorizeMcpServerOAuthOptions,
+	type AuthorizeMcpServerOAuthResult,
+	authorizeMcpServerOAuth,
 	type CreateDisabledMcpToolPoliciesOptions,
 	type CreateDisabledMcpToolPolicyOptions,
 	type CreateMcpToolsOptions,
@@ -237,15 +240,20 @@ export {
 	createDisabledMcpToolPolicies,
 	createDisabledMcpToolPolicy,
 	createMcpTools,
+	type DefaultMcpServerClientFactoryOptions,
+	getMcpServerOAuthState,
 	hasMcpSettingsFile,
 	InMemoryMcpManager,
 	type LoadMcpSettingsOptions,
+	listMcpServerOAuthStatuses,
 	loadMcpSettingsFile,
 	type McpConnectionStatus,
 	type McpManager,
 	type McpManagerOptions,
 	type McpServerClient,
 	type McpServerClientFactory,
+	type McpServerOAuthState,
+	type McpServerOAuthStatus,
 	type McpServerRegistration,
 	type McpServerSnapshot,
 	type McpServerTransportConfig,
@@ -264,6 +272,7 @@ export {
 	resolveMcpServerRegistrations,
 	type SetMcpServerDisabledOptions,
 	setMcpServerDisabled,
+	updateMcpServerOAuthState,
 } from "./extensions/mcp";
 export {
 	type AgentTask,

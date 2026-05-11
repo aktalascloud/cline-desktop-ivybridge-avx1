@@ -61,11 +61,22 @@ export type McpServerTransportConfig =
 	| McpSseTransportConfig
 	| McpStreamableHttpTransportConfig;
 
+export interface McpServerOAuthState {
+	clientInformation?: Record<string, unknown>;
+	tokens?: Record<string, unknown>;
+	codeVerifier?: string;
+	discoveryState?: Record<string, unknown>;
+	redirectUrl?: string;
+	lastError?: string;
+	lastAuthenticatedAt?: number;
+}
+
 export interface McpServerRegistration {
 	name: string;
 	transport: McpServerTransportConfig;
 	disabled?: boolean;
 	metadata?: Record<string, unknown>;
+	oauth?: McpServerOAuthState;
 }
 
 export interface McpServerSnapshot {
@@ -92,6 +103,14 @@ export interface McpServerClient {
 export type McpServerClientFactory = (
 	registration: McpServerRegistration,
 ) => Promise<McpServerClient> | McpServerClient;
+
+export interface McpServerOAuthStatus {
+	serverName: string;
+	oauthSupported: boolean;
+	oauthConfigured: boolean;
+	lastError?: string;
+	lastAuthenticatedAt?: number;
+}
 
 export interface McpManagerOptions {
 	clientFactory: McpServerClientFactory;

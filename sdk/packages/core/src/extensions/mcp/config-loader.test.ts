@@ -4,10 +4,12 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	hasMcpSettingsFile,
+	listMcpServerOAuthStatuses,
 	loadMcpSettingsFile,
 	registerMcpServersFromSettingsFile,
 	resolveMcpServerRegistrations,
 	setMcpServerDisabled,
+	updateMcpServerOAuthState,
 } from "./config-loader";
 
 describe("mcp config loader", () => {
@@ -69,6 +71,7 @@ describe("mcp config loader", () => {
 				},
 				disabled: undefined,
 				metadata: undefined,
+				oauth: undefined,
 			},
 			{
 				name: "search",
@@ -78,6 +81,7 @@ describe("mcp config loader", () => {
 				},
 				disabled: true,
 				metadata: undefined,
+				oauth: undefined,
 			},
 		]);
 	});
@@ -122,6 +126,7 @@ describe("mcp config loader", () => {
 				},
 				disabled: undefined,
 				metadata: undefined,
+				oauth: undefined,
 			},
 		]);
 	});
@@ -186,6 +191,7 @@ describe("mcp config loader", () => {
 				},
 				disabled: undefined,
 				metadata: undefined,
+				oauth: undefined,
 			},
 		]);
 	});
@@ -224,6 +230,7 @@ describe("mcp config loader", () => {
 				},
 				disabled: undefined,
 				metadata: undefined,
+				oauth: undefined,
 			},
 			{
 				name: "legacyHttp",
@@ -233,6 +240,7 @@ describe("mcp config loader", () => {
 				},
 				disabled: undefined,
 				metadata: undefined,
+				oauth: undefined,
 			},
 		]);
 	});
@@ -279,5 +287,116 @@ describe("mcp config loader", () => {
 			mcpServers?: Record<string, { disabled?: boolean }>;
 		};
 		expect(enabled.mcpServers?.docs?.disabled).toBeUndefined();
+	});
+
+	it("loads and updates sdk-managed oauth state in server entries", async () => {
+		const tempRoot = await mkdtemp(join(tmpdir(), "core-mcp-config-loader-"));
+		tempRoots.push(tempRoot);
+		const filePath = join(tempRoot, "cline_mcp_settings.json");
+		await writeFile(
+			filePath,
+			JSON.stringify(
+				{
+					mcpServers: {
+						linear: {
+							transport: {
+								type: "streamableHttp",
+								url: "https://mcp.linear.app/mcp",
+							},
+							oauth: {
+								tokens: {
+									access_token: "old-token",
+									token_type: "Bearer",
+								},
+								lastAuthenticatedAt: 123,
+							},
+						},
+					},
+				},
+				null,
+				2,
+			),
+			"utf8",
+		);
+
+		const registrations = resolveMcpServerRegistrations({ filePath });
+		expect(registrations[0]?.oauth?.tokens?.access_token).toBe("old-token");
+		expect(listMcpServerOAuthStatuses({ filePath })).toEqual([
+			{
+				serverName: "linear",
+				oauthSupported: true,
+				oauthConfigured: true,
+				lastError: undefined,
+				lastAuthenticatedAt: 123,
+			},
+		]);
+
+		updateMcpServerOAuthState(
+			"linear",
+			(current) => ({
+				...current,
+				tokens: {
+					access_token: "new-token",
+					token_type: "Bearer",
+				},
+				lastError: undefined,
+			}),
+			{ filePath },
+		);
+
+		const written = JSON.parse(await readFile(filePath, "utf8")) as {
+			mcpServers: {
+				linear: {
+					oauth?: {
+						tokens?: Record<string, unknown>;
+						lastAuthenticatedAt?: number;
+					};
+				};
+			};
+		};
+		expect(written.mcpServers.linear.oauth?.tokens?.access_token).toBe(
+			"new-token",
+		);
+		expect(written.mcpServers.linear.oauth?.lastAuthenticatedAt).toBe(123);
+	});
+
+	it("rejects inherited server names when updating oauth state", async () => {
+		const tempRoot = await mkdtemp(join(tmpdir(), "core-mcp-config-loader-"));
+		tempRoots.push(tempRoot);
+		const filePath = join(tempRoot, "cline_mcp_settings.json");
+		await writeFile(
+			filePath,
+			JSON.stringify(
+				{
+					mcpServers: {},
+				},
+				null,
+				2,
+			),
+			"utf8",
+		);
+
+		const objectPrototype = Object.prototype as { oauth?: unknown };
+		const originalOauth = objectPrototype.oauth;
+		try {
+			expect(() =>
+				updateMcpServerOAuthState(
+					"__proto__",
+					() => ({
+						tokens: {
+							access_token: "bad-token",
+						},
+					}),
+					{ filePath },
+				),
+			).toThrow("Unknown MCP server: __proto__");
+			expect(objectPrototype.oauth).toBe(originalOauth);
+		} finally {
+			if (originalOauth === undefined) {
+				delete objectPrototype.oauth;
+			} else {
+				objectPrototype.oauth = originalOauth;
+			}
+		}
 	});
 });

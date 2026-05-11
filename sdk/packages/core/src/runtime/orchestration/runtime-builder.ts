@@ -155,7 +155,9 @@ async function loadConfiguredMcpTools(logger?: BasicLogger): Promise<{
 	}
 
 	const manager = new InMemoryMcpManager({
-		clientFactory: createDefaultMcpServerClientFactory(),
+		clientFactory: createDefaultMcpServerClientFactory({
+			settingsPath,
+		}),
 	});
 
 	let registrations: Awaited<

@@ -3,7 +3,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { parseStdioCommand } from "./index";
-import { addServer, removeServer } from "./settings";
+import {
+	addServer,
+	clearServerOAuth,
+	loadServers,
+	removeServer,
+} from "./settings";
 
 describe("MCP wizard settings", () => {
 	const originalSettingsPath = process.env.CLINE_MCP_SETTINGS_PATH;
@@ -56,5 +61,71 @@ describe("MCP wizard settings", () => {
 		expect(
 			parseStdioCommand('npx -y "@scope/server name" --root "my dir"'),
 		).toEqual(["npx", "-y", "@scope/server name", "--root", "my dir"]);
+	});
+
+	it("loads and clears OAuth state stored on a server entry", async () => {
+		const settingsPath = await useTempSettingsPath();
+		await writeFile(
+			settingsPath,
+			`${JSON.stringify(
+				{
+					mcpServers: {
+						linear: {
+							transport: {
+								type: "streamableHttp",
+								url: "https://mcp.linear.app/mcp",
+							},
+							oauth: {
+								tokens: {
+									access_token: "oauth-token",
+								},
+								lastAuthenticatedAt: 123,
+							},
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+		);
+
+		expect(loadServers()[0]?.oauth?.tokens?.access_token).toBe("oauth-token");
+
+		clearServerOAuth("linear");
+
+		const parsed = JSON.parse(await readFile(settingsPath, "utf8")) as {
+			mcpServers?: {
+				linear?: {
+					oauth?: unknown;
+				};
+			};
+		};
+		expect(parsed.mcpServers?.linear?.oauth).toBeUndefined();
+	});
+
+	it("does not create an empty server when clearing OAuth for a missing name", async () => {
+		const settingsPath = await useTempSettingsPath();
+		await writeFile(
+			settingsPath,
+			`${JSON.stringify(
+				{
+					mcpServers: {
+						linear: {
+							transport: {
+								type: "streamableHttp",
+								url: "https://mcp.linear.app/mcp",
+							},
+						},
+					},
+				},
+				null,
+				2,
+			)}\n`,
+		);
+		const before = await readFile(settingsPath, "utf8");
+
+		clearServerOAuth("missing");
+
+		await expect(readFile(settingsPath, "utf8")).resolves.toBe(before);
 	});
 });

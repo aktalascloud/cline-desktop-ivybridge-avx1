@@ -2,10 +2,26 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { resolveMcpSettingsPath } from "@cline/shared/storage";
 import { z } from "zod";
-import type { McpManager, McpServerRegistration } from "./types";
+import type {
+	McpManager,
+	McpServerOAuthState,
+	McpServerOAuthStatus,
+	McpServerRegistration,
+} from "./types";
 
 const stringRecordSchema = z.record(z.string(), z.string());
 const metadataSchema = z.record(z.string(), z.unknown());
+const oauthStateSchema = z
+	.object({
+		clientInformation: z.record(z.string(), z.unknown()).optional(),
+		tokens: z.record(z.string(), z.unknown()).optional(),
+		codeVerifier: z.string().optional(),
+		discoveryState: z.record(z.string(), z.unknown()).optional(),
+		redirectUrl: z.string().url().optional(),
+		lastError: z.string().optional(),
+		lastAuthenticatedAt: z.number().int().positive().optional(),
+	})
+	.strip();
 
 const stdioTransportSchema = z.object({
 	type: z.literal("stdio"),
@@ -37,6 +53,7 @@ const nestedRegistrationBodySchema = z.object({
 	transport: mcpTransportSchema,
 	disabled: z.boolean().optional(),
 	metadata: metadataSchema.optional(),
+	oauth: oauthStateSchema.optional(),
 });
 
 const legacyTransportTypeSchema = z
@@ -48,6 +65,7 @@ const legacyRegistrationBaseSchema = z.object({
 	transportType: legacyTransportTypeSchema,
 	disabled: z.boolean().optional(),
 	metadata: metadataSchema.optional(),
+	oauth: oauthStateSchema.optional(),
 });
 
 function mapLegacyTransportType(
@@ -90,6 +108,7 @@ const legacyStdioRegistrationSchema = legacyRegistrationBaseSchema
 		},
 		disabled: value.disabled,
 		metadata: value.metadata,
+		oauth: value.oauth,
 	}));
 
 const legacyUrlRegistrationSchema = legacyRegistrationBaseSchema
@@ -121,6 +140,7 @@ const legacyUrlRegistrationSchema = legacyRegistrationBaseSchema
 				},
 				disabled: value.disabled,
 				metadata: value.metadata,
+				oauth: value.oauth,
 			};
 		}
 		return {
@@ -131,6 +151,7 @@ const legacyUrlRegistrationSchema = legacyRegistrationBaseSchema
 			},
 			disabled: value.disabled,
 			metadata: value.metadata,
+			oauth: value.oauth,
 		};
 	});
 
@@ -185,6 +206,33 @@ function readJsonObject(filePath: string): Record<string, unknown> {
 	return parsed as Record<string, unknown>;
 }
 
+function getOwnServerRecord(
+	servers: Record<string, unknown>,
+	name: string,
+): Record<string, unknown> | undefined {
+	if (!Object.prototype.hasOwnProperty.call(servers, name)) {
+		return undefined;
+	}
+	const value = servers[name];
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
+}
+
+function setOwnServerRecord(
+	servers: Record<string, unknown>,
+	name: string,
+	value: Record<string, unknown>,
+): void {
+	Object.defineProperty(servers, name, {
+		value,
+		enumerable: true,
+		configurable: true,
+		writable: true,
+	});
+}
+
 export function loadMcpSettingsFile(
 	options: LoadMcpSettingsOptions = {},
 ): McpSettingsFile {
@@ -212,6 +260,63 @@ export function loadMcpSettingsFile(
 	return result.data;
 }
 
+function loadRawMcpSettingsFile(filePath: string): Record<string, unknown> {
+	const raw = readFileSync(filePath, "utf8");
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(raw);
+	} catch (error) {
+		const details = error instanceof Error ? error.message : String(error);
+		throw new Error(
+			`Failed to parse MCP settings JSON at "${filePath}": ${details}`,
+		);
+	}
+	if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+		throw new Error(`Invalid MCP settings at "${filePath}": expected object`);
+	}
+	const settings = parsed as Record<string, unknown>;
+	const servers = settings.mcpServers;
+	if (!servers || typeof servers !== "object" || Array.isArray(servers)) {
+		throw new Error(
+			`Invalid MCP settings at "${filePath}": mcpServers must be an object`,
+		);
+	}
+	return settings;
+}
+
+export function normalizeMcpServerOAuthState(
+	value: McpServerOAuthState | undefined,
+): McpServerOAuthState | undefined {
+	if (!value) {
+		return undefined;
+	}
+	const normalized: McpServerOAuthState = {
+		...(value.clientInformation
+			? { clientInformation: value.clientInformation }
+			: {}),
+		...(value.tokens ? { tokens: value.tokens } : {}),
+		...(value.codeVerifier ? { codeVerifier: value.codeVerifier } : {}),
+		...(value.discoveryState ? { discoveryState: value.discoveryState } : {}),
+		...(value.redirectUrl ? { redirectUrl: value.redirectUrl } : {}),
+		...(value.lastError ? { lastError: value.lastError } : {}),
+		...(value.lastAuthenticatedAt
+			? { lastAuthenticatedAt: value.lastAuthenticatedAt }
+			: {}),
+	};
+	return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
+function validateOauthState(value: unknown): McpServerOAuthState | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	const result = oauthStateSchema.safeParse(value);
+	if (!result.success) {
+		return undefined;
+	}
+	return normalizeMcpServerOAuthState(result.data);
+}
+
 export function hasMcpSettingsFile(
 	options: LoadMcpSettingsOptions = {},
 ): boolean {
@@ -228,6 +333,7 @@ export function resolveMcpServerRegistrations(
 		transport: value.transport,
 		disabled: value.disabled,
 		metadata: value.metadata,
+		oauth: value.oauth,
 	}));
 }
 
@@ -251,22 +357,81 @@ export function setMcpServerDisabled(
 		);
 	}
 	const servers = { ...(serversValue as Record<string, unknown>) };
-	const current = servers[name];
-	if (!current || typeof current !== "object" || Array.isArray(current)) {
+	const current = getOwnServerRecord(servers, name);
+	if (!current) {
 		throw new Error(`Unknown MCP server: ${name}`);
 	}
-	const next = { ...(current as Record<string, unknown>) };
+	const next = { ...current };
 	if (options.disabled) {
 		next.disabled = true;
 	} else {
 		delete next.disabled;
 	}
-	servers[name] = next;
+	setOwnServerRecord(servers, name, next);
 	mkdirSync(dirname(filePath), { recursive: true });
 	writeFileSync(
 		filePath,
 		`${JSON.stringify({ ...settings, mcpServers: servers }, null, 2)}\n`,
 	);
+}
+
+export function getMcpServerOAuthState(
+	serverName: string,
+	options: LoadMcpSettingsOptions = {},
+): McpServerOAuthState | undefined {
+	const config = loadMcpSettingsFile(options);
+	if (!Object.prototype.hasOwnProperty.call(config.mcpServers, serverName)) {
+		return undefined;
+	}
+	return normalizeMcpServerOAuthState(config.mcpServers[serverName]?.oauth);
+}
+
+export function updateMcpServerOAuthState(
+	serverName: string,
+	updater: (current: McpServerOAuthState) => McpServerOAuthState,
+	options: LoadMcpSettingsOptions = {},
+): McpServerOAuthState {
+	const filePath = options.filePath ?? resolveDefaultMcpSettingsPath();
+	const settings = loadRawMcpSettingsFile(filePath);
+	const servers = settings.mcpServers as Record<string, unknown>;
+	const server = getOwnServerRecord(servers, serverName);
+	if (!server) {
+		throw new Error(`Unknown MCP server: ${serverName}`);
+	}
+
+	const current = validateOauthState(server.oauth) ?? {};
+	const updated = normalizeMcpServerOAuthState(updater(current));
+	if (updated) {
+		server.oauth = updated;
+	} else {
+		delete server.oauth;
+	}
+
+	mkdirSync(dirname(filePath), { recursive: true });
+	writeFileSync(filePath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
+	return updated ?? {};
+}
+
+export function listMcpServerOAuthStatuses(
+	options: LoadMcpSettingsOptions = {},
+): McpServerOAuthStatus[] {
+	const registrations = resolveMcpServerRegistrations(options);
+	return registrations
+		.map((registration) => {
+			const oauthSupported = registration.transport.type !== "stdio";
+			const accessToken = registration.oauth?.tokens?.access_token;
+			return {
+				serverName: registration.name,
+				oauthSupported,
+				oauthConfigured:
+					oauthSupported &&
+					typeof accessToken === "string" &&
+					accessToken.trim().length > 0,
+				lastError: registration.oauth?.lastError,
+				lastAuthenticatedAt: registration.oauth?.lastAuthenticatedAt,
+			};
+		})
+		.sort((left, right) => left.serverName.localeCompare(right.serverName));
 }
 
 export async function registerMcpServersFromSettingsFile(

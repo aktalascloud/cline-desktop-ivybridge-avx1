@@ -1,11 +1,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { resolveDefaultMcpSettingsPath } from "@cline/core";
+import {
+	type McpServerOAuthState,
+	resolveDefaultMcpSettingsPath,
+} from "@cline/core";
 
 export interface McpServerEntry {
 	name: string;
 	transport: McpTransport;
 	disabled?: boolean;
+	oauth?: McpServerOAuthState;
 }
 
 export type McpTransport =
@@ -34,10 +38,17 @@ export function loadServers(): McpServerEntry[] {
 		return Object.entries(servers).map(([name, value]) => {
 			const entry = value as Record<string, unknown>;
 			const transport = (entry.transport ?? entry) as McpTransport;
+			const oauth =
+				entry.oauth &&
+				typeof entry.oauth === "object" &&
+				!Array.isArray(entry.oauth)
+					? (entry.oauth as McpServerOAuthState)
+					: undefined;
 			return {
 				name,
 				transport,
 				disabled: entry.disabled === true,
+				oauth,
 			};
 		});
 	} catch {
@@ -65,6 +76,20 @@ function readRawServers(): Record<string, unknown> {
 	return servers && typeof servers === "object" && !Array.isArray(servers)
 		? { ...(servers as Record<string, unknown>) }
 		: {};
+}
+
+function getOwnServerRecord(
+	servers: Record<string, unknown>,
+	name: string,
+): Record<string, unknown> | undefined {
+	if (!Object.prototype.hasOwnProperty.call(servers, name)) {
+		return undefined;
+	}
+	const value = servers[name];
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		return undefined;
+	}
+	return value as Record<string, unknown>;
 }
 
 function writeServers(servers: Record<string, unknown>): void {
@@ -98,6 +123,17 @@ export function updateServer(name: string, transport: McpTransport): void {
 			? (servers[name] as Record<string, unknown>)
 			: {};
 	servers[name] = { ...existing, transport };
+	writeServers(servers);
+}
+
+export function clearServerOAuth(name: string): void {
+	const servers = readRawServers();
+	const existing = getOwnServerRecord(servers, name);
+	if (!existing) {
+		return;
+	}
+	delete existing.oauth;
+	servers[name] = existing;
 	writeServers(servers);
 }
 
