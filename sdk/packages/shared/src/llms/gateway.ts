@@ -5,6 +5,7 @@ import type {
 } from "../agent";
 import type { BasicLogger } from "../logging/logger";
 import type { ProviderCapability } from "../rpc/runtime";
+import type { ITelemetryService } from "../services/telemetry";
 
 export type JsonValue =
 	| string
@@ -104,6 +105,7 @@ export interface GatewayProviderContext {
 	config: GatewayResolvedProviderConfig;
 	signal?: AbortSignal;
 	logger?: BasicLogger;
+	telemetry?: ITelemetryService;
 }
 
 export interface GatewayStreamRequest {
@@ -162,4 +164,5 @@ export interface GatewayConfig {
 	providerConfigs?: readonly GatewayProviderConfig[];
 	fetch?: typeof fetch;
 	logger?: BasicLogger;
+	telemetry?: ITelemetryService;
 }

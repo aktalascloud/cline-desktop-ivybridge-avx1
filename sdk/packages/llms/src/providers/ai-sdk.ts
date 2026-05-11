@@ -10,6 +10,7 @@ import type {
 import {
 	type AiSdkFormatterMessage,
 	type AiSdkFormatterPart,
+	captureSdkError,
 	formatMessagesForAiSdk,
 	sanitizeSurrogates,
 } from "@cline/shared";
@@ -905,6 +906,18 @@ function createAiSdkProvider(kind: ProviderModuleKind): GatewayProviderFactory {
 								severity: "error",
 							});
 						}
+						captureSdkError(context.telemetry, {
+							component: "llms",
+							operation: "provider.stream",
+							error: streamError,
+							severity: "error",
+							handled: true,
+							context: {
+								providerId: request.providerId,
+								modelId: request.modelId,
+								providerKind: kind,
+							},
+						});
 					},
 				}) as unknown as AiSdkStreamResult;
 
@@ -938,6 +951,18 @@ function createAiSdkProvider(kind: ProviderModuleKind): GatewayProviderFactory {
 						severity: "error",
 					});
 				}
+				captureSdkError(context.telemetry, {
+					component: "llms",
+					operation: "provider.create_or_stream",
+					error,
+					severity: "error",
+					handled: true,
+					context: {
+						providerId: request.providerId,
+						modelId: request.modelId,
+						providerKind: kind,
+					},
+				});
 				yield {
 					type: "finish",
 					reason: "error",

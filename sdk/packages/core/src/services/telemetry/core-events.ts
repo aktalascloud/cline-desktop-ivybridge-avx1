@@ -1,4 +1,8 @@
-import type { ITelemetryService, TelemetryProperties } from "@cline/shared";
+import {
+	type ITelemetryService,
+	SDK_ERROR_TELEMETRY_EVENT,
+	type TelemetryProperties,
+} from "@cline/shared";
 
 const MAX_ERROR_MESSAGE_LENGTH = 500;
 
@@ -62,6 +66,9 @@ export const CORE_TELEMETRY_EVENTS = {
 		INITIALIZED: "workspace.initialized",
 		INIT_ERROR: "workspace.init_error",
 		PATH_RESOLVED: "workspace.path_resolved",
+	},
+	SDK: {
+		ERROR: SDK_ERROR_TELEMETRY_EVENT,
 	},
 } as const;
 

@@ -19,9 +19,11 @@ import type {
 	AgentToolResult,
 	AgentUsage,
 	AgentRuntimeConfig as BaseAgentRuntimeConfig,
+	TelemetryProperties,
 	ToolApprovalResult,
 	ToolPolicy,
 } from "@cline/shared";
+import { captureSdkError } from "@cline/shared";
 import { nanoid } from "nanoid";
 
 // Local `createUID` helper. The clinee source imports this from
@@ -89,6 +91,7 @@ function resolveRuntimeConfig(
 	const { providerId, modelId, apiKey, baseUrl, headers, ...rest } = config;
 	const gateway = createGateway({
 		providerConfigs: [{ providerId, apiKey, baseUrl, headers }],
+		telemetry: rest.telemetry,
 	});
 	const model = gateway.createAgentModel({ providerId, modelId });
 	return { ...rest, model };
@@ -1287,12 +1290,23 @@ export class AgentRuntime {
 					...metadata,
 					error: event.error,
 				});
+				captureSdkError(this.config.telemetry, {
+					component: "agents",
+					operation: "agent.run",
+					error: event.error,
+					severity: "error",
+					handled: false,
+					context: metadata as TelemetryProperties,
+				});
 				break;
 			default:
 				this.config.logger?.debug?.("Agent event", metadata);
 				break;
 		}
-		void this.config.telemetry?.capture?.(`agent.${event.type}`, metadata);
+		this.config.telemetry?.capture({
+			event: `agent.${event.type}`,
+			properties: metadata as TelemetryProperties,
+		});
 		for (const listener of this.listeners) {
 			listener(event);
 		}

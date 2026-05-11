@@ -7,10 +7,12 @@ import type {
 	HubClientContribution,
 	HubEventEnvelope,
 	SessionRecord as HubSessionRecord,
+	ITelemetryService,
 	JsonValue,
 	ToolApprovalRequest,
 } from "@cline/shared";
 import {
+	captureSdkError,
 	createSessionId,
 	HUB_CHECKPOINT_CAPABILITY,
 	HUB_COMPACTION_CAPABILITY,
@@ -497,6 +499,7 @@ export interface HubRuntimeHostOptions {
 	clientType?: string;
 	displayName?: string;
 	capabilities?: RuntimeCapabilities;
+	telemetry?: ITelemetryService;
 }
 
 function mapStatus(
@@ -684,6 +687,7 @@ export class HubRuntimeHost implements RuntimeHost {
 		AbortController
 	>();
 	private readonly defaultCapabilities: RuntimeCapabilities;
+	private readonly telemetry?: ITelemetryService;
 
 	constructor(
 		options: HubRuntimeHostOptions,
@@ -699,6 +703,7 @@ export class HubRuntimeHost implements RuntimeHost {
 		};
 		this.defaultCapabilities =
 			normalizeRuntimeCapabilities(options.capabilities) ?? {};
+		this.telemetry = options.telemetry;
 		this.runtimeAddress = options.url;
 		this.pendingPrompts = {
 			list: (input) => this.requestPendingPromptsList(input),
@@ -1271,6 +1276,19 @@ export class HubRuntimeHost implements RuntimeHost {
 			target,
 		);
 		if (!reply.ok) {
+			captureSdkError(this.telemetry, {
+				component: "core",
+				operation: "hub.runtime_host.read_session_messages",
+				error: new Error(hubReplyErrorMessage(reply, "session.messages")),
+				severity: reply.error?.code === "session_not_found" ? "warn" : "error",
+				handled: true,
+				context: {
+					command: "session.messages",
+					sessionId: target,
+					errorCode: reply.error?.code,
+					runtimeAddress: this.runtimeAddress,
+				},
+			});
 			throw new Error(hubReplyErrorMessage(reply, "session.messages"));
 		}
 		const messages = reply.payload?.messages;

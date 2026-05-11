@@ -23,6 +23,7 @@ export type {
 	AutomationEventEnvelope,
 	BasicLogger,
 	BasicLogger as Logger,
+	CaptureSdkErrorInput,
 	ChatRunTurnRequest,
 	ChatRuntimeConfig,
 	ChatStartSessionArtifacts,
@@ -47,6 +48,8 @@ export type {
 	ProviderOAuthLoginResponse,
 	RuntimeLoggerConfig,
 	SaveProviderSettingsActionRequest,
+	SdkTelemetryErrorComponent,
+	SdkTelemetryErrorSeverity,
 	SessionLineage,
 	TEAM_LIFECYCLE_EVENT_TYPE,
 	TEAM_PROGRESS_EVENT_TYPE,
@@ -71,7 +74,9 @@ export type {
 } from "@cline/shared";
 export {
 	buildClineSystemPrompt as getClineDefaultSystemPrompt,
+	buildSdkErrorProperties,
 	ContributionRegistry,
+	captureSdkError,
 	createClineTelemetryServiceConfig,
 	createClineTelemetryServiceMetadata,
 	createContributionRegistry,
@@ -79,9 +84,11 @@ export {
 	emptyWorkspaceManifest,
 	formatDisplayUserInput,
 	noopBasicLogger,
+	normalizeSdkError,
 	normalizeUserInput,
 	parseUserCommandEnvelope,
 	registerDisposable,
+	SDK_ERROR_TELEMETRY_EVENT,
 } from "@cline/shared";
 export * from "@cline/shared/storage";
 export {

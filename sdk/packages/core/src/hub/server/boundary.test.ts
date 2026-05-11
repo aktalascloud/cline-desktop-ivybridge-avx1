@@ -254,7 +254,9 @@ describe("HubServerTransport boundaries", () => {
 
 	it("returns session_not_found when session messages are requested for an unknown session", async () => {
 		const readMessages = vi.fn().mockResolvedValue([]);
+		const telemetry = { capture: vi.fn() };
 		const transport = createTransport({
+			telemetry,
 			sessionHost: {
 				subscribe: vi.fn(),
 				startSession: vi.fn(),
@@ -288,6 +290,20 @@ describe("HubServerTransport boundaries", () => {
 				code: "session_not_found",
 				message: "Unknown session: missing-session",
 			},
+		});
+		expect(telemetry.capture).toHaveBeenCalledWith({
+			event: "sdk.error",
+			properties: expect.objectContaining({
+				component: "core",
+				operation: "hub.command_reply",
+				severity: "warn",
+				handled: true,
+				command: "session.messages",
+				requestId: "req-1",
+				sessionId: "missing-session",
+				errorCode: "session_not_found",
+				error_message: "Unknown session: missing-session",
+			}),
 		});
 	});
 

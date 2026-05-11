@@ -1,7 +1,7 @@
 /**
  * Unit tests for `createAgentRuntimeConfig` and its small pure
  * helpers (`buildModelOptions`, `buildMessageModelInfo`,
- * `resolveToolExecution`, `mapTelemetry`).
+ * `resolveToolExecution`).
  *
  */
 
@@ -17,7 +17,6 @@ import {
 	buildMessageModelInfo,
 	buildModelOptions,
 	createAgentRuntimeConfig,
-	mapTelemetry,
 	resolveToolExecution,
 } from "./agent-runtime-config-builder";
 
@@ -119,41 +118,6 @@ describe("resolveToolExecution", () => {
 	it("returns 'parallel' for >= 2", () => {
 		expect(resolveToolExecution(2)).toBe("parallel");
 		expect(resolveToolExecution(8)).toBe("parallel");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// mapTelemetry
-// ---------------------------------------------------------------------------
-
-describe("mapTelemetry", () => {
-	it("returns undefined when input is undefined", () => {
-		expect(mapTelemetry(undefined)).toBeUndefined();
-	});
-
-	it("adapts ITelemetryService.capture to AgentTelemetry.capture", () => {
-		const capture = vi.fn();
-		const telemetry = {
-			capture,
-			captureRequired: vi.fn(),
-			setDistinctId: vi.fn(),
-			setMetadata: vi.fn(),
-			updateMetadata: vi.fn(),
-			setCommonProperties: vi.fn(),
-			updateCommonProperties: vi.fn(),
-			isEnabled: () => true,
-			recordCounter: vi.fn(),
-			recordHistogram: vi.fn(),
-			recordGauge: vi.fn(),
-			flush: vi.fn(async () => undefined),
-			dispose: vi.fn(async () => undefined),
-		} as unknown as ITelemetryService;
-		const adapted = mapTelemetry(telemetry);
-		adapted?.capture?.("evt", { k: "v" });
-		expect(capture).toHaveBeenCalledWith({
-			event: "evt",
-			properties: { k: "v" },
-		});
 	});
 });
 
@@ -265,7 +229,21 @@ describe("createAgentRuntimeConfig", () => {
 			error: vi.fn(),
 		};
 		const telemetryCapture = vi.fn();
-		const telemetry = { capture: telemetryCapture };
+		const telemetry = {
+			capture: telemetryCapture,
+			captureRequired: vi.fn(),
+			setDistinctId: vi.fn(),
+			setMetadata: vi.fn(),
+			updateMetadata: vi.fn(),
+			setCommonProperties: vi.fn(),
+			updateCommonProperties: vi.fn(),
+			isEnabled: () => true,
+			recordCounter: vi.fn(),
+			recordHistogram: vi.fn(),
+			recordGauge: vi.fn(),
+			flush: vi.fn(async () => undefined),
+			dispose: vi.fn(async () => undefined),
+		} as unknown as ITelemetryService;
 		const runtimeConfig = createAgentRuntimeConfig({
 			agentConfig: makeAgentConfig(),
 			agentId: "a",

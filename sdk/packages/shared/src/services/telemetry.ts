@@ -11,6 +11,36 @@ export type TelemetryArray = Array<TelemetryValue>;
 
 export type TelemetryProperties = TelemetryObject;
 
+const DEFAULT_ERROR_MESSAGE_LIMIT = 500;
+
+export type SdkTelemetryErrorComponent =
+	| "shared"
+	| "llms"
+	| "agents"
+	| "core"
+	| "cli"
+	| "vscode"
+	| "desktop"
+	| (string & {});
+
+export type SdkTelemetryErrorSeverity =
+	| "debug"
+	| "info"
+	| "warn"
+	| "error"
+	| "fatal";
+
+export interface CaptureSdkErrorInput {
+	component: SdkTelemetryErrorComponent;
+	operation: string;
+	error: unknown;
+	severity?: SdkTelemetryErrorSeverity;
+	handled?: boolean;
+	context?: TelemetryProperties;
+	event?: string;
+	messageLimit?: number;
+}
+
 export interface TelemetryMetadata {
 	extension_version: string;
 	cline_type: string;
@@ -54,6 +84,111 @@ export interface ITelemetryService {
 	): void;
 	flush(): Promise<void>;
 	dispose(): Promise<void>;
+}
+
+export const SDK_ERROR_TELEMETRY_EVENT = "sdk.error";
+
+export function captureSdkError(
+	telemetry: ITelemetryService | undefined,
+	input: CaptureSdkErrorInput,
+): void {
+	if (!telemetry) {
+		return;
+	}
+	telemetry.capture({
+		event: input.event ?? SDK_ERROR_TELEMETRY_EVENT,
+		properties: buildSdkErrorProperties(input),
+	});
+}
+
+export function buildSdkErrorProperties(
+	input: CaptureSdkErrorInput,
+): TelemetryProperties {
+	return {
+		...(input.context ?? {}),
+		component: input.component,
+		operation: input.operation,
+		severity: input.severity ?? "error",
+		handled: input.handled ?? true,
+		...normalizeSdkError(input.error, input.messageLimit),
+	};
+}
+
+export function normalizeSdkError(
+	error: unknown,
+	messageLimit = DEFAULT_ERROR_MESSAGE_LIMIT,
+): TelemetryProperties {
+	const record = isRecord(error) ? error : undefined;
+	const errorObject = error instanceof Error ? error : undefined;
+	const message =
+		errorObject?.message ??
+		stringValue(record?.message) ??
+		(typeof error === "string" ? error : String(error));
+	const code = stringOrNumberValue(record?.code);
+	const status =
+		numberValue(record?.status) ??
+		numberValue(record?.statusCode) ??
+		numberValue(record?.responseStatus);
+
+	return {
+		error_type:
+			errorObject?.name?.trim() ||
+			stringValue(record?.name) ||
+			errorObject?.constructor?.name ||
+			"Error",
+		error_message: truncateTelemetryString(
+			sanitizeTelemetryErrorMessage(message),
+			messageLimit,
+		),
+		...(code !== undefined ? { error_code: code } : {}),
+		...(status !== undefined ? { error_status: status } : {}),
+	};
+}
+
+function sanitizeTelemetryErrorMessage(message: string): string {
+	return message
+		.replace(/(authorization=Bearer\s+)[^&\s]+/gi, "$1[redacted]")
+		.replace(
+			/(api[_-]?key|access[_-]?token|refresh[_-]?token|authorization|password|secret)=([^&\s]+)/gi,
+			"$1=[redacted]",
+		)
+		.replace(/(Bearer\s+)[A-Za-z0-9._~+/-]+=*/gi, "$1[redacted]")
+		.replace(/\/Users\/[^/\s]+/g, "/Users/[redacted]")
+		.replace(/\/home\/[^/\s]+/g, "/home/[redacted]")
+		.replace(/([A-Za-z]:[\\/]+Users[\\/]+)[^\\/\s]+/g, "$1[redacted]");
+}
+
+function truncateTelemetryString(value: string, limit: number): string {
+	const normalizedLimit = Math.max(1, Math.floor(limit));
+	return value.length > normalizedLimit
+		? value.substring(0, normalizedLimit)
+		: value;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
+}
+
+function stringValue(value: unknown): string | undefined {
+	return typeof value === "string" && value.trim().length > 0
+		? value
+		: undefined;
+}
+
+function stringOrNumberValue(value: unknown): string | number | undefined {
+	if (typeof value === "string" && value.trim().length > 0) {
+		return value;
+	}
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return value;
+	}
+	return undefined;
+}
+
+function numberValue(value: unknown): number | undefined {
+	return typeof value === "number" && Number.isFinite(value)
+		? value
+		: undefined;
 }
 
 export interface OpenTelemetryClientConfig {

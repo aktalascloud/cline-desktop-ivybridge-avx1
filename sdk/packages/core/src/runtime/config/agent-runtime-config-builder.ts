@@ -21,9 +21,9 @@ import type {
 	AgentRuntimePlugin,
 	AgentRuntimePrepareTurnContext,
 	AgentRuntimePrepareTurnResult,
-	AgentTelemetry,
 	AgentTool,
 	BasicLogger,
+	ITelemetryService,
 } from "@cline/shared";
 
 /**
@@ -51,7 +51,7 @@ export interface CreateAgentRuntimeConfigInput {
 	/** Pre-built model adapter (produced by `apiHandlerToAgentModel`). */
 	readonly model: AgentModel;
 	readonly logger?: BasicLogger;
-	readonly telemetry?: AgentTelemetry;
+	readonly telemetry?: ITelemetryService;
 	/** Pre-built tool array (builtins + plugin-contributed + session extras). */
 	readonly tools?: readonly AgentTool<unknown, unknown>[];
 	readonly toolContextMetadata?: Record<string, unknown>;
@@ -106,7 +106,7 @@ export function createAgentRuntimeConfig(
 		consumePendingUserMessage: agentConfig.consumePendingUserMessage,
 		plugins: input.plugins,
 		logger: input.logger ?? agentConfig.logger,
-		telemetry: input.telemetry ?? mapTelemetry(agentConfig.telemetry),
+		telemetry: input.telemetry ?? agentConfig.telemetry,
 		initialMessages: input.initialMessages,
 		completionPolicy: agentConfig.completionPolicy,
 		maxIterations: agentConfig.maxIterations,
@@ -178,33 +178,4 @@ export function resolveToolExecution(
 		return undefined;
 	}
 	return maxParallelToolCalls >= 2 ? "parallel" : "sequential";
-}
-
-/**
- * Adapt the full `ITelemetryService` to the minimal `AgentTelemetry`
- * shape. The runtime only calls `capture(event, properties)`; the
- * remaining methods are host concerns and stay on the
- * `ITelemetryService` instance owned by `SessionRuntime`.
- */
-export function mapTelemetry(
-	telemetry: AgentConfig["telemetry"],
-): AgentTelemetry | undefined {
-	if (!telemetry) {
-		return undefined;
-	}
-	return {
-		capture: (event, properties) => {
-			// The runtime's `AgentTelemetry.capture` signature uses
-			// `Record<string, unknown>`, which is wider than
-			// `TelemetryProperties`. We cast at the boundary — any
-			// non-telemetry-compatible values are ignored by the
-			// underlying service.
-			telemetry.capture({
-				event,
-				properties: properties as
-					| Parameters<typeof telemetry.capture>[0]["properties"]
-					| undefined,
-			});
-		},
-	};
 }

@@ -1275,6 +1275,7 @@ describe("HubRuntimeHost", () => {
 	});
 
 	it("throws when the hub rejects message reads", async () => {
+		const telemetry = { capture: vi.fn() };
 		commandMock.mockResolvedValue({
 			ok: false,
 			error: {
@@ -1284,11 +1285,27 @@ describe("HubRuntimeHost", () => {
 		});
 
 		const { HubRuntimeHost } = await import("./hub-runtime-host");
-		const host = new HubRuntimeHost({ url: "ws://127.0.0.1:25463/hub" });
+		const host = new HubRuntimeHost({
+			url: "ws://127.0.0.1:25463/hub",
+			telemetry: telemetry as never,
+		});
 
 		await expect(host.readSessionMessages("sess-missing")).rejects.toThrow(
 			"Unknown session: sess-missing",
 		);
+		expect(telemetry.capture).toHaveBeenCalledWith({
+			event: "sdk.error",
+			properties: expect.objectContaining({
+				component: "core",
+				operation: "hub.runtime_host.read_session_messages",
+				severity: "warn",
+				handled: true,
+				command: "session.messages",
+				sessionId: "sess-missing",
+				errorCode: "session_not_found",
+				error_message: "Unknown session: sess-missing",
+			}),
+		});
 	});
 
 	it("throws when the hub rejects settings list", async () => {

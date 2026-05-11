@@ -1,3 +1,4 @@
+import { captureSdkError } from "@cline/shared";
 import type { ClineCoreOptions } from "../../cline-core/types";
 import {
 	ensureCompatibleLocalHubUrl,
@@ -67,11 +68,22 @@ function createLocalBackend(options: ClineCoreOptions): SessionBackend {
 		return new CoreSessionService(store, {
 			messagesArtifactUploader: options.messagesArtifactUploader,
 		});
-	} catch {
+	} catch (error) {
 		// Fallback to file-based session service if SQLite is unavailable.
 		options.telemetry?.capture({
 			event: "session_backend_fallback",
 			properties: {
+				requestedBackend: "sqlite",
+				fallbackBackend: "file",
+			},
+		});
+		captureSdkError(options.telemetry, {
+			component: "core",
+			operation: "session_backend.sqlite_init",
+			error,
+			severity: "warn",
+			handled: true,
+			context: {
 				requestedBackend: "sqlite",
 				fallbackBackend: "file",
 			},
@@ -169,6 +181,7 @@ export async function createRuntimeHost(
 				clientType: options.hub?.clientType,
 				displayName: options.hub?.displayName,
 				capabilities: options.capabilities,
+				telemetry: options.telemetry,
 			},
 			{
 				workspaceRoot: options.hub?.workspaceRoot,
@@ -194,6 +207,7 @@ export async function createRuntimeHost(
 					clientType: options.hub?.clientType,
 					displayName: options.hub?.displayName,
 					capabilities: options.capabilities,
+					telemetry: options.telemetry,
 				},
 				{
 					workspaceRoot: options.hub?.workspaceRoot,
@@ -208,6 +222,17 @@ export async function createRuntimeHost(
 					reason: "hub_connect_failed",
 					severity: "warn",
 					error,
+				});
+				captureSdkError(options.telemetry, {
+					component: "core",
+					operation: "runtime_host.hub_connect",
+					error,
+					severity: "warn",
+					handled: true,
+					context: {
+						backendMode: "auto",
+						fallbackBackend: "local",
+					},
 				});
 			}
 		}

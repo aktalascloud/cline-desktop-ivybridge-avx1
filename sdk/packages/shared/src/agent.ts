@@ -12,24 +12,11 @@ import type {
 	ToolPolicy,
 } from "./llms/tools";
 import type { BasicLogger } from "./logging/logger";
+import type { ITelemetryService } from "./services/telemetry";
 
 // =============================================================================
 // Lightweight telemetry surface used by AgentRuntime
 // =============================================================================
-
-/**
- * Minimal telemetry interface consumed by the new `AgentRuntime`.
- *
- * This is intentionally smaller than `ITelemetryService` (see
- * `./services/telemetry`); hosts that wish to forward runtime telemetry
- * to the full service should adapt via a simple shim.
- */
-export interface AgentTelemetry {
-	capture?: (
-		event: string,
-		properties?: Record<string, unknown>,
-	) => void | Promise<void>;
-}
 
 // =============================================================================
 // Message parts
@@ -434,7 +421,7 @@ export interface AgentRuntimeConfig {
 	hooks?: Partial<AgentRuntimeHooks>;
 	plugins?: readonly AgentRuntimePlugin[];
 	logger?: BasicLogger;
-	telemetry?: AgentTelemetry;
+	telemetry?: ITelemetryService;
 	initialMessages?: readonly AgentMessage[];
 	maxIterations?: number;
 	completionPolicy?: {

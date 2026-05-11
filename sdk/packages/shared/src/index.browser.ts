@@ -279,14 +279,23 @@ export {
 	resolveClineEnvironment,
 } from "./runtime/cline-environment";
 export type {
+	CaptureSdkErrorInput,
 	ITelemetryService,
 	OpenTelemetryClientConfig,
+	SdkTelemetryErrorComponent,
+	SdkTelemetryErrorSeverity,
 	TelemetryArray,
 	TelemetryMetadata,
 	TelemetryObject,
 	TelemetryPrimitive,
 	TelemetryProperties,
 	TelemetryValue,
+} from "./services/telemetry";
+export {
+	buildSdkErrorProperties,
+	captureSdkError,
+	normalizeSdkError,
+	SDK_ERROR_TELEMETRY_EVENT,
 } from "./services/telemetry";
 export type { ClineTelemetryServiceConfig } from "./services/telemetry-config";
 export {

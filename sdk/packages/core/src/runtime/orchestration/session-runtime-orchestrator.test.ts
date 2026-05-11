@@ -377,6 +377,33 @@ describe("SessionRuntime.getExtensionRegistry", () => {
 		});
 	});
 
+	it("passes effective telemetry into AgentRuntime config", async () => {
+		const telemetry = {
+			capture: vi.fn(),
+		} as unknown as AgentConfig["telemetry"];
+		const { deps, configs } = withCapturingFakeRuntime();
+		const session = new SessionRuntime(makeAgentConfig({ telemetry }), deps);
+
+		await session.run("go");
+
+		expect(configs[0]?.telemetry).toBe(telemetry);
+	});
+
+	it("passes dependency telemetry into AgentRuntime config", async () => {
+		const telemetry = {
+			capture: vi.fn(),
+		} as unknown as AgentConfig["telemetry"];
+		const { deps, configs } = withCapturingFakeRuntime();
+		const session = new SessionRuntime(makeAgentConfig(), {
+			...deps,
+			telemetry,
+		});
+
+		await session.run("go");
+
+		expect(configs[0]?.telemetry).toBe(telemetry);
+	});
+
 	it("merges extension-registered tools into the AgentRuntime tools for the turn", async () => {
 		const extTool: AgentTool = {
 			name: "ext-tool-a",

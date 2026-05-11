@@ -705,7 +705,11 @@ export class SessionRuntime {
 
 		// Build the AgentRuntime for this turn.
 		const systemPrompt = await this.composeSystemPrompt();
-		const agentModel = createAgentModelFromConfig(this.config, this.logger);
+		const agentModel = createAgentModelFromConfig(
+			this.config,
+			this.logger,
+			this.telemetry,
+		);
 		// Merge extension-contributed tools with the config-declared
 		// tools for this turn. Extensions register tools via
 		// `api.registerTool` during `setup()` — parity with legacy
@@ -743,6 +747,7 @@ export class SessionRuntime {
 			parentAgentId: this.parentAgentId,
 			model: agentModel,
 			logger: this.logger,
+			telemetry: this.telemetry,
 			tools,
 			toolContextMetadata: {
 				modelSupportsImages:

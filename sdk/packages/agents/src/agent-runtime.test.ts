@@ -5,6 +5,7 @@ import type {
 	AgentModelRequest,
 	AgentRuntimePlugin,
 	AgentTool,
+	ITelemetryService,
 } from "@cline/shared";
 import { describe, expect, it, vi } from "vitest";
 import { AgentRuntime } from "./index";
@@ -1209,7 +1210,21 @@ describe("AgentRuntime", () => {
 	});
 
 	it("captures events, logger calls, telemetry, and failed tool runs", async () => {
-		const telemetry = { capture: vi.fn() };
+		const telemetry = {
+			capture: vi.fn(),
+			captureRequired: vi.fn(),
+			setDistinctId: vi.fn(),
+			setMetadata: vi.fn(),
+			updateMetadata: vi.fn(),
+			setCommonProperties: vi.fn(),
+			updateCommonProperties: vi.fn(),
+			isEnabled: () => true,
+			recordCounter: vi.fn(),
+			recordHistogram: vi.fn(),
+			recordGauge: vi.fn(),
+			flush: vi.fn(async () => undefined),
+			dispose: vi.fn(async () => undefined),
+		} as unknown as ITelemetryService;
 		const logger = {
 			debug: vi.fn(),
 			log: vi.fn(),

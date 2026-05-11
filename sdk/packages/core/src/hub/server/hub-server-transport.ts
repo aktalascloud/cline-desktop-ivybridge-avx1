@@ -5,7 +5,7 @@ import type {
 	HubReplyEnvelope,
 	ToolApprovalRequest,
 } from "@cline/shared";
-import { createSessionId } from "@cline/shared";
+import { captureSdkError, createSessionId } from "@cline/shared";
 import { CronService } from "../../cron/service/cron-service";
 import { HubScheduleCommandService } from "../../cron/service/schedule-command-service";
 import { HubScheduleService } from "../../cron/service/schedule-service";
@@ -194,6 +194,7 @@ export class HubServerTransport implements NativeHubTransport {
 			pendingCapabilityRequests: this.pendingCapabilityRequests,
 			suppressNextTerminalEventBySession:
 				this.suppressNextTerminalEventBySession,
+			telemetry: options.telemetry,
 			sessionHost: this.sessionHost,
 			publish: (event) => this.publish(event),
 			buildEvent: buildHubEvent,
@@ -247,6 +248,17 @@ export class HubServerTransport implements NativeHubTransport {
 		this.sessionHost.subscribe((event: CoreSessionEvent) => {
 			void projectSessionEvent(this.ctx, event).catch((error) => {
 				logHubBoundaryError("session event handling failed", error);
+				captureSdkError(this.options.telemetry, {
+					component: "core",
+					operation: "hub.session_event_project",
+					error,
+					severity: "error",
+					handled: true,
+					context: {
+						eventType: event.type,
+						sessionId: event.payload.sessionId,
+					},
+				});
 			});
 		});
 	}
@@ -294,6 +306,26 @@ export class HubServerTransport implements NativeHubTransport {
 	}
 
 	async handleCommand(envelope: HubCommandEnvelope): Promise<HubReplyEnvelope> {
+		try {
+			const reply = await this.dispatchCommand(envelope);
+			this.captureFailedReply(envelope, reply);
+			return reply;
+		} catch (error) {
+			captureSdkError(this.options.telemetry, {
+				component: "core",
+				operation: "hub.command",
+				error,
+				severity: "error",
+				handled: false,
+				context: this.commandTelemetryContext(envelope),
+			});
+			throw error;
+		}
+	}
+
+	private async dispatchCommand(
+		envelope: HubCommandEnvelope,
+	): Promise<HubReplyEnvelope> {
 		switch (envelope.command) {
 			case "client.register":
 				return handleClientRegister(this.ctx, envelope);
@@ -387,6 +419,42 @@ export class HubServerTransport implements NativeHubTransport {
 				return reply;
 			}
 		}
+	}
+
+	private captureFailedReply(
+		envelope: HubCommandEnvelope,
+		reply: HubReplyEnvelope,
+	): void {
+		if (
+			reply.ok ||
+			!reply.error ||
+			!shouldCaptureHubReplyError(reply.error.code)
+		) {
+			return;
+		}
+		captureSdkError(this.options.telemetry, {
+			component: "core",
+			operation: "hub.command_reply",
+			error: new Error(reply.error.message),
+			severity: reply.error.code === "session_not_found" ? "warn" : "error",
+			handled: true,
+			context: {
+				...this.commandTelemetryContext(envelope),
+				errorCode: reply.error.code,
+			},
+		});
+	}
+
+	private commandTelemetryContext(envelope: HubCommandEnvelope) {
+		return {
+			command: envelope.command,
+			requestId: envelope.requestId,
+			clientId: envelope.clientId,
+			sessionId:
+				typeof envelope.payload?.sessionId === "string"
+					? envelope.payload.sessionId
+					: envelope.sessionId,
+		};
 	}
 
 	private async handleSettingsList(
@@ -498,8 +566,28 @@ export class HubServerTransport implements NativeHubTransport {
 						`listener threw while publishing ${event.event}`,
 						error,
 					);
+					captureSdkError(this.options.telemetry, {
+						component: "core",
+						operation: "hub.publish",
+						error,
+						severity: "warn",
+						handled: true,
+						context: {
+							event: event.event,
+							sessionId: event.sessionId,
+						},
+					});
 				}
 			}
 		}
 	}
+}
+
+function shouldCaptureHubReplyError(code: string): boolean {
+	return (
+		code === "session_not_found" ||
+		code === "session_messages_not_found" ||
+		code === "hub_command_timeout" ||
+		code.endsWith("_failed")
+	);
 }

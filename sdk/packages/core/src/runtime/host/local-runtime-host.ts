@@ -6,6 +6,7 @@ import {
 	type AgentConfig,
 	type AgentEvent,
 	type AgentResult,
+	captureSdkError,
 	createSessionId,
 	type ITelemetryService,
 	isLikelyAuthError,
@@ -438,6 +439,7 @@ export class LocalRuntimeHost implements RuntimeHost {
 			userFileContentLoader: loadUserFileContent,
 			toolPolicies: bootstrap.toolPolicies,
 			requestToolApproval: bootstrap.requestToolApproval,
+			telemetry: configWithProvider.telemetry,
 			onConsecutiveMistakeLimitReached:
 				configWithProvider.onConsecutiveMistakeLimitReached,
 			completionPolicy: runtime.completionPolicy,
@@ -476,6 +478,18 @@ export class LocalRuntimeHost implements RuntimeHost {
 						"Failed to persist session messages after assistant response",
 						{ sessionId, error },
 					);
+					captureSdkError(configWithProvider.telemetry, {
+						component: "core",
+						operation: "session.persist_messages_after_assistant_response",
+						error,
+						severity: "warn",
+						handled: true,
+						context: {
+							sessionId,
+							providerId: configWithProvider.providerId,
+							modelId: configWithProvider.modelId,
+						},
+					});
 				}
 			},
 		};
@@ -576,6 +590,18 @@ export class LocalRuntimeHost implements RuntimeHost {
 			if (active.interactive && active.aborting) {
 				result = await this.completeAbortedInteractiveTurn(active);
 			} else {
+				captureSdkError(active.config.telemetry, {
+					component: "core",
+					operation: "session.start",
+					error,
+					severity: "error",
+					handled: false,
+					context: {
+						sessionId: active.sessionId,
+						providerId: active.config.providerId,
+						modelId: active.config.modelId,
+					},
+				});
 				await this.failSession(active);
 				throw error;
 			}
@@ -666,6 +692,18 @@ export class LocalRuntimeHost implements RuntimeHost {
 			if (session.interactive && session.aborting) {
 				return await this.completeAbortedInteractiveTurn(session);
 			}
+			captureSdkError(session.config.telemetry, {
+				component: "core",
+				operation: "session.submit",
+				error,
+				severity: "error",
+				handled: false,
+				context: {
+					sessionId: session.sessionId,
+					providerId: session.config.providerId,
+					modelId: session.config.modelId,
+				},
+			});
 			await this.failSession(session);
 			throw error;
 		}
@@ -1036,6 +1074,18 @@ export class LocalRuntimeHost implements RuntimeHost {
 			this.observeTaskCompletionTool(session, result);
 			return result;
 		} catch (error) {
+			captureSdkError(session.config.telemetry, {
+				component: "core",
+				operation: "session.turn",
+				error,
+				severity: "error",
+				handled: false,
+				context: {
+					sessionId: session.sessionId,
+					providerId: session.config.providerId,
+					modelId: session.config.modelId,
+				},
+			});
 			await this.invoke<void>(
 				"persistSessionMessages",
 				session.sessionId,
@@ -1255,6 +1305,21 @@ export class LocalRuntimeHost implements RuntimeHost {
 				error,
 				severity: "warn",
 			});
+			captureSdkError(session.config.telemetry, {
+				component: "core",
+				operation: "session.shutdown_cleanup",
+				error,
+				severity: "warn",
+				handled: true,
+				context: {
+					sessionId: session.sessionId,
+					stage,
+					status: input.status,
+					shutdownReason: input.shutdownReason,
+					providerId: session.config.providerId,
+					modelId: session.config.modelId,
+				},
+			});
 		};
 
 		if (session.artifacts) {
@@ -1305,6 +1370,20 @@ export class LocalRuntimeHost implements RuntimeHost {
 				stage,
 				error,
 				severity: "warn",
+			});
+			captureSdkError(session.config.telemetry, {
+				component: "core",
+				operation: "session.runtime_cleanup",
+				error,
+				severity: "warn",
+				handled: true,
+				context: {
+					sessionId: session.sessionId,
+					stage,
+					reason,
+					providerId: session.config.providerId,
+					modelId: session.config.modelId,
+				},
 			});
 		};
 
@@ -1418,7 +1497,21 @@ export class LocalRuntimeHost implements RuntimeHost {
 
 	private getSessionOrThrow(sessionId: string): ActiveSession {
 		const session = this.sessions.get(sessionId);
-		if (!session) throw new Error(`session not found: ${sessionId}`);
+		if (!session) {
+			const error = new Error(`session not found: ${sessionId}`);
+			captureSdkError(this.defaultTelemetry, {
+				component: "core",
+				operation: "session.active_lookup",
+				error,
+				severity: "warn",
+				handled: true,
+				context: {
+					sessionId,
+					activeSessionCount: this.sessions.size,
+				},
+			});
+			throw error;
+		}
 		return session;
 	}
 

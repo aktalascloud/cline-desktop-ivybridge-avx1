@@ -294,6 +294,43 @@ describe("LocalRuntimeHost", () => {
 		);
 	});
 
+	it("captures active session lookup misses as handled telemetry", async () => {
+		const adapter = {
+			name: "test",
+			emit: vi.fn(),
+			emitRequired: vi.fn(),
+			recordCounter: vi.fn(),
+			recordHistogram: vi.fn(),
+			recordGauge: vi.fn(),
+			isEnabled: vi.fn(() => true),
+			flush: vi.fn().mockResolvedValue(undefined),
+			dispose: vi.fn().mockResolvedValue(undefined),
+		};
+		const telemetry = new TelemetryService({ adapters: [adapter] });
+		const manager = new RuntimeHostUnderTest({
+			distinctId,
+			sessionService: {} as never,
+			telemetry,
+		});
+
+		await expect(
+			manager.runTurn({ sessionId: "missing-session", prompt: "hi" }),
+		).rejects.toThrow("session not found: missing-session");
+
+		expect(adapter.emit).toHaveBeenCalledWith(
+			"sdk.error",
+			expect.objectContaining({
+				component: "core",
+				operation: "session.active_lookup",
+				severity: "warn",
+				handled: true,
+				sessionId: "missing-session",
+				activeSessionCount: 0,
+				error_message: "session not found: missing-session",
+			}),
+		);
+	});
+
 	it("passes app runtime capabilities into the local execution path", async () => {
 		const sessionId = "sess-local-capabilities";
 		const manifest = createManifest(sessionId);
@@ -1930,6 +1967,7 @@ describe("LocalRuntimeHost", () => {
 				shutdown: vi.fn(),
 			}),
 		};
+		const telemetry = new TelemetryService();
 		let agentConfig: AgentConfig | undefined;
 		const agent = {
 			run: vi.fn().mockResolvedValue(createResult()),
@@ -1948,6 +1986,7 @@ describe("LocalRuntimeHost", () => {
 			distinctId,
 			sessionService: sessionService as never,
 			runtimeBuilder,
+			telemetry,
 			createAgent: (config) => {
 				agentConfig = config;
 				return agent as never;
@@ -1968,6 +2007,7 @@ describe("LocalRuntimeHost", () => {
 			agentConfig?.consumePendingUserMessage?.(),
 		);
 		expect(consumed).toBe('<user_input mode="plan">steer this</user_input>');
+		expect(agentConfig?.telemetry).toBe(telemetry);
 	});
 
 	it("clears pending prompts after an interactive abort", async () => {
