@@ -1,6 +1,6 @@
 import { dirname } from "node:path";
 import type * as LlmsProviders from "@cline/llms";
-import type { AgentResult } from "@cline/shared";
+import type { AgentResult, BasicLogger } from "@cline/shared";
 import { nanoid } from "nanoid";
 import type {
 	SubAgentEndContext,
@@ -45,11 +45,13 @@ export class UnifiedSessionPersistenceService {
 		private readonly adapter: SessionPersistenceAdapter,
 		options: {
 			messagesArtifactUploader?: SessionMessagesArtifactUploader;
+			logger?: BasicLogger;
 		} = {},
 	) {
 		this.manifestStore = new SessionManifestStore(
 			adapter,
 			options.messagesArtifactUploader,
+			options.logger,
 		);
 		this.teamChildren = new TeamChildSessionManager(
 			adapter,

@@ -67,6 +67,7 @@ function createLocalBackend(options: ClineCoreOptions): SessionBackend {
 		store.init();
 		return new CoreSessionService(store, {
 			messagesArtifactUploader: options.messagesArtifactUploader,
+			logger: options.logger,
 		});
 	} catch (error) {
 		// Fallback to file-based session service if SQLite is unavailable.
@@ -90,6 +91,7 @@ function createLocalBackend(options: ClineCoreOptions): SessionBackend {
 		});
 		return new FileSessionService(undefined, {
 			messagesArtifactUploader: options.messagesArtifactUploader,
+			logger: options.logger,
 		});
 	}
 }

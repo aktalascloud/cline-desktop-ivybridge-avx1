@@ -438,6 +438,73 @@ describe("UnifiedSessionPersistenceService", () => {
 	);
 
 	sqliteIt(
+		"keeps failed message uploads out of user-facing console output",
+		async () => {
+			const dbDir = mkdtempSync(join(tmpdir(), "messages-upload-fail-db-"));
+			const sessionsDir = mkdtempSync(join(tmpdir(), "messages-upload-fail-"));
+			tempDirs.push(dbDir, sessionsDir);
+
+			const store = new SqliteSessionStore({ sessionsDir: dbDir });
+			stores.push(store);
+			const uploadError = new Error("upload denied");
+			const uploadMessagesFile = vi.fn(async () => {
+				throw uploadError;
+			});
+			const logger = {
+				debug: vi.fn(),
+				log: vi.fn(),
+			};
+			const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+			const service = new CoreSessionService(store, {
+				sessionArtifactsDir: sessionsDir,
+				messagesArtifactUploader: {
+					uploadMessagesFile,
+				},
+				logger,
+			});
+			const sessionId = "root-upload-fail-session";
+			await service.createRootSessionWithArtifacts({
+				sessionId,
+				source: SessionSource.CLI,
+				pid: process.pid,
+				interactive: false,
+				provider: "openrouter",
+				model: "qwen/qwen3.6-plus",
+				cwd: "/tmp/project",
+				workspaceRoot: "/tmp/project",
+				enableTools: true,
+				enableSpawn: false,
+				enableTeams: false,
+				prompt: "hello",
+				startedAt: "2026-04-10T19:00:00.000Z",
+			});
+
+			try {
+				await expect(
+					service.persistSessionMessages(sessionId, [
+						{
+							role: "user",
+							content: "hello",
+						},
+					]),
+				).resolves.toBeUndefined();
+				expect(warn).not.toHaveBeenCalled();
+			} finally {
+				warn.mockRestore();
+			}
+
+			expect(uploadMessagesFile).toHaveBeenCalledTimes(1);
+			expect(logger.debug).toHaveBeenCalledWith(
+				"Failed to upload persisted session messages",
+				{
+					sessionId,
+					error: uploadError,
+				},
+			);
+		},
+	);
+
+	sqliteIt(
 		"deletes the full root session directory even when artifact paths are stale",
 		async () => {
 			const dbDir = mkdtempSync(join(tmpdir(), "delete-root-session-dir-db-"));

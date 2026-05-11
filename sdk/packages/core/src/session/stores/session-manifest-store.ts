@@ -7,6 +7,7 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import type * as LlmsProviders from "@cline/llms";
+import type { BasicLogger } from "@cline/shared";
 import { ensureHookLogDir } from "@cline/shared/storage";
 import { nowIso, SessionArtifacts } from "../../services/session-artifacts";
 import {
@@ -30,6 +31,7 @@ export class SessionManifestStore {
 	constructor(
 		private readonly adapter: SessionPersistenceAdapter,
 		private readonly messagesArtifactUploader?: SessionMessagesArtifactUploader,
+		private readonly logger?: BasicLogger,
 	) {
 		this.artifacts = new SessionArtifacts(() => this.ensureSessionsDir());
 	}
@@ -126,10 +128,10 @@ export class SessionManifestStore {
 				row,
 			});
 		} catch (error) {
-			console.warn(
-				`Failed to upload persisted session messages for ${sessionId}`,
+			this.logger?.debug("Failed to upload persisted session messages", {
+				sessionId,
 				error,
-			);
+			});
 		}
 	}
 
