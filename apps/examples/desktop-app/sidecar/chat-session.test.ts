@@ -204,6 +204,9 @@ describe("starting SSH sessions", () => {
 		expect(start).toHaveBeenCalledWith(
 			expect.objectContaining({ initialMessages: transcript }),
 		);
+		expect(start.mock.calls[0]?.[0]).not.toHaveProperty(
+			"config.initialMessages",
+		);
 		expect(ctx.liveSessions.get(sessionId)?.messages).toEqual(transcript);
 	});
 
@@ -1483,6 +1486,7 @@ describe("first-send connection updates", () => {
 			prompt: "continue with Codex",
 			config: {
 				...baseConfig,
+				initialMessages: [{ role: "user", content: "old seed" }],
 				provider: "openai-codex",
 				model: "gpt-5.3-codex",
 			},
@@ -1502,6 +1506,9 @@ describe("first-send connection updates", () => {
 					{ role: "assistant", content: "first response" },
 				],
 			}),
+		);
+		expect(start.mock.calls[0]?.[0]).not.toHaveProperty(
+			"config.initialMessages",
 		);
 		expect(updateSessionConnection).toHaveBeenCalledWith(sessionId, {
 			providerId: "openai-codex",
