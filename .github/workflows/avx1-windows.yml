@@ -2,7 +2,7 @@ name: Windows AVX1 qualification
 on:
   push:
     branches: [avx1]
-    paths: ['apps/**', 'sdk/**', 'fork/**', '!fork/**/*.json', '!fork/**/*.md', '!fork/bench-*', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
+    paths: ['apps/**', 'sdk/**', 'fork/build-windows.ps1', 'fork/download.py', 'fork/seed-bun.py', 'fork/seed-nsis.py', 'fork/collect-licenses.py', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
   workflow_dispatch:
     inputs:
       source_sha:
@@ -45,11 +45,19 @@ jobs:
         with:
           ref: ${{ needs.validate.outputs.sha }}
           fetch-depth: 0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24.20.0'
+          package-manager-cache: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13.14'
       - name: Pinned Bun and compiler environment
         shell: pwsh
         run: |
           $archive=Join-Path $env:RUNNER_TEMP 'bun.zip'
-          Invoke-WebRequest https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-windows-x64-baseline.zip -OutFile $archive
+          python ./fork/download.py https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-windows-x64-baseline.zip $archive 78c221c2376f79731ccf4e4af0b3bb46d81fefa3296c5abee09ad8a1b21e68c6
+          if($LASTEXITCODE){throw 'Resumable Bun download failed'}
           if((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '78c221c2376f79731ccf4e4af0b3bb46d81fefa3296c5abee09ad8a1b21e68c6'){throw 'Bun hash mismatch'}
           Expand-Archive $archive "$env:RUNNER_TEMP\bun"
           $bun="$env:RUNNER_TEMP\bun\bun-windows-x64-baseline"
@@ -66,7 +74,7 @@ jobs:
           $vs=& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           Import-Module "$vs\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
           Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64 -vcvars_ver=14.44.35207 -winsdk=10.0.26100.0'
-          & ./fork/build-windows.ps1 -SourceSha $env:SOURCE_SHA -Profile ivy-thin8
+          & ./fork/build-windows.ps1 -SourceSha $env:SOURCE_SHA -Profile ivy-fat1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: Cline-Desktop-AVX1-RU-candidate

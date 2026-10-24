@@ -1,6 +1,6 @@
 param(
   [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string]$SourceSha,
-  [ValidateSet('default','ivy-thin8','ivy-thin1','ivy-fat1')][string]$Profile='ivy-thin8',
+  [ValidateSet('default','ivy-thin8','ivy-thin1','ivy-fat1')][string]$Profile='ivy-fat1',
   [switch]$SkipPrepare
 )
 $ErrorActionPreference='Stop'
@@ -13,6 +13,8 @@ Push-Location $root
 try {
   if((git rev-parse HEAD).Trim() -ne $SourceSha){throw 'Checkout does not match the pinned source SHA'}
   if((bun --version).Trim() -ne '1.4.2'){throw 'Bun 1.4.2 is required'}
+  if((node --version).Trim() -ne 'v24.20.0'){throw 'Node 24.20.0 is required'}
+  if((python --version).Trim() -ne 'Python 3.13.14'){throw 'Python 3.13.14 is required'}
   if((rustc --version) -notmatch '^rustc 1\.97\.0 '){throw 'Rust 1.97.0 is required'}
   if(-not $env:VCToolsInstallDir -or $env:VCToolsInstallDir.TrimEnd('\') -notmatch '\\14\.44\.35207$'){throw 'MSVC toolset 14.44.35207 is required'}
   if($env:WindowsSDKVersion.TrimEnd('\') -ne '10.0.26100.0'){throw 'Windows SDK 10.0.26100.0 is required'}
@@ -42,6 +44,20 @@ try {
     if($LASTEXITCODE){throw 'Real Windows installer hook tests failed'}
     bun -F @cline/code typecheck
     if($LASTEXITCODE){throw 'Type checking failed'}
+    bun -F @cline/cli typecheck
+    if($LASTEXITCODE){throw 'CLI type checking failed'}
+    bun -F @cline/core typecheck
+    if($LASTEXITCODE){throw 'Core type checking failed'}
+    Push-Location (Join-Path $root 'apps\cli')
+    try {
+      bun x vitest run --config vitest.config.ts src/runtime/run-agent.test.ts src/commands/update.test.ts
+      if($LASTEXITCODE){throw 'CLI cancellation/update regression tests failed'}
+    } finally {Pop-Location}
+    Push-Location (Join-Path $root 'sdk\packages\core')
+    try {
+      bun x vitest run --maxWorkers=4 --config vitest.config.ts src/extensions/mcp src/services/workspace src/runtime/host/local-runtime-host.test.ts
+      if($LASTEXITCODE){throw 'MCP/workspace/runtime regression tests failed'}
+    } finally {Pop-Location}
     bun -F @cline/code build:web
     if($LASTEXITCODE){throw 'Production frontend build failed'}
     Push-Location $app
