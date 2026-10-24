@@ -16,6 +16,7 @@ import { distributionBootstrap } from "./distribution-bootstrap";
 import {
 	loggingBundlePlugin,
 	loggingWorkers,
+	discordWorkerPath,
 } from "../../../fork/logging-bundle";
 
 const cliDir = resolve(import.meta.dir, "..");
@@ -106,6 +107,7 @@ export async function compileCliBinary(
 	const dashboardRuntime = await buildDashboardRuntimeDirectory();
 	const parserWorker = findOpenTuiParserWorker();
 	const logWorkers = loggingWorkers(cliDir);
+	const discordWorker = discordWorkerPath(cliDir);
 	const targetOs = input.bunTarget.includes("windows") ? "windows" : "posix";
 	const bunfsRoot = targetOs === "windows" ? "B:/~BUN/root/" : "/$bunfs/root/";
 	const parserWorkerPath = relative(rootDir, parserWorker).replaceAll(
@@ -131,7 +133,12 @@ export async function compileCliBinary(
 	try {
 		const autoload = input.autoloadLaunchDirectoryConfig !== false;
 		result = await Bun.build({
-			entrypoints: [entrypoint, parserWorker, ...Object.values(logWorkers)],
+			entrypoints: [
+				entrypoint,
+				parserWorker,
+				discordWorker,
+				...Object.values(logWorkers),
+			],
 			root: rootDir,
 			banner: distributionBootstrap(input.distribution),
 			plugins: [loggingBundlePlugin()],
@@ -149,6 +156,9 @@ export async function compileCliBinary(
 			minify: true,
 			external: ["@anthropic-ai/vertex-sdk"],
 			define: {
+				__CLINE_DISCORD_WS_WORKER__: JSON.stringify(
+					bunfsRoot + relative(rootDir, discordWorker).replaceAll("\\", "/"),
+				),
 				__CLINE_LOG_THREAD__: JSON.stringify(
 					bunfsRoot +
 						relative(rootDir, logWorkers.thread).replaceAll("\\", "/"),

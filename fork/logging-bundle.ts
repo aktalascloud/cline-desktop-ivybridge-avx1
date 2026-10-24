@@ -11,6 +11,13 @@ export function loggingWorkers(resolveFrom: string) {
 	};
 }
 
+export function discordWorkerPath(resolveFrom: string) {
+	return join(
+		dirname(Bun.resolveSync("@discordjs/ws", resolveFrom)),
+		"defaultWorker.js",
+	);
+}
+
 export const loggingWorkerNames = {
 	thread: "thread-stream-worker.js",
 	pino: "pino-worker.js",
@@ -37,11 +44,15 @@ export function loggingBundlePlugin(): BunPlugin {
 			build.onLoad(
 				{
 					filter:
-						/[\\/]thread-stream[\\/]index\.js$|[\\/]pino[\\/]lib[\\/]transport\.js$/,
+						/[\\/]thread-stream[\\/]index\.js$|[\\/]pino[\\/]lib[\\/]transport\.js$|[\\/]@discordjs[\\/]ws[\\/]dist[\\/]index\.js$/,
 				},
 				async ({ path }) => {
 					let contents = await Bun.file(path).text();
 					contents = contents
+						.replace(
+							/\(0, import_node_path\.join\)\(__dirname,\s*['"]defaultWorker\.js['"]\)/g,
+							"__CLINE_DISCORD_WS_WORKER__",
+						)
 						.replace(
 							/join\(__dirname,\s*['"]lib['"],\s*['"]worker\.js['"]\)/g,
 							"__CLINE_LOG_THREAD__",
