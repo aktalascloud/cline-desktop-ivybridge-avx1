@@ -2,7 +2,7 @@ name: Windows AVX1 qualification
 on:
   push:
     branches: [avx1]
-    paths: ['apps/**', 'sdk/**', '!sdk/ARCHITECTURE.md', '!sdk/DOC.md', 'fork/build-windows.ps1', 'fork/download.py', 'fork/seed-bun.py', 'fork/seed-nsis.py', 'fork/collect-licenses.py', 'fork/verify-updater/**', 'fork/updater/public-key.txt', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
+    paths: ['apps/**', 'sdk/**', '!sdk/ARCHITECTURE.md', '!sdk/DOC.md', 'fork/build-windows.ps1', 'fork/logging-bundle.ts', 'fork/download.py', 'fork/seed-bun.py', 'fork/seed-nsis.py', 'fork/collect-licenses.py', 'fork/verify-updater/**', 'fork/updater/public-key.txt', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
   workflow_dispatch:
     inputs:
       source_sha:

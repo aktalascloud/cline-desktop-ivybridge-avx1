@@ -13,6 +13,10 @@ import { dirname, join, relative, resolve } from "node:path";
 import { $ } from "bun";
 import { buildDashboardRuntimeDirectory } from "./dashboard-runtime";
 import { distributionBootstrap } from "./distribution-bootstrap";
+import {
+	loggingBundlePlugin,
+	loggingWorkers,
+} from "../../../fork/logging-bundle";
 
 const cliDir = resolve(import.meta.dir, "..");
 const rootDir = resolve(cliDir, "../..");
@@ -101,6 +105,7 @@ export async function compileCliBinary(
 	const pluginRuntime = join(rootDir, "sdk/packages/core/dist/plugin-runtime");
 	const dashboardRuntime = await buildDashboardRuntimeDirectory();
 	const parserWorker = findOpenTuiParserWorker();
+	const logWorkers = loggingWorkers(cliDir);
 	const targetOs = input.bunTarget.includes("windows") ? "windows" : "posix";
 	const bunfsRoot = targetOs === "windows" ? "B:/~BUN/root/" : "/$bunfs/root/";
 	const parserWorkerPath = relative(rootDir, parserWorker).replaceAll(
@@ -126,9 +131,10 @@ export async function compileCliBinary(
 	try {
 		const autoload = input.autoloadLaunchDirectoryConfig !== false;
 		result = await Bun.build({
-			entrypoints: [entrypoint, parserWorker],
+			entrypoints: [entrypoint, parserWorker, ...Object.values(logWorkers)],
 			root: rootDir,
 			banner: distributionBootstrap(input.distribution),
+			plugins: [loggingBundlePlugin()],
 			splitting: true,
 			compile: {
 				target: input.bunTarget,
@@ -143,6 +149,16 @@ export async function compileCliBinary(
 			minify: true,
 			external: ["@anthropic-ai/vertex-sdk"],
 			define: {
+				__CLINE_LOG_THREAD__: JSON.stringify(
+					bunfsRoot +
+						relative(rootDir, logWorkers.thread).replaceAll("\\", "/"),
+				),
+				__CLINE_LOG_PINO__: JSON.stringify(
+					bunfsRoot + relative(rootDir, logWorkers.pino).replaceAll("\\", "/"),
+				),
+				__CLINE_LOG_FILE__: JSON.stringify(
+					bunfsRoot + relative(rootDir, logWorkers.file).replaceAll("\\", "/"),
+				),
 				"process.env.CLINE_DESKTOP_DISTRIBUTION": JSON.stringify(
 					input.distribution ?? "",
 				),

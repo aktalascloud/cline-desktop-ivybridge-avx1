@@ -33,6 +33,8 @@ try {
     if($LASTEXITCODE){throw 'Runtime verification failed'}
     bun -F @cline/code build:runtime
     if($LASTEXITCODE){throw 'CLI/Hub/backend build failed'}
+    bun test fork/logging-bundle.test.ts
+    if($LASTEXITCODE){throw 'Relocatable logger worker tests failed'}
     & "$app\src-tauri\bin\cline-cli-x86_64-pc-windows-msvc.exe" --version
     if($LASTEXITCODE){throw 'Compiled CLI execution failed'}
     cargo fetch --locked --manifest-path "$app\src-tauri\Cargo.toml"
@@ -65,7 +67,12 @@ try {
     bun -F @cline/code build:web
     if($LASTEXITCODE){throw 'Production frontend build failed'}
     Push-Location $app
-    try { bun x vitest run --config vitest.config.ts; if($LASTEXITCODE){throw 'Desktop tests failed'} }
+    try {
+      bun x vitest run --maxWorkers=1 --config vitest.config.ts webview/components/views/chat/chat-input-bar.test.tsx
+      if($LASTEXITCODE){throw 'Composer tests failed'}
+      bun x vitest run --maxWorkers=2 --exclude webview/components/views/chat/chat-input-bar.test.tsx --config vitest.config.ts
+      if($LASTEXITCODE){throw 'Desktop tests failed'}
+    }
     finally {Pop-Location}
   }
   $env:RUSTFLAGS="--remap-path-prefix=$root=/src/cline"

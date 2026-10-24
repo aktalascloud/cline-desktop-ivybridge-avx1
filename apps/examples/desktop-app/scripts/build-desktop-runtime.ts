@@ -6,6 +6,11 @@ import {
 	installOpenTuiNativeVariants,
 } from "../../../cli/script/compile-binary";
 import { telemetryDefineArgs } from "./telemetry-define-args";
+import {
+	loggingBundlePlugin,
+	loggingWorkers,
+	loggingWorkerNames,
+} from "../../../../fork/logging-bundle";
 
 // The desktop app ships two runtime artifacts and no app-specific executable:
 //
@@ -52,7 +57,8 @@ const resolveBunCompileTarget = (
 	if (targetTriple.startsWith("aarch64-apple-darwin"))
 		return "bun-darwin-arm64";
 	if (targetTriple.startsWith("x86_64-apple-darwin")) return "bun-darwin-x64";
-	if (targetTriple.startsWith("x86_64-pc-windows")) return "bun-windows-x64-baseline";
+	if (targetTriple.startsWith("x86_64-pc-windows"))
+		return "bun-windows-x64-baseline";
 	if (targetTriple.startsWith("aarch64-pc-windows")) return "bun-windows-arm64";
 	// SSH hosts may predate AVX2 (e.g. Ivy Bridge Xeons). The default Bun
 	// x64 runtime can SIGILL before our entrypoint runs on those CPUs.
@@ -104,7 +110,40 @@ const bundleDesktopBackend = async (): Promise<void> => {
 		recursive: true,
 	});
 	const defines = telemetryDefineArgs();
-	await $`bun build ./sidecar/index.ts --target bun --minify ${defines} --outfile ${DESKTOP_BACKEND_BUNDLE}`;
+	const define: Record<string, string> = {};
+	for (let index = 0; index < defines.length; index += 2) {
+		const pair = defines[index + 1];
+		const separator = pair.indexOf("=");
+		define[pair.slice(0, separator)] = pair.slice(separator + 1);
+	}
+	const logWorkers = loggingWorkers(APP_ROOT);
+	for (const key of Object.keys(logWorkers) as Array<keyof typeof logWorkers>) {
+		const result = await Bun.build({
+			entrypoints: [logWorkers[key]],
+			target: "bun",
+			minify: true,
+		});
+		if (!result.success) throw new Error("Logger worker build failed");
+		await Bun.write(
+			`${BIN_DIR}/desktop-backend/${loggingWorkerNames[key]}`,
+			result.outputs[0],
+		);
+	}
+	const result = await Bun.build({
+		entrypoints: ["./sidecar/index.ts"],
+		target: "bun",
+		minify: true,
+		plugins: [loggingBundlePlugin()],
+		banner: `globalThis.__clineLoggingPaths = Object.fromEntries(Object.entries(${JSON.stringify(loggingWorkerNames)}).map(([key, name]) => [key, process.getBuiltinModule('node:url').fileURLToPath(new URL(name, import.meta.url))]));`,
+		define: {
+			...define,
+			__CLINE_LOG_THREAD__: "globalThis.__clineLoggingPaths.thread",
+			__CLINE_LOG_PINO__: "globalThis.__clineLoggingPaths.pino",
+			__CLINE_LOG_FILE__: "globalThis.__clineLoggingPaths.file",
+		},
+	});
+	if (!result.success) throw new Error("Desktop backend build failed");
+	await Bun.write(DESKTOP_BACKEND_BUNDLE, result.outputs[0]);
 };
 
 // Each compiled CLI embeds a full Bun runtime (~100 MB), and both Linux copies
@@ -181,17 +220,20 @@ const main = async () => {
 	if (needed.some(([os, arch]) => !hasOpenTuiNativeVariant(os, arch))) {
 		await installOpenTuiNativeVariants();
 	}
+	console.log("Building desktop backend and logger workers");
 	await bundleDesktopBackend();
+	console.log("Building host CLI");
 	if (targetTriple === "universal-apple-darwin") {
 		await buildUniversalMacCli();
 	} else {
 		await compileDesktopCli(targetTriple);
 	}
+	console.log("Building remote CLI helpers");
 	await buildRemoteClis();
 };
 
 if (import.meta.main) {
-	main().catch((error: unknown) => {
+	await main().catch((error: unknown) => {
 		console.error(error);
 		process.exitCode = 1;
 	});
