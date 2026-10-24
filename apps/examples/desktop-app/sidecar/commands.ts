@@ -986,7 +986,12 @@ async function listGitBranches(
 
 /** Where task worktrees live; honors `CLINE_DIR` like the rest of the Cline dir. */
 function taskWorktreesRoot(): string {
-	return join(resolveClineDir(), "worktrees");
+	const path = join(resolveClineDir(), "worktrees");
+	try {
+		return realpathSync.native(path);
+	} catch {
+		return resolve(path);
+	}
 }
 
 /**
@@ -1018,13 +1023,20 @@ async function createGitWorktree(
 		["-C", repoRoot, "worktree", "add", "-b", branch, worktreePath, "HEAD"],
 		{ encoding: "utf8" },
 	);
-	return { path: worktreePath, branch };
+	return { path: realpathSync.native(worktreePath), branch };
 }
 
 /** True for paths of the exact `~/.cline/worktrees/<id>/<repo>` shape. */
 function isTaskWorktreePath(path: string): boolean {
 	if (!path.trim()) return false;
-	const normalized = resolve(path);
+	const inputPath = resolve(path);
+	let normalized: string;
+	try {
+		if (lstatSync(inputPath).isSymbolicLink()) return false;
+		normalized = realpathSync.native(inputPath);
+	} catch {
+		return false;
+	}
 	const key = (value: string) =>
 		process.platform === "win32" ? value.toLowerCase() : value;
 	if (key(dirname(dirname(normalized))) !== key(resolve(taskWorktreesRoot())))

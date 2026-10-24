@@ -725,6 +725,7 @@
 	"Allow notifications": "Разрешить уведомления",
 	"Desktop notifications": "Уведомления приложения",
 	"Notify only while the Cline window is in the background. Clicking a notification opens its session.": "Уведомлять, только когда окно Cline находится в фоне. Нажатие на уведомление открывает его сеанс.",
+	"Notifications": "Уведомления",
 	"Notifications are blocked in system settings.": "Уведомления заблокированы в системных настройках.",
 	"Event": "Событие",
 	"Notify": "Уведомлять",

@@ -2,3 +2,6 @@ demo.gif filter=lfs diff=lfs merge=lfs -text
 assets/docs/demo.gif filter=lfs diff=lfs merge=lfs -text
 
 * text=auto eol=lf
+
+# Unified patch context retains a required leading space on empty lines.
+patches/*.patch -whitespace

@@ -29,6 +29,7 @@ import {
 	updateMcpServerOAuthStateAsync,
 } from "./config-loader";
 import { augmentMcpTimeoutError, resolveMcpRequestTimeoutMs } from "./timeout";
+import { sameOAuthIssuer } from "./issuer";
 import type {
 	McpServerOAuthClientConfig,
 	McpServerOAuthState,
@@ -222,10 +223,16 @@ function createOAuthClientMetadata(redirectUrl: string): OAuthClientMetadata {
 export function createMcpOAuthClientInformation(
 	config: McpServerOAuthClientConfig | undefined,
 ): OAuthClientInformationMixed | undefined {
+	if (config?.clientSecret && !config.issuer) {
+		throw new Error(
+			"MCP OAuth client secrets require oauthClient.issuer. Configure the trusted authorization-server issuer before signing in.",
+		);
+	}
 	return config
 		? {
 				client_id: config.clientId,
 				...(config.clientSecret ? { client_secret: config.clientSecret } : {}),
+				...(config.issuer ? { issuer: config.issuer } : {}),
 			}
 		: undefined;
 }
@@ -258,6 +265,12 @@ function assertOAuthClientUnchanged(
 export function createMcpOAuthProviderContext(
 	options: CreateMcpOAuthProviderContextOptions,
 ): McpOAuthProviderContext {
+	if (
+		options.clientInformation?.client_secret &&
+		!options.clientInformation.issuer
+	) {
+		throw new Error("MCP OAuth client secrets require a trusted issuer.");
+	}
 	let state: McpServerOAuthState = {};
 	try {
 		state =
@@ -269,14 +282,33 @@ export function createMcpOAuthProviderContext(
 	}
 	let lastAuthorizationUrl: string | undefined;
 	let lastOAuthState: string | undefined;
-	const currentClientInformation = () =>
-		options.clientInformation ??
-		(state.clientInformation as OAuthClientInformationMixed | undefined);
+	const currentClientInformation = ():
+		| OAuthClientInformationMixed
+		| undefined => {
+		const stored = state.clientInformation as
+			| OAuthClientInformationMixed
+			| undefined;
+		const configured = options.clientInformation;
+		if (configured) {
+			if (
+				!configured.issuer &&
+				stored?.issuer &&
+				isSameOAuthClient(stored, configured)
+			)
+				return { ...configured, issuer: stored.issuer };
+			return configured;
+		}
+		// Preserve legacy records on disk, but never refresh an unbound secret.
+		return stored?.issuer ? stored : undefined;
+	};
 	const expectedOAuthClient = options.clientInformation
 		? {
 				clientId: options.clientInformation.client_id,
 				...(options.clientInformation.client_secret
 					? { clientSecret: options.clientInformation.client_secret }
+					: {}),
+				...(options.clientInformation.issuer
+					? { issuer: options.clientInformation.issuer }
 					: {}),
 			}
 		: null;
@@ -344,6 +376,11 @@ export function createMcpOAuthProviderContext(
 		},
 		tokens: () =>
 			currentClientInformation()?.client_id &&
+			typeof state.tokens?.issuer === "string" &&
+			sameOAuthIssuer(
+				state.tokens.issuer,
+				currentClientInformation()?.issuer,
+			) &&
 			isSameOAuthClient(
 				state.clientInformation as OAuthClientInformationMixed | undefined,
 				currentClientInformation(),
@@ -352,9 +389,19 @@ export function createMcpOAuthProviderContext(
 				: undefined,
 		saveTokens: async (tokens) => {
 			const lastAuthenticatedAt = Date.now();
-			const clientInformation = currentClientInformation();
+			let clientInformation = currentClientInformation();
 			if (!clientInformation?.client_id) {
 				throw new Error("Cannot save MCP OAuth tokens without a client ID.");
+			}
+			if (typeof tokens.issuer === "string") {
+				if (
+					clientInformation.issuer &&
+					!sameOAuthIssuer(clientInformation.issuer, tokens.issuer)
+				)
+					throw new Error(
+						"MCP OAuth token issuer does not match the configured client issuer.",
+					);
+				clientInformation = { ...clientInformation, issuer: tokens.issuer };
 			}
 			await patch((current) => {
 				// A pre-registered client is already bound by the guarded oauthClient

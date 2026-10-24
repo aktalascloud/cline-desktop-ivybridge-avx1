@@ -13,7 +13,7 @@
     "purpose": "security(desktop): bump next 16.2.11 → 16.3.8 (8 Dependabot advisories, re-cut of #14753)",
     "origin": "official-upstream-pr",
     "status": "adapted-upstream-pr",
-    "verification": "Next 16.3.8; full dependency-lock conflict resolution, frozen install and production static export"
+    "verification": "Initial adaptation to 16.3.8 superseded by pinned 16.4.3 after advisory review; frozen install and production static export passed."
   },
   {
     "url": "https://github.com/cline/cline/pull/15223",
@@ -115,7 +115,7 @@
     "id": "AVX1-STORAGE",
     "purpose": "Close all seven transient SQLite session stores; prevent accumulated file handles",
     "status": "qualification",
-    "verification": "Windows history/settings/worktree integration tests; comparative handle benchmark pending"
+    "verification": "Three paired synthetic Windows runs: handle growth +300 becomes 0; closed-store median wall time 1395.8 ms vs 1302.9 ms. Resource correctness fix, no speedup."
   },
   {
     "origin": "local",
@@ -130,5 +130,21 @@
     "purpose": "Permanent fork app ID/key/feed, isolated data, no official CLI auto-update, idle guard and fail-closed installer",
     "status": "qualification",
     "verification": "Installed update/persistence/signature/GUI gates pending"
+  },
+  {
+    "origin": "local",
+    "id": "AVX1-MCP-ISSUER",
+    "url": "https://github.com/modelcontextprotocol/typescript-sdk/security/advisories/GHSA-6qxp-vccf-f47h",
+    "sha": "edd12e282620ebf770d67316f19cf91d4112a1bd",
+    "purpose": "MCP SDK 1.32.2 and persisted OAuth issuer binding; preserve but do not reuse unbound legacy credentials",
+    "status": "qualification",
+    "verification": "Full advisory and installed SDK implementation reviewed; 253 focused MCP/workspace/runtime tests passed, 3 skipped."
+  },
+  {
+    "origin": "local",
+    "id": "AVX1-DEPENDENCIES",
+    "purpose": "Pinned MCP SDK 1.32.2, DOMPurify 3.4.17, Next 16.4.3, simple-git 4.0.2, shell-quote 1.12.0, follow-redirects 1.16.1, fast-uri 4.2.3; hoisted Zod 4.6.7; early configured array-size rejection backported to legacy Zod 3.25.76",
+    "status": "qualification",
+    "verification": "Reachability inspected in actual backend dependency graph, manifests/licenses reviewed; full regression and installed-runtime checks required. No claim that every monorepo development dependency is vulnerability-free."
   }
 ]

@@ -21,12 +21,15 @@ Tauri signatures do not imply a publicly trusted Authenticode certificate.
 
 ## Changes and evidence
 
-- [Next.js 16.3.8 security update](https://github.com/cline/cline/pull/15146), adapted to the current lockfile.
+- [Next.js security update](https://github.com/cline/cline/pull/15146), adapted to the lockfile and superseded by 16.4.3.
 - [undici 7.30.1 security floor](https://github.com/cline/cline/pull/15287).
 - [Transcript regression checks](https://github.com/cline/cline/pull/15223); the production fix is already in upstream main.
-- Local changes: EN/RU localization, fork update isolation, deterministic SQLite connection closure, and safe Windows worktree cleanup.
+- Local changes: EN/RU localization, fork update isolation, deterministic SQLite connection closure, safe Windows worktree cleanup and MCP OAuth issuer binding with SDK 1.32.2.
 
-No speedup is claimed before comparative measurements. Bun 1.4.2 x64 and
+The [synthetic history test](fork/history-benchmark.json) eliminates handle growth
+(+300 to 0 over 100 polls), but median wall time rises from 1302.9 to 1395.8 ms.
+This is a resource correctness fix; no overall speedup or LLM throughput gain is claimed.
+Native profile and installed UI comparisons remain pending. Bun 1.4.2 x64 and
 baseline downloads contained the same executable; both ran on this CPU.
 Bun/JSC, WebView2 and npm native libraries are prebuilt. Rust flags do not
 recompile them. No PGO, affinity/NUMA policy, CUDA or model weights are added.

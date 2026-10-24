@@ -1,3 +1,4 @@
+import { sameOAuthIssuer } from "./issuer";
 import { randomUUID } from "node:crypto";
 import {
 	existsSync,
@@ -57,6 +58,7 @@ const oauthClientSchema = z
 	.object({
 		clientId: z.string().min(1),
 		clientSecret: z.string().min(1).optional(),
+		issuer: z.string().url().optional(),
 	})
 	.strip();
 
@@ -871,7 +873,8 @@ function buildOAuthStateMutator(
 			const expectedClient = options.expectedOAuthClient ?? undefined;
 			if (
 				currentClient?.clientId !== expectedClient?.clientId ||
-				currentClient?.clientSecret !== expectedClient?.clientSecret
+				currentClient?.clientSecret !== expectedClient?.clientSecret ||
+				currentClient?.issuer !== expectedClient?.issuer
 			) {
 				throw new McpOAuthClientChangedError(serverName);
 			}
@@ -949,6 +952,16 @@ export function getMcpServerOAuthStatus(
 	const oauthConfigured =
 		oauthSupported &&
 		tokensMatchConfiguredClient &&
+		typeof registration.oauth?.tokens?.issuer === "string" &&
+		sameOAuthIssuer(
+			registration.oauth.tokens.issuer,
+			tokenClientInformation?.issuer,
+		) &&
+		(!registration.oauthClient?.issuer ||
+			sameOAuthIssuer(
+				registration.oauthClient.issuer,
+				tokenClientInformation?.issuer,
+			)) &&
 		typeof accessToken === "string" &&
 		accessToken.trim().length > 0;
 	return {
@@ -958,7 +971,8 @@ export function getMcpServerOAuthStatus(
 		authorizationRequired:
 			oauthSupported &&
 			!oauthConfigured &&
-			registration.oauth?.authorizationRequired === true,
+			(registration.oauth?.authorizationRequired === true ||
+				typeof accessToken === "string"),
 		lastError: registration.oauth?.lastError,
 		lastAuthenticatedAt: registration.oauth?.lastAuthenticatedAt,
 	};

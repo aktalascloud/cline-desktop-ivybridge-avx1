@@ -3,6 +3,7 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
+	realpathSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -25,7 +26,7 @@ function git(cwd: string, ...args: string[]): string {
 }
 
 beforeEach(() => {
-	sandbox = mkdtempSync(join(tmpdir(), "cline-worktree-"));
+	sandbox = realpathSync.native(mkdtempSync(join(tmpdir(), "cline-worktree-")));
 	repo = join(sandbox, "my-app");
 	git(sandbox, "init", "-q", "-b", "main", repo);
 	git(repo, "commit", "-q", "--allow-empty", "-m", "init");

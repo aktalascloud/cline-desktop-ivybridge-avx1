@@ -1,8 +1,8 @@
 # Cline Desktop Changelog
 
-## 1.0.0
+## 1.0.1
 
-- Qualification build of the unofficial Cline Desktop AVX1 RU fork, based on upstream 0.0.48. Russian/English interface, isolated updater and data directory, Windows worktree fixes, Next.js 16.3.8 and undici 7.30.1. No performance improvement is claimed before measurements.
+- Qualification build of the unofficial Cline Desktop AVX1 RU fork, based on upstream 0.0.48. Russian/English interface, isolated updater and data directory, Windows worktree fixes, MCP OAuth issuer binding and updated security dependencies. Native performance qualification is pending.
 - Проверочная сборка неофициального Cline Desktop AVX1 RU на базе upstream 0.0.48. Русский и английский интерфейс, отдельные обновления и данные, исправления worktree для Windows, обновления безопасности. Ускорение до замеров не заявляется.
 
 ## 0.0.48

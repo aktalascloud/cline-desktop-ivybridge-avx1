@@ -12,6 +12,7 @@ import {
 } from "./config-loader";
 import {
 	createMcpOAuthProviderContext,
+	createMcpOAuthClientInformation,
 	createMcpSdkTransport,
 	isMcpUnauthorizedError,
 } from "./oauth";
@@ -31,6 +32,7 @@ describe("mcp oauth", () => {
 	async function createSettingsFile(oauthClient?: {
 		clientId: string;
 		clientSecret?: string;
+		issuer?: string;
 	}): Promise<string> {
 		const tempRoot = await mkdtemp(join(tmpdir(), "core-mcp-oauth-"));
 		tempRoots.push(tempRoot);
@@ -56,6 +58,54 @@ describe("mcp oauth", () => {
 		);
 		return filePath;
 	}
+
+	it("requires an issuer before a configured secret can be used", () => {
+		expect(() =>
+			createMcpOAuthClientInformation({
+				clientId: "fixture",
+				clientSecret: "fixture-secret",
+			}),
+		).toThrow(/issuer/);
+	});
+	it("preserves issuer binding and refuses tokens from a different authorization server", async () => {
+		const issuer = "https://auth.example.test";
+		const settingsPath = await createSettingsFile({
+			clientId: "fixture",
+			clientSecret: "fixture-secret",
+			issuer,
+		});
+		const options = {
+			settingsPath,
+			serverName: "linear",
+			redirectUrl: "http://127.0.0.1:1456/mcp/oauth/callback",
+			clientInformation: createMcpOAuthClientInformation({
+				clientId: "fixture",
+				clientSecret: "fixture-secret",
+				issuer,
+			}),
+		};
+		const context = createMcpOAuthProviderContext(options);
+		await context.provider.saveTokens({
+			access_token: "fixture-access",
+			refresh_token: "fixture-refresh",
+			token_type: "bearer",
+			issuer: issuer + "/",
+		});
+		const before = await readFile(settingsPath, "utf8");
+		await expect(
+			context.provider.saveTokens({
+				access_token: "must-not-persist",
+				token_type: "bearer",
+				issuer: "https://other.example.test",
+			}),
+		).rejects.toThrow(/issuer/);
+		expect(await readFile(settingsPath, "utf8")).toBe(before);
+		const restored = createMcpOAuthProviderContext(options);
+		expect((await restored.provider.tokens())?.access_token).toBe(
+			"fixture-access",
+		);
+		expect((await restored.provider.clientInformation())?.issuer).toBe(issuer);
+	});
 
 	it("tracks the most recent generated OAuth state", async () => {
 		const settingsPath = await createSettingsFile();
@@ -131,6 +181,7 @@ describe("mcp oauth", () => {
 		const settingsPath = await createSettingsFile({
 			clientId: "client-a",
 			clientSecret: "secret-a",
+			issuer: "https://auth.example.test",
 		});
 		const first = createMcpOAuthProviderContext({
 			settingsPath,
@@ -139,12 +190,14 @@ describe("mcp oauth", () => {
 			clientInformation: {
 				client_id: "client-a",
 				client_secret: "secret-a",
+				issuer: "https://auth.example.test",
 			},
 		});
 		await first.provider.saveTokens({
 			access_token: "old-access-token",
 			refresh_token: "old-refresh-token",
 			token_type: "bearer",
+			issuer: "https://auth.example.test",
 		});
 		expect((await first.provider.tokens())?.access_token).toBe(
 			"old-access-token",
@@ -157,6 +210,7 @@ describe("mcp oauth", () => {
 			clientInformation: {
 				client_id: "client-b",
 				client_secret: "secret-a",
+				issuer: "https://auth.example.test",
 			},
 		});
 		expect(await changedId.provider.tokens()).toBeUndefined();
@@ -168,6 +222,7 @@ describe("mcp oauth", () => {
 			clientInformation: {
 				client_id: "client-a",
 				client_secret: "secret-b",
+				issuer: "https://auth.example.test",
 			},
 		});
 		expect(await changedSecret.provider.tokens()).toBeUndefined();
@@ -203,6 +258,7 @@ describe("mcp oauth", () => {
 		const settingsPath = await createSettingsFile({
 			clientId: "client-a",
 			clientSecret: "secret-a",
+			issuer: "https://auth.example.test",
 		});
 		const context = createMcpOAuthProviderContext({
 			settingsPath,
@@ -211,6 +267,7 @@ describe("mcp oauth", () => {
 			clientInformation: {
 				client_id: "client-a",
 				client_secret: "secret-a",
+				issuer: "https://auth.example.test",
 			},
 		});
 		await context.resetInteractiveState();
@@ -221,6 +278,7 @@ describe("mcp oauth", () => {
 			linear.oauthClient = {
 				clientId: "client-b",
 				clientSecret: "secret-b",
+				issuer: "https://auth.example.test",
 			};
 			delete linear.oauth;
 		});
@@ -230,6 +288,7 @@ describe("mcp oauth", () => {
 				access_token: "stale-access-token",
 				refresh_token: "stale-refresh-token",
 				token_type: "bearer",
+				issuer: "https://auth.example.test",
 			}),
 		).rejects.toBeInstanceOf(McpOAuthClientChangedError);
 
@@ -237,6 +296,7 @@ describe("mcp oauth", () => {
 		expect(written.mcpServers.linear.oauthClient).toEqual({
 			clientId: "client-b",
 			clientSecret: "secret-b",
+			issuer: "https://auth.example.test",
 		});
 		expect(written.mcpServers.linear.oauth).toBeUndefined();
 	});
@@ -341,7 +401,7 @@ describe("mcp oauth", () => {
 		}
 	});
 
-	it("reuses tokens persisted before client binding was introduced", async () => {
+	it("preserves but never reuses legacy credentials without issuer binding", async () => {
 		const settingsPath = await createSettingsFile();
 		const settings = JSON.parse(await readFile(settingsPath, "utf8"));
 		settings.mcpServers.linear.oauth = {
@@ -363,9 +423,12 @@ describe("mcp oauth", () => {
 			redirectUrl: "http://127.0.0.1:1456/mcp/oauth/callback",
 		});
 
-		expect((await context.provider.tokens())?.access_token).toBe(
-			"legacy-access-token",
-		);
+		expect(await context.provider.tokens()).toBeUndefined();
+		expect(await context.provider.clientInformation()).toBeUndefined();
+		expect(
+			JSON.parse(await readFile(settingsPath, "utf8")).mcpServers.linear.oauth
+				.tokens.access_token,
+		).toBe("legacy-access-token");
 
 		if (!context.provider.saveClientInformation) {
 			throw new Error(

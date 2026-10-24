@@ -8,7 +8,7 @@ $root=Split-Path -Parent $PSScriptRoot
 $app=Join-Path $root 'apps\examples\desktop-app'
 if(-not $env:CARGO_HOME){$env:CARGO_HOME=Join-Path $env:USERPROFILE '.cargo'}
 if(-not $env:BUN_INSTALL_CACHE_DIR){$env:BUN_INSTALL_CACHE_DIR=Join-Path $root '.build-cache\bun'}
-$env:PATH="$env:PATH;${env:ProgramFiles}\Git\usr\bin"
+$env:PATH="$env:VCToolsInstallDir\bin\Hostx64\x64;${env:ProgramFiles}\Git\usr\bin;$env:PATH"
 Push-Location $root
 try {
   if((git rev-parse HEAD).Trim() -ne $SourceSha){throw 'Checkout does not match the pinned source SHA'}
@@ -63,7 +63,7 @@ try {
   try {
     cargo test --locked --release --manifest-path src-tauri\Cargo.toml
     if($LASTEXITCODE){throw 'Native tests failed'}
-    bun tauri build --bundles nsis --config src-tauri\tauri.prepared.conf.json --verbose
+    bun tauri build --bundles nsis --config src-tauri\tauri.prepared.conf.json --verbose -- --locked
     if($LASTEXITCODE){throw 'Native installer build failed'}
   }finally{Pop-Location}
   $target=if($env:CARGO_TARGET_DIR){$env:CARGO_TARGET_DIR}else{"$app\src-tauri\target"}

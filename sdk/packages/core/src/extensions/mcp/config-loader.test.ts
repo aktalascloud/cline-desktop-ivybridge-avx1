@@ -489,8 +489,13 @@ describe("mcp config loader", () => {
 								url: "https://mcp.linear.app/mcp",
 							},
 							oauth: {
+								clientInformation: {
+									client_id: "fixture",
+									issuer: "https://auth.example.test",
+								},
 								tokens: {
 									access_token: "old-token",
+									issuer: "https://auth.example.test",
 									token_type: "Bearer",
 								},
 								lastAuthenticatedAt: 123,
@@ -523,6 +528,7 @@ describe("mcp config loader", () => {
 				...current,
 				tokens: {
 					access_token: "new-token",
+					issuer: "https://auth.example.test",
 					token_type: "Bearer",
 				},
 				lastError: undefined,

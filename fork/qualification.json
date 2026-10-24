@@ -17,12 +17,11 @@
   "native_default_tests": 5,
   "speedup_claim": null,
   "pending": [
-    "final full regression run",
-    "installer and update qualification",
-    "comparative benchmarks",
-    "independent installed processes and autostart",
-    "GUI inspection",
-    "GitHub Actions notification settings verification"
+    "final regressions and native profile comparison",
+    "final installer/update persistence",
+    "installed provider/tools/MCP/stream/cancellation",
+    "GUI input restoration and inspection",
+    "draft/package/source checks before publication"
   ],
   "research": {
     "branches": 2445,
@@ -37,6 +36,18 @@
   },
   "notes": [
     "Only selected implementations have been reviewed. Discovery records and downloaded diffs are not counted as reviewed fixes.",
-    "Computer Use ended because it could not confidently determine a browser URL on Windows; GUI verification requires a subsequent turn."
-  ]
+    "Windows Computer Use input unavailable: GetCursorPos 0x80070005. Russian onboarding observed; interaction and update checks remain incomplete."
+  ],
+  "sdk_security_regression": {
+    "passed": 253,
+    "skipped": 3
+  },
+  "actions_email_notifications": "verified disabled in authenticated GitHub settings",
+  "installed_seed": {
+    "version": "1.0.0",
+    "updater_signature_verified": true,
+    "tampered_installer_rejected": true,
+    "desktop_outside_windows_job": true,
+    "startup": "one fork Startup shortcut; official Cline shortcut belongs to separate installation"
+  }
 }
