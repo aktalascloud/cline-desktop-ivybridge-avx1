@@ -17,6 +17,18 @@ export const loggingWorkerNames = {
 	file: "pino-file.js",
 };
 
+export function backendLoggingOptions() {
+	return {
+		plugins: [loggingBundlePlugin()],
+		banner: `globalThis.__clineLoggingPaths = Object.fromEntries(Object.entries(${JSON.stringify(loggingWorkerNames)}).map(([key, name]) => [key, process.getBuiltinModule('node:url').fileURLToPath(new URL(name, import.meta.url))]));`,
+		define: {
+			__CLINE_LOG_THREAD__: "globalThis.__clineLoggingPaths.thread",
+			__CLINE_LOG_PINO__: "globalThis.__clineLoggingPaths.pino",
+			__CLINE_LOG_FILE__: "globalThis.__clineLoggingPaths.file",
+		},
+	};
+}
+
 /** Keep logger workers relocatable instead of embedding build-machine __dirname. */
 export function loggingBundlePlugin(): BunPlugin {
 	return {

@@ -11,6 +11,7 @@ import {
 	loggingBundlePlugin,
 	loggingWorkers,
 	loggingWorkerNames,
+	backendLoggingOptions,
 } from "./logging-bundle";
 
 describe("relocatable logging workers", () => {
@@ -20,6 +21,7 @@ describe("relocatable logging workers", () => {
 		mkdirSync(cache, { recursive: true });
 		const stage = mkdtempSync(join(cache, "logger-test-"));
 		const workers = loggingWorkers(join(root, "apps/cli"));
+		const logging = backendLoggingOptions();
 		const entry = join(stage, "probe.ts");
 		await Bun.write(
 			entry,
@@ -33,6 +35,7 @@ transport.end();await new Promise(resolve=>transport.once('close',resolve));`,
 		try {
 			for (const key of Object.keys(workers) as Array<keyof typeof workers>) {
 				const result = await Bun.build({
+					...logging,
 					entrypoints: [workers[key]],
 					target: "bun",
 					minify: true,
@@ -42,6 +45,11 @@ transport.end();await new Promise(resolve=>transport.once('close',resolve));`,
 					join(stage, loggingWorkerNames[key]),
 					result.outputs[0],
 				);
+				expect(
+					(await result.outputs[0].text()).includes(
+						root.replaceAll("\\", "\\\\"),
+					),
+				).toBe(false);
 			}
 			for (const compiled of [false, true]) {
 				const output = join(stage, compiled ? "probe.exe" : "probe.js");

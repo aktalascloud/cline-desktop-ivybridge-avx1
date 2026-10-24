@@ -7,7 +7,7 @@ import {
 } from "../../../cli/script/compile-binary";
 import { telemetryDefineArgs } from "./telemetry-define-args";
 import {
-	loggingBundlePlugin,
+	backendLoggingOptions,
 	loggingWorkers,
 	loggingWorkerNames,
 } from "../../../../fork/logging-bundle";
@@ -117,8 +117,10 @@ const bundleDesktopBackend = async (): Promise<void> => {
 		define[pair.slice(0, separator)] = pair.slice(separator + 1);
 	}
 	const logWorkers = loggingWorkers(APP_ROOT);
+	const logging = backendLoggingOptions();
 	for (const key of Object.keys(logWorkers) as Array<keyof typeof logWorkers>) {
 		const result = await Bun.build({
+			...logging,
 			entrypoints: [logWorkers[key]],
 			target: "bun",
 			minify: true,
@@ -133,13 +135,10 @@ const bundleDesktopBackend = async (): Promise<void> => {
 		entrypoints: ["./sidecar/index.ts"],
 		target: "bun",
 		minify: true,
-		plugins: [loggingBundlePlugin()],
-		banner: `globalThis.__clineLoggingPaths = Object.fromEntries(Object.entries(${JSON.stringify(loggingWorkerNames)}).map(([key, name]) => [key, process.getBuiltinModule('node:url').fileURLToPath(new URL(name, import.meta.url))]));`,
+		...logging,
 		define: {
 			...define,
-			__CLINE_LOG_THREAD__: "globalThis.__clineLoggingPaths.thread",
-			__CLINE_LOG_PINO__: "globalThis.__clineLoggingPaths.pino",
-			__CLINE_LOG_FILE__: "globalThis.__clineLoggingPaths.file",
+			...logging.define,
 		},
 	});
 	if (!result.success) throw new Error("Desktop backend build failed");

@@ -33,6 +33,8 @@ try {
     if($LASTEXITCODE){throw 'Runtime verification failed'}
     bun -F @cline/code build:runtime
     if($LASTEXITCODE){throw 'CLI/Hub/backend build failed'}
+    python ./fork/check-bundle-paths.py
+    if($LASTEXITCODE){throw 'Generated runtime privacy check failed'}
     bun test fork/logging-bundle.test.ts
     if($LASTEXITCODE){throw 'Relocatable logger worker tests failed'}
     & "$app\src-tauri\bin\cline-cli-x86_64-pc-windows-msvc.exe" --version
