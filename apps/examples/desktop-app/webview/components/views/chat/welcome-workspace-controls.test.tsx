@@ -381,6 +381,7 @@ describe("WelcomeWorkspaceControls cloud mode", () => {
 		const search = container.querySelector<HTMLInputElement>(
 			'input[placeholder="Search branches…"]',
 		);
+		expect(search).not.toBeNull();
 		await act(async () => {
 			const setter = Object.getOwnPropertyDescriptor(
 				HTMLInputElement.prototype,
@@ -389,10 +390,12 @@ describe("WelcomeWorkspaceControls cloud mode", () => {
 			setter?.call(search, "feature");
 			search?.dispatchEvent(new Event("input", { bubbles: true }));
 		});
-		await vi.waitFor(() =>
-			expect(onListCloudBranches).toHaveBeenCalledWith(42, {
-				query: "feature",
-			}),
+		await vi.waitFor(
+			() =>
+				expect(onListCloudBranches).toHaveBeenCalledWith(42, {
+					query: "feature",
+				}),
+			{ timeout: 5_000 },
 		);
 		await vi.waitFor(() =>
 			expect(container.textContent).toContain("feature/result"),

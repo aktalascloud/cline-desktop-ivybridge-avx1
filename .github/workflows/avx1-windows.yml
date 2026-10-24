@@ -2,7 +2,7 @@ name: Windows AVX1 qualification
 on:
   push:
     branches: [avx1]
-    paths: ['apps/**', 'sdk/**', 'fork/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
+    paths: ['apps/**', 'sdk/**', 'fork/**', '!fork/**/*.json', '!fork/**/*.md', '!fork/bench-*', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
   workflow_dispatch:
     inputs:
       source_sha:
