@@ -1307,3 +1307,7 @@ session’s tool approval policies or approval callback, matching generic subage
 and teammates. The parent’s `subagent_<name>` delegation call still follows the
 parent’s approval policy. Tool allowlists and disabled-tool filtering remain in
 effect when constructing child tools. Inherited runtime hooks are unchanged.
+
+### CLI first-turn cancellation
+
+The one-shot CLI initializes a non-interactive session without a prompt, records its session ID, arms its timeout, and submits the first turn through `send()`. This prevents the first streamed request from running to completion inside `start()` before the host can cancel it. Core callers that intentionally pass a prompt to `start()` retain the existing behavior; single-run finalization and first-prompt/title persistence remain in Core.

@@ -12,6 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { $ } from "bun";
 import { buildDashboardRuntimeDirectory } from "./dashboard-runtime";
+import { distributionBootstrap } from "./distribution-bootstrap";
 
 const cliDir = resolve(import.meta.dir, "..");
 const rootDir = resolve(cliDir, "../..");
@@ -127,6 +128,7 @@ export async function compileCliBinary(
 		result = await Bun.build({
 			entrypoints: [entrypoint, parserWorker],
 			root: rootDir,
+			banner: distributionBootstrap(input.distribution),
 			splitting: true,
 			compile: {
 				target: input.bunTarget,

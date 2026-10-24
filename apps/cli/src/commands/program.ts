@@ -22,6 +22,10 @@ function normalizeAutoApproveValue(
  * Add the shared root-level options to any command.
  */
 export function addRootOptions(cmd: Command): Command {
+	const configDirectory =
+		process.env.CLINE_DESKTOP_DISTRIBUTION === "avx1"
+			? "~/.cline-avx1"
+			: "~/.cline";
 	return (
 		cmd
 			.option("-p, --plan", "Run in plan mode")
@@ -72,18 +76,21 @@ export function addRootOptions(cmd: Command): Command {
 				"--acp",
 				"Run in Agent Client Protocol (ACP) mode for editor integration",
 			)
-			.option("--config <path>", "Configuration directory (default: ~/.cline)")
+			.option(
+				"--config <path>",
+				`Configuration directory (default: ${configDirectory})`,
+			)
 			.option(
 				"--data-dir <path>",
-				"Use isolated local state at this directory path (default: ~/.cline/data)",
+				`Use isolated local state at this directory path (default: ${configDirectory}/data)`,
 			)
 			.option(
 				"--hooks-dir <path>",
-				"Directory path to additional hooks for runtime hook injection (default: ~/.cline/hooks)",
+				`Directory path to additional hooks for runtime hook injection (default: ${configDirectory}/hooks)`,
 			)
 			.option(
 				"--worktree",
-				"Auto-create a detached git worktree under ~/.cline/worktrees/ and run the task there",
+				`Auto-create a detached git worktree under ${configDirectory}/worktrees/ and run the task there`,
 			)
 			.option("--update", "Check for updates and install if available")
 			.option("--kanban", "Run the kanban app")

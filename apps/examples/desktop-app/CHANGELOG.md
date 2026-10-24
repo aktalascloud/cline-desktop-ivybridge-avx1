@@ -2,8 +2,8 @@
 
 ## 1.0.1
 
-- Qualification build of the unofficial Cline Desktop AVX1 RU fork, based on upstream 0.0.48. Russian/English interface, isolated updater and data directory, Windows worktree fixes, MCP OAuth issuer binding and updated security dependencies. Native performance qualification is pending.
-- Проверочная сборка неофициального Cline Desktop AVX1 RU на базе upstream 0.0.48. Русский и английский интерфейс, отдельные обновления и данные, исправления worktree для Windows, обновления безопасности. Ускорение до замеров не заявляется.
+- Unofficial Cline Desktop AVX1 RU, based on upstream 0.0.48. English/Russian interface, a shared fork profile for Desktop/CLI/Hub, signed fork updates, Windows worktree/SQLite fixes, MCP OAuth issuer binding, first-turn CLI timeout and updated security dependencies. Ivy Bridge fat-LTO profile; no LLM throughput gain is claimed.
+- Неофициальный Cline Desktop AVX1 RU на базе upstream 0.0.48. Русский/английский интерфейс, общий профиль форка для Desktop/CLI/Hub, собственные подписанные обновления, исправления worktree/SQLite в Windows, привязка MCP OAuth к issuer, таймаут первого запроса CLI и обновления безопасности. Профиль Ivy Bridge с fat LTO; рост LLM tokens/s не заявляется.
 
 ## 0.0.48
 

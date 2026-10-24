@@ -510,6 +510,12 @@ and `createLocalHubScheduleRuntimeHandlers` to supply connector authentication.
 Paths start with `/api/v1/connectors`; the host supplies the API origin and
 authentication. Omit it to retain local account authentication and rollout checks.
 
+## MCP OAuth issuer binding
+
+MCP OAuth persistence retains the SDK-provided `issuer` in both tokens and client information. Pre-registered confidential clients must set `oauthClient.issuer` to the trusted authorization-server issuer alongside their locally configured client secret. An MCP server must not choose that trusted issuer for an existing secret.
+
+Legacy unbound records remain on disk but are not reused automatically; users sign in again. Tokens are returned only for the matching client and issuer. Issuer changes during a pending authorization invalidate that write rather than overwriting changed credentials.
+
 ## MCP Apps (experimental)
 
 MCP Apps support is off by default.

@@ -46,16 +46,18 @@ try {
     if($LASTEXITCODE){throw 'Type checking failed'}
     bun -F @cline/cli typecheck
     if($LASTEXITCODE){throw 'CLI type checking failed'}
-    bun -F @cline/core typecheck
-    if($LASTEXITCODE){throw 'Core type checking failed'}
     Push-Location (Join-Path $root 'apps\cli')
     try {
+      bun test script/distribution-bootstrap.test.ts
+      if($LASTEXITCODE){throw 'Fork profile bootstrap tests failed'}
       bun x vitest run --config vitest.config.ts src/runtime/run-agent.test.ts src/commands/update.test.ts
       if($LASTEXITCODE){throw 'CLI cancellation/update regression tests failed'}
     } finally {Pop-Location}
-    Push-Location (Join-Path $root 'sdk\packages\core')
+    Push-Location (Join-Path $root 'sdk')
     try {
-      bun x vitest run --maxWorkers=4 --config vitest.config.ts src/extensions/mcp src/services/workspace src/runtime/host/local-runtime-host.test.ts
+      bun -F @cline/core typecheck
+      if($LASTEXITCODE){throw 'Core type checking failed'}
+      bun -F @cline/core test:unit --maxWorkers=4 src/extensions/mcp src/services/workspace src/runtime/host/local-runtime-host.test.ts
       if($LASTEXITCODE){throw 'MCP/workspace/runtime regression tests failed'}
     } finally {Pop-Location}
     bun -F @cline/code build:web
@@ -87,5 +89,10 @@ try {
   if($installers.Count -ne 1){throw 'Expected one NSIS installer'}
   $output=Join-Path $root 'dist\avx1';New-Item -ItemType Directory -Path $output -Force|Out-Null
   $exe=Join-Path $output 'Cline-Desktop-AVX1-RU-Setup.exe';Copy-Item -LiteralPath $installers[0].FullName -Destination $exe -Force
+  $publicKeyFile=Join-Path $PSScriptRoot 'updater\public-key.txt'
+  $configuredKey=(Get-Content "$app\src-tauri\tauri.conf.json" -Raw|ConvertFrom-Json).plugins.updater.pubkey
+  if((Get-Content -LiteralPath $publicKeyFile -Raw).Trim() -ne $configuredKey){throw 'Updater public-key copies differ'}
+  cargo run --locked --release --target-dir (Join-Path $root '.build-cache\updater-verifier') --manifest-path (Join-Path $PSScriptRoot 'verify-updater\Cargo.toml') -- $exe $publicKeyFile ($installers[0].FullName+'.sig')
+  if($LASTEXITCODE){throw 'Updater signature/tamper verification failed'}
   [ordered]@{source_sha=$SourceSha;profile=$Profile;sha256=(Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant();size=(Get-Item $exe).Length;rustflags=$env:RUSTFLAGS.Replace($root,'<source>').Replace($env:CARGO_HOME,'<cargo>');lto=$env:CARGO_PROFILE_RELEASE_LTO;codegen_units=$env:CARGO_PROFILE_RELEASE_CODEGEN_UNITS;hardware_qualification='required on Ivy Bridge before publication'} | ConvertTo-Json | Set-Content "$output\manifest.json" -Encoding utf8
 }finally{Pop-Location}
