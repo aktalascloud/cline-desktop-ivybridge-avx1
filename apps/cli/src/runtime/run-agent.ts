@@ -299,9 +299,8 @@ export async function runAgent(
 					context: ConsecutiveMistakeLimitContext,
 				) => resolveMistakeLimitDecision(config, context),
 			},
-			prompt: userInput,
-			userImages: userImages.length > 0 ? userImages : undefined,
-			userFiles: userFiles.length > 0 ? userFiles : undefined,
+			// Start without a turn so timeout/signal handling owns the first
+			// streamed request too. runTurn persists its prompt and title.
 			interactive: false,
 			localRuntime: {
 				onTeamRestored: () => emitTeamRestored(config),
