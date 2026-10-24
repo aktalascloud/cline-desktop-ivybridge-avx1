@@ -6,9 +6,11 @@ describe("fork bootstrap before imports", () => {
 	const home = join("fixture", "home");
 	const apply = (env: Record<string, string | undefined>) => {
 		const code = distributionBootstrap("avx1");
-		new Function("process", "require", code!)({ env }, (name: string) =>
-			name === "node:path" ? { join } : { homedir: () => home },
-		);
+		new Function("process", code!)({
+			env,
+			getBuiltinModule: (name: string) =>
+				name === "node:path" ? { join } : { homedir: () => home },
+		});
 	};
 	it("selects the fork profile when both storage overrides are absent", () => {
 		const env = {};

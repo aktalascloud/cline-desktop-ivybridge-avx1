@@ -33,6 +33,8 @@ try {
     if($LASTEXITCODE){throw 'Runtime verification failed'}
     bun -F @cline/code build:runtime
     if($LASTEXITCODE){throw 'CLI/Hub/backend build failed'}
+    & "$app\src-tauri\bin\cline-cli-x86_64-pc-windows-msvc.exe" --version
+    if($LASTEXITCODE){throw 'Compiled CLI execution failed'}
     cargo fetch --locked --manifest-path "$app\src-tauri\Cargo.toml"
     if($LASTEXITCODE){throw 'Cargo lock verification failed'}
     python (Join-Path $PSScriptRoot 'collect-licenses.py')

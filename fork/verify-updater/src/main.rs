@@ -11,5 +11,5 @@ fn main() {
     key.verify(&data, &sig, true).unwrap();
     let last = data.len()-1; data[last] ^= 1;
     assert!(key.verify(&data,&sig,true).is_err(),"tampered installer must fail verification");
-    println!("{{\"signature_valid\":true,\"tamper_rejected\":true,\"engine\":\"minisign-verify 0.2.5, same verification as Tauri updater\"}}");
+    println!("{{\"signature_valid\":true,\"tamper_rejected\":true,\"engine\":\"minisign-verify 0.3.0, same verification as Tauri updater\"}}");
 }

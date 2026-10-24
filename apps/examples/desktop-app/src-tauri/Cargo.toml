@@ -14,7 +14,7 @@ tauri = { version = "2.12.4", features = ["image-png", "tray-icon"] }
 notify-rust = "4.18"
 tauri-plugin-notification = "2"
 tauri-plugin-single-instance = "2"
-tauri-plugin-updater = "2"
+tauri-plugin-updater = { version = "=2.14.0", default-features = false, features = ["rustls-tls", "system-proxy"] }
 tokio = { version = "1", features = ["sync", "time"] }
 portable-pty = "0.9"
 # gtk3 instead of the default xdg-portal backend on Linux: the portal needs a
