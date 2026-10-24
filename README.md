@@ -12,8 +12,7 @@ messages, code, commands and API identifiers retain their original text.
 
 Qualification is in progress. No installer is approved for publication yet.
 Verified releases will contain one file: `Cline-Desktop-AVX1-RU-Setup.exe`.
-Use Windows 10 1809 or newer with Microsoft WebView2. The target system is
-Windows 10 LTSC 19044 with Xeon E5-2697 v2 CPUs.
+Tested target: Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 and Microsoft WebView2.
 
 The fork uses its own application ID, signed Tauri update feed, data directory
 and one Startup shortcut. It does not replace another Cline installation.
@@ -27,9 +26,9 @@ Tauri signatures do not imply a publicly trusted Authenticode certificate.
 - Local changes: EN/RU localization, fork update isolation, deterministic SQLite connection closure, safe Windows worktree cleanup and MCP OAuth issuer binding with SDK 1.32.2.
 
 The [synthetic history test](fork/history-benchmark.json) eliminates handle growth
-(+300 to 0 over 100 polls), but median wall time rises from 1302.9 to 1395.8 ms.
+(+300 to 0 over 100 polls), but median wall time rises from 1240.3 to 1378.7 ms.
 This is a resource correctness fix; no overall speedup or LLM throughput gain is claimed.
-Native profile and installed UI comparisons remain pending. Bun 1.4.2 x64 and
+Native file size is lower with fat LTO; overall speedup is not established. See [measurements and limits](fork/performance.md). Installed GUI qualification remains pending. Bun 1.4.2 x64 and
 baseline downloads contained the same executable; both ran on this CPU.
 Bun/JSC, WebView2 and npm native libraries are prebuilt. Rust flags do not
 recompile them. No PGO, affinity/NUMA policy, CUDA or model weights are added.
@@ -40,3 +39,5 @@ gates must pass before release publication.
 
 Apache-2.0: see [LICENSE](LICENSE). Bundled dependencies retain their licenses
 and notices; corresponding source links are included with the installer.
+
+The bundled CLI currently retains its English TUI. Native GUI qualification and a decision on inherited historical S3-shaped records remain open; see the qualification status.

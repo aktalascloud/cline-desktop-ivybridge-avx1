@@ -1,5 +1,5 @@
 {
-  "status": "in-progress",
+  "status": "awaiting-final-qualification-and-user-actions",
   "release_approved": false,
   "upstream_sha": "40c5d99031fe1128189c5b52e40638d2b7787754",
   "upstream_desktop": "0.0.48",
@@ -17,11 +17,11 @@
   "native_default_tests": 5,
   "speedup_claim": null,
   "pending": [
-    "final regressions and native profile comparison",
-    "final installer/update persistence",
-    "installed provider/tools/MCP/stream/cancellation",
-    "GUI input restoration and inspection",
-    "draft/package/source checks before publication"
+    "latest CI completion",
+    "native GUI input restoration",
+    "user decision on inherited S3-shaped records and public history/tags",
+    "safe original-profile migration and single-active-Startup cutover",
+    "publication/feed and cleanup after all gates pass"
   ],
   "research": {
     "branches": 2445,
@@ -35,8 +35,9 @@
     "open_fork_pr_records": 274
   },
   "notes": [
-    "Only selected implementations have been reviewed. Discovery records and downloaded diffs are not counted as reviewed fixes.",
-    "Windows Computer Use input unavailable: GetCursorPos 0x80070005. Russian onboarding observed; interaction and update checks remain incomplete."
+    "No user signing key, provider credential or configuration is committed.",
+    "Historical upstream enterpriseTelemetry cache contains an S3-shaped credential pair; values were neither printed nor exercised. Upstream-history preservation and removal of those bytes require a user decision.",
+    "Windows Computer Use input returned GetCursorPos 0x80070005; native GUI interaction remains pending."
   ],
   "sdk_security_regression": {
     "passed": 253,
@@ -49,5 +50,27 @@
     "tampered_installer_rejected": true,
     "desktop_outside_windows_job": true,
     "startup": "one fork Startup shortcut; official Cline shortcut belongs to separate installation"
+  },
+  "native_security": {
+    "cargo_audit": "0.22.2",
+    "vulnerabilities": 0,
+    "database_commit": "21d909e4c8bd4e14c7aea58bf980c881a0053ab1"
+  },
+  "cli_profile_default_verified": true,
+  "installed_candidate": {
+    "version": "1.0.1",
+    "signature_verified": true,
+    "tamper_rejected": true,
+    "package_files": 2884,
+    "sensitive_package_matches": 0,
+    "runtime_db_logs_models": 0,
+    "upgrade_from_seed": "1.0.0",
+    "fork_profile_files_preserved": 14,
+    "ui_preferences_preserved": true,
+    "original_provider_file_unchanged": true,
+    "installed_executables_match_payload": true,
+    "desktop_launched_via_wmi_outside_codex_job": true,
+    "cli_doctor_and_tui_passed": true,
+    "protocol_fixture_passed": true
   }
 }

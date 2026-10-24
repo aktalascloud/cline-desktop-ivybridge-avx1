@@ -1,7 +1,7 @@
 # Fork build and release
 
 One Windows x64 channel, application ID `cloud.aktalas.cline.desktop.avx1.ru`.
-Use Bun 1.4.2, Rust 1.97.0, MSVC 14.44.35207 and Windows SDK 10.0.26100.0.
+Use Bun 1.4.2, Node 24.20.0, Python 3.13.14, Rust 1.97.0, MSVC 14.44.35207 and Windows SDK 10.0.26100.0.
 Build a clean, pinned checkout with `fork/build-windows.ps1 -SourceSha <full-sha>`.
 The release candidate is `dist/avx1/Cline-Desktop-AVX1-RU-Setup.exe`.
 

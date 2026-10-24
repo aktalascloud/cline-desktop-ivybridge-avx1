@@ -1,0 +1,163 @@
+{
+  "application": "Cline Desktop AVX1 RU",
+  "unofficial": true,
+  "version": "1.0.1",
+  "upstream_sha": "40c5d99031fe1128189c5b52e40638d2b7787754",
+  "build_source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
+  "release_approved": false,
+  "native": {
+    "kind": "source-built",
+    "rust": "1.97.0",
+    "msvc": "14.44.35207",
+    "windows_sdk": "10.0.26100.0",
+    "profile": "ivy-fat1",
+    "rust_flags": [
+      "opt-level=3",
+      "lto=fat",
+      "codegen-units=1",
+      "target-cpu=ivybridge",
+      "target-feature=-avx2,-fma",
+      "strip debuginfo",
+      "source/cargo path remapping"
+    ],
+    "c_flags": "ring cc defaults observed: /MD /O2 /Brepro and vendor warning/function flags; no global CFLAGS override",
+    "pgo": false,
+    "affinity_or_numa_pinning": false
+  },
+  "cli_and_hub": {
+    "version": "3.0.73",
+    "kind": "JavaScript/TypeScript compiled from source into embedded prebuilt Bun",
+    "target": "bun-windows-x64-baseline",
+    "flags": [
+      "minify",
+      "--use-system-ca",
+      "disable launch-directory dotenv/bunfig autoload",
+      "fork storage bootstrap before imports",
+      "official auto-update disabled for fork distribution"
+    ],
+    "sha256": "845d2dd67816d242ec803ee8c66d534708b5a253f27e75135b95f3397af71272"
+  },
+  "backend": {
+    "kind": "source-built JS bundle",
+    "flags": [
+      "target=bun",
+      "minify",
+      "no telemetry credentials inlined"
+    ]
+  },
+  "frontend": {
+    "kind": "source-built static export",
+    "next": "16.4.3",
+    "react": "19.2.4"
+  },
+  "prebuilt": [
+    {
+      "name": "Bun / JavaScriptCore",
+      "version": "1.4.2+744846f84",
+      "source": "https://github.com/oven-sh/bun/tree/744846f844374847c902b5e7fd59b4342a51ef99",
+      "download_alias_exe_sha256": "15277c59ccd6c6c20f8dc9716c2b59c1776320d606b6a8658f70be8799519ca4",
+      "notes": "x64/baseline aliases are byte-identical; actual runtime and CLI run on the target Ivy Bridge. Rust/C flags do not rebuild Bun/JSC."
+    },
+    {
+      "name": "OpenTUI native libraries",
+      "version": "0.4.3",
+      "notes": "Prebuilt platform packages; no local CPU flags claimed. Windows TUI smoke test loads its FFI renderer."
+    },
+    {
+      "name": "WebView2",
+      "version": "153.0.4234.32 at initial qualification",
+      "notes": "Existing Microsoft system runtime, not rebuilt or bundled as an optimized engine."
+    }
+  ],
+  "remote_helpers": {
+    "kind": "cross-built CLI JavaScript with prebuilt Bun runtime",
+    "targets": [
+      "bun-linux-x64-baseline",
+      "bun-linux-arm64"
+    ],
+    "notes": "Included for upstream SSH support; Linux executables are not executed on Windows."
+  },
+  "native_packages": [
+    {
+      "name": "minisign-verify",
+      "version": "0.3.0",
+      "checksum": "871285dc19d8d0ebe0eef3d0e99a205f2a71363b122632cbbfa4a6c370a960ce",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "plist",
+      "version": "1.10.0",
+      "checksum": "7da1d65da6dd5d1e44199ac0f58712d241c0f439f80adea8924d832384087f85",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "quick-xml",
+      "version": "0.41.0",
+      "checksum": "e660451e55124f798a69a5af3f49ccfbefbd41910eefd25caf2393e1f3473ec1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "ring",
+      "version": "0.17.14",
+      "checksum": "a4689e6c2294d81e88dc6261c768b63bc4fcdb852be6d1352498b114f61383b7",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "rustls",
+      "version": "0.23.46",
+      "checksum": "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "rustls-webpki",
+      "version": "0.103.16",
+      "checksum": "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "tauri",
+      "version": "2.12.4",
+      "checksum": "f316751027fc2644221d1a448564d519efb07067fda584879d9cda966391d212",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "tauri-plugin-updater",
+      "version": "2.14.0",
+      "checksum": "7259989d4fe11b2bf51f7d671642249b1837c4ae2da1430dc713ae38f98ceeec",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "webpki-root-certs",
+      "version": "1.0.10",
+      "checksum": "58ec80e73fd8baf57bf0d9615554c75348bda990d6d5bbeab964dd068319fecb",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "webview2-com",
+      "version": "0.39.1",
+      "checksum": "3f89fca7a704cee10dcb3654c1dbb8941d1783132f1917358af75bec37a7d7e6",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "wry",
+      "version": "0.57.0",
+      "checksum": "a819957a01b3119af85e638a38d242af76dbc87d130dca67bfd0441072e21ff0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    }
+  ],
+  "selected_npm": [],
+  "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
+  "bun_lock_sha256": "0d088407eb5d27d934eb83cf4d4fcd620d2a74391f5d90e61e179c2ddf9aa50e",
+  "cuda_used": false,
+  "llm_models_included": false,
+  "authenticode": "NotSigned; Tauri updater signature is a separate verification mechanism",
+  "updater_zip_support": false,
+  "installer": {
+    "filename": "Cline-Desktop-AVX1-RU-Setup.exe",
+    "sha256": "fcd7d73a96641edb55d0d665a598e35f376ad121a22ca916d8cea5c0fe9ae6f7",
+    "size": 133992324,
+    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnZsOEpka2w2MGh5SittNDJhZmVPNzVrN00vbjllSHJaTFNwN2J6c0k1K1h4cEM3N2NFdmtsZGY2Y0lpQTQ4Q0pWcXBVemxKUmw2RUUvZmlzV1ZlSHdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODg1Njg1CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMQowU0VXRWd0ZmFtUXhRSDRWT3U3UTltSGJKcDEydHVyamxyUGhsZWhxVHFCblQveWdFTmg1Ym8zdTJrQ3ZaMk5ZbGlhaXNCYU9vTWlTR210K2s2dVhBdz09Cg==",
+    "authenticode": "NotSigned",
+    "status": "local candidate installed; native GUI/history-policy/cutover gates pending"
+  }
+}

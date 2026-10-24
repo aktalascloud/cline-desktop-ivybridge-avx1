@@ -10,7 +10,7 @@
   {
     "url": "https://github.com/cline/cline/pull/15146",
     "sha": "f417a565ce25aa7ffd70b6e9c112fe9e86f591e2",
-    "purpose": "security(desktop): bump next 16.2.11 → 16.3.8 (8 Dependabot advisories, re-cut of #14753)",
+    "purpose": "security(desktop): bump next 16.2.11 \u2192 16.3.8 (8 Dependabot advisories, re-cut of #14753)",
     "origin": "official-upstream-pr",
     "status": "adapted-upstream-pr",
     "verification": "Initial adaptation to 16.3.8 superseded by pinned 16.4.3 after advisory review; frozen install and production static export passed."
@@ -129,7 +129,7 @@
     "id": "AVX1-UPDATER",
     "purpose": "Permanent fork app ID/key/feed, isolated data, no official CLI auto-update, idle guard and fail-closed installer",
     "status": "qualification",
-    "verification": "Installed update/persistence/signature/GUI gates pending"
+    "verification": "Permanent key/feed isolation; CLI default fork profile verified on a compiled executable; minisign-verify 0.3.0 signature/tamper test; installer/process/persistence/GUI gates remain explicit."
   },
   {
     "origin": "local",
@@ -146,5 +146,26 @@
     "purpose": "Pinned MCP SDK 1.32.2, DOMPurify 3.4.17, Next 16.4.3, simple-git 4.0.2, shell-quote 1.12.0, follow-redirects 1.16.1, fast-uri 4.2.3; hoisted Zod 4.6.7; early configured array-size rejection backported to legacy Zod 3.25.76",
     "status": "qualification",
     "verification": "Reachability inspected in actual backend dependency graph, manifests/licenses reviewed; full regression and installed-runtime checks required. No claim that every monorepo development dependency is vulnerability-free."
+  },
+  {
+    "origin": "local",
+    "id": "AVX1-NATIVE-SECURITY",
+    "purpose": "Targeted TLS/certificate/XML updates; updater 2.14.0 with ZIP support disabled for the raw-EXE channel",
+    "status": "qualification",
+    "verification": "cargo-audit 0.22.2 against RustSec snapshot 21d909e4c8bd4e14c7aea58bf980c881a0053ab1: 0 known vulnerabilities, no ignored advisories."
+  },
+  {
+    "origin": "local",
+    "id": "AVX1-CLI-FIRST-TURN",
+    "purpose": "Arm timeout before the first streamed one-shot turn; preserve Core finalization and prompt persistence",
+    "status": "tested",
+    "verification": "18 run-agent tests; actual compiled CLI loopback SSE timeout disconnects the server connection."
+  },
+  {
+    "origin": "local",
+    "id": "AVX1-RELOCATABLE-WORKERS",
+    "purpose": "Bundle logger and optional gateway workers without checkout-machine paths",
+    "status": "tested",
+    "verification": "Real bundled/compiled pino file transport test; generated runtime privacy scan; full-package scan required."
   }
 ]

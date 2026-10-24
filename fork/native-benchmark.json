@@ -1,0 +1,136 @@
+{
+  "scope": "Warm-cache real native Desktop launch to renderer Hub-ready acknowledgement; loader wall time, sampled process-tree CPU/RSS through ready+2 seconds. Short-lived children between 50ms samples may be missed. No interaction/LLM throughput measurement.",
+  "warmups_per_profile": 1,
+  "measured_repeats_per_profile": 5,
+  "cli_sha256": "845d2dd67816d242ec803ee8c66d534708b5a253f27e75135b95f3397af71272",
+  "results": [
+    {
+      "profile": "default",
+      "repeat": 1,
+      "wall_to_ready_ms": 7853.242500015767,
+      "main_to_hub_ready_ms": 7682,
+      "process_tree_peak_rss": 959848448,
+      "process_tree_cpu_s": 13.53125,
+      "observed_processes": 15,
+      "native_exe_bytes": 18567680,
+      "native_sha256": "9922dee45a9710f062517f5d75061da7cf6876b223b43578c36c2d209a741913"
+    },
+    {
+      "profile": "ivy-fat1",
+      "repeat": 1,
+      "wall_to_ready_ms": 7470.129799999995,
+      "main_to_hub_ready_ms": 7369,
+      "process_tree_peak_rss": 950681600,
+      "process_tree_cpu_s": 12.234375,
+      "observed_processes": 15,
+      "native_exe_bytes": 17229824,
+      "native_sha256": "51e88570e1e2a9d058f0c97603e8fefdaaa65362854fb47136fe95a139d4b0f1"
+    },
+    {
+      "profile": "default",
+      "repeat": 2,
+      "wall_to_ready_ms": 7755.811899987748,
+      "main_to_hub_ready_ms": 7646,
+      "process_tree_peak_rss": 954171392,
+      "process_tree_cpu_s": 12.109375,
+      "observed_processes": 14,
+      "native_exe_bytes": 18567680,
+      "native_sha256": "9922dee45a9710f062517f5d75061da7cf6876b223b43578c36c2d209a741913"
+    },
+    {
+      "profile": "ivy-fat1",
+      "repeat": 2,
+      "wall_to_ready_ms": 7622.58599998313,
+      "main_to_hub_ready_ms": 7480,
+      "process_tree_peak_rss": 957739008,
+      "process_tree_cpu_s": 12.65625,
+      "observed_processes": 15,
+      "native_exe_bytes": 17229824,
+      "native_sha256": "51e88570e1e2a9d058f0c97603e8fefdaaa65362854fb47136fe95a139d4b0f1"
+    },
+    {
+      "profile": "default",
+      "repeat": 3,
+      "wall_to_ready_ms": 7760.008299985202,
+      "main_to_hub_ready_ms": 7589,
+      "process_tree_peak_rss": 959987712,
+      "process_tree_cpu_s": 12.328125,
+      "observed_processes": 15,
+      "native_exe_bytes": 18567680,
+      "native_sha256": "9922dee45a9710f062517f5d75061da7cf6876b223b43578c36c2d209a741913"
+    },
+    {
+      "profile": "ivy-fat1",
+      "repeat": 3,
+      "wall_to_ready_ms": 7534.756000008201,
+      "main_to_hub_ready_ms": 7425,
+      "process_tree_peak_rss": 949194752,
+      "process_tree_cpu_s": 12.6875,
+      "observed_processes": 15,
+      "native_exe_bytes": 17229824,
+      "native_sha256": "51e88570e1e2a9d058f0c97603e8fefdaaa65362854fb47136fe95a139d4b0f1"
+    },
+    {
+      "profile": "default",
+      "repeat": 4,
+      "wall_to_ready_ms": 7953.458599979058,
+      "main_to_hub_ready_ms": 7756,
+      "process_tree_peak_rss": 962199552,
+      "process_tree_cpu_s": 13.390625,
+      "observed_processes": 15,
+      "native_exe_bytes": 18567680,
+      "native_sha256": "9922dee45a9710f062517f5d75061da7cf6876b223b43578c36c2d209a741913"
+    },
+    {
+      "profile": "ivy-fat1",
+      "repeat": 4,
+      "wall_to_ready_ms": 7923.471399990376,
+      "main_to_hub_ready_ms": 7797,
+      "process_tree_peak_rss": 952131584,
+      "process_tree_cpu_s": 12.609375,
+      "observed_processes": 15,
+      "native_exe_bytes": 17229824,
+      "native_sha256": "51e88570e1e2a9d058f0c97603e8fefdaaa65362854fb47136fe95a139d4b0f1"
+    },
+    {
+      "profile": "default",
+      "repeat": 5,
+      "wall_to_ready_ms": 7751.070500002243,
+      "main_to_hub_ready_ms": 7612,
+      "process_tree_peak_rss": 962539520,
+      "process_tree_cpu_s": 12.390625,
+      "observed_processes": 15,
+      "native_exe_bytes": 18567680,
+      "native_sha256": "9922dee45a9710f062517f5d75061da7cf6876b223b43578c36c2d209a741913"
+    },
+    {
+      "profile": "ivy-fat1",
+      "repeat": 5,
+      "wall_to_ready_ms": 7647.3169999953825,
+      "main_to_hub_ready_ms": 7533,
+      "process_tree_peak_rss": 953692160,
+      "process_tree_cpu_s": 12.6875,
+      "observed_processes": 15,
+      "native_exe_bytes": 17229824,
+      "native_sha256": "51e88570e1e2a9d058f0c97603e8fefdaaa65362854fb47136fe95a139d4b0f1"
+    }
+  ],
+  "source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
+  "hub_state": "cold Hub for each run; filesystem/WebView profile caches warmed",
+  "rss_caveat": "Sum of observed process RSS may count shared pages more than once.",
+  "profiles": {
+    "default": {
+      "opt_level": 3,
+      "lto": false,
+      "codegen_units": 16,
+      "target_cpu": "default x86_64"
+    },
+    "ivy-fat1": {
+      "opt_level": 3,
+      "lto": "fat",
+      "codegen_units": 1,
+      "target_cpu": "ivybridge",
+      "target_features": "-avx2,-fma"
+    }
+  }
+}
