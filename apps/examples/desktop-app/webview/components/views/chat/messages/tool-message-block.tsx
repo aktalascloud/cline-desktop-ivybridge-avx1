@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { AgentCommandOutput, GeneratedMediaContent } from "@cline/ui";
 import {
@@ -44,6 +45,7 @@ function ToolLabel({
 	parts: ToolLabelPart[];
 	isRunning: boolean;
 }) {
+	const t = useTranslation();
 	return (
 		<span className={cn(isRunning && STREAMING_TITLE_CLASS)}>
 			{parts.map((part, index) =>
@@ -70,6 +72,7 @@ const ToolCallRow = memo(function ToolCallRow({
 	onExpandImage?: (image: ChatMessageImage) => void;
 	onProceedWhileRunning?: ProceedWhileRunningHandler;
 }) {
+	const t = useTranslation();
 	const { payload, toolName, inProgress, summary } =
 		buildToolPresentation(message);
 	// A missing result can outlive its run. Only gate the running display;
@@ -306,7 +309,7 @@ const ToolCallRow = memo(function ToolCallRow({
 				{inputPreview ? (
 					<div className="space-y-1">
 						<div className="text-[11px] uppercase tracking-wide text-muted-foreground/80">
-							Input
+							{t("Input")}
 						</div>
 						<ToolActivityCode className="text-sm">
 							{inputPreview}
@@ -330,7 +333,7 @@ const ToolCallRow = memo(function ToolCallRow({
 							{isProceeding ? (
 								<Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
 							) : null}
-							Proceed while running
+							{t("Proceed while running")}
 						</Button>
 						{proceedError ? (
 							<div className="text-xs text-destructive">{proceedError}</div>
@@ -354,6 +357,7 @@ export const ToolMessageBlock = memo(
 		onExpandImage?: (image: ChatMessageImage) => void;
 		onProceedWhileRunning?: ProceedWhileRunningHandler;
 	}) {
+		const t = useTranslation();
 		if (messages.length === 0) return null;
 		return (
 			<div className="flex flex-col gap-1">

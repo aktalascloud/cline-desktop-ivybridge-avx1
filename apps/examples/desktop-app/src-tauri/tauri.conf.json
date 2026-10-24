@@ -1,19 +1,19 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "Cline",
-	"version": "0.0.48",
-	"identifier": "bot.cline.app",
+	"productName": "Cline Desktop AVX1 RU",
+	"version": "1.0.0",
+	"identifier": "cloud.aktalas.cline.desktop.avx1.ru",
 	"build": {
 		"beforeDevCommand": "bun run build:runtime && bun run dev:web",
 		"devUrl": "http://localhost:3125",
-		"beforeBuildCommand": "bun run dmg:background && bun run build",
+		"beforeBuildCommand": "bun run build",
 		"frontendDist": "../webview/out"
 	},
 	"plugins": {
 		"updater": {
-			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENEMTJDNzk2RUExQUY3RDEKUldUUjl4cnFsc2NTelYxNzlFR1NkWnI0VTM1V0hvQXRyOW0xV2c0bFhkL3dhdkdpNGhNRW1MQXEK",
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZFMUI5QzJEOERGQzMyMDEKUldRQk12eU5MWndiYmpsazRZZ2k4ZUhsM0hObWtYSkZ1YzRrMEVQYkt1dFI1L01INzVvY1crWmcK",
 			"endpoints": [
-				"https://github.com/cline/cline/releases/download/desktop-latest/latest.json"
+				"https://raw.githubusercontent.com/aktalascloud/cline-desktop-ivybridge-avx1/avx1/fork/updater/latest.json"
 			]
 		}
 	},
@@ -21,7 +21,7 @@
 		"windows": [
 			{
 				"label": "main",
-				"title": "Cline",
+				"title": "Cline Desktop AVX1 RU",
 				"width": 1500,
 				"height": 980,
 				"resizable": true,
@@ -36,17 +36,22 @@
 	},
 	"bundle": {
 		"active": true,
-		"targets": "all",
+		"targets": [
+			"nsis"
+		],
 		"category": "DeveloperTool",
-		"shortDescription": "Cline AI coding agent",
-		"longDescription": "Cline is an AI coding agent. It reads your code, edits files, runs commands, and works through tasks with you in any project on your machine.",
-		"homepage": "https://cline.bot",
-		"externalBin": ["bin/cline-cli"],
+		"shortDescription": "Unofficial Cline Desktop for Windows x64 / Ivy Bridge, with Russian interface",
+		"longDescription": "Unofficial community fork of Cline Desktop with English and Russian interface. Source and licenses are available in the fork repository.",
+		"homepage": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1",
+		"externalBin": [
+			"bin/cline-cli"
+		],
 		"resources": [
 			"icons/app/*.png",
 			"icons/app/macos/*.png",
 			"bin/remote-helpers/*",
-			"bin/desktop-backend/**/*"
+			"bin/desktop-backend/**/*",
+			"licenses/**/*"
 		],
 		"icon": [
 			"icons/32x32.png",
@@ -85,6 +90,8 @@
 					"y": 200
 				}
 			}
-		}
+		},
+		"createUpdaterArtifacts": true,
+		"license": "Apache-2.0"
 	}
 }

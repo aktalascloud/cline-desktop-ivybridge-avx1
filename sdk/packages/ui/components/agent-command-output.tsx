@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import { type ReactNode, useEffect, useRef } from "react";
 
@@ -18,6 +19,7 @@ export function AgentCommandOutput({
 	tabIndex,
 	classNames,
 }: AgentCommandOutputProps) {
+	const t = useTranslation();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const shouldAutoScrollRef = useRef(true);
 	useEffect(() => {
@@ -30,10 +32,10 @@ export function AgentCommandOutput({
 	return (
 		<div className="mt-2 space-y-1">
 			<div className="text-[11px] uppercase tracking-wide text-cline-ui-muted-foreground/80">
-				Output
+				{t("Output")}
 			</div>
 			<div
-				aria-label="Command output"
+				aria-label={t("Command output")}
 				aria-live="off"
 				className={`max-h-64 overflow-auto rounded-md border border-cline-ui-border/70 bg-black/90 p-3 font-cline-ui-mono text-cline-ui-xs leading-relaxed text-zinc-100${classNames?.viewport ? ` ${classNames.viewport}` : ""}`}
 				onScroll={(event) => {

@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { AgentConversationHeader, SessionStatus } from "@cline/ui";
 import {
@@ -101,6 +102,7 @@ function AgentHeaderImpl({
 	terminalOpen = false,
 	terminalShortcut,
 }: AgentHeaderProps) {
+	const t = useTranslation();
 	const [isEditingTitle, setIsEditingTitle] = useState(false);
 	const [titleInput, setTitleInput] = useState("");
 	const [titleEditorWidth, setTitleEditorWidth] = useState<number>();
@@ -171,7 +173,9 @@ function AgentHeaderImpl({
 								id="toggle-project-files"
 								onClick={onToggleFiles}
 								size={hasChanges ? "sm" : "icon-sm"}
-								title={filesOpen ? "Hide project files" : "Show project files"}
+								title={
+									filesOpen ? t("Hide project files") : t("Show project files")
+								}
 								type="button"
 								variant="ghost"
 							>
@@ -186,7 +190,9 @@ function AgentHeaderImpl({
 						) : null}
 						{onToggleTerminal ? (
 							<Button
-								aria-label={terminalOpen ? "Hide terminal" : "Show terminal"}
+								aria-label={
+									terminalOpen ? t("Hide terminal") : t("Show terminal")
+								}
 								aria-pressed={terminalOpen}
 								className={cn(
 									"text-muted-foreground transition-colors hover:text-foreground",
@@ -197,7 +203,7 @@ function AgentHeaderImpl({
 								title={
 									terminalShortcut
 										? `Toggle terminal (${terminalShortcut})`
-										: "Toggle terminal"
+										: t("Toggle terminal")
 								}
 								type="button"
 								variant="ghost"
@@ -221,7 +227,7 @@ function AgentHeaderImpl({
 							/>
 						) : (
 							<Button
-								aria-label="New session"
+								aria-label={t("New session")}
 								className="flex items-center gap-1 rounded-md text-sm text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
 								onClick={() => onNewThread?.()}
 								size="icon-sm"
@@ -306,7 +312,7 @@ function AgentHeaderImpl({
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button
-						aria-label="Session actions"
+						aria-label={t("Session actions")}
 						className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
 						id="show-more-btn"
 						variant="ghost"
@@ -323,7 +329,9 @@ function AgentHeaderImpl({
 						onClick={triggerDeleteSession}
 					>
 						<Trash2 className="size-4" />
-						<span>{deletingSession ? "Deleting..." : "Delete session"}</span>
+						<span>
+							{deletingSession ? t("Deleting...") : t("Delete session")}
+						</span>
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
@@ -352,6 +360,7 @@ function SubagentSessionBadge({
 	parentSession: { sessionId: string; title?: string };
 	onOpenParentSession?: (parentSessionId: string) => void | Promise<void>;
 }) {
+	const t = useTranslation();
 	const parentTitle = parentSession.title?.trim();
 	const label = "Main Agent Session";
 	const hint = parentTitle
@@ -398,6 +407,7 @@ function AgentActivityStatus({
 	onOpenChange?: (open: boolean) => void;
 	onOpenAgentSession?: (agentSessionId: string) => void | Promise<void>;
 }) {
+	const t = useTranslation();
 	// Controlled so selecting an agent can dismiss the popover as the session view
 	// takes over; an uncontrolled one would linger over the newly opened session.
 	const [open, setOpen] = useState(false);
@@ -459,7 +469,9 @@ function AgentActivityStatus({
 				id="agent-activity-panel"
 			>
 				<div className="border-b border-border/70 px-3 py-2">
-					<div className="text-sm font-medium text-foreground">Agents</div>
+					<div className="text-sm font-medium text-foreground">
+						{t("Agents")}
+					</div>
 					<div className="mt-0.5 text-[11px] text-muted-foreground">
 						{label}
 					</div>
@@ -492,11 +504,12 @@ function AgentRoster({
 	error: string | null;
 	onSelect: (agentSessionId: string) => void;
 }) {
+	const t = useTranslation();
 	if (loading && agents.length === 0) {
 		return (
 			<div className="flex items-center gap-2 px-3 py-4 text-xs text-muted-foreground">
 				<Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
-				Loading agents...
+				{t("Loading agents...")}
 			</div>
 		);
 	}
@@ -507,8 +520,8 @@ function AgentRoster({
 		return (
 			<div className="px-3 py-4 text-xs text-muted-foreground">
 				{activity.running > 0
-					? "Waiting for the first agent to report in..."
-					: "No agent details were recorded for this session."}
+					? t("Waiting for the first agent to report in...")
+					: t("No agent details were recorded for this session.")}
 				{error ? (
 					<div className="mt-1 text-[11px] text-muted-foreground/80">
 						{error}
@@ -541,7 +554,8 @@ function AgentRoster({
 					className="border-t border-border/70 px-3 py-2 text-[11px] text-muted-foreground"
 					id="agent-roster-stale"
 				>
-					Could not refresh — showing the last known agents. {error}
+					{t("Could not refresh — showing the last known agents. ")}
+					{error}
 				</div>
 			) : null}
 		</>
@@ -577,6 +591,7 @@ function AgentRosterRow({
 	agent: SessionAgentEntry;
 	onSelect: () => void;
 }) {
+	const t = useTranslation();
 	const state = agentEntryState(agent.status);
 	const StateIcon = AGENT_STATE_ICON[state];
 	const isRunning = state === "running";
@@ -588,7 +603,7 @@ function AgentRosterRow({
 			<button
 				className="flex w-full min-w-0 items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-hover"
 				onClick={onSelect}
-				title="Open this agent's session"
+				title={t("Open this agent's session")}
 				type="button"
 			>
 				<StateIcon
@@ -603,12 +618,12 @@ function AgentRosterRow({
 				    min-w-0 lets the clamp/truncate win over the text's intrinsic size. */}
 				<span className="flex min-w-0 flex-1 flex-col">
 					<span className="line-clamp-2 wrap-break-word text-xs font-medium text-foreground">
-						{task || "Untitled task"}
+						{task || t("Untitled task")}
 					</span>
 					<span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground">
 						{agent.kind === "teamtask" ? (
 							<span className="shrink-0 text-[10px] uppercase tracking-wide">
-								{agent.teamName ? `team ${agent.teamName}` : "team"}
+								{agent.teamName ? `team ${agent.teamName}` : t("team")}
 							</span>
 						) : null}
 						<span
@@ -617,7 +632,7 @@ function AgentRosterRow({
 						>
 							{lastAction ||
 								(isRunning
-									? "Starting up..."
+									? t("Starting up...")
 									: `No activity recorded (${state})`)}
 						</span>
 					</span>

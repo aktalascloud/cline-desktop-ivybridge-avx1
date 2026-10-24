@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import type { ProviderAuthInfo } from "@cline/shared/browser";
 import { AttachmentDropZone } from "@cline/ui";
@@ -311,6 +312,7 @@ function useCloudProvisioningPhase(
 }
 
 function CloudProvisioningPane({ phase }: { phase: string }) {
+	const t = useTranslation();
 	return (
 		<div className="px-6 py-6">
 			<div
@@ -351,9 +353,17 @@ function reapOrphanedTerminals(): Promise<void> {
 }
 
 export default function Home() {
+	const t = useTranslation();
 	const startup = useHubStartup();
 	const hubReady =
 		startup.transport === "connected" && startup.hub.state === "ready";
+	useEffect(() => {
+		if (hubReady && "__TAURI_INTERNALS__" in window) {
+			void import("@tauri-apps/api/core")
+				.then(({ invoke }) => invoke("record_desktop_ready"))
+				.catch(() => {});
+		}
+	}, [hubReady]);
 	// Mount the app once the Hub is first ready, then hide it with Activity
 	// whenever the Hub is not ready. Hidden Activity content keeps its state
 	// (open conversations) but unmounts effects, so its dialogs, including
@@ -377,6 +387,7 @@ export default function Home() {
 }
 
 function App() {
+	const t = useTranslation();
 	const [initialThreadId] = useState(makeThreadId);
 	// Outlive keyed chat panes without re-rendering the app on every keystroke.
 	const { current: promptDrafts } = useRef(new Map<string, string>());
@@ -1337,6 +1348,7 @@ function ChatThreadPane({
 		onHeightChange: (height: number) => void;
 	};
 }) {
+	const t = useTranslation();
 	const {
 		sessionId,
 		status,
@@ -1569,7 +1581,7 @@ function ChatThreadPane({
 	const terminalToggle =
 		terminalEnabled && terminal ? (
 			<Button
-				aria-label={terminal.open ? "Hide terminal" : "Show terminal"}
+				aria-label={terminal.open ? t("Hide terminal") : t("Show terminal")}
 				aria-pressed={terminal.open}
 				className={cn(
 					"inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background/80 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-surface-hover",
@@ -1582,7 +1594,7 @@ function ChatThreadPane({
 				variant="ghost"
 			>
 				<SquareTerminal className="size-3.5" />
-				Terminal
+				{t("Terminal")}
 			</Button>
 		) : undefined;
 	// Threads opened on Cloud have no captured Local config.
@@ -2675,10 +2687,10 @@ function ChatThreadPane({
 				<div className="h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
 				<p className="text-sm text-muted-foreground">
 					{chatTransportState === "unavailable"
-						? "Desktop backend unavailable"
+						? t("Desktop backend unavailable")
 						: chatTransportState !== "connected"
-							? "Connecting..."
-							: "Loading..."}
+							? t("Connecting...")
+							: t("Loading...")}
 				</p>
 				{chatTransportError ? (
 					<p className="max-w-xl px-6 text-center text-xs text-muted-foreground">
@@ -2755,7 +2767,7 @@ function ChatThreadPane({
 				disabled={isCloudSessionExpired}
 				description={
 					isCloudSession
-						? "Images will be added to your next message"
+						? t("Images will be added to your next message")
 						: undefined
 				}
 				onAttachFiles={handleAttachFiles}
@@ -2919,11 +2931,11 @@ function ChatThreadPane({
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Delete Session?</AlertDialogTitle>
+						<AlertDialogTitle>{t("Delete Session?")}</AlertDialogTitle>
 						<AlertDialogDescription>
 							{isCloudSession
-								? "This cloud session and its workspace will be deleted."
-								: "This session will be removed from local history."}
+								? t("This cloud session and its workspace will be deleted.")
+								: t("This session will be removed from local history.")}
 							{!isCloudSession &&
 							isTaskWorktreePath(config.workspaceRoot || config.cwd || "")
 								? ` ${TASK_WORKTREE_DELETE_WARNING}`
@@ -2932,14 +2944,14 @@ function ChatThreadPane({
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={deletingSession}>
-							Cancel
+							{t("Cancel")}
 						</AlertDialogCancel>
 						<AlertDialogAction
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							disabled={deletingSession}
 							onClick={() => void handleDeleteSession()}
 						>
-							{deletingSession ? "Deleting..." : "Delete"}
+							{deletingSession ? t("Deleting...") : t("Delete")}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

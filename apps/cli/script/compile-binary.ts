@@ -80,6 +80,7 @@ export async function installOpenTuiNativeVariants(): Promise<void> {
 }
 
 export interface CompileCliBinaryOptions {
+	distribution?: "avx1";
 	bunTarget: Bun.Build.CompileTarget;
 	outfile: string;
 	/** Runtime flags baked into the executable, e.g. `--use-system-ca`. */
@@ -140,6 +141,9 @@ export async function compileCliBinary(
 			minify: true,
 			external: ["@anthropic-ai/vertex-sdk"],
 			define: {
+				"process.env.CLINE_DESKTOP_DISTRIBUTION": JSON.stringify(
+					input.distribution ?? "",
+				),
 				OTUI_TREE_SITTER_WORKER_PATH: bunfsRoot + parserWorkerPath,
 				// compile.assets keeps each directory tree under its basename.
 				__CLINE_PLUGIN_RUNTIME_DIR__: JSON.stringify(

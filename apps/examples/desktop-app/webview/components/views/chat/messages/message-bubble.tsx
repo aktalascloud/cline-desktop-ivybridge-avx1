@@ -1,4 +1,6 @@
 "use client";
+import { readLanguage } from "@/lib/i18n";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { GeneratedMediaContent } from "@cline/ui";
 import {
@@ -44,6 +46,7 @@ function MessageImages({
 	isUser: boolean;
 	onExpandImage?: (image: ChatMessageImage) => void;
 }) {
+	const t = useTranslation();
 	if (!isUser) {
 		return (
 			<MessageImageCarousel images={images} onExpandImage={onExpandImage} />
@@ -81,6 +84,7 @@ function UserMessageMarkdown({
 	content: string;
 	attachedFiles?: string[];
 }) {
+	const t = useTranslation();
 	const { commandNames, mentionPaths } = useKnownComposerTokens();
 	const tokenKey = getComposerHighlights(
 		content,
@@ -97,6 +101,7 @@ function UserMessageMarkdown({
 }
 
 function MessageMedia({ media }: { media: ChatMessageMedia[] }) {
+	const t = useTranslation();
 	return (
 		<div className="flex max-w-2xl flex-col gap-2">
 			{media.map((item) => (
@@ -184,6 +189,7 @@ export const MessageBubble = memo(function MessageBubble({
 	reasoningRedacted: boolean;
 	thoughtDurationMilliseconds?: number;
 }) {
+	const t = useTranslation();
 	const isUser = message.role === "user";
 	const isError = message.role === "error";
 	const checkpoint = message.meta?.checkpoint;
@@ -236,7 +242,7 @@ export const MessageBubble = memo(function MessageBubble({
 	const messageDate = new Date(message.createdAt);
 	const hasValidMessageDate = !Number.isNaN(messageDate.getTime());
 	const messageTime = hasValidMessageDate
-		? messageDate.toLocaleTimeString(undefined, {
+		? messageDate.toLocaleTimeString(readLanguage(), {
 				hour: "numeric",
 				minute: "2-digit",
 			})
@@ -245,7 +251,7 @@ export const MessageBubble = memo(function MessageBubble({
 		<time
 			className="shrink-0 whitespace-nowrap text-xs leading-none text-muted-foreground/70"
 			dateTime={messageDate.toISOString()}
-			title={messageDate.toLocaleString()}
+			title={messageDate.toLocaleString(readLanguage())}
 		>
 			{messageTime}
 		</time>
@@ -319,9 +325,11 @@ export const MessageBubble = memo(function MessageBubble({
 					<MessageActions side="end" visible={keepUserActionsVisible}>
 						{onCopyMessage ? (
 							<MessageAction
-								label={wasCopied ? "Copied user message" : "Copy user message"}
+								label={
+									wasCopied ? t("Copied user message") : t("Copy user message")
+								}
 								onClick={() => void onCopyMessage(message.id, displayContent)}
-								title={wasCopied ? "Copied" : "Copy message"}
+								title={wasCopied ? t("Copied") : t("Copy message")}
 							>
 								{wasCopied ? (
 									<Check className="h-3.5 w-3.5" />
@@ -333,11 +341,11 @@ export const MessageBubble = memo(function MessageBubble({
 						{onEditMessage && runCount && displayContent.trim() ? (
 							<MessageAction
 								disabled={editDisabled || editPending}
-								label="Edit user message"
+								label={t("Edit user message")}
 								onClick={() =>
 									void onEditMessage(message.id, displayContent, runCount)
 								}
-								title="Edit message and restart from this point"
+								title={t("Edit message and restart from this point")}
 							>
 								{editPending ? (
 									<Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -349,11 +357,11 @@ export const MessageBubble = memo(function MessageBubble({
 						{checkpoint ? (
 							<MessageAction
 								disabled={restoreDisabled || restorePending}
-								label="Restore checkpoint"
+								label={t("Restore checkpoint")}
 								onClick={() =>
 									void onRestoreCheckpoint?.(message.id, checkpoint.runCount)
 								}
-								title="Restore checkpoint"
+								title={t("Restore checkpoint")}
 							>
 								{restorePending ? (
 									<Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -383,11 +391,11 @@ export const MessageBubble = memo(function MessageBubble({
 						<MessageAction
 							label={
 								wasCopied
-									? "Copied assistant message"
-									: "Copy assistant message"
+									? t("Copied assistant message")
+									: t("Copy assistant message")
 							}
 							onClick={() => void onCopyMessage(message.id, message.content)}
-							title={wasCopied ? "Copied" : "Copy raw assistant output"}
+							title={wasCopied ? t("Copied") : t("Copy raw assistant output")}
 						>
 							{wasCopied ? (
 								<Check className="h-3 w-3" />
@@ -399,9 +407,11 @@ export const MessageBubble = memo(function MessageBubble({
 					{onForkSession ? (
 						<MessageAction
 							disabled={forkDisabled || forkPending}
-							label="Fork session"
+							label={t("Fork session")}
 							onClick={() => void onForkSession(message.id)}
-							title="Fork session - copy full message history into a new session"
+							title={t(
+								"Fork session - copy full message history into a new session",
+							)}
 						>
 							{forkPending ? (
 								<Loader2 className="h-3 w-3 animate-spin" />

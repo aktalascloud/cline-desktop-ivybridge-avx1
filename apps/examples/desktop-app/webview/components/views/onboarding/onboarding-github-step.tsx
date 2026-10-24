@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { GitHubIcon } from "@cline/ui";
 import { Loader2, Lock } from "lucide-react";
@@ -19,6 +20,7 @@ export const GITHUB_INSTALL_POLL_INTERVAL_MS = 3_000;
 type GitHubStepPhase = "checking" | "connect" | "waiting" | "connected";
 
 export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
+	const t = useTranslation();
 	const [phase, setPhase] = useState<GitHubStepPhase>("checking");
 	const [connectError, setConnectError] = useState<string | null>(null);
 	const [repos, setRepos] = useState<ClineGitHubRepository[] | null>(null);
@@ -147,7 +149,7 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 	if (phase === "checking") {
 		return (
 			<output
-				aria-label="Checking GitHub connection"
+				aria-label={t("Checking GitHub connection")}
 				className="flex items-center justify-center py-16"
 			>
 				<Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -158,11 +160,12 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 	return (
 		<>
 			<h1 className="text-2xl font-semibold tracking-tight text-foreground">
-				Connect GitHub
+				{t("Connect GitHub")}
 			</h1>
 			<p className="mt-2 text-sm text-muted-foreground">
-				Grant Cline access to your GitHub repositories to supercharge it with
-				real-world context. You can always do this later from your dashboard.
+				{t(
+					"Grant Cline access to your GitHub repositories to supercharge it with real-world context. You can always do this later from your dashboard.",
+				)}
 			</p>
 
 			<div className="mt-6 rounded-2xl border border-border/70 bg-background/60 p-4">
@@ -172,16 +175,18 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 							<GitHubIcon className="size-4" />
 						</span>
 						<div className="flex items-center gap-2">
-							<p className="text-base font-semibold text-foreground">GitHub</p>
+							<p className="text-base font-semibold text-foreground">
+								{t("GitHub")}
+							</p>
 							{phase === "connected" ? (
 								<Badge
 									className="bg-primary/15 text-primary"
 									variant="secondary"
 								>
-									Connected
+									{t("Connected")}
 								</Badge>
 							) : (
-								<Badge variant="secondary">Not connected</Badge>
+								<Badge variant="secondary">{t("Not connected")}</Badge>
 							)}
 						</div>
 					</div>
@@ -191,7 +196,7 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 							onClick={() => void connect()}
 							type="button"
 						>
-							Connect GitHub
+							{t("Connect GitHub")}
 						</Button>
 					) : null}
 				</div>
@@ -200,14 +205,14 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 					<div className="mt-3 flex flex-wrap items-center gap-3">
 						<p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
 							<Loader2 className="size-4 animate-spin" />
-							Finish installing the Cline GitHub App in your browser...
+							{t("Finish installing the Cline GitHub App in your browser...")}
 						</p>
 						<button
 							className="text-sm text-muted-foreground transition-colors hover:text-foreground"
 							onClick={() => setPhase("connect")}
 							type="button"
 						>
-							Cancel
+							{t("Cancel")}
 						</button>
 					</div>
 				) : null}
@@ -221,7 +226,7 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 				{phase === "connected" ? (
 					<div className="mt-4 border-t border-border/70 pt-3">
 						<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-							Accessible repositories
+							{t("Accessible repositories")}
 							{repos ? (
 								<span className="ml-2 font-normal normal-case">
 									({repos.length})
@@ -231,7 +236,7 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 						{repos === null ? (
 							<p className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
 								<Loader2 className="size-4 animate-spin" />
-								Loading repositories...
+								{t("Loading repositories...")}
 							</p>
 						) : repos.length > 0 ? (
 							<ul className="mt-2 flex max-h-40 flex-col gap-1 overflow-y-auto pr-1">
@@ -256,8 +261,9 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 							</ul>
 						) : (
 							<p className="mt-2 text-sm text-muted-foreground">
-								No repositories found. You may need to grant access in your
-								GitHub App settings.
+								{t(
+									"No repositories found. You may need to grant access in your GitHub App settings.",
+								)}
 							</p>
 						)}
 					</div>
@@ -271,7 +277,7 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 						onClick={onContinue}
 						type="button"
 					>
-						Continue
+						{t("Continue")}
 					</Button>
 				) : (
 					<button
@@ -279,7 +285,7 @@ export function GitHubConnectStep({ onContinue }: { onContinue: () => void }) {
 						onClick={onContinue}
 						type="button"
 					>
-						Skip for now
+						{t("Skip for now")}
 					</button>
 				)}
 			</div>

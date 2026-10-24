@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { MicIcon, SquareIcon } from "lucide-react";
 import type { ComponentProps } from "react";
@@ -157,6 +158,7 @@ export function SpeechInput({
 	title,
 	...props
 }: SpeechInputProps) {
+	const t = useTranslation();
 	const [mode, setMode] = useState<SpeechInputMode>(() =>
 		detectSpeechInputMode(recordingMode),
 	);
@@ -494,7 +496,7 @@ export function SpeechInput({
 				<TooltipTrigger asChild>
 					<Button
 						{...props}
-						aria-label={isListening ? "Stop recording" : "Record speech"}
+						aria-label={isListening ? t("Stop recording") : t("Record speech")}
 						aria-pressed={isListening}
 						className={cn(
 							"group relative z-10 size-7 rounded-md p-1.5 transition-colors",
@@ -515,14 +517,14 @@ export function SpeechInput({
 						title={
 							mode === "speech-recognition" && recordingMode !== "auto"
 								? isListening
-									? "Stop browser speech recognition"
-									: "Record with browser speech recognition"
+									? t("Stop browser speech recognition")
+									: t("Record with browser speech recognition")
 								: isListening
-									? "Stop recording"
+									? t("Stop recording")
 									: (title ??
 										(unavailable
-											? "Speech input is not supported in this browser"
-											: "Record speech"))
+											? t("Speech input is not supported in this browser")
+											: t("Record speech")))
 						}
 						type="button"
 					>
@@ -540,7 +542,7 @@ export function SpeechInput({
 				</TooltipTrigger>
 				{canShowStopHint ? (
 					<TooltipContent side="top" sideOffset={8}>
-						Click Stop to transcribe your recording.
+						{t("Click Stop to transcribe your recording.")}
 					</TooltipContent>
 				) : null}
 			</Tooltip>

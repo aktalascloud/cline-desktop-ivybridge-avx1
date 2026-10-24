@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@cline/core", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@cline/core")>()),
 	SqliteSessionStore: class {
+		close() {}
 		get() {
 			return { metadata: {} };
 		}

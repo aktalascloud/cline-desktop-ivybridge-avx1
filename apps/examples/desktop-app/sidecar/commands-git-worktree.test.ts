@@ -58,7 +58,9 @@ describe("create_git_worktree command", () => {
 		expect(git(result.path, "branch", "--show-current")).toBe(result.branch);
 		// The original checkout is untouched.
 		expect(git(repo, "branch", "--show-current")).toBe("main");
-		expect(git(repo, "worktree", "list")).toContain(result.path);
+		expect(git(repo, "worktree", "list").replaceAll("\\", "/")).toContain(
+			result.path.replaceAll("\\", "/"),
+		);
 	});
 
 	it("reports the worktree root it creates under in the process context", async () => {
@@ -105,7 +107,9 @@ describe("create_git_worktree command", () => {
 		const result = await run(nested);
 
 		expect(result.path.endsWith("my-app")).toBe(true);
-		expect(git(repo, "worktree", "list")).toContain(result.path);
+		expect(git(repo, "worktree", "list").replaceAll("\\", "/")).toContain(
+			result.path.replaceAll("\\", "/"),
+		);
 	});
 
 	it("rejects a folder that is not a git repository", async () => {
@@ -241,7 +245,9 @@ describe("delete_chat_session worktree cleanup", () => {
 		const { events } = await deleteSession(store, "session-a");
 
 		expect(existsSync(worktree.path)).toBe(true);
-		expect(git(repo, "worktree", "list")).toContain(worktree.path);
+		expect(git(repo, "worktree", "list").replaceAll("\\", "/")).toContain(
+			worktree.path.replaceAll("\\", "/"),
+		);
 		expect(events[0]?.payload).not.toHaveProperty("removedWorktree.path");
 	});
 
@@ -276,7 +282,9 @@ describe("delete_chat_session worktree cleanup", () => {
 		await deleteSession(new SqliteSessionStore(), "session-home");
 
 		expect(existsSync(worktree.path)).toBe(true);
-		expect(git(repo, "worktree", "list")).toContain(worktree.path);
+		expect(git(repo, "worktree", "list").replaceAll("\\", "/")).toContain(
+			worktree.path.replaceAll("\\", "/"),
+		);
 	});
 
 	it("leaves a regular workspace folder alone", async () => {

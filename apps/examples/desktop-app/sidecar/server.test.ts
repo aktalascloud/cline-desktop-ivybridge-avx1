@@ -8,6 +8,42 @@ import type { SidecarContext } from "./types";
 
 const TEST_APPROVAL_TOKEN = "test-approval-token";
 
+it("protects update safety with the existing approval credential and origin checks", async () => {
+	const handler = createFetchHandler(
+		{
+			liveSessions: new Map(),
+			runtimeBindings: new Map([
+				["local", { sessionManager: { list: async () => [] } }],
+			]),
+		} as never,
+		vi.fn(),
+		TEST_APPROVAL_TOKEN,
+	);
+	const server = createTestServer();
+	expect(
+		(await handler(new Request("http://127.0.0.1:3126/update-safety"), server))
+			?.status,
+	).toBe(403);
+	expect(
+		(
+			await handler(
+				new Request(
+					`http://127.0.0.1:3126/update-safety?approval_token=${TEST_APPROVAL_TOKEN}`,
+					{ headers: { origin: "https://untrusted.example" } },
+				),
+				server,
+			)
+		)?.status,
+	).toBe(403);
+	const response = await handler(
+		new Request(
+			`http://127.0.0.1:3126/update-safety?approval_token=${TEST_APPROVAL_TOKEN}`,
+		),
+		server,
+	);
+	expect(await response?.json()).toEqual({ safe: true, activeSessionCount: 0 });
+});
+
 function createTestServer() {
 	return {
 		port: 3126,

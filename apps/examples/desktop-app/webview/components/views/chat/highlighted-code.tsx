@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { markdownCodeHighlighter } from "@cline/ui/components/markdown";
 import { parseDiffFromFile } from "@pierre/diffs";
@@ -124,6 +125,7 @@ function useHighlightedRanges(
 }
 
 function TokenSpans({ tokens }: { tokens: Token[] | undefined }) {
+	const t = useTranslation();
 	if (!tokens || tokens.length === 0) return <>{"\u200b"}</>;
 	return (
 		<>
@@ -160,6 +162,7 @@ export function CodeFile({
 	path: string;
 	contents: string;
 }) {
+	const t = useTranslation();
 	const lines = useMemo(() => plainLines(contents), [contents]);
 	const head = useHighlightedRanges(contents, path, [
 		[0, Math.min(lines.length, FILE_HEAD_LINES)],
@@ -275,6 +278,7 @@ export function CodeDiff({
 	 */
 	fragment?: boolean;
 }) {
+	const t = useTranslation();
 	const rows = useMemo(() => {
 		const all = buildRows(oldText, newText, path);
 		return fragment ? all.filter((row) => row.kind !== "gap") : all;
@@ -302,7 +306,7 @@ export function CodeDiff({
 	if (rows.length === 0) {
 		return (
 			<div className="p-4 text-xs text-muted-foreground">
-				No textual changes.
+				{t("No textual changes.")}
 			</div>
 		);
 	}
@@ -322,7 +326,9 @@ export function CodeDiff({
 						// biome-ignore lint/suspicious/noArrayIndexKey: rows are positional
 						key={index}
 					>
-						⋯ {row.hidden} unchanged line{row.hidden === 1 ? "" : "s"}
+						⋯ {row.hidden}
+						{t(" unchanged line")}
+						{row.hidden === 1 ? "" : "s"}
 					</div>
 				) : (
 					<div

@@ -1,0 +1,134 @@
+[
+  {
+    "url": "https://github.com/cline/cline/pull/15287",
+    "sha": "1d3cd89e848c2647808c49d7f2d1875b41ef19e6",
+    "purpose": "security: undici 7.30.1 floor (two reachable process-crash DoS)",
+    "origin": "official-upstream-pr",
+    "status": "included-upstream-pr",
+    "verification": "undici 7.30.1 floor; frozen dependency installation and production frontend build"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15146",
+    "sha": "f417a565ce25aa7ffd70b6e9c112fe9e86f591e2",
+    "purpose": "security(desktop): bump next 16.2.11 → 16.3.8 (8 Dependabot advisories, re-cut of #14753)",
+    "origin": "official-upstream-pr",
+    "status": "adapted-upstream-pr",
+    "verification": "Next 16.3.8; full dependency-lock conflict resolution, frozen install and production static export"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15223",
+    "sha": "5cb79ecf4a423b32b9b92cd4cdd4dc8f83ef5141",
+    "purpose": "fix(desktop): avoid sending session transcripts twice",
+    "origin": "official-upstream-pr",
+    "status": "already-upstream-with-additional-regression-assertions",
+    "verification": "Current main already contains the production fix; extra assertions retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14082",
+    "sha": "32368910621e6d4ddd9fc1e6fffc985f3c7f775d",
+    "purpose": "fix(desktop): use baseline Bun target for Windows x64 sidecar",
+    "origin": "official-upstream-pr",
+    "status": "adapted-intent",
+    "verification": "Original sidecar files are obsolete; current CLI target uses baseline alias. Bun 1.4.2 aliases are byte-identical and both run"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15148",
+    "sha": "d461778cd3a5099ad5bc66162e49f90c401adddc",
+    "purpose": "fix(mcp): re-handshake when a remote server answers with a lost session",
+    "origin": "official-upstream-pr",
+    "status": "deferred",
+    "verification": "Recovery falls back to matching a plain error message before replay; uncertain execution must not be repeated"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15295",
+    "sha": "e4b6ea149d321a2a91a49f286f1430a01fe900a5",
+    "purpose": "fix(desktop): skip routine hub polling in diagnostics exports",
+    "origin": "official-upstream-pr",
+    "status": "deferred",
+    "verification": "Diagnostic filtering scans up to 32 MiB instead of 2 MiB; no performance benefit established"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15299",
+    "sha": "b36a7b907d37e9f568655654b09fca08d2bc0551",
+    "purpose": "fix(desktop): reuse recent cloud session listings",
+    "origin": "official-upstream-pr",
+    "status": "discovered-not-integrated",
+    "verification": "Cross-account cloud-cache behavior requires a complete compatibility review"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15321",
+    "sha": "44696e83c983544790a5f10796bc5b21c81e2dae",
+    "purpose": "Desktop: Local Models page (Ollama + LM Studio) and Provider settings group",
+    "origin": "official-upstream-pr",
+    "status": "deferred",
+    "verification": "44-file provider-management change; keep current provider APIs until dedicated qualification"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14344",
+    "sha": "660e4a202719b2297cf968d037ee3f4e03af7fc9",
+    "purpose": "fix(desktop): polish Windows window chrome",
+    "origin": "official-upstream-pr",
+    "status": "deferred",
+    "verification": "Broad 15-file window-chrome change; no unreviewed merge"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14337",
+    "sha": "f966c843fbc53c08ccdee014b62cda2401a169c4",
+    "purpose": "feat(desktop): add an interface-language setting to the desktop app",
+    "origin": "official-upstream-pr",
+    "status": "reviewed-mechanism-not-applied",
+    "verification": "An older language-setting/catalog implementation; current fork uses an EN/RU host translator and shared UI context"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14383",
+    "sha": "808a1063b79c0c63110bb3376e9baa4ed0994fad",
+    "purpose": "feat: add i18n support to the Cline desktop app with Simplified Chinese",
+    "origin": "official-upstream-pr",
+    "status": "discovered-not-integrated",
+    "verification": "Older 75-file Chinese i18n branch requires API adaptation; not merged blindly"
+  },
+  {
+    "url": "https://github.com/abeatrix/cline/pull/1",
+    "sha": "c6ec129c1dedbda7ca6d8420e46646f731e45d54",
+    "origin": "third-party-fork",
+    "purpose": "OpenAI-compatible providerOptions aliases",
+    "status": "deferred",
+    "verification": "Diff includes unrelated workflow deletion. Provider routing must be selectively adapted and checked against the pinned AI SDK before inclusion."
+  },
+  {
+    "url": "https://github.com/cline-test-bot/cline/pull/3",
+    "sha": "a305b141bb2af45c7e0557c7f158fd7eefde4fe8",
+    "origin": "third-party-fork",
+    "purpose": "Retain streamed tool output",
+    "status": "deferred",
+    "verification": "Implementation appends and serializes accumulated output per chunk without a bound. Requires output limits and batching before adoption."
+  },
+  {
+    "origin": "local",
+    "id": "AVX1-LOCALE",
+    "purpose": "English/Russian UI, shared UI host translation context, plurals, tray and installer language",
+    "status": "qualification",
+    "verification": "Dictionary placeholder and plural tests; native plural tests; GUI review pending"
+  },
+  {
+    "origin": "local",
+    "id": "AVX1-STORAGE",
+    "purpose": "Close all seven transient SQLite session stores; prevent accumulated file handles",
+    "status": "qualification",
+    "verification": "Windows history/settings/worktree integration tests; comparative handle benchmark pending"
+  },
+  {
+    "origin": "local",
+    "id": "AVX1-WORKTREE",
+    "purpose": "Remove worktrees from the main repo on Windows; retain nonempty parent directories and reject link targets",
+    "status": "qualification",
+    "verification": "Real Windows git worktree tests"
+  },
+  {
+    "origin": "local",
+    "id": "AVX1-UPDATER",
+    "purpose": "Permanent fork app ID/key/feed, isolated data, no official CLI auto-update, idle guard and fail-closed installer",
+    "status": "qualification",
+    "verification": "Installed update/persistence/signature/GUI gates pending"
+  }
+]

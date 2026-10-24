@@ -1,3 +1,4 @@
+import { t, useTranslation } from "@/lib/i18n";
 import { Switch } from "@cline/ui";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const EVENT_COPY: Record<
 };
 
 export function NotificationSettings() {
+	const t = useTranslation();
 	const [settings, setSettings] = useState<DesktopNotificationSettings>(
 		readDesktopNotificationSettings,
 	);
@@ -81,10 +83,12 @@ export function NotificationSettings() {
 	const permissionControl =
 		permission === "granted" ? (
 			<span className="shrink-0 text-xs font-medium text-muted-foreground">
-				Allowed by system
+				{t("Allowed by system")}
 			</span>
 		) : permission === "unsupported" ? null : permission === null ? (
-			<span className="shrink-0 text-xs text-muted-foreground">Checking…</span>
+			<span className="shrink-0 text-xs text-muted-foreground">
+				{t("Checking…")}
+			</span>
 		) : (
 			<Button
 				disabled={requestingPermission}
@@ -93,7 +97,9 @@ export function NotificationSettings() {
 				type="button"
 				variant="outline"
 			>
-				{permission === "denied" ? "Check permission" : "Allow notifications"}
+				{permission === "denied"
+					? t("Check permission")
+					: t("Allow notifications")}
 			</Button>
 		);
 
@@ -106,15 +112,16 @@ export function NotificationSettings() {
 			<div className="flex items-center justify-between gap-5 max-[720px]:flex-col max-[720px]:items-stretch">
 				<div className="flex flex-col gap-1">
 					<p className="text-base font-semibold text-foreground">
-						Desktop notifications
+						{t("Desktop notifications")}
 					</p>
 					<p className="text-sm text-muted-foreground">
-						Notify only while the Cline window is in the background. Clicking a
-						notification opens its session.
+						{t(
+							"Notify only while the Cline window is in the background. Clicking a notification opens its session.",
+						)}
 					</p>
 					{permission === "denied" ? (
 						<p className="mt-1 text-xs text-destructive">
-							Notifications are blocked in system settings.
+							{t("Notifications are blocked in system settings.")}
 						</p>
 					) : null}
 				</div>
@@ -122,9 +129,9 @@ export function NotificationSettings() {
 			</div>
 			<div className="mt-4 rounded-lg border bg-card px-4">
 				<div className="grid grid-cols-[minmax(0,1fr)_5rem_4rem] items-center gap-3 border-b py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-					<span>Event</span>
-					<span className="text-center">Notify</span>
-					<span className="text-center">Sound</span>
+					<span>{t("Event")}</span>
+					<span className="text-center">{t("Notify")}</span>
+					<span className="text-center">{t("Sound")}</span>
 				</div>
 				{DESKTOP_NOTIFICATION_EVENT_TYPES.map((eventType) => {
 					const copy = EVENT_COPY[eventType];

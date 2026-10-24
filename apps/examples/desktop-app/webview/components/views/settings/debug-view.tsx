@@ -1,3 +1,4 @@
+import { t, useTranslation } from "@/lib/i18n";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageFrame, PageHeader } from "../page-layout";
@@ -7,21 +8,23 @@ export function DebugContent({
 }: {
 	onExportDiagnostics: () => void;
 }) {
+	const t = useTranslation();
 	return (
 		<PageFrame>
 			<PageHeader
-				title="Debug"
-				description="Tools for troubleshooting Cline."
+				title={t("Debug")}
+				description={t("Tools for troubleshooting Cline.")}
 			/>
 			<section className="max-w-344">
 				<div className="flex py-4 items-center justify-between gap-5 max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
 					<div className="flex flex-col gap-1">
 						<p className="text-base font-semibold text-foreground">
-							Diagnostics
+							{t("Diagnostics")}
 						</p>
 						<p className="text-sm text-muted-foreground">
-							Export app info, recent logs, and the metadata of sessions you
-							choose as a file you can attach when reporting a problem.
+							{t(
+								"Export app info, recent logs, and the metadata of sessions you choose as a file you can attach when reporting a problem.",
+							)}
 						</p>
 					</div>
 					<Button
@@ -32,7 +35,7 @@ export function DebugContent({
 						variant="outline"
 					>
 						<Download className="size-3" />
-						Export…
+						{t("Export…")}
 					</Button>
 				</div>
 			</section>

@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import { useCallback, useEffect, useId, useState } from "react";
 
@@ -104,6 +105,7 @@ export function AgentPromptQueue({
 	onRemove,
 	onSteer,
 }: AgentPromptQueueProps) {
+	const t = useTranslation();
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editingValue, setEditingValue] = useState("");
 	const [pendingId, setPendingId] = useState<string | null>(null);
@@ -198,7 +200,12 @@ export function AgentPromptQueue({
 			>
 				<Icon name={expanded ? "chevron-down" : "chevron-right"} small />
 				<span>
-					{items.length} prompt{items.length === 1 ? "" : "s"} queued
+					{t(
+						items.length === 1
+							? "{count} prompt queued"
+							: "{count} prompts queued",
+						{ count: items.length },
+					)}
 				</span>
 			</button>
 			<div
@@ -233,7 +240,7 @@ export function AgentPromptQueue({
 							<div className="cline-ui-agent-prompt-queue__content min-w-0 flex-1">
 								{isEditing ? (
 									<textarea
-										aria-label="Edit queued prompt"
+										aria-label={t("Edit queued prompt")}
 										className="cline-ui-agent-prompt-queue__editor block min-h-8 w-full resize-none rounded-cline-ui-md border border-cline-ui-border bg-cline-ui-background px-2 py-1.5 text-cline-ui-foreground text-cline-ui-xs leading-4 outline-none focus:border-[color-mix(in_oklab,var(--cline-ui-primary)_50%,transparent)] focus:shadow-[0_0_0_1px_color-mix(in_oklab,var(--cline-ui-primary)_20%,transparent)]"
 										disabled={isPending}
 										onChange={(event) => setEditingValue(event.target.value)}
@@ -261,13 +268,14 @@ export function AgentPromptQueue({
 										</span>
 										{hasAttachments ? (
 											<span className="cline-ui-agent-prompt-queue__attachments shrink-0 text-[10px] text-cline-ui-muted-foreground">
-												{item.attachmentCount} attachment
+												{item.attachmentCount}
+												{t(" attachment")}
 												{item.attachmentCount === 1 ? "" : "s"}
 											</span>
 										) : null}
 										{item.steer ? (
 											<span className="cline-ui-agent-prompt-queue__badge shrink-0 rounded-full bg-cline-ui-primary/10 px-1.5 py-0.5 font-cline-ui-medium text-[10px] text-cline-ui-primary">
-												Next turn
+												{t("Next turn")}
 											</span>
 										) : null}
 									</div>
@@ -285,7 +293,7 @@ export function AgentPromptQueue({
 								{isEditing ? (
 									<>
 										<button
-											aria-label="Save queued prompt"
+											aria-label={t("Save queued prompt")}
 											className={ACTION_CLASS_NAME}
 											disabled={isBusy || editingValue.trim().length === 0}
 											onClick={() => void submitEdit(item)}
@@ -294,7 +302,7 @@ export function AgentPromptQueue({
 											<Icon name="check" />
 										</button>
 										<button
-											aria-label="Cancel editing queued prompt"
+											aria-label={t("Cancel editing queued prompt")}
 											className={ACTION_CLASS_NAME}
 											disabled={isBusy}
 											onClick={cancelEdit}
@@ -307,18 +315,18 @@ export function AgentPromptQueue({
 									<>
 										{!item.steer ? (
 											<button
-												aria-label="Steer queued prompt"
+												aria-label={t("Steer queued prompt")}
 												className={ACTION_CLASS_NAME}
 												disabled={isBusy}
 												onClick={() => void runAction(item, "steer")}
-												title="Steer"
+												title={t("Steer")}
 												type="button"
 											>
 												<Icon name="corner-down-left" />
 											</button>
 										) : null}
 										<button
-											aria-label="Edit queued prompt"
+											aria-label={t("Edit queued prompt")}
 											className={ACTION_CLASS_NAME}
 											disabled={isBusy}
 											onClick={() => {
@@ -330,7 +338,7 @@ export function AgentPromptQueue({
 											<Icon name="pencil" />
 										</button>
 										<button
-											aria-label="Remove queued prompt"
+											aria-label={t("Remove queued prompt")}
 											className={ACTION_CLASS_NAME}
 											disabled={isBusy}
 											onClick={() => void runAction(item, "remove")}

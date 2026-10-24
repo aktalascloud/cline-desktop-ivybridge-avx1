@@ -6,6 +6,7 @@ mod linux_tray;
 mod linux_webview;
 #[cfg(target_os = "macos")]
 mod macos_notification;
+mod native_locale;
 mod terminal;
 
 use serde::{Deserialize, Serialize};
@@ -38,6 +39,7 @@ const TRAY_QUIT_MENU_ID: &str = "tray-quit";
 const KEYBINDINGS_MENU_ID: &str = "keybindings";
 const CHECK_FOR_UPDATES_MENU_ID: &str = "check-for-updates";
 const DESKTOP_ACTION_PENDING_EVENT: &str = "desktop-action-pending";
+static APP_STARTED: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 #[cfg(any(target_os = "macos", test))]
 const EXPORT_DIAGNOSTICS_MENU_ID: &str = "export-diagnostics";
 #[cfg(any(target_os = "macos", test))]
@@ -87,6 +89,8 @@ impl DesktopActionState {
 }
 
 struct TrayMenuState {
+    static_items: Vec<(MenuItem<tauri::Wry>, &'static str)>,
+    active_sessions: std::sync::atomic::AtomicU32,
     status: MenuItem<tauri::Wry>,
     hub_healthy: Mutex<bool>,
     running_sessions: MenuItem<tauri::Wry>,
@@ -169,31 +173,33 @@ impl UpdateState {
 }
 
 fn tray_status_text(update_status: &UpdateStatus, hub_healthy: bool) -> &'static str {
-    match update_status.state.as_str() {
+    native_locale::text(match update_status.state.as_str() {
         "checking" => "Status: Checking for Updates",
         "downloading" => "Status: Downloading Update",
         "ready" => "Status: Update Available",
         "error" => "Status: Update Check Failed",
         _ if hub_healthy => "Status: Healthy",
         _ => "Status: Hub Disconnected",
-    }
+    })
 }
 
 // Label for the "Check for Updates..." menu item. While a cycle is in flight
 // the item is disabled (see update_menu_item_enabled) and narrates progress;
 // once an update is staged it turns into the restart action instead.
 fn update_menu_item_text(update_status: &UpdateStatus) -> String {
-    match (
-        update_status.state.as_str(),
-        update_status.version.as_deref(),
-    ) {
-        ("checking", _) => "Checking for Updates...".to_string(),
-        ("downloading", Some(version)) => format!("Downloading Update v{version}..."),
-        ("downloading", None) => "Downloading Update...".to_string(),
-        ("ready", Some(version)) => format!("Restart to Update to v{version}"),
-        ("ready", None) => "Restart to Update".to_string(),
-        _ => "Check for Updates...".to_string(),
-    }
+    native_locale::update_label(
+        match (
+            update_status.state.as_str(),
+            update_status.version.as_deref(),
+        ) {
+            ("checking", _) => "Checking for Updates...".to_string(),
+            ("downloading", Some(version)) => format!("Downloading Update v{version}..."),
+            ("downloading", None) => "Downloading Update...".to_string(),
+            ("ready", Some(version)) => format!("Restart to Update to v{version}"),
+            ("ready", None) => "Restart to Update".to_string(),
+            _ => "Check for Updates...".to_string(),
+        },
+    )
 }
 
 fn update_menu_item_enabled(update_status: &UpdateStatus) -> bool {
@@ -201,6 +207,9 @@ fn update_menu_item_enabled(update_status: &UpdateStatus) -> bool {
 }
 
 fn running_sessions_text(running_sessions: u32) -> String {
+    if native_locale::is_russian() {
+        return native_locale::sessions(running_sessions);
+    }
     match running_sessions {
         1 => "1 session running".to_string(),
         count => format!("{count} sessions running"),
@@ -936,16 +945,118 @@ async fn pick_workspace_directory(
 }
 
 #[tauri::command]
+fn record_desktop_ready() {
+    // Opt-in benchmark output only. No path or user content arrives from JS.
+    if let Ok(path) = std::env::var("CLINE_AVX1_BENCH_READY") {
+        let elapsed = APP_STARTED.get().map(|start| start.elapsed().as_millis());
+        let value = serde_json::json!({"pid": std::process::id(), "main_to_hub_ready_ms": elapsed});
+        let _ = fs::write(path, value.to_string());
+    }
+}
+
+#[tauri::command]
+fn set_interface_language(app: tauri::AppHandle, language: String) -> Result<(), String> {
+    if !matches!(language.as_str(), "en" | "ru") {
+        return Err("Unsupported interface language".to_string());
+    }
+    let directory = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    fs::create_dir_all(&directory).map_err(|e| e.to_string())?;
+    fs::write(directory.join("interface-language.txt"), &language).map_err(|e| e.to_string())?;
+    native_locale::set(&language);
+    let menu = app.state::<TrayMenuState>();
+    for (item, label) in &menu.static_items {
+        item.set_text(native_locale::text(label))
+            .map_err(|e| e.to_string())?;
+    }
+    let count = menu.active_sessions.load(AtomicOrdering::Relaxed);
+    if count != u32::MAX {
+        let _ = menu.running_sessions.set_text(running_sessions_text(count));
+    }
+    let update_state = app.state::<Arc<UpdateState>>();
+    refresh_tray_status(&app, &update_state);
+    Ok(())
+}
+
+#[tauri::command]
 fn get_update_status(update_state: State<'_, Arc<UpdateState>>) -> UpdateStatus {
     update_state.snapshot()
 }
 
+async fn ensure_update_safe(app: &tauri::AppHandle) -> Result<(), String> {
+    let message = || {
+        if native_locale::is_russian() {
+        "Не удалось подтвердить отсутствие активных сеансов во всех Hub. Дождитесь их завершения и повторите."
+    } else { "Could not confirm that all Hub sessions are idle. Wait for them to finish and retry." }.to_string()
+    };
+    let endpoint = app
+        .state::<Arc<DesktopBackendState>>()
+        .ws_endpoint
+        .lock()
+        .ok()
+        .and_then(|value| value.clone())
+        .ok_or_else(message)?;
+    let mut url = tauri::Url::parse(&endpoint).map_err(|_| message())?;
+    if !matches!(
+        url.host_str(),
+        Some("127.0.0.1") | Some("[::1]") | Some("::1")
+    ) || url.port().is_none()
+    {
+        return Err(message());
+    }
+    url.set_scheme("http").map_err(|_| message())?;
+    url.set_path("/update-safety");
+    let client = reqwest::Client::builder()
+        .no_proxy()
+        .redirect(reqwest::redirect::Policy::none())
+        .timeout(Duration::from_secs(5))
+        .build()
+        .map_err(|_| message())?;
+    // Never include the URL in errors: its query carries the approval token.
+    let response = client
+        .get(url)
+        .send()
+        .await
+        .map_err(|_| message())?
+        .error_for_status()
+        .map_err(|_| message())?;
+    let result: serde_json::Value = response.json().await.map_err(|_| message())?;
+    if result.get("safe").and_then(|value| value.as_bool()) == Some(true) {
+        Ok(())
+    } else {
+        Err(message())
+    }
+}
+
 #[tauri::command]
-fn restart_to_apply_update(app: tauri::AppHandle) {
+async fn restart_to_apply_update(app: tauri::AppHandle) -> Result<(), String> {
+    ensure_update_safe(&app).await?;
     apply_staged_update(&app);
+    Ok(())
 }
 
 fn apply_staged_update(app: &tauri::AppHandle) {
+    // A missing status is not evidence that there are no active sessions.
+    let sessions = app
+        .state::<TrayMenuState>()
+        .active_sessions
+        .load(AtomicOrdering::Relaxed);
+    if sessions != 0 {
+        let state = app.state::<Arc<UpdateState>>();
+        state.set(
+            "error",
+            None,
+            Some(
+                if native_locale::is_russian() {
+                    "Дождитесь завершения активных сеансов перед обновлением."
+                } else {
+                    "Wait for active sessions to finish before updating."
+                }
+                .to_string(),
+            ),
+        );
+        refresh_tray_status(app, &state);
+        return;
+    }
     let backend_state = app.state::<Arc<DesktopBackendState>>();
     let update_state = app.state::<Arc<UpdateState>>();
     // Neither restart() nor install() returns, so the run-loop Exit handler
@@ -953,6 +1064,13 @@ fn apply_staged_update(app: &tauri::AppHandle) {
     // first. On Windows this also releases the bundled CLI's file lock,
     // which the NSIS installer needs in order to replace it.
     backend_state.stop();
+    // The isolated fork Hub also holds cline-cli.exe open. Stop it only after
+    // the session gate, before asking NSIS to replace any installed files.
+    if let Some(context) = app.try_state::<AppContext>() {
+        if let Some(cli) = resolve_desktop_cli_path(&context) {
+            let _ = Command::new(cli).args(["hub", "stop"]).status();
+        }
+    }
     // Windows and Linux: install the bytes staged by the background cycle.
     // On Windows install() launches the NSIS installer (which relaunches the
     // app when done) and exits this process, so it only returns on failure.
@@ -1035,7 +1153,17 @@ async fn check_for_update_now(
 /// outcome (up to date / update ready / failed) in its own UI.
 fn handle_check_for_updates_menu(app: &tauri::AppHandle) {
     if app.state::<Arc<UpdateState>>().ready_version().is_some() {
-        apply_staged_update(app);
+        let app = app.clone();
+        tauri::async_runtime::spawn(async move {
+            match ensure_update_safe(&app).await {
+                Ok(()) => apply_staged_update(&app),
+                Err(error) => {
+                    let state = app.state::<Arc<UpdateState>>();
+                    set_update_status(&app, &state, "error", None, Some(error));
+                    show_main_window(&app);
+                }
+            }
+        });
     } else {
         queue_desktop_action(app, DesktopAction::CheckForUpdates);
     }
@@ -1492,7 +1620,33 @@ fn setup_tray_icon(
     app: &tauri::App,
     check_for_updates: Option<MenuItem<tauri::Wry>>,
 ) -> tauri::Result<()> {
-    let status = MenuItem::new(app, "Status: Healthy", false, None::<&str>)?;
+    let status = MenuItem::new(
+        app,
+        native_locale::text("Status: Healthy"),
+        false,
+        None::<&str>,
+    )?;
+    let new_session = MenuItem::with_id(
+        app,
+        TRAY_NEW_SESSION_MENU_ID,
+        native_locale::text("New Session"),
+        true,
+        None::<&str>,
+    )?;
+    let settings = MenuItem::with_id(
+        app,
+        TRAY_SETTINGS_MENU_ID,
+        native_locale::text("Settings"),
+        true,
+        None::<&str>,
+    )?;
+    let quit = MenuItem::with_id(
+        app,
+        TRAY_QUIT_MENU_ID,
+        native_locale::text("Quit"),
+        true,
+        None::<&str>,
+    )?;
     let running_sessions = MenuItem::new(app, running_sessions_text(0), false, None::<&str>)?;
     let mut menu = MenuBuilder::new(app)
         .text(
@@ -1511,12 +1665,12 @@ fn setup_tray_icon(
     }
     let menu = menu
         .separator()
-        .text(TRAY_NEW_SESSION_MENU_ID, "New Session")
+        .item(&new_session)
         .item(&running_sessions)
         .separator()
-        .text(TRAY_SETTINGS_MENU_ID, "Settings")
+        .item(&settings)
         .separator()
-        .text(TRAY_QUIT_MENU_ID, "Quit")
+        .item(&quit)
         .build()?;
 
     // This is the same glyph used by webview/components/cline-logo.tsx,
@@ -1547,6 +1701,12 @@ fn setup_tray_icon(
     })
     .build(app)?;
     app.manage(TrayMenuState {
+        static_items: vec![
+            (new_session, "New Session"),
+            (settings, "Settings"),
+            (quit, "Quit"),
+        ],
+        active_sessions: std::sync::atomic::AtomicU32::new(u32::MAX),
         status,
         hub_healthy: Mutex::new(true),
         running_sessions,
@@ -1568,6 +1728,9 @@ fn set_tray_status(
     hub_healthy: bool,
     running_sessions: u32,
 ) -> Result<(), String> {
+    tray_menu
+        .active_sessions
+        .store(running_sessions, AtomicOrdering::Relaxed);
     if let Ok(mut healthy) = tray_menu.hub_healthy.lock() {
         *healthy = hub_healthy;
     }
@@ -1592,6 +1755,15 @@ fn set_tray_status(
 }
 
 fn main() {
+    let _ = APP_STARTED.set(Instant::now());
+    // Fork data and the bundled CLI stay separate from other Cline installs.
+    // Set before creating threads. Explicit user data-directory overrides win.
+    if non_empty_env("CLINE_DIR").is_none() && non_empty_env("CLINE_DATA_DIR").is_none() {
+        if let Ok(home) = std::env::var("USERPROFILE").or_else(|_| std::env::var("HOME")) {
+            std::env::set_var("CLINE_DIR", PathBuf::from(home).join(".cline-avx1"));
+        }
+    }
+    std::env::set_var("CLINE_NO_AUTO_UPDATE", "1");
     // Must stay first: WebKitGTK reads the environment while initializing,
     // and the variable has to be in place before any thread exists.
     #[cfg(target_os = "linux")]
@@ -1619,6 +1791,13 @@ fn main() {
         .manage(DesktopActionState::default())
         .manage(terminal::TerminalState::default())
         .setup(move |app| {
+            let language = app
+                .path()
+                .app_config_dir()
+                .ok()
+                .and_then(|dir| fs::read_to_string(dir.join("interface-language.txt")).ok())
+                .unwrap_or_else(|| "ru".to_string());
+            native_locale::set(language.trim());
             app.manage(AppContext {
                 launch_cwd: launch_cwd.clone(),
                 workspace_root: workspace_root.clone(),
@@ -1703,6 +1882,8 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            record_desktop_ready,
+            set_interface_language,
             get_desktop_backend_endpoint,
             pick_workspace_directory,
             open_mcp_settings_file,

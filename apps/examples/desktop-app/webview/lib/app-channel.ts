@@ -9,8 +9,8 @@
  * See apps/examples/desktop-app/EXPERIMENTAL.md for the channel model.
  */
 
-export const STABLE_PRODUCT_NAME = "Cline";
-export const BETA_PRODUCT_NAME = "Cline Beta";
+export const STABLE_PRODUCT_NAME = "Cline Desktop AVX1 RU";
+export const BETA_PRODUCT_NAME = STABLE_PRODUCT_NAME;
 
 export function isBetaVersion(version: string | null | undefined): boolean {
 	return typeof version === "string" && version.includes("-beta");

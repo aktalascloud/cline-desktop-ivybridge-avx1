@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import {
 	ArrowDown,
@@ -81,6 +82,7 @@ export function SourceControlColumn({
 	onOpenCommitFile,
 	selectedCommitFile,
 }: SourceControlColumnProps) {
+	const t = useTranslation();
 	const [expandedCommits, setExpandedCommits] = useState<Set<string>>(
 		() => new Set(),
 	);
@@ -126,9 +128,9 @@ export function SourceControlColumn({
 			<div className="flex flex-1 flex-col items-center justify-center gap-1 p-6 text-center text-xs text-muted-foreground">
 				<GitBranch className="mb-1 size-4" />
 				<span className="font-medium text-foreground">
-					Not a git repository
+					{t("Not a git repository")}
 				</span>
-				<span>Initialize one to track changes here.</span>
+				<span>{t("Initialize one to track changes here.")}</span>
 			</div>
 		);
 	}
@@ -146,7 +148,8 @@ export function SourceControlColumn({
 				) : null}
 				{!state && loading ? (
 					<div className="flex items-center gap-2 px-2 py-2 text-[11px] text-muted-foreground">
-						<Loader2 className="size-3 animate-spin" /> Reading repository...
+						<Loader2 className="size-3 animate-spin" />
+						{t(" Reading repository...")}
 					</div>
 				) : null}
 				{state ? (
@@ -156,7 +159,7 @@ export function SourceControlColumn({
 								staged.length > 0 ? (
 									<RowAction
 										disabled={busy}
-										label="Unstage all"
+										label={t("Unstage all")}
 										onClick={() =>
 											void onAction({
 												type: "unstage",
@@ -169,7 +172,7 @@ export function SourceControlColumn({
 								) : null
 							}
 							count={staged.length}
-							label="Staged changes"
+							label={t("Staged changes")}
 							onToggle={() => setStagedOpen((open) => !open)}
 							open={stagedOpen}
 						>
@@ -205,14 +208,14 @@ export function SourceControlColumn({
 									<>
 										<RowAction
 											disabled={busy}
-											label="Discard all changes"
+											label={t("Discard all changes")}
 											onClick={() => onRequestDiscard(changes)}
 										>
 											<Undo2 className="size-3" />
 										</RowAction>
 										<RowAction
 											disabled={busy}
-											label="Stage all"
+											label={t("Stage all")}
 											onClick={() =>
 												void onAction({
 													type: "stage",
@@ -231,7 +234,7 @@ export function SourceControlColumn({
 									? "No changes in the working tree"
 									: undefined
 							}
-							label="Changes"
+							label={t("Changes")}
 							onToggle={() => setChangesOpen((open) => !open)}
 							open={changesOpen}
 						>
@@ -271,7 +274,7 @@ export function SourceControlColumn({
 						<Group
 							count={state.commits.length}
 							empty="No commits yet"
-							label="Recent commits"
+							label={t("Recent commits")}
 							onToggle={() => setCommitsOpen((open) => !open)}
 							open={commitsOpen}
 						>
@@ -308,8 +311,8 @@ export function SourceControlColumn({
 											<div>
 												{filesState?.loading ? (
 													<CommitDetailRow last={isLast}>
-														<Loader2 className="size-3 animate-spin" /> Loading
-														files...
+														<Loader2 className="size-3 animate-spin" />
+														{t(" Loading files...")}
 													</CommitDetailRow>
 												) : filesState?.error ? (
 													<CommitDetailRow last={isLast}>
@@ -319,7 +322,7 @@ export function SourceControlColumn({
 													</CommitDetailRow>
 												) : filesState?.files?.length === 0 ? (
 													<CommitDetailRow last={isLast}>
-														No file changes
+														{t("No file changes")}
 													</CommitDetailRow>
 												) : (
 													filesState?.files?.map((file) => (
@@ -390,6 +393,7 @@ export function BranchIndicator({
 }: {
 	state: SourceControlState | null;
 }) {
+	const t = useTranslation();
 	if (!state?.root) return null;
 	return (
 		<span
@@ -397,11 +401,11 @@ export function BranchIndicator({
 			title={
 				state.hasUpstream
 					? `${state.ahead} ahead, ${state.behind} behind upstream`
-					: "No upstream branch"
+					: t("No upstream branch")
 			}
 		>
 			<GitBranch className="size-3 shrink-0" />
-			<span className="min-w-0 truncate">{state.branch ?? "detached"}</span>
+			<span className="min-w-0 truncate">{state.branch ?? t("detached")}</span>
 			{state.ahead > 0 ? (
 				<span className="flex items-center font-mono text-[10px]">
 					<ArrowUp className="size-2.5" />
@@ -434,6 +438,7 @@ function CommitRail({
 	last?: boolean;
 	single?: boolean;
 }) {
+	const t = useTranslation();
 	const rail = single
 		? null
 		: dot && first
@@ -464,7 +469,7 @@ function CommitRail({
 							? "border-muted-foreground/60"
 							: "border-primary bg-primary",
 					)}
-					title={dot === "pushed" ? "Pushed" : "Not pushed"}
+					title={dot === "pushed" ? t("Pushed") : t("Not pushed")}
 				/>
 			) : null}
 		</span>
@@ -478,6 +483,7 @@ function CommitDetailRow({
 	last: boolean;
 	children: ReactNode;
 }) {
+	const t = useTranslation();
 	return (
 		<div className="flex h-7 items-center gap-1.5 px-2 text-[11px] text-muted-foreground">
 			<CommitRail last={last} />
@@ -503,6 +509,7 @@ function Group({
 	empty?: string;
 	children: ReactNode;
 }) {
+	const t = useTranslation();
 	return (
 		<section>
 			<div className="group flex h-7 items-center gap-1.5 px-1 text-[11px] font-medium text-muted-foreground">
@@ -548,6 +555,7 @@ function RowAction({
 	disabled?: boolean;
 	children: ReactNode;
 }) {
+	const t = useTranslation();
 	return (
 		<button
 			aria-label={label}
@@ -578,6 +586,7 @@ function ChangeRow({
 	actions: ReactNode;
 	onOpen: () => void;
 }) {
+	const t = useTranslation();
 	const directory = directoryOf(file.path);
 	return (
 		<div
@@ -620,7 +629,7 @@ function ChangeRow({
 			{session ? (
 				<span
 					className="size-1.5 shrink-0 rounded-full bg-primary"
-					title="Changed in this session"
+					title={t("Changed in this session")}
 				/>
 			) : null}
 			{file.additions !== null || file.deletions !== null ? (

@@ -1,3 +1,4 @@
+import { t, useTranslation } from "@/lib/i18n";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export function ExportDiagnosticsDialog({
 	open,
 	onOpenChange,
 }: ExportDiagnosticsDialogProps) {
+	const t = useTranslation();
 	const [sessions, setSessions] = useState<SessionHistoryItem[]>([]);
 	const [selected, setSelected] = useState<Set<string>>(new Set());
 	const [loading, setLoading] = useState(false);
@@ -104,23 +106,23 @@ export function ExportDiagnosticsDialog({
 		<Dialog onOpenChange={onOpenChange} open={open}>
 			<DialogContent className="grid max-h-[min(640px,calc(100dvh-2rem))] w-[min(560px,calc(100vw-2rem))] max-w-none grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] gap-4 sm:max-w-none">
 				<DialogHeader className="min-w-0">
-					<DialogTitle>Export diagnostics</DialogTitle>
+					<DialogTitle>{t("Export diagnostics")}</DialogTitle>
 					<DialogDescription>
-						Saves a text file with app info, recent logs, and the metadata of
-						the sessions you pick. Prompts, conversation contents, and API keys
-						are never included.
+						{t(
+							"Saves a text file with app info, recent logs, and the metadata of the sessions you pick. Prompts, conversation contents, and API keys are never included.",
+						)}
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex min-h-0 min-w-0 flex-col gap-2">
-					<p className="text-sm font-medium text-foreground">Sessions</p>
+					<p className="text-sm font-medium text-foreground">{t("Sessions")}</p>
 					{loading ? (
 						<div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
 							<Loader2 className="size-4 animate-spin" />
-							Loading sessions…
+							{t("Loading sessions…")}
 						</div>
 					) : sessions.length === 0 ? (
 						<p className="py-6 text-sm text-muted-foreground">
-							No local sessions on this machine yet.
+							{t("No local sessions on this machine yet.")}
 						</p>
 					) : (
 						<div className="min-h-0 overflow-y-auto rounded-md border">
@@ -168,11 +170,11 @@ export function ExportDiagnosticsDialog({
 						onClick={() => onOpenChange(false)}
 						variant="outline"
 					>
-						Cancel
+						{t("Cancel")}
 					</Button>
 					<Button disabled={exporting || loading} onClick={exportBundle}>
 						{exporting ? <Loader2 className="size-4 animate-spin" /> : null}
-						Export
+						{t("Export")}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

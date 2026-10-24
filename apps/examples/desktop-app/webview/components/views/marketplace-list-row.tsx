@@ -1,3 +1,4 @@
+import { t, useTranslation } from "@/lib/i18n";
 import { BadgeCheck, Check, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ export function MarketplaceTypeGlyph({
 	meta: MarketplaceTypeMeta;
 	className?: string;
 }) {
+	const t = useTranslation();
 	const Icon = meta.icon;
 	return (
 		<span
@@ -40,6 +42,7 @@ export function MarketplaceTypeGlyph({
 }
 
 export function MarketplaceTypePill({ meta }: { meta: MarketplaceTypeMeta }) {
+	const t = useTranslation();
 	const Icon = meta.icon;
 	return (
 		<span
@@ -79,6 +82,7 @@ export function MarketplaceListRow({
 	onSelect: () => void;
 	selected: boolean;
 }) {
+	const t = useTranslation();
 	return (
 		<button
 			className={cn(
@@ -105,7 +109,7 @@ export function MarketplaceListRow({
 			{showType ? <MarketplaceTypePill meta={meta} /> : null}
 			{installed ? (
 				<Check
-					aria-label="Installed"
+					aria-label={t("Installed")}
 					className="size-3.5 shrink-0 text-emerald-500"
 				/>
 			) : null}

@@ -298,7 +298,9 @@ pub fn terminal_spawn(
                         carry.extend_from_slice(&buf[..n]);
                         let (text, rest) = split_utf8(std::mem::take(&mut carry));
                         carry = rest;
-                        if !text.is_empty() && on_event.send(TerminalEvent::Data { data: text }).is_err() {
+                        if !text.is_empty()
+                            && on_event.send(TerminalEvent::Data { data: text }).is_err()
+                        {
                             break;
                         }
                     }

@@ -1,4 +1,6 @@
 "use client";
+import { readLanguage } from "@/lib/i18n";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -17,6 +19,7 @@ import { desktopClient } from "@/lib/desktop-client";
 import type { HubStatus } from "@/lib/hub-status";
 
 export function HubPanel() {
+	const t = useTranslation();
 	const [status, setStatus] = useState<HubStatus | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [confirmOpen, setConfirmOpen] = useState(false);
@@ -75,7 +78,7 @@ export function HubPanel() {
 			<div className="flex items-center justify-between gap-4">
 				<div className="min-w-0">
 					<h2 id="hub-heading" className="text-lg font-semibold">
-						Cline Hub
+						{t("Cline Hub")}
 					</h2>
 					{status ? (
 						<p className="mt-1 break-all font-mono text-xs text-muted-foreground">
@@ -83,7 +86,9 @@ export function HubPanel() {
 						</p>
 					) : null}
 					<p className="mt-1 text-sm text-muted-foreground">
-						Restart the local hub to stop active sessions and reconnect clients.
+						{t(
+							"Restart the local hub to stop active sessions and reconnect clients.",
+						)}
 					</p>
 				</div>
 				<Button
@@ -95,7 +100,7 @@ export function HubPanel() {
 					<RefreshCw
 						className={restarting ? "size-3 animate-spin" : "size-3"}
 					/>
-					{restarting ? "Restarting…" : "Restart Hub"}
+					{restarting ? t("Restarting…") : t("Restart Hub")}
 				</Button>
 			</div>
 			{error ? (
@@ -104,13 +109,15 @@ export function HubPanel() {
 				</p>
 			) : null}
 			{!status && !error ? (
-				<p className="mt-4 text-sm text-muted-foreground">Loading hub…</p>
+				<p className="mt-4 text-sm text-muted-foreground">
+					{t("Loading hub…")}
+				</p>
 			) : null}
 			{status ? (
 				<div className="mt-4 grid gap-4 lg:grid-cols-2">
 					<div className="min-w-0 rounded-lg border">
 						<h3 className="flex items-center gap-2 border-b px-4 py-3 text-sm font-semibold">
-							Connected clients
+							{t("Connected clients")}
 							<Badge variant="secondary">{status.clients.length}</Badge>
 						</h3>
 						<ul className="max-h-72 overflow-auto divide-y">
@@ -123,20 +130,23 @@ export function HubPanel() {
 										{client.clientType} · {client.clientId}
 									</p>
 									<p className="mt-1 text-xs text-muted-foreground">
-										Connected {new Date(client.connectedAt).toLocaleString()}
+										{t("Connected ")}
+										{new Date(client.connectedAt).toLocaleString(
+											readLanguage(),
+										)}
 									</p>
 								</li>
 							))}
 						</ul>
 						{status.clients.length === 0 ? (
 							<p className="p-4 text-sm text-muted-foreground">
-								No connected clients.
+								{t("No connected clients.")}
 							</p>
 						) : null}
 					</div>
 					<div className="min-w-0 rounded-lg border">
 						<h3 className="border-b px-4 py-3 text-sm font-semibold">
-							Recent events
+							{t("Recent events")}
 						</h3>
 						<ol className="max-h-72 overflow-auto divide-y">
 							{status.events.map((event) => (
@@ -147,7 +157,9 @@ export function HubPanel() {
 											className="shrink-0 text-xs text-muted-foreground"
 											dateTime={new Date(event.timestamp).toISOString()}
 										>
-											{new Date(event.timestamp).toLocaleTimeString()}
+											{new Date(event.timestamp).toLocaleTimeString(
+												readLanguage(),
+											)}
 										</time>
 									</div>
 									<p className="break-words text-xs text-muted-foreground">
@@ -158,8 +170,9 @@ export function HubPanel() {
 						</ol>
 						{status.events.length === 0 ? (
 							<p className="p-4 text-sm text-muted-foreground">
-								No recent events. Activity is recorded while the desktop app is
-								running.
+								{t(
+									"No recent events. Activity is recorded while the desktop app is running.",
+								)}
 							</p>
 						) : null}
 					</div>
@@ -173,21 +186,23 @@ export function HubPanel() {
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Restart Cline Hub?</AlertDialogTitle>
+						<AlertDialogTitle>{t("Restart Cline Hub?")}</AlertDialogTitle>
 						<AlertDialogDescription>
-							This stops the local hub and its active sessions, then starts a
-							fresh hub. Connected desktop, CLI, and VS Code clients will
-							disconnect and reconnect.
+							{t(
+								"This stops the local hub and its active sessions, then starts a fresh hub. Connected desktop, CLI, and VS Code clients will disconnect and reconnect.",
+							)}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel disabled={restarting}>Cancel</AlertDialogCancel>
+						<AlertDialogCancel disabled={restarting}>
+							{t("Cancel")}
+						</AlertDialogCancel>
 						<Button
 							variant="destructive"
 							disabled={restarting}
 							onClick={() => void restart()}
 						>
-							{restarting ? "Restarting…" : "Restart Hub"}
+							{restarting ? t("Restarting…") : t("Restart Hub")}
 						</Button>
 					</AlertDialogFooter>
 				</AlertDialogContent>

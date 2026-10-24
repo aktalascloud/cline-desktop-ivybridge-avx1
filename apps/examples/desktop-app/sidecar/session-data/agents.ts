@@ -73,11 +73,14 @@ export function readChildSessionMessages(
 		return null;
 	}
 	let record: { parentSessionId?: string; messagesPath?: string } | undefined;
+	const store = new SqliteSessionStore();
 	try {
-		record = new SqliteSessionStore().get(trimmed);
+		record = store.get(trimmed);
 	} catch {
 		// No session database on this host; nothing to resolve.
 		return null;
+	} finally {
+		store.close();
 	}
 	if (!record?.parentSessionId) {
 		return null;
@@ -156,31 +159,35 @@ export function listSessionAgents(
 		return [];
 	}
 	const store = new SqliteSessionStore();
-	const out: SessionAgentRecord[] = [];
-	for (const record of store.listChildren(trimmedRootId, limit)) {
-		const agentId = record.agentId?.trim();
-		if (!agentId) {
-			continue;
+	try {
+		const out: SessionAgentRecord[] = [];
+		for (const record of store.listChildren(trimmedRootId, limit)) {
+			const agentId = record.agentId?.trim();
+			if (!agentId) {
+				continue;
+			}
+			const messagesPath = resolveChildMessagesPath(record);
+			const messages = messagesPath ? readMessagesFile(messagesPath) : null;
+			out.push({
+				sessionId: record.sessionId,
+				agentId,
+				parentAgentId: record.parentAgentId,
+				kind: record.sessionId.includes(TEAM_TASK_MARKER)
+					? "teamtask"
+					: "subagent",
+				status: record.status,
+				prompt: record.prompt,
+				lastAction: messages?.length ? deriveLastAction(messages) : undefined,
+				teamName: record.teamName,
+				provider: record.provider || undefined,
+				model: record.model || undefined,
+				startedAt: record.startedAt,
+				endedAt: record.endedAt ?? undefined,
+				hasMessages: Boolean(messages && messages.length > 0),
+			});
 		}
-		const messagesPath = resolveChildMessagesPath(record);
-		const messages = messagesPath ? readMessagesFile(messagesPath) : null;
-		out.push({
-			sessionId: record.sessionId,
-			agentId,
-			parentAgentId: record.parentAgentId,
-			kind: record.sessionId.includes(TEAM_TASK_MARKER)
-				? "teamtask"
-				: "subagent",
-			status: record.status,
-			prompt: record.prompt,
-			lastAction: messages?.length ? deriveLastAction(messages) : undefined,
-			teamName: record.teamName,
-			provider: record.provider || undefined,
-			model: record.model || undefined,
-			startedAt: record.startedAt,
-			endedAt: record.endedAt ?? undefined,
-			hasMessages: Boolean(messages && messages.length > 0),
-		});
+		return out;
+	} finally {
+		store.close();
 	}
-	return out;
 }

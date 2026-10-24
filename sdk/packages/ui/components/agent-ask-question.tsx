@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import {
 	type KeyboardEvent as ReactKeyboardEvent,
@@ -59,6 +60,7 @@ export function AgentAskQuestion({
 	onAnswers,
 	pendingAnswers = {},
 }: AgentAskQuestionProps) {
+	const t = useTranslation();
 	const [selections, setSelections] = useState<
 		Readonly<Record<string, readonly string[]>>
 	>({});
@@ -68,7 +70,7 @@ export function AgentAskQuestion({
 
 	return (
 		<section
-			aria-label="Follow-up question"
+			aria-label={t("Follow-up question")}
 			className="cline-ui-agent-ask-question flex flex-col gap-2"
 		>
 			{items.map((item, itemIndex) => {
@@ -167,7 +169,7 @@ export function AgentAskQuestion({
 
 									{item.multiple ? (
 										<div className="cline-ui-agent-ask-question__multiple-hint text-cline-ui-sm text-cline-ui-muted-foreground">
-											Select all that apply.
+											{t("Select all that apply.")}
 										</div>
 									) : null}
 									{item.description ? (
@@ -185,7 +187,7 @@ export function AgentAskQuestion({
 						</div>
 
 						<fieldset
-							aria-label="Answer options"
+							aria-label={t("Answer options")}
 							className="cline-ui-agent-ask-question__options m-0 flex min-w-0 flex-col border-0 px-1 py-4"
 							onKeyDown={handleOptionKeyDown}
 						>
@@ -228,7 +230,7 @@ export function AgentAskQuestion({
 							<div className="flex items-center justify-end gap-2">
 								{item.multiple ? null : (
 									<input
-										aria-label="Custom answer"
+										aria-label={t("Custom answer")}
 										className="cline-ui-agent-ask-question__custom min-w-0 flex-1 h-8 rounded-cline-ui-md border border-cline-ui-border bg-cline-ui-background px-2 text-cline-ui-foreground text-cline-ui-sm outline-none focus:border-[color-mix(in_oklab,var(--cline-ui-primary)_50%,transparent)] focus:shadow-[0_0_0_1px_color-mix(in_oklab,var(--cline-ui-primary)_20%,transparent)]"
 										disabled={isPending}
 										onChange={(event) => {
@@ -244,7 +246,7 @@ export function AgentAskQuestion({
 												submit();
 											}
 										}}
-										placeholder="Or type your own answer…"
+										placeholder={t("Or type your own answer…")}
 										type="text"
 										value={customAnswer}
 									/>
@@ -260,10 +262,10 @@ export function AgentAskQuestion({
 									{isPending ? (
 										<>
 											<Spinner />
-											Sending…
+											{t("Sending…")}
 										</>
 									) : (
-										"Submit"
+										t("Submit")
 									)}
 								</Button>
 							</div>

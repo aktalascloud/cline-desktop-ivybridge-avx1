@@ -309,6 +309,7 @@ const CLIENT_COUNT_EXIT_TIMEOUT_MS = 3_000;
  * Skipped for npx, dev, unknown installs. Disable with CLINE_NO_AUTO_UPDATE=1.
  */
 export function autoUpdateOnStartup(): void {
+	if (process.env.CLINE_DESKTOP_DISTRIBUTION === "avx1") return;
 	if (process.env.IS_DEV === "true") return;
 	if (process.env.CLINE_NO_AUTO_UPDATE === "1") return;
 	if (!isAutoUpdateEnabledGlobally()) return;
@@ -403,6 +404,7 @@ async function otherCliClientsAttached(): Promise<boolean> {
 export async function applyDeferredUpdate(
 	pending?: ManualUpdateCommand,
 ): Promise<"none" | "deferred" | "started"> {
+	if (process.env.CLINE_DESKTOP_DISTRIBUTION === "avx1") return "none";
 	if (!pending) {
 		// Short-lived commands can reach exit before the startup version check
 		// resolves; give it a brief grace so one-shot-only usage still updates.
@@ -453,6 +455,12 @@ export interface CheckForUpdatesOptions {
 export async function checkForUpdates(
 	options: CheckForUpdatesOptions = {},
 ): Promise<number> {
+	if (process.env.CLINE_DESKTOP_DISTRIBUTION === "avx1") {
+		writeln(
+			"Cline Desktop AVX1 RU: use the signed Desktop updater. https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest",
+		);
+		return 0;
+	}
 	const currentVersion = version;
 	const includeKanban = options.includeKanban ?? true;
 	writeln(

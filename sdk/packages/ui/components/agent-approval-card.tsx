@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import { type ReactNode, useId } from "react";
 
@@ -37,6 +38,7 @@ export function AgentApprovalCard({
 	responding,
 	title,
 }: AgentApprovalCardProps) {
+	const t = useTranslation();
 	const titleId = useId();
 	const isPending = responding !== undefined;
 
@@ -82,10 +84,10 @@ export function AgentApprovalCard({
 					{responding === "approve" ? (
 						<>
 							<Spinner />
-							Approving...
+							{t("Approving...")}
 						</>
 					) : (
-						"Approve"
+						t("Approve")
 					)}
 				</button>
 				<button
@@ -97,10 +99,10 @@ export function AgentApprovalCard({
 					{responding === "reject" ? (
 						<>
 							<Spinner />
-							Rejecting...
+							{t("Rejecting...")}
 						</>
 					) : (
-						"Reject"
+						t("Reject")
 					)}
 				</button>
 			</div>

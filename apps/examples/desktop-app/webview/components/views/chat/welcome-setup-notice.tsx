@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Cable } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export function WelcomeSetupNotice({
 	onOpenSetup: () => void;
 	onOpenModelSettings: () => void;
 }) {
+	const t = useTranslation();
 	return (
 		// <output> carries an implicit "status" role, announcing the notice to
 		// assistive tech when it appears.
@@ -25,10 +27,12 @@ export function WelcomeSetupNotice({
 				</span>
 				<div className="min-w-0">
 					<p className="text-sm font-semibold text-foreground">
-						Connect a model to start building
+						{t("Connect a model to start building")}
 					</p>
 					<p className="mt-0.5 text-[13px] text-muted-foreground">
-						Sign in with Cline or add an API key — it takes under a minute.
+						{t(
+							"Sign in with Cline or add an API key — it takes under a minute.",
+						)}
 					</p>
 				</div>
 			</div>
@@ -39,7 +43,7 @@ export function WelcomeSetupNotice({
 					size="sm"
 					type="button"
 				>
-					Connect a model
+					{t("Connect a model")}
 				</Button>
 				<Button
 					className="rounded-full"
@@ -48,7 +52,7 @@ export function WelcomeSetupNotice({
 					type="button"
 					variant="ghost"
 				>
-					Model settings
+					{t("Model settings")}
 				</Button>
 			</div>
 		</output>

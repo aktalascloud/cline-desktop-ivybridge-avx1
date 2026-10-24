@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Bug, ExternalLink, Loader2, Rss, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -50,6 +51,7 @@ function useAppVersion(): string | null {
 }
 
 function UpdateAction() {
+	const t = useTranslation();
 	const status = useAppUpdateStatus();
 	const [checking, setChecking] = useState(false);
 	const [checkResult, setCheckResult] = useState<
@@ -88,7 +90,7 @@ function UpdateAction() {
 					type="button"
 				>
 					{restarting ? <Loader2 className="size-3 animate-spin" /> : null}
-					Restart to update
+					{t("Restart to update")}
 				</Button>
 			) : (
 				<Button
@@ -110,7 +112,7 @@ function UpdateAction() {
 					) : (
 						<Rss className="size-3" />
 					)}
-					Check for updates
+					{t("Check for updates")}
 				</Button>
 			)}
 			{description ? (
@@ -131,13 +133,14 @@ function ReleaseNotes({
 	releases: ChangelogRelease[] | null;
 	error: string | null;
 }) {
+	const t = useTranslation();
 	if (error) {
 		return <p className="py-4 text-sm text-muted-foreground">{error}</p>;
 	}
 	if (!releases) {
 		return (
 			<p className="py-4 text-sm text-muted-foreground">
-				Loading release notes…
+				{t("Loading release notes…")}
 			</p>
 		);
 	}
@@ -152,13 +155,13 @@ function ReleaseNotes({
 						<button
 							className="font-mono text-sm text-foreground hover:underline"
 							onClick={() => void openExternalUrl(releaseUrl(release.version))}
-							title="Open this release on GitHub"
+							title={t("Open this release on GitHub")}
 							type="button"
 						>
 							v{release.version}
 						</button>
 						{release.version === appVersion ? (
-							<Badge variant="secondary">Installed</Badge>
+							<Badge variant="secondary">{t("Installed")}</Badge>
 						) : null}
 					</div>
 					<MemoizedMarkdown
@@ -176,6 +179,7 @@ export function AboutContent({
 }: {
 	onOpenConnectors: () => void;
 }) {
+	const t = useTranslation();
 	const appVersion = useAppVersion();
 	const [releases, setReleases] = useState<ChangelogRelease[] | null>(null);
 	const [changelogError, setChangelogError] = useState<string | null>(null);
@@ -213,7 +217,7 @@ export function AboutContent({
 						) : null}
 						{isBetaVersion(appVersion) ? (
 							<Badge className="uppercase tracking-wide" variant="secondary">
-								Beta
+								{t("Beta")}
 							</Badge>
 						) : null}
 					</span>
@@ -221,14 +225,19 @@ export function AboutContent({
 				title={productNameForVersion(appVersion)}
 			/>
 			<section className="max-w-344">
+				<p className="border-b py-4 text-sm text-muted-foreground">
+					{t(
+						"Unofficial community fork. Source, patches and verified releases are maintained by aktalascloud.",
+					)}
+				</p>
 				{whatsNew ? (
 					<div className="flex items-center justify-between gap-5 border-b py-4 max-[720px]:flex-col max-[720px]:items-stretch">
 						<div className="flex flex-col gap-1">
 							<p className="text-base font-semibold text-foreground">
-								Highlights
+								{t("Highlights")}
 							</p>
 							<p className="text-sm text-muted-foreground">
-								A short tour of the biggest recent additions.
+								{t("A short tour of the biggest recent additions.")}
 							</p>
 						</div>
 						<Button
@@ -239,7 +248,7 @@ export function AboutContent({
 							variant="outline"
 						>
 							<Sparkles className="size-3" />
-							Show what's new
+							{t("Show what's new")}
 						</Button>
 						<WhatsNewDialog
 							onOpenChange={setWhatsNewOpen}
@@ -252,10 +261,10 @@ export function AboutContent({
 				<div className="flex items-center justify-between gap-5 border-b py-4 max-[720px]:flex-col max-[720px]:items-stretch">
 					<div className="flex flex-col gap-1">
 						<p className="text-base font-semibold text-foreground">
-							Report an issue
+							{t("Report an issue")}
 						</p>
 						<p className="text-sm text-muted-foreground">
-							Found a bug or have a request? Open an issue on GitHub.
+							{t("Found a bug or have a request? Open an issue on GitHub.")}
 						</p>
 					</div>
 					<Button
@@ -266,13 +275,13 @@ export function AboutContent({
 						variant="outline"
 					>
 						<Bug className="size-3" />
-						Open GitHub issues
+						{t("Open GitHub issues")}
 					</Button>
 				</div>
 				<div className="pt-6">
 					<div className="flex items-center justify-between gap-4">
 						<h2 className="text-lg font-semibold text-foreground">
-							Release notes
+							{t("Release notes")}
 						</h2>
 						<Button
 							className="text-muted-foreground"
@@ -281,7 +290,7 @@ export function AboutContent({
 							type="button"
 							variant="ghost"
 						>
-							Full changelog
+							{t("Full changelog")}
 							<ExternalLink className="size-3" />
 						</Button>
 					</div>

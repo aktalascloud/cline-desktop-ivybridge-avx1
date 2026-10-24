@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import {
 	DEFAULT_MAX_TOTAL_MEDIA_BYTES,
@@ -112,6 +113,7 @@ export function GeneratedMediaContent({
 	className,
 	classNames,
 }: GeneratedMediaContentProps) {
+	const t = useTranslation();
 	const source = useInlineMediaUrl(media);
 	const browserOwnedSource = source?.startsWith("blob:") ? source : undefined;
 	if (!browserOwnedSource) {
@@ -131,7 +133,7 @@ export function GeneratedMediaContent({
 		case "image":
 			return (
 				<img
-					alt={media.name ?? "Generated image"}
+					alt={media.name ?? t("Generated image")}
 					className={modalityClassName}
 					data-media-id={media.id}
 					src={browserOwnedSource}

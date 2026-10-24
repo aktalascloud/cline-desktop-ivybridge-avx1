@@ -69,6 +69,8 @@ function createDestination(path: string): DestinationResult {
 		const fd = openSync(path, "a");
 		closeSync(fd);
 		const initialStats = statSync(path);
+		if (!initialStats.isFile())
+			throw new Error("Log destination must be a regular file");
 		if (
 			Date.now() - initialStats.mtimeMs >= LOG_MAX_AGE_MS ||
 			initialStats.size >= DESKTOP_LOG_MAX_BYTES

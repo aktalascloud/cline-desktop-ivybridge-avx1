@@ -1,5 +1,10 @@
 # Cline Desktop Changelog
 
+## 1.0.0
+
+- Qualification build of the unofficial Cline Desktop AVX1 RU fork, based on upstream 0.0.48. Russian/English interface, isolated updater and data directory, Windows worktree fixes, Next.js 16.3.8 and undici 7.30.1. No performance improvement is claimed before measurements.
+- Проверочная сборка неофициального Cline Desktop AVX1 RU на базе upstream 0.0.48. Русский и английский интерфейс, отдельные обновления и данные, исправления worktree для Windows, обновления безопасности. Ускорение до замеров не заявляется.
+
 ## 0.0.48
 
 - GPT-6 models (such as `gpt-6-sol` and `gpt-6.1-sol`) work on OpenAI and Azure OpenAI-compatible endpoints. Before, every request was rejected because Cline sent `max_tokens` instead of `max_completion_tokens`

@@ -94,3 +94,8 @@ apps/examples/desktop-app/webview/.next
 # Next.js generated type shim (churns between dev and build)
 apps/examples/desktop-app/webview/next-env.d.ts
 apps/examples/desktop-app/.cursor/settings.json
+
+# Fork build products and generated third-party notice inventory.
+.build-cache/
+dist/avx1/
+apps/examples/desktop-app/src-tauri/licenses/

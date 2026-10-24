@@ -1,0 +1,77 @@
+name: Windows AVX1 qualification
+on:
+  push:
+    branches: [avx1]
+    paths: ['apps/**', 'sdk/**', 'fork/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: 'Full existing commit SHA on avx1'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: cline-avx1-windows
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: github.repository == 'aktalascloud/cline-desktop-ivybridge-avx1' && github.ref == 'refs/heads/avx1'
+    runs-on: windows-2022
+    outputs:
+      sha: ${{ steps.source.outputs.sha }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ inputs.source_sha || github.sha }}
+          fetch-depth: 0
+      - id: source
+        shell: pwsh
+        env:
+          REQUESTED_SHA: ${{ inputs.source_sha || github.sha }}
+        run: |
+          $sha=(git rev-parse HEAD).Trim()
+          if($env:REQUESTED_SHA -notmatch '^[0-9a-f]{40}$' -or $sha -ne $env:REQUESTED_SHA){throw 'A full pinned SHA is required'}
+          if($sha -notmatch '^[0-9a-f]{40}$'){throw 'Invalid source SHA'}
+          git merge-base --is-ancestor $sha origin/avx1
+          if($LASTEXITCODE){throw 'Source must belong to avx1'}
+          "sha=$sha" >> $env:GITHUB_OUTPUT
+  build:
+    needs: validate
+    runs-on: windows-2022
+    environment: AVX1Release
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
+          fetch-depth: 0
+      - name: Pinned Bun and compiler environment
+        shell: pwsh
+        run: |
+          $archive=Join-Path $env:RUNNER_TEMP 'bun.zip'
+          Invoke-WebRequest https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-windows-x64-baseline.zip -OutFile $archive
+          if((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '78c221c2376f79731ccf4e4af0b3bb46d81fefa3296c5abee09ad8a1b21e68c6'){throw 'Bun hash mismatch'}
+          Expand-Archive $archive "$env:RUNNER_TEMP\bun"
+          $bun="$env:RUNNER_TEMP\bun\bun-windows-x64-baseline"
+          New-Item -ItemType HardLink "$bun\bunx.exe" -Target "$bun\bun.exe" | Out-Null
+          $bun >> $env:GITHUB_PATH
+          rustup toolchain install 1.97.0 --profile minimal --component rustfmt
+      - name: Build signed installer at pinned SHA
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+          SOURCE_SHA: ${{ needs.validate.outputs.sha }}
+        run: |
+          $vs=& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          Import-Module "$vs\Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
+          Enter-VsDevShell -VsInstallPath $vs -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64 -vcvars_ver=14.44.35207 -winsdk=10.0.26100.0'
+          & ./fork/build-windows.ps1 -SourceSha $env:SOURCE_SHA -Profile ivy-thin8
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Cline-Desktop-AVX1-RU-candidate
+          path: dist/avx1/Cline-Desktop-AVX1-RU-Setup.exe
+          retention-days: 3
+          if-no-files-found: error
+# Publication follows real installation, update, privacy and Ivy Bridge GUI
+# qualification by the local agent. CI never publishes a release automatically.

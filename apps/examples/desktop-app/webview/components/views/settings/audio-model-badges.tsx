@@ -1,8 +1,10 @@
+import { t, useTranslation } from "@/lib/i18n";
 import { AudioWaveform, Mic, WifiOff } from "lucide-react";
 import type { ProviderModel } from "@/lib/provider-schema";
 
 /** Operation and execution-mode labels shared by the voice and provider catalogs. */
 export function AudioModelBadges({ model }: { model: ProviderModel }) {
+	const t = useTranslation();
 	const transcription = model.operation === "transcription";
 	const realtime =
 		model.operation === "realtime" ||
@@ -15,8 +17,8 @@ export function AudioModelBadges({ model }: { model: ProviderModel }) {
 			<span
 				title={
 					realtime
-						? "Live audio with streaming updates"
-						: "Audio-to-text transcription"
+						? t("Live audio with streaming updates")
+						: t("Audio-to-text transcription")
 				}
 				className="inline-flex shrink-0 items-center gap-1 rounded bg-surface-hover px-1.5 py-px font-sans text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground"
 			>
@@ -27,8 +29,8 @@ export function AudioModelBadges({ model }: { model: ProviderModel }) {
 			!model.operationModes.includes("streaming") ? (
 				<span
 					role="img"
-					aria-label="Streaming not supported"
-					title="Streaming not supported"
+					aria-label={t("Streaming not supported")}
+					title={t("Streaming not supported")}
 					className="shrink-0 text-muted-foreground"
 				>
 					<WifiOff aria-hidden="true" className="size-3.5" />

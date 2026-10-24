@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export function WhatsNewDialog({
 	onShowAllChanges?: () => void;
 	onOpenConnectors: () => void;
 }) {
+	const t = useTranslation();
 	const spotlight = "spotlight" in release;
 	return (
 		<Dialog onOpenChange={onOpenChange} open={open}>
@@ -57,7 +59,7 @@ export function WhatsNewDialog({
 					style={{ background: HERO_BACKGROUND }}
 				>
 					<p className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-[oklch(0.88_0.09_315)]">
-						What's new in Cline
+						{t("What's new in Cline")}
 					</p>
 					<DialogTitle className="mt-1.5 text-2xl font-semibold tracking-tight text-white">
 						{release.title}
@@ -90,7 +92,7 @@ export function WhatsNewDialog({
 								type="button"
 								variant="ghost"
 							>
-								See all changes
+								{t("See all changes")}
 								<ArrowRight className="size-3.5" />
 							</Button>
 						) : (
@@ -98,12 +100,12 @@ export function WhatsNewDialog({
 						)}
 						{spotlight ? (
 							<Button onClick={onOpenConnectors} type="button">
-								Open Connectors
+								{t("Open Connectors")}
 								<ArrowRight className="size-4" />
 							</Button>
 						) : (
 							<Button onClick={() => onOpenChange(false)} type="button">
-								Get Started
+								{t("Get Started")}
 							</Button>
 						)}
 					</div>
@@ -118,6 +120,7 @@ function ConnectorsSpotlight({
 }: {
 	onOpenConnectors: () => void;
 }) {
+	const t = useTranslation();
 	const recipe = COMPOSIO_RECIPES.find(
 		(candidate) => candidate.id === "organize-your-day",
 	);
@@ -142,8 +145,9 @@ function ConnectorsSpotlight({
 				))}
 			</div>
 			<p className="text-sm leading-relaxed text-muted-foreground">
-				Gmail, Slack, Calendar, Linear, Notion, and hundreds more, in one click.
-				Cline pulls context from them and acts on your behalf.
+				{t(
+					"Gmail, Slack, Calendar, Linear, Notion, and hundreds more, in one click. Cline pulls context from them and acts on your behalf.",
+				)}
 			</p>
 			{recipe ? (
 				<button
@@ -153,7 +157,7 @@ function ConnectorsSpotlight({
 				>
 					<span className="flex items-center justify-between">
 						<span className="text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
-							Example
+							{t("Example")}
 						</span>
 						<ArrowRight className="size-3.5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
 					</span>
@@ -161,7 +165,9 @@ function ConnectorsSpotlight({
 						{recipe.title}
 					</span>
 					<span className="text-sm leading-relaxed text-muted-foreground">
-						&ldquo;{recipe.prompt}&rdquo;
+						{t("&ldquo;")}
+						{recipe.prompt}
+						{t("&rdquo;")}
 					</span>
 					<span className="mt-2 flex flex-wrap gap-1.5">
 						{recipe.connectors.map((connector) => (

@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import type { PluginCommandCatalog } from "@cline/core";
 
@@ -390,6 +391,7 @@ function ChatInputBarImpl({
 	onOpenModelSettings,
 	summary,
 }: ChatInputBarProps) {
+	const t = useTranslation();
 	// The composer compacts by its own width rather than the window's: beside
 	// the workspace panel it can be narrow in a wide window, and a container
 	// query would turn the settings row into the containing block for the
@@ -1232,8 +1234,8 @@ function ChatInputBarImpl({
 							{filteredSlashCommands.length === 0 ? (
 								<div className="px-3 py-2 text-sm text-muted-foreground">
 									{slashLoading
-										? "Loading commands..."
-										: (slashError ?? "No matching commands")}
+										? t("Loading commands...")
+										: (slashError ?? t("No matching commands"))}
 								</div>
 							) : (
 								<>
@@ -1262,7 +1264,7 @@ function ChatInputBarImpl({
 									))}
 									{slashLoading && (
 										<div className="px-3 py-1 text-[10px] text-muted-foreground">
-											Loading...
+											{t("Loading...")}
 										</div>
 									)}
 								</>
@@ -1277,7 +1279,9 @@ function ChatInputBarImpl({
 						>
 							{mentionFiles.length === 0 ? (
 								<div className="px-3 py-2 text-sm text-muted-foreground">
-									{mentionLoading ? "Searching files..." : "No matching files"}
+									{mentionLoading
+										? t("Searching files...")
+										: t("No matching files")}
 								</div>
 							) : (
 								<>
@@ -1301,7 +1305,7 @@ function ChatInputBarImpl({
 									))}
 									{mentionLoading && (
 										<div className="px-3 py-1 text-[10px] text-muted-foreground">
-											Updating...
+											{t("Updating...")}
 										</div>
 									)}
 								</>
@@ -1329,7 +1333,7 @@ function ChatInputBarImpl({
 								className="flex shrink-0 items-center gap-1.5 self-center text-xs text-muted-foreground"
 							>
 								<Spinner className="size-3.5" />
-								<span className="sr-only">Transcribing voice input</span>
+								<span className="sr-only">{t("Transcribing voice input")}</span>
 							</output>
 						)}
 						<AgentComposerTextarea
@@ -1469,18 +1473,26 @@ function ChatInputBarImpl({
 							}
 							placeholder={
 								speechInputProcessing
-									? "Transcribing voice input…"
+									? t("Transcribing voice input…")
 									: needsCloudRepository
-										? "Choose a repository"
+										? t("Choose a repository")
 										: isBusy && variant !== "welcome"
 											? promptsInQueue.length > 0
-												? "Agent is working... submit to queue another message, or Enter to send the first message from the queue"
-												: "Agent is working... submit to queue another message"
+												? t(
+														"Agent is working... submit to queue another message, or Enter to send the first message from the queue",
+													)
+												: t(
+														"Agent is working... submit to queue another message",
+													)
 											: executionTarget === "cloud"
-												? "Describe what Cline should do in this repository."
+												? t("Describe what Cline should do in this repository.")
 												: variant === "welcome"
-													? "Ask to make changes, @mention files, reference #PRs, or run /commands."
-													: "Enter your question or type / for commands or @ for context"
+													? t(
+															"Ask to make changes, @mention files, reference #PRs, or run /commands.",
+														)
+													: t(
+															"Enter your question or type / for commands or @ for context",
+														)
 							}
 							readOnly={speechInputActive || readOnly}
 							ref={promptInputRef}
@@ -1498,15 +1510,15 @@ function ChatInputBarImpl({
 									aria-live="polite"
 									className="max-w-40 text-right text-[11px] leading-4 text-muted-foreground"
 								>
-									Repository required
+									{t("Repository required")}
 								</span>
 							) : null}
 							{canAbort && (
 								<AgentComposerStopButton
-									aria-label="Stop agent"
+									aria-label={t("Stop agent")}
 									variant={variant}
 									onClick={onAbort}
-									title="Stop the agent (Esc)"
+									title={t("Stop the agent (Esc)")}
 									type="button"
 								>
 									<CircleStop className="size-3" />
@@ -1540,14 +1552,14 @@ function ChatInputBarImpl({
 							) : null}
 							{(!isBusy || canSend) && (
 								<AgentComposerSendButton
-									aria-label="Send message"
+									aria-label={t("Send message")}
 									variant={variant}
 									disabled={!canSend}
 									onClick={handleSend}
 									title={
 										needsCloudRepository
-											? "Choose a repository"
-											: "Send (Enter)"
+											? t("Choose a repository")
+											: t("Send (Enter)")
 									}
 									type="button"
 								>
@@ -1559,8 +1571,9 @@ function ChatInputBarImpl({
 				</div>
 				{unsupportedDraftImageCount > 0 && (
 					<output className="block px-2 text-sm text-destructive">
-						This model doesn’t support the attached images. Remove them or
-						choose a model that supports images before sending.
+						{t(
+							"This model doesn’t support the attached images. Remove them or choose a model that supports images before sending.",
+						)}
 					</output>
 				)}
 				{attachments.length > 0 && (
@@ -1570,7 +1583,8 @@ function ChatInputBarImpl({
 								className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-1 text-sm text-foreground"
 								key={attachment.id}
 							>
-								{attachment.isImage ? "image:" : "file:"} {attachment.name}
+								{attachment.isImage ? t("image:") : t("file:")}{" "}
+								{attachment.name}
 								<button
 									aria-label={`Remove ${attachment.name}`}
 									className="rounded-sm p-0.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground"
@@ -1590,14 +1604,16 @@ function ChatInputBarImpl({
 				<AgentComposerSettingsGroup className="group-data-[compact]/composer:flex-none">
 					<button
 						aria-label={
-							executionTarget === "cloud" ? "Attach images" : "Attach files"
+							executionTarget === "cloud"
+								? t("Attach images")
+								: t("Attach files")
 						}
 						title={
 							executionTarget === "cloud"
-								? "Attach images"
+								? t("Attach images")
 								: imagesUnsupported
-									? "Attach files (this model doesn’t support images)"
-									: "Attach files"
+									? t("Attach files (this model doesn’t support images)")
+									: t("Attach files")
 						}
 						className="rounded-md p-2 text-muted-foreground hover:bg-surface-hover"
 						onClick={() => fileInputRef.current?.click()}
@@ -1631,7 +1647,7 @@ function ChatInputBarImpl({
 							}}
 							type="button"
 						>
-							Plan
+							{t("Plan")}
 						</button>
 						<button
 							aria-pressed={mode === "act"}
@@ -1646,7 +1662,7 @@ function ChatInputBarImpl({
 							}}
 							type="button"
 						>
-							Act
+							{t("Act")}
 						</button>
 					</div>
 					<div className="min-w-0 group-data-[compact]/composer:shrink-0">
@@ -1675,14 +1691,14 @@ function ChatInputBarImpl({
 						value={EFFORT_LEVELS[effortIndex]?.value ?? "low"}
 					>
 						<SelectTrigger
-							aria-label="Thinking level"
+							aria-label={t("Thinking level")}
 							className="gap-1.5 border-0 px-2 text-sm shadow-none data-[size=sm]:h-7 [&>svg:last-child]:hidden group-data-[compact]/composer:size-7 group-data-[compact]/composer:shrink-0 group-data-[compact]/composer:justify-center group-data-[compact]/composer:p-0 bg-transparent! hover:bg-surface-hover!"
 							size="sm"
 							title={
 								cloudSettingsLocked
-									? "Thinking level is fixed when a cloud session starts"
+									? t("Thinking level is fixed when a cloud session starts")
 									: modelSupportsReasoning === false
-										? "The selected model does not report reasoning support"
+										? t("The selected model does not report reasoning support")
 										: undefined
 							}
 						>
@@ -1784,6 +1800,7 @@ const ModelSelector = memo(function ModelSelector({
 	/** Opens Settings → Providers; adds a "set up another provider" row when set. */
 	onOpenModelSettings?: () => void;
 }) {
+	const t = useTranslation();
 	const [providerModels, setProviderModels] = useState<
 		Record<string, string[]>
 	>(includeCloudModels ? {} : FALLBACK_PROVIDER_MODELS);
@@ -2332,7 +2349,7 @@ const ModelSelector = memo(function ModelSelector({
 			emptyText="No providers found."
 			onValueChange={handleProviderSelect}
 			options={providerOptions}
-			placeholder="Provider"
+			placeholder={t("Provider")}
 			placement="top"
 			searchPlaceholder="Search providers"
 			value={resolvedProvider}
@@ -2354,7 +2371,7 @@ const ModelSelector = memo(function ModelSelector({
 			}}
 			options={visibleModelPicker.options}
 			panelWidth="20rem"
-			placeholder="Model"
+			placeholder={t("Model")}
 			placement="top"
 			searchPlaceholder="Search models"
 			sections={visibleModelPicker.sections}
@@ -2373,7 +2390,7 @@ const ModelSelector = memo(function ModelSelector({
 				onClick={refreshActiveProviderModels}
 				type="button"
 			>
-				Could not load cloud models. Retry
+				{t("Could not load cloud models. Retry")}
 			</button>
 		);
 	}
@@ -2382,7 +2399,7 @@ const ModelSelector = memo(function ModelSelector({
 			<button
 				aria-expanded={mobileOpen}
 				aria-haspopup="dialog"
-				aria-label="Model and provider"
+				aria-label={t("Model and provider")}
 				className="hidden size-7 shrink-0 items-center justify-center rounded-md text-foreground hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 group-data-[compact]/composer:inline-flex"
 				disabled={isBusy || providers.length === 0}
 				onClick={() => setMobileOpen((current) => !current)}
@@ -2395,7 +2412,7 @@ const ModelSelector = memo(function ModelSelector({
 			{mobileOpen ? (
 				<>
 					<button
-						aria-label="Close model selector"
+						aria-label={t("Close model selector")}
 						className="fixed inset-0 z-40 hidden cursor-default opacity-0 group-data-[compact]/composer:block"
 						onClick={() => setMobileOpen(false)}
 						type="button"
@@ -2403,7 +2420,7 @@ const ModelSelector = memo(function ModelSelector({
 					<div className="absolute bottom-full left-0 z-50 mb-2 hidden w-64 max-w-[calc(100vw-2rem)] space-y-3 rounded-lg border border-border bg-popover p-3 shadow-xl animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-1 motion-reduce:animate-none group-data-[compact]/composer:block">
 						<div className="space-y-1">
 							<div className="text-xs font-medium text-muted-foreground">
-								Provider
+								{t("Provider")}
 							</div>
 							{renderProviderSelect(
 								"w-full max-w-none justify-between text-sm",
@@ -2411,7 +2428,7 @@ const ModelSelector = memo(function ModelSelector({
 						</div>
 						<div className="space-y-1">
 							<div className="text-xs font-medium text-muted-foreground">
-								Model
+								{t("Model")}
 							</div>
 							{renderModelSelect(
 								"w-full max-w-none justify-between text-sm",

@@ -36,6 +36,23 @@ const originalIsDev = process.env.IS_DEV;
 const originalNoAutoUpdate = process.env.CLINE_NO_AUTO_UPDATE;
 const tempDirs: string[] = [];
 
+it("keeps the AVX1 distribution on the signed Desktop update channel", async () => {
+	const previous = process.env.CLINE_DESKTOP_DISTRIBUTION;
+	process.env.CLINE_DESKTOP_DISTRIBUTION = "avx1";
+	mockSpawn.mockClear();
+	try {
+		autoUpdateOnStartup();
+		expect(
+			await applyDeferredUpdate({ command: "fixture-must-not-run" } as never),
+		).toBe("none");
+		expect(await checkForUpdates()).toBe(0);
+		expect(mockSpawn).not.toHaveBeenCalled();
+	} finally {
+		if (previous === undefined) delete process.env.CLINE_DESKTOP_DISTRIBUTION;
+		else process.env.CLINE_DESKTOP_DISTRIBUTION = previous;
+	}
+});
+
 function createFile(path: string): string {
 	mkdirSync(dirname(path), { recursive: true });
 	writeFileSync(path, "");
@@ -244,7 +261,9 @@ describe("hub restart owner selection", () => {
 
 		const owner = resolveCliHubOwnerContext();
 
-		expect(owner.discoveryPath).toContain("/locks/hub/owners/");
+		expect(owner.discoveryPath.replaceAll("\\", "/")).toContain(
+			"/locks/hub/owners/",
+		);
 		expect(owner.discoveryPath).not.toBe(
 			"/tmp/cline-update-test-data/locks/hub/production.json",
 		);

@@ -46,10 +46,10 @@ describe("desktop window title", () => {
 		expect(buildDesktopWindowTitle("")).toBe(DEFAULT_DESKTOP_WINDOW_TITLE);
 	});
 
-	it("titles beta builds with the beta product name", async () => {
+	it("keeps the fork product name for every version", async () => {
 		const { buildDesktopWindowTitle } = await importFresh();
 		expect(buildDesktopWindowTitle("0.0.14-beta.1")).toBe(
-			"Cline Beta v0.0.14-beta.1",
+			"Cline Desktop AVX1 RU v0.0.14-beta.1",
 		);
 	});
 

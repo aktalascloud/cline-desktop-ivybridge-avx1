@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import type { AgendaTaskRecord } from "@cline/shared";
 import { getClineEnvironmentConfig } from "@cline/shared/browser";
@@ -106,6 +107,7 @@ export function WelcomeScreen({
 	/** Height taken from the pane below (the terminal drawer). */
 	bottomInset?: number;
 }) {
+	const t = useTranslation();
 	const { user, activeOrganization, refreshAccount } = useAccount();
 	// The welcome column pads the hero from the top of the window, so a drawer
 	// opening underneath pushes the composer below the fold; bring it back.
@@ -482,7 +484,7 @@ export function WelcomeScreen({
 			hideWelcomeComposer={showCloudOnboarding}
 			welcomeHeader={
 				<div className="cline-view-enter">
-					<h1 className="sr-only">What would you like to build?</h1>
+					<h1 className="sr-only">{t("What would you like to build?")}</h1>
 					<AgentWelcomeHero />
 
 					<div className="mt-11 flex min-w-0 items-center gap-2">
@@ -515,7 +517,8 @@ export function WelcomeScreen({
 						/>
 						{signInError ? (
 							<p className="mt-2 text-xs text-destructive">
-								Sign in failed: {signInError}
+								{t("Sign in failed: ")}
+								{signInError}
 							</p>
 						) : null}
 						{terminalToggle ? (
@@ -565,7 +568,7 @@ export function WelcomeScreen({
 								}}
 							/>
 							<AgendaTaskReviewDialog
-								confirmLabel="Approve and start"
+								confirmLabel={t("Approve and start")}
 								onConfirm={async (task) => {
 									await handleTaskAction(task);
 									setReviewTask(null);
@@ -587,8 +590,9 @@ export function WelcomeScreen({
 					{active && cloudModeActive && !showCloudOnboarding ? (
 						<p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
 							<Cloud aria-hidden="true" className="size-3 shrink-0" />
-							Cloud sessions run on a secure sandbox, work on a branch, and keep
-							going even when you close the app.
+							{t(
+								"Cloud sessions run on a secure sandbox, work on a branch, and keep going even when you close the app.",
+							)}
 						</p>
 					) : null}
 				</>

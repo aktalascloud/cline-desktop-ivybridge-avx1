@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { useEffect, useSyncExternalStore } from "react";
 import { ToastAction } from "@/components/ui/toast";
@@ -125,7 +126,7 @@ function showUpdateReadyToast(version: string) {
 					void restartToApplyUpdate();
 				}}
 			>
-				Restart now
+				{t("Restart now")}
 			</ToastAction>
 		),
 	});

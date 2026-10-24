@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { useEffect, useState } from "react";
 import {
@@ -11,6 +12,7 @@ export function WebSearchProviderGuidance({
 }: {
 	onOpenModelProviders?: () => void;
 }) {
+	const t = useTranslation();
 	const [readyProviders, setReadyProviders] = useState<string[] | null>(null);
 	useEffect(() => {
 		let generation = 0;
@@ -44,26 +46,28 @@ export function WebSearchProviderGuidance({
 	if (readyProviders.length > 0)
 		return (
 			<p className="text-xs text-muted-foreground">
-				Ready to use with {readyProviders.join(", ")} on models that support web
-				search.
+				{t("Ready to use with ")}
+				{readyProviders.join(", ")}
+				{t(" on models that support web search.")}
 			</p>
 		);
 	return (
 		<p className="text-xs text-amber-700 dark:text-amber-300">
-			None of your connected providers support built-in web search, so this
-			setting has no effect yet.{" "}
+			{t(
+				"None of your connected providers support built-in web search, so this setting has no effect yet.",
+			)}{" "}
 			{onOpenModelProviders ? (
 				<button
 					type="button"
 					className="underline underline-offset-2 hover:text-foreground"
 					onClick={onOpenModelProviders}
 				>
-					Connect a provider
+					{t("Connect a provider")}
 				</button>
 			) : (
-				"Connect a provider in Settings"
+				t("Connect a provider in Settings")
 			)}{" "}
-			that supports it.
+			{t("that supports it.")}
 		</p>
 	);
 }

@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import {
 	useMessageScroller,
@@ -22,6 +23,7 @@ import { formatChatMessageContent } from "./message-content";
 import { isSystemSteeringMessage } from "./messages/group-messages";
 
 export function TranscriptOutline({ messages }: { messages: ChatMessage[] }) {
+	const t = useTranslation();
 	const { scrollToMessage } = useMessageScroller();
 	const { currentAnchorId } = useMessageScrollerVisibility();
 	const outlineRef = useRef<HTMLElement>(null);
@@ -67,7 +69,7 @@ export function TranscriptOutline({ messages }: { messages: ChatMessage[] }) {
 	return (
 		<nav
 			ref={outlineRef}
-			aria-label="Transcript outline"
+			aria-label={t("Transcript outline")}
 			className="absolute left-2 top-1/2 z-10 flex max-h-[calc(100%-3rem)] -translate-y-1/2 flex-col overflow-y-auto rounded-md bg-background/90 p-1"
 		>
 			{userMessages.map((message, index) => (
@@ -105,6 +107,7 @@ const TranscriptOutlineEntry = memo(function TranscriptOutlineEntry({
 	currentButtonRef: RefObject<HTMLButtonElement | null>;
 	onNavigate: (messageId: string) => void;
 }) {
+	const t = useTranslation();
 	const preview = useMemo(
 		() =>
 			formatChatMessageContent("user", content).replace(/\s+/g, " ") ||

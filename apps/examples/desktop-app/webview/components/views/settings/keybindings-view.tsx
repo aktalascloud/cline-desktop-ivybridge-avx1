@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Kbd, KbdGroup } from "@cline/ui";
 import { Keyboard } from "lucide-react";
@@ -31,6 +32,7 @@ function ShortcutRecorder({
 	value: string;
 	onChange: (key: string) => void;
 }) {
+	const t = useTranslation();
 	const [recording, setRecording] = useState(false);
 	const [invalidShortcut, setInvalidShortcut] = useState(false);
 	const modifierHint = isMacPlatform() ? "⌘, ⌃, or ⌥" : "Ctrl or Alt";
@@ -84,7 +86,7 @@ function ShortcutRecorder({
 				invalidShortcut ? (
 					`Use ${modifierHint}, or F1–F24`
 				) : (
-					"Press shortcut…"
+					t("Press shortcut…")
 				)
 			) : value ? (
 				<KbdGroup>
@@ -93,13 +95,14 @@ function ShortcutRecorder({
 					))}
 				</KbdGroup>
 			) : (
-				"Unbound"
+				t("Unbound")
 			)}
 		</Button>
 	);
 }
 
 export function KeybindingsContent() {
+	const t = useTranslation();
 	const stored = useKeybindings();
 	const [draft, setDraft] = useState<ResolvedKeybindings>(stored);
 	const [error, setError] = useState<string | null>(null);
@@ -155,24 +158,27 @@ export function KeybindingsContent() {
 							type="button"
 							variant="outline"
 						>
-							Open keybindings.json
+							{t("Open keybindings.json")}
 						</Button>
 						<Button
 							onClick={() => persist(defaultKeybindings())}
 							type="button"
 							variant="outline"
 						>
-							Reset to defaults
+							{t("Reset to defaults")}
 						</Button>
 					</div>
 				}
-				description="Click a shortcut to record a new one. Changes are saved to local keybindings.json file"
+				description={t(
+					"Click a shortcut to record a new one. Changes are saved to local keybindings.json file",
+				)}
 				icon={Keyboard}
-				title="Keybindings"
+				title={t("Keybindings")}
 			/>
 			{error ? (
 				<p className="mb-4 text-sm text-destructive">
-					Could not save keybindings: {error}
+					{t("Could not save keybindings: ")}
+					{error}
 				</p>
 			) : null}
 			<div className="divide-y rounded-lg border">
@@ -191,7 +197,8 @@ export function KeybindingsContent() {
 								</p>
 								{conflict ? (
 									<p className="mt-1 text-xs text-destructive">
-										Also assigned to “{conflict}”.
+										{t("Also assigned to “")}
+										{conflict}”.
 									</p>
 								) : null}
 							</div>
@@ -201,7 +208,7 @@ export function KeybindingsContent() {
 										className="flex items-center gap-2 text-xs text-muted-foreground"
 										htmlFor={`keybinding-hold-${definition.id}`}
 									>
-										Hold (s)
+										{t("Hold (s)")}
 										<Input
 											aria-label={`${definition.label} hold time in seconds`}
 											id={`keybinding-hold-${definition.id}`}

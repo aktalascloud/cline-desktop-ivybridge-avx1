@@ -52,7 +52,7 @@ const resolveBunCompileTarget = (
 	if (targetTriple.startsWith("aarch64-apple-darwin"))
 		return "bun-darwin-arm64";
 	if (targetTriple.startsWith("x86_64-apple-darwin")) return "bun-darwin-x64";
-	if (targetTriple.startsWith("x86_64-pc-windows")) return "bun-windows-x64";
+	if (targetTriple.startsWith("x86_64-pc-windows")) return "bun-windows-x64-baseline";
 	if (targetTriple.startsWith("aarch64-pc-windows")) return "bun-windows-arm64";
 	// SSH hosts may predate AVX2 (e.g. Ivy Bridge Xeons). The default Bun
 	// x64 runtime can SIGILL before our entrypoint runs on those CPUs.
@@ -73,6 +73,7 @@ const compileDesktopCli = async (
 	outfile = desktopCliOutfile(targetTriple),
 ): Promise<string> => {
 	await compileCliBinary({
+		distribution: "avx1",
 		bunTarget: resolveBunCompileTarget(targetTriple),
 		outfile: fileURLToPath(new URL(`../${outfile}`, import.meta.url)),
 		// A packaged app and an SSH session launch the CLI from directories the

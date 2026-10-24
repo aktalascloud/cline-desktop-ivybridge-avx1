@@ -1,3 +1,4 @@
+import { t, useTranslation } from "@/lib/i18n";
 import { agentComposerTokenClassName } from "@cline/ui";
 import {
 	agentMarkdownControls,
@@ -56,6 +57,7 @@ export function MarkdownLinkSafetyModal({
 	onConfirm,
 	url,
 }: LinkSafetyModalProps) {
+	const t = useTranslation();
 	return (
 		<AlertDialog
 			onOpenChange={(open) => {
@@ -65,17 +67,19 @@ export function MarkdownLinkSafetyModal({
 		>
 			<AlertDialogContent>
 				<AlertDialogHeader>
-					<AlertDialogTitle>Open external link?</AlertDialogTitle>
+					<AlertDialogTitle>{t("Open external link?")}</AlertDialogTitle>
 					<AlertDialogDescription>
-						You are about to leave Cline and visit this address.
+						{t("You are about to leave Cline and visit this address.")}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<div className="max-h-32 overflow-y-auto wrap-break-word rounded-md bg-muted p-3 font-mono text-sm">
 					{url}
 				</div>
 				<AlertDialogFooter>
-					<AlertDialogCancel>Cancel</AlertDialogCancel>
-					<AlertDialogAction onClick={onConfirm}>Open link</AlertDialogAction>
+					<AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+					<AlertDialogAction onClick={onConfirm}>
+						{t("Open link")}
+					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
@@ -170,6 +174,7 @@ function SafeMarkdownLink({
 	title,
 	...props
 }: MarkdownLinkProps) {
+	const t = useTranslation();
 	const [isOpen, setIsOpen] = useState(false);
 	const isIncomplete = href === "streamdown:incomplete-link";
 	const url = isIncomplete ? undefined : href;
@@ -286,6 +291,7 @@ function isSafeMarkdownImageSource(source: string): boolean {
 }
 
 function MarkdownImage({ alt, height, src, title, width }: MarkdownImageProps) {
+	const t = useTranslation();
 	const label = typeof alt === "string" ? alt.trim() : "";
 	const source = typeof src === "string" ? src.trim() : "";
 
@@ -307,7 +313,8 @@ function MarkdownImage({ alt, height, src, title, width }: MarkdownImageProps) {
 
 	return (
 		<span data-streamdown="blocked-image" role="note">
-			External image blocked for privacy{label ? `: ${label}` : ""}
+			{t("External image blocked for privacy")}
+			{label ? `: ${label}` : ""}
 		</span>
 	);
 }
@@ -395,6 +402,7 @@ export const MemoizedMarkdown = memo(
 		/** Exact `/command` and `@path` tokens to render as composer chips. */
 		chipTokens?: ReadonlySet<string>;
 	}) => {
+		const t = useTranslation();
 		const {
 			captureDiagramLink,
 			pendingUrl,

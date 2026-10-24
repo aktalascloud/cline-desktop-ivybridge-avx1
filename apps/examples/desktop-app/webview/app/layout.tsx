@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { NativeLanguageSync } from "@/components/language-settings";
+import { UiLanguageProvider } from "@/components/ui-language-provider";
 import { DesktopErrorTelemetry } from "@/components/desktop-error-telemetry";
 import { NativeShell } from "@/components/native-shell";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,7 +9,7 @@ import { HUB_THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
-	title: "Cline",
+	title: "Cline Desktop AVX1 RU",
 	description: "Build software with Cline.",
 	icons: {
 		icon: [
@@ -55,10 +57,13 @@ export default function RootLayout({
 				/>
 			</head>
 			<body className="h-full min-h-screen font-sans antialiased">
-				<DesktopErrorTelemetry />
-				<NativeShell />
-				{children}
-				<Toaster />
+				<UiLanguageProvider>
+					<NativeLanguageSync />
+					<DesktopErrorTelemetry />
+					<NativeShell />
+					{children}
+					<Toaster />
+				</UiLanguageProvider>
 			</body>
 		</html>
 	);

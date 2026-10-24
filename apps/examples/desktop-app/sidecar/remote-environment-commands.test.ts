@@ -35,6 +35,7 @@ vi.mock("@cline/core", async () => {
 			create: coreCreateMock,
 		},
 		SqliteSessionStore: class {
+			close() {}
 			public get(sessionId: string): unknown {
 				return sessionStoreGetMock(sessionId);
 			}

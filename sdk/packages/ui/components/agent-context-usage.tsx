@@ -1,6 +1,8 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import type { ReactNode } from "react";
+import { useUiLocale } from "./ui-locale.js";
 
 /** Current request context metrics, not accumulated session token traffic. */
 export interface AgentContextUsageData {
@@ -35,6 +37,8 @@ export function AgentContextUsage({
 	costLabel,
 	children,
 }: AgentContextUsageProps) {
+	const t = useTranslation();
+	const { locale } = useUiLocale();
 	const contextWindow = usage.contextWindow;
 	const totalTokens = usage.tokensIn + usage.tokensOut;
 	if (totalTokens <= 0 || !contextWindow || contextWindow <= 0) {
@@ -52,7 +56,7 @@ export function AgentContextUsage({
 			: ratio >= 0.5
 				? "stroke-orange-500"
 				: "stroke-cline-ui-primary";
-	const contextUsageLabel = `${formatCompactTokens(totalTokens)} / ${formatCompactTokens(contextWindow)} (${percent}%)`;
+	const contextUsageLabel = `${formatCompactTokens(totalTokens, locale)} / ${formatCompactTokens(contextWindow, locale)} (${percent}%)`;
 	const cachedTokens = Math.min(usage.cacheReadTokens, usage.tokensIn);
 	const uncachedInputTokens = Math.max(usage.tokensIn - cachedTokens, 0);
 	const segmentScale =
@@ -63,7 +67,14 @@ export function AgentContextUsage({
 	const circumference = 2 * Math.PI * radius;
 
 	return children({
-		triggerLabel: `Context window: ${totalTokens.toLocaleString()} of ${contextWindow.toLocaleString()} tokens used (${percent}%)`,
+		triggerLabel: t(
+			"Context window: {used} of {total} tokens used ({percent}%)",
+			{
+				used: totalTokens.toLocaleString(locale),
+				total: contextWindow.toLocaleString(locale),
+				percent,
+			},
+		),
 		ring: (
 			<svg
 				aria-hidden="true"
@@ -96,7 +107,9 @@ export function AgentContextUsage({
 		details: (
 			<div className="px-3 py-3">
 				<div className="flex items-center justify-between gap-4 text-cline-ui-sm">
-					<span className="text-cline-ui-muted-foreground">Context window</span>
+					<span className="text-cline-ui-muted-foreground">
+						{t("Context window")}
+					</span>
 					<span className="font-cline-ui-mono text-cline-ui-sm text-cline-ui-foreground">
 						{contextUsageLabel}
 					</span>
@@ -131,30 +144,34 @@ export function AgentContextUsage({
 				</div>
 				<div className="mt-3 space-y-2 text-cline-ui-sm">
 					<div className="flex items-center justify-between gap-4">
-						<span className="text-cline-ui-muted-foreground">Input tokens</span>
+						<span className="text-cline-ui-muted-foreground">
+							{t("Input tokens")}
+						</span>
 						<span className="font-cline-ui-mono text-cline-ui-foreground">
-							{usage.tokensIn.toLocaleString()}
+							{usage.tokensIn.toLocaleString(locale)}
 						</span>
 					</div>
 					<div className="flex items-center justify-between gap-4">
 						<span className="text-cline-ui-muted-foreground">
-							Output tokens
+							{t("Output tokens")}
 						</span>
 						<span className="font-cline-ui-mono text-cline-ui-foreground">
-							{usage.tokensOut.toLocaleString()}
+							{usage.tokensOut.toLocaleString(locale)}
 						</span>
 					</div>
 					<div className="flex items-center justify-between gap-4">
 						<span className="text-cline-ui-muted-foreground">
-							Cached tokens
+							{t("Cached tokens")}
 						</span>
 						<span className="font-cline-ui-mono text-cline-ui-foreground">
-							{usage.cacheReadTokens.toLocaleString()}
+							{usage.cacheReadTokens.toLocaleString(locale)}
 						</span>
 					</div>
 					{costLabel || costLabel === 0 ? (
 						<div className="flex items-center justify-between gap-4">
-							<span className="text-cline-ui-muted-foreground">Cost</span>
+							<span className="text-cline-ui-muted-foreground">
+								{t("Cost")}
+							</span>
 							<span className="font-cline-ui-mono text-cline-ui-foreground">
 								{costLabel}
 							</span>
@@ -166,14 +183,14 @@ export function AgentContextUsage({
 	});
 }
 
-function formatCompactTokens(value: number): string {
+function formatCompactTokens(value: number, locale = "en"): string {
 	if (value >= 1_000_000) {
 		return `${(value / 1_000_000).toFixed(1)}M`;
 	}
 	if (value >= 1_000) {
 		return `${formatCompactUnit(value / 1_000)}k`;
 	}
-	return value.toLocaleString();
+	return value.toLocaleString(locale);
 }
 
 function formatCompactUnit(value: number): string {

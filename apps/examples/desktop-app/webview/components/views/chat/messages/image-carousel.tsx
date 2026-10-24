@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -11,6 +12,7 @@ export function MessageImageCarousel({
 	images: ChatMessageImage[];
 	onExpandImage?: (image: ChatMessageImage) => void;
 }) {
+	const t = useTranslation();
 	const [activeIndex, setActiveIndex] = useState(0);
 	const lastIndex = images.length - 1;
 	const safeIndex = Math.min(activeIndex, lastIndex);
@@ -40,7 +42,7 @@ export function MessageImageCarousel({
 			{images.length > 1 ? (
 				<>
 					<button
-						aria-label="Previous generated image"
+						aria-label={t("Previous generated image")}
 						className="absolute left-1 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/85 text-foreground shadow-sm backdrop-blur-sm transition-opacity hover:bg-background disabled:cursor-not-allowed disabled:opacity-35"
 						disabled={safeIndex === 0}
 						onClick={() => setActiveIndex((index) => Math.max(0, index - 1))}
@@ -49,7 +51,7 @@ export function MessageImageCarousel({
 						<ChevronLeft className="size-4" />
 					</button>
 					<button
-						aria-label="Next generated image"
+						aria-label={t("Next generated image")}
 						className="absolute right-1 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/85 text-foreground shadow-sm backdrop-blur-sm transition-opacity hover:bg-background disabled:cursor-not-allowed disabled:opacity-35"
 						disabled={safeIndex === lastIndex}
 						onClick={() =>

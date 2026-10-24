@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { SessionStatus } from "@cline/ui";
 import {
@@ -154,6 +155,7 @@ function sortTimestamp(session?: SessionHistoryItem) {
 }
 
 export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
+	const t = useTranslation();
 	const [query, setQuery] = useState("");
 	const [sessionFilters, setSessionFilters] = useState<string[]>([]);
 	const [sortDirection, setSortDirection] = useState<"newest" | "oldest">(
@@ -343,41 +345,41 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 		<div className="flex h-full min-h-0 flex-col overflow-hidden bg-background text-foreground">
 			<header className="flex shrink-0 items-end justify-between gap-6 px-18 pb-7 pt-10 max-[1200px]:px-8 max-md:pl-12 max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:pr-4 max-[720px]:pt-5">
 				<div className="min-w-0">
-					<h1 className="text-3xl font-semibold">Sessions</h1>
+					<h1 className="text-3xl font-semibold">{t("Sessions")}</h1>
 					<p className="mt-3 text-base leading-6 text-muted-foreground">
-						Recent sessions across clients and workspaces.
+						{t("Recent sessions across clients and workspaces.")}
 					</p>
 				</div>
 				<div className="flex min-w-0 items-center gap-2">
 					<div className="relative min-w-44 max-w-72 flex-1">
 						<Search className="-translate-y-1/2 pointer-events-none absolute left-2.5 top-1/2 size-4 text-muted-foreground" />
 						<Input
-							aria-label="Search sessions"
+							aria-label={t("Search sessions")}
 							className="h-8 pl-8"
 							onChange={(event) => setQuery(event.target.value)}
-							placeholder="Search"
+							placeholder={t("Search")}
 							value={query}
 						/>
 					</div>
 					<Button
-						aria-label="Import sessions from other tools"
+						aria-label={t("Import sessions from other tools")}
 						className="h-8 rounded-md px-2.5"
 						onClick={() => setImportDialogOpen(true)}
 						size="sm"
-						title="Import sessions from Claude Code, Codex, or opencode"
+						title={t("Import sessions from Claude Code, Codex, or opencode")}
 						type="button"
 						variant="outline"
 					>
 						<Import className="size-4" />
-						Import
+						{t("Import")}
 					</Button>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
-								aria-label="Sort sessions"
+								aria-label={t("Sort sessions")}
 								className="h-8 rounded-md px-2.5"
 								size="sm"
-								title="Sort sessions"
+								title={t("Sort sessions")}
 								type="button"
 								variant="outline"
 							>
@@ -386,10 +388,10 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" sideOffset={6}>
 							<DropdownMenuItem onClick={() => setSortDirection("newest")}>
-								Newest first
+								{t("Newest first")}
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => setSortDirection("oldest")}>
-								Oldest first
+								{t("Oldest first")}
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
@@ -406,10 +408,10 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 					>
 						<DropdownMenuTrigger asChild>
 							<Button
-								aria-label="Filter sessions"
+								aria-label={t("Filter sessions")}
 								className="h-8 rounded-md px-2.5"
 								size="sm"
-								title="Filter sessions"
+								title={t("Filter sessions")}
 								type="button"
 								variant={sessionFilters.length > 0 ? "default" : "outline"}
 							>
@@ -418,18 +420,18 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="max-h-72 w-72">
 							<DropdownMenuGroup>
-								<DropdownMenuLabel>Filter sessions</DropdownMenuLabel>
+								<DropdownMenuLabel>{t("Filter sessions")}</DropdownMenuLabel>
 								{sessionFilters.length > 0 ? (
 									<>
 										<DropdownMenuItem onClick={() => setSessionFilters([])}>
-											Clear filters
+											{t("Clear filters")}
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />
 									</>
 								) : null}
 								{filterOptions.length === 0 ? (
 									<DropdownMenuItem disabled>
-										No filters available
+										{t("No filters available")}
 									</DropdownMenuItem>
 								) : (
 									filterOptions.map((detail) => (
@@ -455,13 +457,13 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 			<section className="min-h-0 flex-1 overflow-auto px-18 pb-10 max-[1200px]:px-8 max-[720px]:px-4">
 				<div className="min-w-240 overflow-hidden rounded-lg border bg-card">
 					<div className="grid grid-cols-[minmax(14rem,1.35fr)_minmax(9rem,0.8fr)_minmax(12rem,1fr)_7rem_5rem_6rem_1.75rem] gap-x-4 bg-muted/40 px-4 py-3 text-sm font-medium text-muted-foreground">
-						<span>Title</span>
-						<span>Workspace</span>
-						<span>Model</span>
-						<span>Tokens</span>
-						<span>Cost</span>
-						<span>Time</span>
-						<span className="sr-only">Actions</span>
+						<span>{t("Title")}</span>
+						<span>{t("Workspace")}</span>
+						<span>{t("Model")}</span>
+						<span>{t("Tokens")}</span>
+						<span>{t("Cost")}</span>
+						<span>{t("Time")}</span>
+						<span className="sr-only">{t("Actions")}</span>
 					</div>
 					<div>
 						{/* Keep the loader up until the backend's first response: the
@@ -470,14 +472,14 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 						{!history.hasLoadedHistory && history.threads.length === 0 ? (
 							<div className="flex items-center gap-2 border-t px-4 py-8 text-sm text-muted-foreground">
 								<Loader2 className="size-4 animate-spin" />
-								Loading session history...
+								{t("Loading session history...")}
 							</div>
 						) : null}
 						{history.hasLoadedHistory && filteredThreads.length === 0 ? (
 							<div className="border-t px-4 py-8 text-sm text-muted-foreground">
 								{history.threads.length === 0
-									? "No sessions yet."
-									: "No sessions match the current filters."}
+									? t("No sessions yet.")
+									: t("No sessions match the current filters.")}
 							</div>
 						) : null}
 						{visibleThreads.map((thread) => {
@@ -531,7 +533,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 													value={editingTitle}
 												/>
 												<Button
-													aria-label="Save title"
+													aria-label={t("Save title")}
 													className="h-8 rounded-md px-2.5"
 													disabled={
 														pendingKind === "rename" || !editingTitle.trim()
@@ -546,7 +548,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 													)}
 												</Button>
 												<Button
-													aria-label="Cancel rename"
+													aria-label={t("Cancel rename")}
 													className="h-8 rounded-md px-2.5"
 													disabled={pendingKind === "rename"}
 													onClick={cancelRename}
@@ -597,7 +599,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 											tabIndex={pendingKind ? -1 : 0}
 										>
 											<span className="flex min-w-0 items-center gap-3 font-semibold">
-												<span className="sr-only">Open session: </span>
+												<span className="sr-only">{t("Open session: ")}</span>
 												<SessionStatus
 													className="shrink-0"
 													label={`Session status: ${thread.status}`}
@@ -613,13 +615,13 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 												<span className="truncate">{thread.title}</span>
 												{thread.origin === "cloud" ? (
 													<Cloud
-														aria-label="Cloud session"
+														aria-label={t("Cloud session")}
 														className="size-3.5 shrink-0 text-muted-foreground"
 													/>
 												) : null}
 												{thread.pinned ? (
 													<Pin
-														aria-label="Pinned"
+														aria-label={t("Pinned")}
 														className="size-3.5 shrink-0 fill-current text-muted-foreground"
 													/>
 												) : null}
@@ -635,10 +637,10 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 													title={thread.repoUrl || workspace}
 												>
 													{thread.origin === "cloud"
-														? thread.repoUrl || "Cloud repository"
+														? thread.repoUrl || t("Cloud repository")
 														: workspace
 															? basenamePath(workspace)
-															: "No workspace"}
+															: t("No workspace")}
 												</span>
 											</span>
 											<span
@@ -690,19 +692,19 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 																thread.pinned && "fill-current",
 															)}
 														/>
-														{thread.pinned ? "Unpin" : "Pin"}
+														{thread.pinned ? t("Unpin") : t("Pin")}
 													</DropdownMenuItem>
 												) : null}
 												<DropdownMenuItem onClick={() => startRename(thread)}>
 													<Pencil className="size-4" />
-													Rename
+													{t("Rename")}
 												</DropdownMenuItem>
 												{thread.origin !== "cloud" ? (
 													<DropdownMenuItem
 														onClick={() => void history.forkThread(thread.id)}
 													>
 														<GitFork className="size-4" />
-														Fork
+														{t("Fork")}
 													</DropdownMenuItem>
 												) : null}
 												<DropdownMenuSeparator />
@@ -711,7 +713,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 													variant="destructive"
 												>
 													<Trash2 className="size-4" />
-													Delete
+													{t("Delete")}
 												</DropdownMenuItem>
 											</DropdownMenuContent>
 										</DropdownMenu>
@@ -727,24 +729,24 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 								</span>
 								<div className="flex items-center gap-1">
 									<Button
-										aria-label="First page"
+										aria-label={t("First page")}
 										className="h-8 rounded-md px-2.5"
 										disabled={currentPage === 0 || history.isLoadingMore}
 										onClick={() => setPage(0)}
 										size="sm"
-										title="First page"
+										title={t("First page")}
 										type="button"
 										variant="outline"
 									>
 										<ChevronsLeft className="size-4" />
 									</Button>
 									<Button
-										aria-label="Previous page"
+										aria-label={t("Previous page")}
 										className="h-8 rounded-md px-2.5"
 										disabled={currentPage === 0 || history.isLoadingMore}
 										onClick={() => setPage(currentPage - 1)}
 										size="sm"
-										title="Previous page"
+										title={t("Previous page")}
 										type="button"
 										variant="outline"
 									>
@@ -778,12 +780,12 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 										),
 									)}
 									<Button
-										aria-label="Next page"
+										aria-label={t("Next page")}
 										className="h-8 rounded-md px-2.5"
 										disabled={!canGoNext || history.isLoadingMore}
 										onClick={() => void goToNextPage()}
 										size="sm"
-										title="Next page"
+										title={t("Next page")}
 										type="button"
 										variant="outline"
 									>
@@ -810,7 +812,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Delete session?</AlertDialogTitle>
+						<AlertDialogTitle>{t("Delete session?")}</AlertDialogTitle>
 						<AlertDialogDescription>
 							{deleteCandidate?.origin === "cloud"
 								? `This deletes "${deleteCandidate?.title ?? "this session"}" and its cloud workspace.`
@@ -825,7 +827,7 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 						<AlertDialogCancel
 							disabled={history.pendingAction?.action === "delete"}
 						>
-							Cancel
+							{t("Cancel")}
 						</AlertDialogCancel>
 						<AlertDialogAction
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -840,10 +842,10 @@ export function SessionsView({ activeSessionId, history }: SessionsViewProps) {
 							{history.pendingAction?.action === "delete" ? (
 								<>
 									<Loader2 className="size-4 animate-spin" />
-									Deleting...
+									{t("Deleting...")}
 								</>
 							) : (
-								"Delete"
+								t("Delete")
 							)}
 						</AlertDialogAction>
 					</AlertDialogFooter>

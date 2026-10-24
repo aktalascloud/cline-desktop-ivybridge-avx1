@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import {
 	ChevronDown,
@@ -115,6 +116,7 @@ export function AgentPullRequestBar({
 	onNavigate,
 	renderChecks,
 }: AgentPullRequestBarProps) {
+	const t = useTranslation();
 	const pr = data?.pullRequest;
 	const PullRequestIcon =
 		pr?.state === "MERGED"
@@ -179,15 +181,16 @@ export function AgentPullRequestBar({
 			data-native-navigation={onNavigate ? true : undefined}
 		>
 			<p className="cline-ui-pr-bar__checks-title mb-2 text-cline-ui-sm font-medium">
-				Checks for #{pr?.number}
+				{t("Checks for #")}
+				{pr?.number}
 			</p>
 			{ci === "unavailable" ? (
 				<p className="text-cline-ui-xs text-cline-ui-muted-foreground">
-					Checks could not be loaded. Refresh to try again.
+					{t("Checks could not be loaded. Refresh to try again.")}
 				</p>
 			) : ci === "none" ? (
 				<p className="text-cline-ui-xs text-cline-ui-muted-foreground">
-					No checks reported for this pull request.
+					{t("No checks reported for this pull request.")}
 				</p>
 			) : null}
 			<ul className="max-h-64 space-y-2 overflow-y-auto">
@@ -217,7 +220,7 @@ export function AgentPullRequestBar({
 	return (
 		<section
 			className="cline-ui-pr-bar border-b border-cline-ui-border px-4 py-2 text-cline-ui-xs"
-			aria-label="Pull request status"
+			aria-label={t("Pull request status")}
 			data-native-navigation={onNavigate ? true : undefined}
 		>
 			{error && (
@@ -226,7 +229,7 @@ export function AgentPullRequestBar({
 					{onDismissError && (
 						<button
 							type="button"
-							aria-label="Dismiss pull request error"
+							aria-label={t("Dismiss pull request error")}
 							className="shrink-0 rounded p-1 hover:bg-cline-ui-muted"
 							onClick={onDismissError}
 						>
@@ -281,7 +284,7 @@ export function AgentPullRequestBar({
 								</span>
 							</span>
 							{!pr && data.published === false && (
-								<span>Task branch not on GitHub</span>
+								<span>{t("Task branch not on GitHub")}</span>
 							)}
 							{pr && (
 								<>
@@ -309,7 +312,7 @@ export function AgentPullRequestBar({
 											type="button"
 											className="cline-ui-pr-bar__check-trigger flex shrink-0 items-center gap-1.5 rounded-md bg-cline-ui-muted px-2 py-1"
 											aria-label={
-												ci === "none" ? "No CI checks" : checkLabels[ci]
+												ci === "none" ? t("No CI checks") : checkLabels[ci]
 											}
 										>
 											<span
@@ -326,14 +329,14 @@ export function AgentPullRequestBar({
 							)}
 						</>
 					) : (
-						<span>Task branch unavailable.</span>
+						<span>{t("Task branch unavailable.")}</span>
 					))}
 				<button
 					type="button"
 					disabled={loading}
 					onClick={onRefresh}
-					aria-label="Refresh pull request status"
-					title="Refresh pull request status"
+					aria-label={t("Refresh pull request status")}
+					title={t("Refresh pull request status")}
 					className="cline-ui-pr-bar__refresh shrink-0 rounded p-1 text-cline-ui-muted-foreground hover:bg-cline-ui-muted disabled:opacity-50"
 				>
 					<RefreshCw

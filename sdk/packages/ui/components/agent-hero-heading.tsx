@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import { useEffect, useState } from "react";
 
@@ -6,6 +7,7 @@ const HERO_VERBS = ["build", "create", "fix", "know"] as const;
 const HERO_CYCLE_MS = 5000;
 
 export function AgentHeroHeading() {
+	const t = useTranslation();
 	const [verbIndex, setVerbIndex] = useState(0);
 
 	useEffect(() => {
@@ -21,11 +23,11 @@ export function AgentHeroHeading() {
 
 	return (
 		<h1
-			aria-label="What would you like to build?"
+			aria-label={t("What would you like to build?")}
 			className="cline-ui-agent-hero-heading"
 		>
 			<span aria-hidden="true">
-				What would you like to{" "}
+				{t("What would you like to")}{" "}
 				<span className="cline-ui-agent-hero-heading__word" key={verb}>
 					{verb.split("").map((character, index) => (
 						<span

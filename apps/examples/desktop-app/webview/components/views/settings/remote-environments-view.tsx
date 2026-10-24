@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import {
 	CheckCircle2,
@@ -76,6 +77,7 @@ function statusLabel(value: string): string {
 }
 
 function StatusBadge({ label, value }: { label: string; value: string }) {
+	const t = useTranslation();
 	const isPositive =
 		value === "connected" || value === "passed" || value === "ready";
 	const isPending =
@@ -126,6 +128,7 @@ function runtimeStateFor(
 }
 
 export function RemoteEnvironmentsContent() {
+	const t = useTranslation();
 	const [profiles, setProfiles] = useState<RemoteEnvironmentProfile[]>([]);
 	const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
 	const [selectedProfileId, setSelectedProfileId] = useState<string | null>(
@@ -376,7 +379,7 @@ export function RemoteEnvironmentsContent() {
 			<PageHeader
 				actions={
 					<Button
-						aria-label="Refresh remote environments"
+						aria-label={t("Refresh remote environments")}
 						disabled={isLoading || isBusy}
 						onClick={() => void loadProfiles()}
 						variant="ghost"
@@ -385,14 +388,16 @@ export function RemoteEnvironmentsContent() {
 						<RefreshCw className={cn(isLoading && "animate-spin")} />
 					</Button>
 				}
-				title="Remote Environments"
-				description="Manage your remote SSH hosts and their configurations."
+				title={t("Remote Environments")}
+				description={t(
+					"Manage your remote SSH hosts and their configurations.",
+				)}
 			/>
 
 			{error ? (
 				<Alert className="mb-5" variant="destructive">
 					<CircleAlert />
-					<AlertTitle>Remote environment error</AlertTitle>
+					<AlertTitle>{t("Remote environment error")}</AlertTitle>
 					<AlertDescription>{error}</AlertDescription>
 				</Alert>
 			) : null}
@@ -401,7 +406,7 @@ export function RemoteEnvironmentsContent() {
 				<Card className="h-112 gap-4 overflow-hidden py-5">
 					<CardHeader className="flex shrink-0 flex-row items-center justify-between gap-3 px-5">
 						<CardTitle className="flex items-center gap-2">
-							SSH Hosts
+							{t("SSH Hosts")}
 							<Badge variant="secondary">{profiles.length}</Badge>
 						</CardTitle>
 						<Button
@@ -411,19 +416,20 @@ export function RemoteEnvironmentsContent() {
 							size="xs"
 						>
 							<Plus />
-							New Host
+							{t("New Host")}
 						</Button>
 					</CardHeader>
 					<CardContent className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3">
 						{isLoading ? (
 							<div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
 								<Loader2 className="size-4 animate-spin" />
-								Loading SSH hosts…
+								{t("Loading SSH hosts…")}
 							</div>
 						) : profiles.length === 0 ? (
 							<PageEmptyState>
-								No SSH hosts yet. Add the address for your first remote
-								environment.
+								{t(
+									"No SSH hosts yet. Add the address for your first remote environment.",
+								)}
 							</PageEmptyState>
 						) : (
 							profiles.map((profile) => {
@@ -459,7 +465,7 @@ export function RemoteEnvironmentsContent() {
 													className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
 													variant="outline"
 												>
-													Active
+													{t("Active")}
 												</Badge>
 											) : runtime.connection === "connecting" ? (
 												<Loader2 className="size-4 animate-spin text-muted-foreground" />
@@ -476,7 +482,7 @@ export function RemoteEnvironmentsContent() {
 					<CardHeader className="px-5">
 						<div className="flex items-center justify-between gap-3">
 							<CardTitle>
-								{selectedProfile?.name ?? "Adding New Host..."}
+								{selectedProfile?.name ?? t("Adding New Host...")}
 							</CardTitle>
 							{draft.id ? (
 								<Button
@@ -491,48 +497,48 @@ export function RemoteEnvironmentsContent() {
 						</div>
 						{hasSavedDestination ? (
 							<CardDescription>
-								Create a new host to change the SSH host, user, or port.
+								{t("Create a new host to change the SSH host, user, or port.")}
 							</CardDescription>
 						) : null}
 					</CardHeader>
 					<CardContent className="space-y-5 px-5">
 						<div className="grid grid-cols-2 gap-4 max-[620px]:grid-cols-1">
 							<div className="space-y-2">
-								<Label htmlFor="remote-name">Name</Label>
+								<Label htmlFor="remote-name">{t("Name")}</Label>
 								<Input
 									disabled={isBusy}
 									id="remote-name"
 									onChange={(event) => updateDraft("name", event.target.value)}
-									placeholder="Build server"
+									placeholder={t("Build server")}
 									value={draft.name}
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="remote-host">SSH host</Label>
+								<Label htmlFor="remote-host">{t("SSH host")}</Label>
 								<Input
 									autoCapitalize="none"
 									disabled={isBusy || hasSavedDestination}
 									id="remote-host"
 									onChange={(event) => updateDraft("host", event.target.value)}
-									placeholder="dev.example.com or ssh-config-alias"
+									placeholder={t("dev.example.com or ssh-config-alias")}
 									spellCheck={false}
 									value={draft.host}
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="remote-user">User (optional)</Label>
+								<Label htmlFor="remote-user">{t("User (optional)")}</Label>
 								<Input
 									autoCapitalize="none"
 									disabled={isBusy || hasSavedDestination}
 									id="remote-user"
 									onChange={(event) => updateDraft("user", event.target.value)}
-									placeholder="ubuntu"
+									placeholder={t("ubuntu")}
 									spellCheck={false}
 									value={draft.user ?? ""}
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="remote-port">Port</Label>
+								<Label htmlFor="remote-port">{t("Port")}</Label>
 								<Input
 									disabled={isBusy || hasSavedDestination}
 									id="remote-port"
@@ -546,7 +552,7 @@ export function RemoteEnvironmentsContent() {
 												: Number(event.target.value),
 										)
 									}
-									placeholder="22 (from SSH config by default)"
+									placeholder={t("22 (from SSH config by default)")}
 									type="number"
 									value={
 										draft.port === undefined || Number.isNaN(draft.port)
@@ -558,20 +564,23 @@ export function RemoteEnvironmentsContent() {
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="remote-identity">Identity file (optional)</Label>
+							<Label htmlFor="remote-identity">
+								{t("Identity file (optional)")}
+							</Label>
 							<Input
 								disabled={isBusy}
 								id="remote-identity"
 								onChange={(event) =>
 									updateDraft("identityFile", event.target.value)
 								}
-								placeholder="~/.ssh/id_ed25519"
+								placeholder={t("~/.ssh/id_ed25519")}
 								spellCheck={false}
 								value={draft.identityFile ?? ""}
 							/>
 							<p className="text-xs text-muted-foreground">
-								Password sign-in is not supported. The host key must already be
-								trusted in your SSH known_hosts file.
+								{t(
+									"Password sign-in is not supported. The host key must already be trusted in your SSH known_hosts file.",
+								)}
 							</p>
 						</div>
 
@@ -582,7 +591,9 @@ export function RemoteEnvironmentsContent() {
 						<div className="rounded-lg border bg-muted/30 p-4">
 							<div className="mb-3 flex items-center justify-between gap-3">
 								<div className="flex items-center gap-2">
-									<p className="text-sm font-medium">Environment status</p>
+									<p className="text-sm font-medium">
+										{t("Environment status")}
+									</p>
 								</div>
 								<Button
 									disabled={isBusy}
@@ -596,31 +607,31 @@ export function RemoteEnvironmentsContent() {
 									) : (
 										<Plug />
 									)}
-									Test Connection
+									{t("Test Connection")}
 								</Button>
 							</div>
 							<div className="grid grid-cols-2 gap-x-5 gap-y-3 max-[620px]:grid-cols-1">
 								<StatusBadge
-									label="Environment"
+									label={t("Environment")}
 									value={draft.id === activeProfileId ? "active" : "inactive"}
 								/>
 								<StatusBadge
-									label="Connection"
+									label={t("Connection")}
 									value={selectedRuntime.connection}
 								/>
 								<StatusBadge
-									label="Connection test"
+									label={t("Connection test")}
 									value={selectedRuntime.test}
 								/>
 								<StatusBadge
-									label="Cline setup"
+									label={t("Cline setup")}
 									value={selectedRuntime.bootstrap}
 								/>
 							</div>
 
 							{selectedRuntime.remotePlatform || selectedRuntime.remoteArch ? (
 								<p className="mt-3 text-xs text-muted-foreground">
-									Remote:{" "}
+									{t("Remote:")}{" "}
 									{[selectedRuntime.remotePlatform, selectedRuntime.remoteArch]
 										.filter(Boolean)
 										.join(" · ")}
@@ -651,7 +662,7 @@ export function RemoteEnvironmentsContent() {
 									{busyAction?.action === "save" ? (
 										<Loader2 className="animate-spin" />
 									) : null}
-									{hasSavedDestination ? "Save" : "Add"}
+									{hasSavedDestination ? t("Save") : t("Add")}
 								</Button>
 							</div>
 						</div>
@@ -667,15 +678,17 @@ export function RemoteEnvironmentsContent() {
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Delete SSH host?</AlertDialogTitle>
+						<AlertDialogTitle>{t("Delete SSH host?")}</AlertDialogTitle>
 						<AlertDialogDescription>
 							{deleteTarget
 								? `Delete “${deleteTarget.name}” from remote environments? Projects and Cline session data remain on the remote host.`
-								: "Delete this SSH host from remote environments?"}
+								: t("Delete this SSH host from remote environments?")}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isBusy}>Cancel</AlertDialogCancel>
+						<AlertDialogCancel disabled={isBusy}>
+							{t("Cancel")}
+						</AlertDialogCancel>
 						<AlertDialogAction
 							className={buttonVariants({ variant: "destructive" })}
 							disabled={isBusy || !deleteTarget}
@@ -683,7 +696,7 @@ export function RemoteEnvironmentsContent() {
 								if (deleteTarget) void deleteProfile(deleteTarget);
 							}}
 						>
-							Delete
+							{t("Delete")}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

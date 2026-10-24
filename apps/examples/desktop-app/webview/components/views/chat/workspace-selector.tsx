@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { isChatWorkspacePath } from "@cline/shared/browser";
 import {
@@ -61,6 +62,7 @@ export function WorkspaceSelector({
 	onCreateGitBranch?: (branchName: string) => Promise<boolean>;
 	disabled?: boolean;
 }) {
+	const t = useTranslation();
 	const [open, setOpen] = useState(false);
 	const [search, setSearch] = useState("");
 	const [branches, setBranches] = useState<string[]>([]);
@@ -305,7 +307,7 @@ export function WorkspaceSelector({
 				<>
 					<Button
 						variant="ghost"
-						aria-label="Close menu"
+						aria-label={t("Close menu")}
 						className="fixed inset-0 z-40 cursor-default h-auto rounded-none opacity-0"
 						data-cursor="default"
 						onClick={() => {
@@ -326,7 +328,9 @@ export function WorkspaceSelector({
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
 								placeholder={
-									hasGit ? "Search workspaces & branches" : "Search workspaces"
+									hasGit
+										? t("Search workspaces & branches")
+										: t("Search workspaces")
 								}
 								className="h-8 flex-1 border-0 bg-transparent px-0 py-0 text-xs shadow-none focus-visible:ring-0 dark:bg-transparent"
 							/>
@@ -334,14 +338,14 @@ export function WorkspaceSelector({
 
 						{loadingBranches ? (
 							<div className="px-3 py-4 text-xs text-muted-foreground">
-								Loading...
+								{t("Loading...")}
 							</div>
 						) : (
 							<>
 								{/* Workspaces section */}
 								<div className="p-1.5 border-b border-border">
 									<div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-										Workspaces
+										{t("Workspaces")}
 									</div>
 									{looksLikeFolderPath(search) && (
 										<Button
@@ -354,7 +358,8 @@ export function WorkspaceSelector({
 										>
 											<FolderCode className="size-3 shrink-0 text-muted-foreground" />
 											<span className="truncate text-xs text-foreground">
-												Open folder “{search.trim()}”
+												{t("Open folder “")}
+												{search.trim()}”
 											</span>
 										</Button>
 									)}
@@ -365,8 +370,10 @@ export function WorkspaceSelector({
 										{filteredWorkspaces.length === 0 ? (
 											<div className="px-2 py-2 text-xs text-muted-foreground">
 												{looksLikeFolderPath(search)
-													? "Press the option above to open this folder"
-													: "No workspaces found — type a full folder path to add one"}
+													? t("Press the option above to open this folder")
+													: t(
+															"No workspaces found — type a full folder path to add one",
+														)}
 											</div>
 										) : (
 											filteredWorkspaces.map((wp) => {
@@ -413,8 +420,8 @@ export function WorkspaceSelector({
 										className="justify-start w-full mt-0.5 text-xs text-muted-foreground"
 									>
 										{pickingWorkspace
-											? "Opening folder picker..."
-											: "Open folder..."}
+											? t("Opening folder picker...")
+											: t("Open folder...")}
 									</Button>
 									{showWorkspacePathInput ? (
 										<div className="mt-1 flex items-center gap-1">
@@ -445,7 +452,7 @@ export function WorkspaceSelector({
 												disabled={switchingWorkspace}
 												className="h-7 px-2 text-xs"
 											>
-												Go
+												{t("Go")}
 											</Button>
 										</div>
 									) : null}
@@ -460,7 +467,7 @@ export function WorkspaceSelector({
 								{hasGit ? (
 									<div className="p-1.5">
 										<div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-											Branches
+											{t("Branches")}
 										</div>
 										<div
 											ref={branchListRef}
@@ -468,7 +475,7 @@ export function WorkspaceSelector({
 										>
 											{filteredBranches.length === 0 ? (
 												<div className="px-2 py-2 text-xs text-muted-foreground">
-													No branches found
+													{t("No branches found")}
 												</div>
 											) : (
 												filteredBranches.map((branch) => (
@@ -522,7 +529,7 @@ export function WorkspaceSelector({
 															setNewBranchName("");
 														}
 													}}
-													placeholder="Branch name"
+													placeholder={t("Branch name")}
 													className="h-8 text-xs"
 												/>
 												<div className="flex items-center gap-2">
@@ -532,7 +539,7 @@ export function WorkspaceSelector({
 														size="sm"
 														className="flex-1 text-xs"
 													>
-														Create
+														{t("Create")}
 													</Button>
 													<Button
 														variant="outline"
@@ -543,7 +550,7 @@ export function WorkspaceSelector({
 														}}
 														className="flex-1 text-xs text-muted-foreground"
 													>
-														Cancel
+														{t("Cancel")}
 													</Button>
 												</div>
 											</div>
@@ -555,7 +562,7 @@ export function WorkspaceSelector({
 												className="justify-start w-full text-xs text-muted-foreground"
 											>
 												<Plus className="size-3" />
-												Create and checkout new branch...
+												{t("Create and checkout new branch...")}
 											</Button>
 										)}
 									</div>

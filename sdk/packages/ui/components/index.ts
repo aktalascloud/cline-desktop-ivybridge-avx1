@@ -133,3 +133,8 @@ export {
 	type SessionStatusTone,
 } from "./session-status.js";
 export { Switch, type SwitchProps } from "./switch.js";
+export {
+	UiLocaleProvider,
+	useUiLocale,
+	type UiTranslator,
+} from "./ui-locale.js";

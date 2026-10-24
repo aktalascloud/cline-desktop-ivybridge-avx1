@@ -16,6 +16,8 @@
   Push $2
   Push $3
   Push $4
+  Push $5
+  StrCpy $5 0
 
   retry:
     System::Call 'rstrtmgr::RmStartSession(*i .r1, i 0, w .r2) i .r0'
@@ -41,15 +43,21 @@
     StrCpy $3 0
     System::Call 'rstrtmgr::RmGetList(i r1, *i .r2, *i r3, p 0, *i .r4) i .r0'
     ${If} $0 == 234 ; ERROR_MORE_DATA: at least one process uses these files
-      ; RmShutdown waits for shutdown; unlike TerminateProcess + Sleep, its
-      ; return value tells us whether stopping the file users failed.
-      System::Call 'rstrtmgr::RmShutdown(i r1, i ${RmForceShutdown}, p 0) i .r0'
+      ; Do not send shutdown to an active Hub or terminate agent work.
+      ; The app updater stops its isolated Hub only after its idle gate.
     ${EndIf}
     ; A 0 from RmGetList means nothing holds the files: $0 stays 0.
 
   end_session:
     ; Release the session on every path, preserving the operation's error.
     System::Call 'rstrtmgr::RmEndSession(i r1)'
+    ${If} $0 == 234
+    ${AndIf} $5 < 10
+      ; Allow the updater's already-exiting process to release its image.
+      IntOp $5 $5 + 1
+      Sleep 200
+      Goto retry
+    ${EndIf}
     ${If} $0 == 0
       Goto done
     ${EndIf}
@@ -61,7 +69,12 @@
     ; have shown in that mode anyway, so offer a retry. Silent (/S) takes
     ; the default and fails closed. Aborting rather than continuing keeps
     ; the install from ending half-replaced.
-    MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Could not stop Cline processes using files in:$\r$\n$INSTDIR$\r$\n$\r$\nClose Cline and its background tasks, then retry. Windows error: $0." /SD IDCANCEL IDRETRY retry
+    ${If} $LANGUAGE == ${LANG_RUSSIAN}
+      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Файлы приложения заняты:$\r$\n$INSTDIR$\r$\n$\r$\nДождитесь завершения сеансов, закройте Cline Desktop AVX1 RU и повторите попытку. Ошибка Windows: $0." /SD IDCANCEL IDRETRY retry
+    ${Else}
+      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Application files are in use:$\r$\n$INSTDIR$\r$\n$\r$\nWait for sessions to finish, close Cline Desktop AVX1 RU, then retry. Windows error: $0." /SD IDCANCEL IDRETRY retry
+    ${EndIf}
+    Pop $5
     Pop $4
     Pop $3
     Pop $2
@@ -73,6 +86,7 @@
   done:
     ; Nothing installs the earlier backend executable any more.
     Delete "$INSTDIR\code-sidecar.exe"
+    Pop $5
     Pop $4
     Pop $3
     Pop $2
@@ -85,5 +99,11 @@
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL
+  Delete "$SMSTARTUP\Cline Desktop AVX1 RU.lnk"
   !insertmacro CallArtificialFunction StopDesktopProcesses
+!macroend
+
+!macro NSIS_HOOK_POSTINSTALL
+  SetOutPath "$INSTDIR"
+  CreateShortCut "$SMSTARTUP\Cline Desktop AVX1 RU.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
 !macroend

@@ -13,6 +13,7 @@ import { abandonComposioConnectsForOwner } from "./composio";
 import { fetchMarketplaceCatalog } from "./marketplace";
 import { cancelMcpOAuthAuthorizationsForOwner } from "./mcp-oauth";
 import { cancelProviderOAuthLoginsForOwner } from "./oauth-login";
+import { getUpdateSafety } from "./update-safety";
 import {
 	BunRuntime,
 	SIDECAR_HOST,
@@ -229,6 +230,14 @@ export function createFetchHandler(
 				}),
 				{ headers: jsonHeaders(req) },
 			);
+		}
+		if (url.pathname === "/update-safety" && req.method === "GET") {
+			if (
+				!isTrustedRequestOrigin(req) ||
+				!hasValidApprovalToken(url, approvalToken)
+			)
+				return createJsonResponse(req, { safe: false }, 403);
+			return createJsonResponse(req, await getUpdateSafety(ctx));
 		}
 
 		if (

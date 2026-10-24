@@ -45,7 +45,7 @@ describe("parseChangelog", () => {
 		expect(releases[0]?.version).toBe(packageJson.version);
 		expect(releases[0]?.notes.length).toBeGreaterThan(0);
 		expect(releaseUrl(releases[0].version)).toBe(
-			`https://github.com/cline/cline/releases/tag/desktop-v${packageJson.version}`,
+			`https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v${packageJson.version}`,
 		);
 	});
 });
