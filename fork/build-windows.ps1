@@ -8,7 +8,7 @@ $root=Split-Path -Parent $PSScriptRoot
 $app=Join-Path $root 'apps\examples\desktop-app'
 if(-not $env:CARGO_HOME){$env:CARGO_HOME=Join-Path $env:USERPROFILE '.cargo'}
 if(-not $env:BUN_INSTALL_CACHE_DIR){$env:BUN_INSTALL_CACHE_DIR=Join-Path $root '.build-cache\bun'}
-$env:PATH="${env:ProgramFiles}\Git\usr\bin;$env:PATH"
+$env:PATH="$env:PATH;${env:ProgramFiles}\Git\usr\bin"
 Push-Location $root
 try {
   if((git rev-parse HEAD).Trim() -ne $SourceSha){throw 'Checkout does not match the pinned source SHA'}
