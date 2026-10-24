@@ -12,7 +12,8 @@ export function loggingWorkers(resolveFrom: string) {
 }
 
 export function discordWorkerPath(resolveFrom: string) {
-	const discord = Bun.resolveSync("discord.js", resolveFrom);
+	const adapter = Bun.resolveSync("@chat-adapter/discord", resolveFrom);
+	const discord = Bun.resolveSync("discord.js", adapter);
 	return join(
 		dirname(Bun.resolveSync("@discordjs/ws", discord)),
 		"defaultWorker.js",

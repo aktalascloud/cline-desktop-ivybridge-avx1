@@ -12,6 +12,7 @@ import {
 	loggingWorkers,
 	loggingWorkerNames,
 	backendLoggingOptions,
+	discordWorkerPath,
 } from "./logging-bundle";
 
 describe("relocatable logging workers", () => {
@@ -21,6 +22,7 @@ describe("relocatable logging workers", () => {
 		mkdirSync(cache, { recursive: true });
 		const stage = mkdtempSync(join(cache, "logger-test-"));
 		const workers = loggingWorkers(join(root, "apps/cli"));
+		expect(await Bun.file(discordWorkerPath(join(root, "apps/cli"))).exists()).toBe(true);
 		const logging = backendLoggingOptions();
 		const entry = join(stage, "probe.ts");
 		await Bun.write(
