@@ -1,6 +1,7 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
+		"target": "ES2022",
 		"paths": {
 			"@/*": ["./*"],
 			"@cline/agents": ["../../../sdk/packages/agents/src/index.ts"],
