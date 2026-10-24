@@ -1,4 +1,7 @@
 !include "Win\RestartManager.nsh"
+!ifndef AVX1_AUTOSTART_LINK
+!define AVX1_AUTOSTART_LINK "Cline Desktop AVX1 RU.lnk"
+!endif
 
 ; The bundled cline-cli.exe runs the desktop backend and, as a detached
 ; daemon, the Hub, which outlives the desktop. Stop users of every installed
@@ -99,11 +102,11 @@
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL
-  Delete "$SMSTARTUP\Cline Desktop AVX1 RU.lnk"
   !insertmacro CallArtificialFunction StopDesktopProcesses
+  Delete "$SMSTARTUP\${AVX1_AUTOSTART_LINK}"
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
   SetOutPath "$INSTDIR"
-  CreateShortCut "$SMSTARTUP\Cline Desktop AVX1 RU.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+  CreateShortCut "$SMSTARTUP\${AVX1_AUTOSTART_LINK}" "$INSTDIR\${MAINBINARYNAME}.exe"
 !macroend

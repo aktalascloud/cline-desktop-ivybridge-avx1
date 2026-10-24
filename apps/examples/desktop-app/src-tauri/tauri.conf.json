@@ -35,17 +35,14 @@
 		}
 	},
 	"bundle": {
+		"useLocalToolsDir": true,
 		"active": true,
-		"targets": [
-			"nsis"
-		],
+		"targets": ["nsis"],
 		"category": "DeveloperTool",
 		"shortDescription": "Unofficial Cline Desktop for Windows x64 / Ivy Bridge, with Russian interface",
 		"longDescription": "Unofficial community fork of Cline Desktop with English and Russian interface. Source and licenses are available in the fork repository.",
 		"homepage": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1",
-		"externalBin": [
-			"bin/cline-cli"
-		],
+		"externalBin": ["bin/cline-cli"],
 		"resources": [
 			"icons/app/*.png",
 			"icons/app/macos/*.png",

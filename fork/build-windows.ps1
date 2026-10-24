@@ -35,6 +35,11 @@ try {
     if($LASTEXITCODE){throw 'Cargo lock verification failed'}
     python (Join-Path $PSScriptRoot 'collect-licenses.py')
     if($LASTEXITCODE){throw 'License inventory failed'}
+    python (Join-Path $PSScriptRoot 'seed-nsis.py')
+    if($LASTEXITCODE){throw 'NSIS tool verification failed'}
+    $env:MAKENSIS_PATH=Join-Path $root '.build-cache\nsis\nsis-3.13\makensis.exe'
+    bun -F @cline/code test:windows-installer
+    if($LASTEXITCODE){throw 'Real Windows installer hook tests failed'}
     bun -F @cline/code typecheck
     if($LASTEXITCODE){throw 'Type checking failed'}
     bun -F @cline/code build:web

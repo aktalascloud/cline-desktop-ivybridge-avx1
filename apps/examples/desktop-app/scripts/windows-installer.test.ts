@@ -135,6 +135,8 @@ describe.skipIf(!windows)("Windows installer process cleanup", () => {
 Unicode true
 RequestExecutionLevel user
 !include FileFunc.nsh
+!define LANG_RUSSIAN 1049
+!define AVX1_AUTOSTART_LINK "Cline AVX1 isolated installer test-${process.pid}.lnk"
 !include "${nsisString(hook)}"
 !define MAINBINARYNAME "cline-app"
 Name "Cline cleanup test"
@@ -206,7 +208,7 @@ SectionEnd
 		);
 	}, 120_000);
 
-	test("stops all target x64 processes, releases the file, and preserves another install", async () => {
+	test("refuses busy files, then installs after the owner closes; preserves another install", async () => {
 		const dir = path.join(root, "Cline 'quoted' $ space (测试)");
 		const beta = await start(`${dir} Beta`, "cline-cli.exe");
 		const targets = [
@@ -218,10 +220,16 @@ SectionEnd
 		expect(() =>
 			writeFileSync(path.join(dir, "cline-cli.exe"), "locked"),
 		).toThrow();
-		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
+		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(2);
+		for (const child of targets) {
+			expect(child.exitCode).toBeNull();
+			expect(child.signalCode).toBeNull();
+			child.kill();
+		}
 		await waitFor(() =>
 			targets.every((p) => p.exitCode !== null || p.signalCode !== null),
 		);
+		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		expect(readFileSync(path.join(dir, "cline-cli.exe"), "utf8")).toBe(
 			"replaced",
 		);
@@ -229,7 +237,7 @@ SectionEnd
 		expect(beta.signalCode).toBeNull();
 	}, 120_000);
 
-	test("uninstaller releases the same files before deleting them", async () => {
+	test("uninstaller refuses a busy runtime before deleting files", async () => {
 		const dir = path.join(root, "uninstall");
 		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		copyFileSync(fixture, path.join(dir, "cline-cli.exe"));
@@ -237,16 +245,25 @@ SectionEnd
 		// _?= disables NSIS's temp-copy trampoline so we wait for the real exit.
 		expect(
 			await run(path.join(dir, "uninstall.exe"), ["/S", `_?=${dir}`]),
-		).toBe(0);
+		).toBe(2);
+		expect(target.exitCode).toBeNull();
+		expect(existsSync(path.join(dir, "cline-cli.exe"))).toBe(true);
+		target.kill();
 		await waitFor(() => target.exitCode !== null || target.signalCode !== null);
+		expect(
+			await run(path.join(dir, "uninstall.exe"), ["/S", `_?=${dir}`]),
+		).toBe(0);
 		expect(existsSync(path.join(dir, "cline-cli.exe"))).toBe(false);
 	}, 120_000);
 
-	test("upgrade stops and removes the earlier backend executable", async () => {
+	test("upgrade waits for the earlier backend to close before removing it", async () => {
 		const dir = path.join(root, "upgrade");
 		const legacy = await start(dir, "code-sidecar.exe");
-		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
+		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(2);
+		expect(legacy.exitCode).toBeNull();
+		legacy.kill();
 		await waitFor(() => legacy.exitCode !== null || legacy.signalCode !== null);
+		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		expect(existsSync(path.join(dir, "code-sidecar.exe"))).toBe(false);
 		expect(readFileSync(path.join(dir, "cline-cli.exe"), "utf8")).toBe(
 			"replaced",
