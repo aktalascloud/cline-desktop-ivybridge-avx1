@@ -147,7 +147,7 @@
   ],
   "selected_npm": [],
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "0d088407eb5d27d934eb83cf4d4fcd620d2a74391f5d90e61e179c2ddf9aa50e",
+  "bun_lock_sha256": "83bb097e56a8dd610717b20aa4becc2553adfc49331d510fde1d35ba77da89ff",
   "cuda_used": false,
   "llm_models_included": false,
   "authenticode": "NotSigned; Tauri updater signature is a separate verification mechanism",
