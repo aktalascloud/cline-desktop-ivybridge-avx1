@@ -2,7 +2,7 @@
 
 Unofficial Windows x64 fork of [Cline](https://github.com/cline/cline), based on
 upstream Desktop 0.0.48 and current main. Built for Ivy Bridge with AVX, F16C,
-SSE4.2 and POPCNT, without requiring AVX2/FMA. [Р СѓСЃСЃРєРёР№](README.ru.md).
+SSE4.2 and POPCNT, without requiring AVX2/FMA. [Русский](README.ru.md).
 
 The Desktop includes its CLI, Hub and backend. Local and OpenAI-compatible
 providers and MCP come from Cline. Russian/English UI switching is added;
@@ -12,6 +12,11 @@ This build focuses on local LLMs, especially **Strata** through its
 OpenAI-compatible API. It supports local model selection, reasoning levels,
 streaming, tools and MCP. Provider endpoints and personal instructions stay
 in the user's local profile.
+
+Voice input supports both live transcription and recorded-file Whisper-compatible
+servers. Select a dedicated voice model in Settings → Voice, then record and press
+Stop. Recognition inserts a draft; it does not send an agent message. Voice and
+text providers are configured separately. The server must actually support STT.
 
 ## Installation
 

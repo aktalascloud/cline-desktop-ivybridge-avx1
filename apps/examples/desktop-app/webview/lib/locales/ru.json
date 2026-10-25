@@ -997,5 +997,9 @@
 	"{count} prompts queued__few": "{count} промпта в очереди",
 	"{count} prompts queued__many": "{count} промптов в очереди",
 	"Unofficial community fork. Source, patches and verified releases are maintained by aktalascloud.": "Неофициальный общественный форк. Исходники, патчи и проверенные выпуски сопровождает aktalascloud.",
-	"The CLI and Hub are updated together with this fork through the signed Desktop installer.": "CLI и Hub обновляются вместе с этим форком через подписанный установщик Desktop."
+	"The CLI and Hub are updated together with this fork through the signed Desktop installer.": "CLI и Hub обновляются вместе с этим форком через подписанный установщик Desktop.",
+	"Speak instead of typing. Live models transcribe as you speak; recorded models transcribe after you press Stop.": "Говорите вместо ввода текста. Потоковые модели распознают речь сразу; обычные модели — после нажатия «Стоп».",
+	"Choose a speech-to-text model to use voice input.": "Выберите модель распознавания речи для голосового ввода.",
+	"None of your configured providers offer speech-to-text models": "У настроенных провайдеров нет моделей распознавания речи",
+	"Connect a provider with speech-to-text models and this page unlocks automatically.": "Подключите провайдера с моделями распознавания речи — настройки станут доступны."
 }

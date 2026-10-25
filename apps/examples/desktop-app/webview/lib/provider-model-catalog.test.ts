@@ -341,7 +341,7 @@ describe("transcription model selection", () => {
 		).toBe(false);
 	});
 
-	it("rejects a configured batch-only transcription model", () => {
+	it("preserves a configured batch transcription target without claiming streaming", () => {
 		const providers: Provider[] = [
 			{
 				id: "groq",
@@ -384,7 +384,7 @@ describe("transcription model selection", () => {
 				providerId: "nvidia",
 				modelId: "whisper-large-v3",
 			}),
-		).toBeNull();
+		).toMatchObject({providerId: "nvidia", modelId: "whisper-large-v3", supportsStreaming: false});
 		expect(selectTranscriptionModel(providers, undefined)).toBeNull();
 	});
 

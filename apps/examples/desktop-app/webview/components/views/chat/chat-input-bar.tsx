@@ -80,6 +80,7 @@ import {
 	VOICE_INPUT_SETTINGS_CHANGED_EVENT,
 } from "@/lib/provider-model-catalog";
 import type { ProviderModel } from "@/lib/provider-schema";
+import { transcribeRecordedAudio } from "@/lib/recorded-transcription";
 import { startStreamingTranscription } from "@/lib/streaming-transcription";
 import { cn } from "@/lib/utils";
 import { TokenUsageRing } from "./token-usage-ring";
@@ -822,6 +823,21 @@ function ChatInputBarImpl({
 		streamingTranscriptRangeRef.current = null;
 	}, []);
 
+	const speechActiveRef = useRef(false);
+	const handleSpeechInputActiveChange = useCallback((active: boolean) => {
+		if (!transcriptionTarget?.supportsStreaming) {
+			if (active && !speechActiveRef.current) handleStreamingTranscriptionStart();
+			if (!active) handleStreamingTranscriptionEnd();
+		}
+		speechActiveRef.current = active;
+		setSpeechInputActive(active);
+	}, [transcriptionTarget?.supportsStreaming, handleStreamingTranscriptionStart, handleStreamingTranscriptionEnd]);
+
+	const handleVoiceTranscriptionChange = useCallback((text: string, source?: "speech-recognition" | "media-recorder") => {
+		handleStreamingTranscriptionChange(text);
+		if (source === "media-recorder") handleStreamingTranscriptionEnd();
+	}, [handleStreamingTranscriptionChange, handleStreamingTranscriptionEnd]);
+
 	const handleStartStreamingTranscription = useCallback(() => {
 		const generation = transcriptionGenerationRef.current;
 		return startStreamingTranscription({
@@ -1530,9 +1546,9 @@ function ChatInputBarImpl({
 							    browser recognition is only a fallback for network failures. */}
 							{transcriptionTarget ? (
 								<SpeechInput
-									fallbackOnNetworkError
+									fallbackOnNetworkError={transcriptionTarget.supportsStreaming}
 									key={`${transcriptionTarget.providerId}:${transcriptionTarget.modelId}`}
-									onActiveChange={setSpeechInputActive}
+									onActiveChange={handleSpeechInputActiveChange}
 									onError={handleSpeechInputError}
 									onNetworkFallback={() =>
 										toast({
@@ -1545,9 +1561,10 @@ function ChatInputBarImpl({
 									onStartStreaming={handleStartStreamingTranscription}
 									onStreamingEnd={handleStreamingTranscriptionEnd}
 									onStreamingStart={handleStreamingTranscriptionStart}
-									onTranscriptionChange={handleStreamingTranscriptionChange}
-									recordingMode="streaming"
-									title={`Transcribe live with ${transcriptionTarget.providerName} / ${transcriptionTarget.modelName}`}
+									onTranscriptionChange={handleVoiceTranscriptionChange}
+                                    onAudioRecorded={transcriptionTarget.supportsStreaming ? undefined : transcribeRecordedAudio}
+									recordingMode={transcriptionTarget.supportsStreaming ? "streaming" : "media-recorder"}
+									title={`${t("Voice input")}: ${transcriptionTarget.providerName} / ${transcriptionTarget.modelName}`}
 								/>
 							) : null}
 							{(!isBusy || canSend) && (

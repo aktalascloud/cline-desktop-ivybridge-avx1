@@ -11,6 +11,7 @@ import { isProviderConnected } from "@/lib/provider-connection";
 import {
 	fetchProviderCatalog,
 	isStreamingTranscriptionModel,
+	isDedicatedTranscriptionModel,
 	loadTranscriptionModels,
 	notifyVoiceInputSettingsChanged,
 	readVoiceInputCatalog,
@@ -29,11 +30,11 @@ type VoiceProviderEntry = {
 	models: ProviderModel[];
 };
 
-/** Voice input only offers models that return text while the user speaks. */
+/** Prefer live transcription; recorded-file STT remains available for local servers. */
 export function defaultTranscriptionModel(
 	models: ProviderModel[],
 ): ProviderModel | undefined {
-	return models.find(isStreamingTranscriptionModel);
+	return models.find(isStreamingTranscriptionModel) ?? models.find(isDedicatedTranscriptionModel);
 }
 
 export function VoiceInputContent({
@@ -98,14 +99,14 @@ export function VoiceInputContent({
 	const voiceProviders: VoiceProviderEntry[] = connectedProviders
 		.map((provider) => ({
 			provider,
-			models: (provider.modelList ?? []).filter(isStreamingTranscriptionModel),
+			models: (provider.modelList ?? []).filter(isDedicatedTranscriptionModel),
 		}))
 		.filter((entry) => entry.models.length > 0);
 	// Providers that would qualify once connected, so the empty states can
 	// point the user at something actionable.
 	const voiceCapableProviderNames = (providers ?? [])
 		.filter((provider) =>
-			(provider.modelList ?? []).some(isStreamingTranscriptionModel),
+			(provider.modelList ?? []).some(isDedicatedTranscriptionModel),
 		)
 		.map((provider) => provider.name);
 
@@ -162,7 +163,7 @@ export function VoiceInputContent({
 		<>
 			<PageHeader
 				description={t(
-					"Speak instead of typing: the microphone in chat transcribes your voice with the model chosen here. Text appears as you speak; Stop ends the live session.",
+					"Speak instead of typing. Live models transcribe as you speak; recorded models transcribe after you press Stop.",
 				)}
 				title={t("Voice input")}
 			/>
@@ -172,7 +173,7 @@ export function VoiceInputContent({
 				(model) => model.id === voiceInput.modelId,
 			) ? (
 				<p className="mb-4 text-sm text-destructive" role="alert">
-					{t("Choose a streaming transcription model to use live voice input.")}
+					{t("Choose a speech-to-text model to use voice input.")}
 				</p>
 			) : null}
 			{modelErrors.length > 0 ? (
@@ -217,17 +218,17 @@ export function VoiceInputContent({
 					<p className="text-base font-medium text-foreground">
 						{hasConnected
 							? t(
-									"None of your configured providers offer streaming speech-to-text models",
+									"None of your configured providers offer speech-to-text models",
 								)
 							: t("Voice input needs a configured model provider")}
 					</p>
 					<p className="text-sm text-muted-foreground">
 						{voiceCapableProviderNames.length > 0
-							? `Connect a provider with streaming transcription models — for example ${voiceCapableProviderNames
+							? `Connect a provider with speech-to-text models — for example ${voiceCapableProviderNames
 									.slice(0, 4)
 									.join(", ")} — and this page unlocks automatically.`
 							: t(
-									"Connect a provider with streaming transcription models and this page unlocks automatically.",
+									"Connect a provider with speech-to-text models and this page unlocks automatically.",
 								)}
 					</p>
 					<Button onClick={onOpenModelProviders} size="sm" type="button">

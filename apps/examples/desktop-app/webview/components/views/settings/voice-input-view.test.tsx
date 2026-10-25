@@ -76,7 +76,7 @@ const unconnectedProvider: Provider = {
 };
 
 describe("defaultTranscriptionModel", () => {
-	it("only selects streaming transcription models", () => {
+	it("prefers streaming and falls back to a dedicated recorded transcription model", () => {
 		expect(
 			defaultTranscriptionModel(transcriptionProvider.modelList ?? [])?.id,
 		).toBe("scribe_v2_realtime");
@@ -90,7 +90,7 @@ describe("defaultTranscriptionModel", () => {
 					operation: "transcription",
 				},
 			])?.id,
-		).toBeUndefined();
+		).toBe("batch-only");
 	});
 });
 
@@ -253,7 +253,7 @@ describe("VoiceInputContent", () => {
 		expect(container.querySelector('[role="alert"]')?.textContent).toContain(
 			"Could not verify voice models for Vercel AI Gateway",
 		);
-		expect(container.querySelectorAll('[role="radio"]').length).toBe(1);
+		expect(container.querySelectorAll('[role="radio"]').length).toBe(2);
 		expect(
 			Array.from(container.querySelectorAll("button")).some(
 				(button) => button.textContent === "Vercel AI Gateway",
@@ -277,7 +277,7 @@ describe("VoiceInputContent", () => {
 		await render();
 
 		expect(container.textContent).toContain(
-			"None of your configured providers offer streaming speech-to-text models",
+			"None of your configured providers offer speech-to-text models",
 		);
 		expect(container.textContent).toContain("Groq");
 	});
@@ -313,7 +313,7 @@ describe("VoiceInputContent", () => {
 		expect(selected?.textContent).toContain("Default");
 	});
 
-	it("excludes batch models and clears the selection when disabled", async () => {
+	it("includes batch models and clears the selection when disabled", async () => {
 		fetchProviderCatalogMock.mockResolvedValue({
 			providers: [transcriptionProvider],
 			settingsPath: "/tmp/providers.json",
@@ -324,7 +324,7 @@ describe("VoiceInputContent", () => {
 		});
 		await render();
 
-		expect(container.textContent).not.toContain("Scribe v1");
+		expect(container.textContent).toContain("Scribe v1");
 
 		invokeMock.mockResolvedValue({});
 		const toggle = container.querySelector<HTMLInputElement>(

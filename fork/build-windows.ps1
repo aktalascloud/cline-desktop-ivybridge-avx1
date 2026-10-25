@@ -63,8 +63,10 @@ try {
     try {
       bun -F @cline/core typecheck
       if($LASTEXITCODE){throw 'Core type checking failed'}
-      bun -F @cline/core test:unit --maxWorkers=4 src/extensions/mcp src/services/workspace src/runtime/host/local-runtime-host.test.ts
+      bun -F @cline/core test:unit --maxWorkers=4 src/extensions/mcp src/services/workspace src/runtime/host/local-runtime-host.test.ts src/services/providers/local-provider-service.test.ts
       if($LASTEXITCODE){throw 'MCP/workspace/runtime regression tests failed'}
+      bun -F @cline/llms test src/transcription.test.ts
+      if($LASTEXITCODE){throw 'Transcription transport regression tests failed'}
     } finally {Pop-Location}
     bun -F @cline/code build:web
     if($LASTEXITCODE){throw 'Production frontend build failed'}

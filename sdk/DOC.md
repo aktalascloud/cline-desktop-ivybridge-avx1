@@ -599,3 +599,5 @@ run returns.
 No message text leaves the client: `textSignature` and `session.input_sent`'s
 `bumpKind` are enums computed locally
 (`packages/core/src/services/telemetry/stall-signals.ts`).
+
+Voice input accepts dedicated audio-to-text models in streaming or recorded-file mode. Recorded audio uses the selected provider through `transcribeConfiguredVoiceInput`; it never changes the text-chat provider. Desktop submits the completed recording through the host SDK and keeps the draft protected while recognition runs. Custom transcription endpoints advertise their explicit model catalog, without unrelated builtin realtime models.

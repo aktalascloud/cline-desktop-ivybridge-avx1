@@ -54,6 +54,7 @@ const {
 }));
 
 type MockSpeechInputProps = {
+	fallbackOnNetworkError?: boolean;
 	title?: string;
 	disabled?: boolean;
 	onAudioRecorded?: (audioBlob: Blob) => Promise<string>;
@@ -1626,6 +1627,35 @@ describe("ChatInputBar", () => {
 		expect(speechInputMockState.current?.onStartStreaming).toEqual(
 			expect.any(Function),
 		);
+	});
+
+	it("records batch voice locally and inserts text only after recognition", async () => {
+		loadProviderModelCatalogMock.mockResolvedValue(providerCatalog({
+			providerId: "local-recording", providerName: "Local speech", modelId: "whisper-1",
+			modelName: "Whisper", supportsStreaming: false,
+		}));
+		const onSend = vi.fn();
+		await renderVoiceComposer({prompt: "alpha omega", onSend});
+		await vi.waitFor(() => expect(speechInputMockState.current?.recordingMode).toBe("media-recorder"));
+		expect(speechInputMockState.current?.onAudioRecorded).toEqual(expect.any(Function));
+		expect(speechInputMockState.current?.fallbackOnNetworkError).toBe(false);
+		const textarea = container.querySelector<HTMLTextAreaElement>('textarea[role="combobox"]');
+		textarea?.setSelectionRange(6, 6);
+		await act(async () => speechInputMockState.current?.onActiveChange?.(true));
+		expect(textarea?.readOnly).toBe(true);
+		await act(async () => {
+			speechInputMockState.current?.onProcessingChange?.(true);
+			speechInputMockState.current?.onActiveChange?.(true);
+		});
+		await act(async () => speechInputMockState.current?.onTranscriptionChange?.("hello", "media-recorder"));
+		expect(textarea?.value).toBe("alpha hello omega");
+		await act(async () => {
+			speechInputMockState.current?.onProcessingChange?.(false);
+			speechInputMockState.current?.onActiveChange?.(false);
+		});
+		expect(textarea?.readOnly).toBe(false);
+		expect(onSend).not.toHaveBeenCalled();
+		expect(startStreamingTranscriptionMock).not.toHaveBeenCalled();
 	});
 
 	it.each([

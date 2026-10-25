@@ -1137,9 +1137,9 @@ export async function getLocalTranscriptionModels(
 	const modelMap = await resolveProviderModelMap(id, config);
 	const models = toSortedProviderModels({
 		...modelMap,
-		...LlmsModels.getBuiltinStreamingTranscriptionModels(
-			providerConfig.routingProviderId ?? id,
-		),
+		...(providerConfig.routingProviderId && providerConfig.routingProviderId !== id
+            ? {}
+            : LlmsModels.getBuiltinStreamingTranscriptionModels(id)),
 	});
 	return {
 		providerId: id,
@@ -1224,12 +1224,6 @@ export async function saveVoiceInputSettings(
 	if (!model || !isDedicatedTranscriptionModel(model)) {
 		throw new Error(
 			`Model "${modelId}" is not a dedicated audio-to-text transcription model`,
-		);
-	}
-
-	if (!model.operationModes?.includes("streaming")) {
-		throw new Error(
-			`Model "${modelId}" does not support streaming transcription. Choose a streaming model for voice input.`,
 		);
 	}
 

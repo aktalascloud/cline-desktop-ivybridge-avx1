@@ -93,7 +93,7 @@ export function selectTranscriptionModel(
 	const model = provider?.modelList?.find(
 		(candidate) =>
 			candidate.id === selection.modelId &&
-			isStreamingTranscriptionModel(candidate),
+			isDedicatedTranscriptionModel(candidate),
 	);
 	return provider && model
 		? {
