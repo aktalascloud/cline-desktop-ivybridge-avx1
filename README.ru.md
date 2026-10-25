@@ -23,7 +23,7 @@ streaming, инструменты и MCP. Адрес провайдера и л�
 ## Установка
 
 Скачайте [текущий выпуск](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) или
-[установщик Windows x64](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.3/Cline-Desktop-AVX1-RU-Setup.exe). Проверяемая система — Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 и WebView2.
+[установщик Windows x64](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.4/Cline-Desktop-AVX1-RU-Setup.exe). Проверяемая система — Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 и WebView2.
 
 У форка собственные ID приложения, подписанные обновления, каталог данных и
 один ярлык автозапуска. Другая установка Cline сохраняется отдельно.
@@ -34,6 +34,7 @@ streaming, инструменты и MCP. Адрес провайдера и л�
 - [Обновление безопасности Next.js](https://github.com/cline/cline/pull/15146), адаптированное и дополненное обновлением до 16.4.3.
 - [Обновление undici до 7.30.1](https://github.com/cline/cline/pull/15287).
 - [Проверки дублирования истории](https://github.com/cline/cline/pull/15223): само исправление уже присутствует в upstream main.
+- Новые чаты больше не восстанавливают удалённого провайдера: работает выбор reasoning настроенной локальной модели. Настройки старых диалогов сохраняются.
 - Наши изменения: RU/EN, отдельные обновления форка, закрытие SQLite-соединений, безопасная работа с worktree в Windows и привязка MCP OAuth к issuer с SDK 1.32.2.
 
 [Синтетический тест истории](fork/history-benchmark.json) устраняет рост handles

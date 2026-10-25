@@ -76,11 +76,11 @@
     "anonymous_download_verified": true
   },
   "ci": {
-    "run": 40173929694,
-    "source": "2256c5595e583a0f8abbb269cb1b7223f3ccceee",
-    "status": "passed",
-    "desktop_tests_passed": 1942,
-    "native_tests_passed": 5
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40204788866",
+    "status": "success",
+    "source_sha": "7a4ee28447acb12a555961c454a5b385a7963e97",
+    "signature_verified": true,
+    "tamper_rejected": true
   },
   "interactive_gui": {
     "status": "waived by owner",
@@ -121,11 +121,11 @@
     "post_history_cleanup": true
   },
   "publication": {
-    "version": "1.0.3",
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.3",
-    "asset_sha256": "299ebcfa6413f7695b2a2632dcdec78c71286a2550ca39323e342e9a37e29b0e",
+    "version": "1.0.4",
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.4",
+    "asset_sha256": "1393fc153e01ce211cd76cb0318c0e7770087dc18b55de6d7a87a5977cffa936",
     "asset_count": 1,
-    "anonymous_download_verified": true
+    "anonymous_download_verified": false
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -134,5 +134,22 @@
     "chromium_webm_to_pcm_wav": "passed",
     "microphone_capture": "not verified",
     "new_throughput_measurements": false
+  },
+  "reasoning_selector": {
+    "regression_before_fix": "new-chat reasoning selector remained disabled",
+    "after_fix": "73 composer tests pass; configured provider restored; High selectable; historical route preserved",
+    "installed_protocol_levels": [
+      "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh"
+    ],
+    "headless_chromium_languages": [
+      "en",
+      "ru"
+    ],
+    "headless_chromium_levels": 5,
+    "native_interactive_click": "waived"
   }
 }

@@ -1,11 +1,11 @@
 {
-  "version": "1.0.3",
-  "notes": "Recorded Whisper voice input with local WAV conversion and an independent speech provider. / Голосовой ввод Whisper: локальный WAV и отдельный голосовой провайдер.",
-  "pub_date": "2026-10-25T09:16:51.678018Z",
+  "version": "1.0.4",
+  "notes": "Fix removed-provider defaults and reasoning selection for local models. / Исправлен выбор провайдера и reasoning для новых чатов с локальными моделями.",
+  "pub_date": "2026-10-25T15:21:15.878557Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmdaWlk2cENmd0xZcGpRUjd3RFVZUWJlaU14cHlnMlFYUjUyNndEK3l0enRvTnQ3SG9UTlBpVU85UnJWZCtxTGo0VnVjcmc4QUpqeUFLUXRjRUxNalFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTE1MDQxCWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4zX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMwpZN0dWWXhSd3h0TDJPMllIekZNMXBIV1ljZ2FuclRDejJubXRQeUt1T0xhK2MyRjR4TWEwd2dhRmZQcjJhd3g4eTc1bWVrc0hocklJZ1NIejVwMFVBQT09Cg==",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.3/Cline-Desktop-AVX1-RU-Setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmd2Q3NVdDA0RWM1cGY2enUyaU93YnpFU3FlNTNaTGxsdUJLZWg5OHpnQTNyTmJhM2pRYmhxRFdXSm1rOFlScXVHUmROMDhkOHlqSXRRc1drT0ZnZVEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTQxMjE5CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC40X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuNApuM24zNzgxNFp6OEhwMzhNaGttbVZpU3REaVVlemRkclhEaVdDT2ppYjI5N2dTMHJJblVxeFI1aU5IZDBMQit4VjBOUkxEU0I1OWpZOGs1UjFmNnRBdz09Cg==",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.4/Cline-Desktop-AVX1-RU-Setup.exe"
     }
   }
 }

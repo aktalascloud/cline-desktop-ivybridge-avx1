@@ -329,5 +329,13 @@
     "origin": "local-fork-patch",
     "status": "applied-qualified",
     "verification": "Windows CI 40173929694, provider/transport/composer tests, real Chromium WebM conversion, signed installed upgrade and anonymous download; physical microphone capture not claimed."
+  },
+  {
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/commit/7a4ee28447acb12a555961c454a5b385a7963e97",
+    "sha": "7a4ee28447acb12a555961c454a5b385a7963e97",
+    "purpose": "Restore configured new-chat provider after removing a remembered provider, including reasoning capability and saved default",
+    "origin": "local-fork-patch",
+    "status": "included",
+    "verification": "Failing regression reproduced; 73 composer tests pass, including High selection and historical route preservation; production frontend, typecheck, native tests, CI and installed offline protocol checks"
   }
 ]

@@ -1,9 +1,9 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "upstream_sha": "40c5d99031fe1128189c5b52e40638d2b7787754",
-  "build_source_sha": "2256c5595e583a0f8abbb269cb1b7223f3ccceee",
+  "build_source_sha": "7a4ee28447acb12a555961c454a5b385a7963e97",
   "release_approved": true,
   "native": {
     "kind": "source-built",
@@ -35,7 +35,7 @@
       "fork storage bootstrap before imports",
       "official auto-update disabled for fork distribution"
     ],
-    "sha256": "f4515a3206f0f793e240147093893658e911b2114ec50105a1feeed037ffc881"
+    "sha256": "cfb1d91971f55ab6d8abdb0b37a12e3f50becfebbe1e0c15d79e86bd1b034006"
   },
   "backend": {
     "kind": "source-built JS bundle",
@@ -154,11 +154,11 @@
   "updater_zip_support": false,
   "installer": {
     "filename": "Cline-Desktop-AVX1-RU-Setup.exe",
-    "sha256": "299ebcfa6413f7695b2a2632dcdec78c71286a2550ca39323e342e9a37e29b0e",
-    "size": 134810581,
-    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmdaWlk2cENmd0xZcGpRUjd3RFVZUWJlaU14cHlnMlFYUjUyNndEK3l0enRvTnQ3SG9UTlBpVU85UnJWZCtxTGo0VnVjcmc4QUpqeUFLUXRjRUxNalFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTE1MDQxCWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4zX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMwpZN0dWWXhSd3h0TDJPMllIekZNMXBIV1ljZ2FuclRDejJubXRQeUt1T0xhK2MyRjR4TWEwd2dhRmZQcjJhd3g4eTc1bWVrc0hocklJZ1NIejVwMFVBQT09Cg==",
+    "sha256": "1393fc153e01ce211cd76cb0318c0e7770087dc18b55de6d7a87a5977cffa936",
+    "size": 134825330,
+    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmd2Q3NVdDA0RWM1cGY2enUyaU93YnpFU3FlNTNaTGxsdUJLZWg5OHpnQTNyTmJhM2pRYmhxRFdXSm1rOFlScXVHUmROMDhkOHlqSXRRc1drT0ZnZVEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTQxMjE5CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC40X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuNApuM24zNzgxNFp6OEhwMzhNaGttbVZpU3REaVVlemRkclhEaVdDT2ppYjI5N2dTMHJJblVxeFI1aU5IZDBMQit4VjBOUkxEU0I1OWpZOGs1UjFmNnRBdz09Cg==",
     "authenticode": "NotSigned",
-    "status": "installed and qualified; microphone capture not claimed"
+    "status": "installed upgrade and offline protocol tests qualified; interactive GUI waived"
   },
   "original_build_source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
   "sanitized_upstream_sha": "8c6e4474bc32cc9a118e74fe158cd5fbbab572aa",
@@ -175,5 +175,11 @@
     "real_chromium_codec_test": "passed with synthetic WebM speech",
     "physical_microphone": "not verified",
     "provider_requires_reachable_stt": true
+  },
+  "reasoning_selector": {
+    "source": "local fork patch",
+    "new_chat": "configured providers only",
+    "historical_session_route": "preserved",
+    "composer_tests_passed": 73
   }
 }
