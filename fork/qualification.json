@@ -51,6 +51,12 @@
     "database_commit": "21d909e4c8bd4e14c7aea58bf980c881a0053ab1"
   },
   "cli_profile_default_verified": true,
+  "local_reasoning_request_fixture": {
+    "levels": ["none", "low", "medium", "high", "xhigh"],
+    "installed_cli_wire_values_verified": true,
+    "real_inference_performed": false,
+    "local_custom_provider_single_model_and_reasoning_catalog_verified": true
+  },
   "installed_candidate": {
     "version": "1.0.1",
     "signature_verified": true,

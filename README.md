@@ -8,6 +8,11 @@ The Desktop includes its CLI, Hub and backend. Local and OpenAI-compatible
 providers and MCP come from Cline. Russian/English UI switching is added;
 messages, code, commands and API identifiers retain their original text.
 
+This build focuses on local LLMs, especially **Strata** through its
+OpenAI-compatible API. It supports local model selection, reasoning levels,
+streaming, tools and MCP. Provider endpoints and personal instructions stay
+in the user's local profile.
+
 ## Installation
 
 Download the [current release](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) or its
