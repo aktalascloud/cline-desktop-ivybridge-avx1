@@ -3,6 +3,7 @@ import {Blob} from "node:buffer";
 
 const invoke=vi.hoisted(()=>vi.fn());
 vi.mock("./desktop-client",()=>({desktopClient:{invoke}}));
+vi.mock("./recorded-audio",()=>({normalizeRecordedAudio:async()=>new Uint8Array([82,73,70,70])}));
 import {transcribeRecordedAudio} from "./recorded-transcription";
 
 describe("recorded voice input",()=>{

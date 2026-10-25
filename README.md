@@ -15,7 +15,8 @@ in the user's local profile.
 
 Voice input supports both live transcription and recorded-file Whisper-compatible
 servers. Select a dedicated voice model in Settings → Voice, then record and press
-Stop. Recognition inserts a draft; it does not send an agent message. Voice and
+Stop. Recordings are converted locally to 16 kHz mono PCM WAV for compatibility.
+Recognition inserts a draft; it does not send an agent message. Voice and
 text providers are configured separately. The server must actually support STT.
 
 ## Installation

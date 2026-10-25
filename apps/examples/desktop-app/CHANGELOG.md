@@ -1,5 +1,10 @@
 # Cline Desktop Changelog
 
+## 1.0.3
+
+- Recorded Whisper-compatible voice input with a separate speech provider, local 16 kHz mono PCM WAV conversion and draft protection. Streaming voice remains available; recordings do not send an agent message automatically.
+- Голосовой ввод через отдельный Whisper-совместимый провайдер, локальное преобразование записи в PCM WAV (моно, 16 кГц) и защита черновика. Потоковый режим сохранён; распознавание не отправляет сообщение агенту автоматически.
+
 ## 1.0.1
 
 - Unofficial Cline Desktop AVX1 RU, based on upstream 0.0.48. English/Russian interface, a shared fork profile for Desktop/CLI/Hub, signed fork updates, Windows worktree/SQLite fixes, MCP OAuth issuer binding, first-turn CLI timeout and updated security dependencies. Ivy Bridge fat-LTO profile; no LLM throughput gain is claimed.
