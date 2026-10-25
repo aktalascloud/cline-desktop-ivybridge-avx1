@@ -23,7 +23,7 @@ streaming, инструменты и MCP. Адрес провайдера и л�
 ## Установка
 
 Скачайте [текущий выпуск](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) или
-[установщик Windows x64](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.1/Cline-Desktop-AVX1-RU-Setup.exe). Проверяемая система — Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 и WebView2.
+[установщик Windows x64](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.3/Cline-Desktop-AVX1-RU-Setup.exe). Проверяемая система — Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 и WebView2.
 
 У форка собственные ID приложения, подписанные обновления, каталог данных и
 один ярлык автозапуска. Другая установка Cline сохраняется отдельно.

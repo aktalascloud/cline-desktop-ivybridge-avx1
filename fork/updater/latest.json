@@ -1,11 +1,11 @@
 {
-  "version": "1.0.1",
-  "notes": "Unofficial AVX1 Windows Desktop; EN/RU, fork updater, Windows/SQLite and security fixes. / Неофициальная сборка AVX1: RU/EN, отдельные обновления, исправления Windows/SQLite и безопасности.",
-  "pub_date": "2026-10-25T03:11:22.915021Z",
+  "version": "1.0.3",
+  "notes": "Recorded Whisper voice input with local WAV conversion and an independent speech provider. / Голосовой ввод Whisper: локальный WAV и отдельный голосовой провайдер.",
+  "pub_date": "2026-10-25T09:16:51.678018Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnZsOEpka2w2MGh5SittNDJhZmVPNzVrN00vbjllSHJaTFNwN2J6c0k1K1h4cEM3N2NFdmtsZGY2Y0lpQTQ4Q0pWcXBVemxKUmw2RUUvZmlzV1ZlSHdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODg1Njg1CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMQowU0VXRWd0ZmFtUXhRSDRWT3U3UTltSGJKcDEydHVyamxyUGhsZWhxVHFCblQveWdFTmg1Ym8zdTJrQ3ZaMk5ZbGlhaXNCYU9vTWlTR210K2s2dVhBdz09Cg==",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.1/Cline-Desktop-AVX1-RU-Setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmdaWlk2cENmd0xZcGpRUjd3RFVZUWJlaU14cHlnMlFYUjUyNndEK3l0enRvTnQ3SG9UTlBpVU85UnJWZCtxTGo0VnVjcmc4QUpqeUFLUXRjRUxNalFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTE1MDQxCWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4zX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMwpZN0dWWXhSd3h0TDJPMllIekZNMXBIV1ljZ2FuclRDejJubXRQeUt1T0xhK2MyRjR4TWEwd2dhRmZQcjJhd3g4eTc1bWVrc0hocklJZ1NIejVwMFVBQT09Cg==",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.3/Cline-Desktop-AVX1-RU-Setup.exe"
     }
   }
 }

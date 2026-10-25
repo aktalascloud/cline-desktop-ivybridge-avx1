@@ -321,5 +321,13 @@
     "origin": "official-upstream-issue",
     "status": "not-reproduced-in-isolated-fork-dom-probe",
     "verification": "Read the Desktop 0.0.48 issue and its comment. Two isolated React/jsdom scenarios passed: built-in OpenAI-compatible and custom local provider, focus/edit/blur, changed key and URL, stale catalog props. Native macOS/WebKit behavior remains unverified; no bug fix is claimed. Live local endpoint was read-only checked and preserved."
+  },
+  {
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/tree/2256c5595e583a0f8abbb269cb1b7223f3ccceee",
+    "sha": "2256c5595e583a0f8abbb269cb1b7223f3ccceee",
+    "purpose": "Recorded Whisper-compatible voice input and local PCM WAV conversion, separate from text-chat provider",
+    "origin": "local-fork-patch",
+    "status": "applied-qualified",
+    "verification": "Windows CI 40173929694, provider/transport/composer tests, real Chromium WebM conversion, signed installed upgrade and anonymous download; physical microphone capture not claimed."
   }
 ]

@@ -22,7 +22,7 @@ text providers are configured separately. The server must actually support STT.
 ## Installation
 
 Download the [current release](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) or its
-[Windows x64 installer](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.1/Cline-Desktop-AVX1-RU-Setup.exe).
+[Windows x64 installer](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.3/Cline-Desktop-AVX1-RU-Setup.exe).
 Tested target: Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 and Microsoft WebView2.
 
 The fork uses its own application ID, signed Tauri update feed, data directory
