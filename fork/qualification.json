@@ -125,7 +125,7 @@
     "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.4",
     "asset_sha256": "1393fc153e01ce211cd76cb0318c0e7770087dc18b55de6d7a87a5977cffa936",
     "asset_count": 1,
-    "anonymous_download_verified": false
+    "anonymous_download_verified": true
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -137,7 +137,7 @@
   },
   "reasoning_selector": {
     "regression_before_fix": "new-chat reasoning selector remained disabled",
-    "after_fix": "73 composer tests pass; configured provider restored; High selectable; historical route preserved",
+    "after_fix": "73 composer tests pass; High and XHigh selectable; removed new-chat provider corrected; historical route preserved",
     "installed_protocol_levels": [
       "none",
       "low",
@@ -150,6 +150,7 @@
       "ru"
     ],
     "headless_chromium_levels": 5,
-    "native_interactive_click": "waived"
+    "native_interactive_click": "waived",
+    "desktop_ci_tests_passed": 1946
   }
 }
