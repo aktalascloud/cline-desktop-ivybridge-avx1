@@ -6,6 +6,7 @@ import {
 	Fragment,
 	type MouseEvent as ReactMouseEvent,
 	StrictMode,
+	useState,
 } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -185,6 +186,127 @@ function providerCatalog(
 		voiceInput,
 	};
 }
+
+function StaleProviderComposer({
+	variant,
+}: {
+	variant: "welcome" | "conversation";
+}) {
+	const [provider, setProvider] = useState("openai-compatible");
+	const [model, setModel] = useState("private-model");
+	const [reasoning, setReasoning] = useState({
+		thinking: false,
+		reasoningEffort: undefined,
+	} as Pick<
+		Parameters<typeof ChatInputBar>[0],
+		"thinking" | "reasoningEffort"
+	>);
+	return (
+		<WorkspaceProvider value={workspaceValue}>
+			<ChatInputBar
+				attachments={[]}
+				gitBranch="main"
+				mode="act"
+				variant={variant}
+				provider={provider}
+				model={model}
+				{...reasoning}
+				onProviderChange={setProvider}
+				onModelChange={setModel}
+				onReasoningChange={setReasoning}
+				onAbort={vi.fn()}
+				onAttachFiles={vi.fn()}
+				onEditPromptInQueue={vi.fn()}
+				onListGitBranches={vi.fn(async () => ({
+					current: "main",
+					branches: ["main"],
+				}))}
+				onModeToggle={vi.fn()}
+				onPromptInputChange={vi.fn()}
+				onRemoveAttachment={vi.fn()}
+				onRemovePromptInQueue={vi.fn()}
+				onSend={vi.fn()}
+				onSteerPromptInQueue={vi.fn()}
+				onSwitchGitBranch={vi.fn(async () => true)}
+				promptDraft={{ version: 0, value: "" }}
+				promptsInQueue={[]}
+				status="idle"
+				summary={{ toolCalls: 0, tokensIn: 0, tokensOut: 0 }}
+			/>
+		</WorkspaceProvider>
+	);
+}
+
+it.each([
+	"welcome",
+	"conversation",
+] as const)("handles a removed provider in the %s composer without losing reasoning metadata", async (variant) => {
+	window.localStorage.setItem(
+		MODEL_SELECTION_STORAGE_KEY,
+		JSON.stringify({
+			lastProvider: "openai-compatible",
+			lastModelByProvider: { "openai-compatible": "private-model" },
+		}),
+	);
+	loadProviderModelCatalogMock.mockResolvedValue({
+		providers: [],
+		enabledProviderIds: ["local-lab"],
+		providerModels: {
+			"openai-compatible": ["gpt-4o"],
+			"local-lab": ["private-model"],
+		},
+		providerNames: { "local-lab": "Local lab" },
+		providerReasoningModels: { "local-lab": ["private-model"] },
+	});
+	loadProviderModelsMock.mockImplementation(async (provider) =>
+		provider === "local-lab"
+			? [
+					{
+						id: "private-model",
+						name: "Private model",
+						supportsReasoning: true,
+					},
+				]
+			: [{ id: "gpt-4o", name: "gpt-4o", supportsReasoning: false }],
+	);
+	await act(async () =>
+		root.render(<StaleProviderComposer variant={variant} />),
+	);
+	await vi.waitFor(() => {
+		const trigger = container.querySelector<HTMLButtonElement>(
+			'[aria-label="Thinking level"]',
+		);
+		expect(trigger?.disabled).toBe(variant === "conversation");
+	});
+	if (variant === "welcome") {
+		expect(container.textContent).toContain("Local lab");
+		expect(loadProviderModelsMock).not.toHaveBeenCalledWith(
+			"openai-compatible",
+		);
+		expect(readModelSelectionStorageFromWindow().lastProvider).toBe(
+			"local-lab",
+		);
+		await act(async () =>
+			container
+				.querySelector<HTMLButtonElement>('[aria-label="Thinking level"]')
+				?.click(),
+		);
+		const high = Array.from(
+			document.querySelectorAll<HTMLElement>('[role="option"]'),
+		).find((option) => option.textContent === "High");
+		expect(high).toBeDefined();
+		await act(async () => high?.click());
+		expect(
+			container.querySelector('[aria-label="Thinking level"]')?.textContent,
+		).toContain("High");
+	} else {
+		expect(readModelSelectionStorageFromWindow().lastProvider).toBe(
+			"openai-compatible",
+		);
+		expect(container.textContent).toContain("private-model");
+	}
+	window.localStorage.removeItem(MODEL_SELECTION_STORAGE_KEY);
+});
 
 function deferred<T>() {
 	let resolve: (value: T) => void = () => {};

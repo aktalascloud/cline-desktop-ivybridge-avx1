@@ -1686,6 +1686,7 @@ function ChatInputBarImpl({
 						<ModelSelector
 							key={executionTarget}
 							autoCorrectModel={!cloudSettingsLocked}
+							preserveUnavailableProvider={variant !== "welcome"}
 							includeCloudModels={executionTarget === "cloud"}
 							isBusy={isBusy}
 							model={model}
@@ -1792,6 +1793,7 @@ const ADD_PROVIDER_OPTION_VALUE = "__add-provider__";
 const ModelSelector = memo(function ModelSelector({
 	allowedProviderIds,
 	autoCorrectModel = true,
+	preserveUnavailableProvider = true,
 	includeCloudModels = false,
 	provider,
 	model,
@@ -1805,6 +1807,8 @@ const ModelSelector = memo(function ModelSelector({
 }: {
 	allowedProviderIds?: string[];
 	autoCorrectModel?: boolean;
+	/** Existing sessions retain their route; new drafts use configured providers. */
+	preserveUnavailableProvider?: boolean;
 	includeCloudModels?: boolean;
 	provider: string;
 	model: string;
@@ -1891,10 +1895,12 @@ const ModelSelector = memo(function ModelSelector({
 				[providerId]: models,
 			}));
 			setEnabledProviderIds((current) =>
-				current.includes(providerId) ? current : [...current, providerId],
+				current.includes(providerId) || !preserveUnavailableProvider
+					? current
+					: [...current, providerId],
 			);
 		},
-		[],
+		[preserveUnavailableProvider],
 	);
 	// Re-fetch only the live list on picker open so the Recommended/Free tiers
 	// stay current. Re-running the full load would first re-apply the bundled
@@ -2106,6 +2112,7 @@ const ModelSelector = memo(function ModelSelector({
 		setReasoningCapabilitySource("loading");
 
 		async function loadCatalogAndActiveModels() {
+			let activeProviderEnabled = true;
 			try {
 				const payload = await loadProviderModelCatalog(
 					includeCloudModels ? { includeCloudModels: true } : undefined,
@@ -2124,16 +2131,23 @@ const ModelSelector = memo(function ModelSelector({
 					...(payload.providerModelDetails ?? {}),
 				}));
 				setReasoningCapabilitySource("catalog");
+				activeProviderEnabled =
+					payload.enabledProviderIds.includes(normalizedProvider);
 				setEnabledProviderIds((current) => {
 					const nextProviderIds = new Set(payload.enabledProviderIds);
 					if (
 						normalizedProvider &&
+						preserveUnavailableProvider &&
 						(!includeCloudModels || !autoCorrectModel)
 					) {
 						nextProviderIds.add(normalizedProvider);
 					}
 					for (const providerId of current) {
-						if (!includeCloudModels && providerId in payload.providerModels) {
+						if (
+							preserveUnavailableProvider &&
+							!includeCloudModels &&
+							providerId in payload.providerModels
+						) {
 							nextProviderIds.add(providerId);
 						}
 					}
@@ -2143,7 +2157,12 @@ const ModelSelector = memo(function ModelSelector({
 				if (!cancelled) setReasoningCapabilitySource("fallback");
 			}
 
-			if (includeCloudModels || !normalizedProvider || cancelled) {
+			if (
+				includeCloudModels ||
+				!normalizedProvider ||
+				cancelled ||
+				(!preserveUnavailableProvider && !activeProviderEnabled)
+			) {
 				return;
 			}
 			try {
@@ -2166,6 +2185,7 @@ const ModelSelector = memo(function ModelSelector({
 		applyProviderModels,
 		autoCorrectModel,
 		catalogRevision,
+		preserveUnavailableProvider,
 		includeCloudModels,
 		normalizedProvider,
 	]);
@@ -2246,6 +2266,14 @@ const ModelSelector = memo(function ModelSelector({
 			resolvedProvider !== normalizedProvider
 		) {
 			onProviderChange(resolvedProvider);
+			// Repair stale new-chat defaults after a provider was removed. Do not
+			// write a historical session's provider into the remembered selection.
+			if (
+				!preserveUnavailableProvider &&
+				reasoningCapabilitySource === "catalog"
+			) {
+				rememberSelection(resolvedProvider, resolvedModel || undefined);
+			}
 		}
 		if (autoCorrectModel && resolvedModel && resolvedModel !== model) {
 			onModelChange(resolvedModel);
@@ -2261,6 +2289,9 @@ const ModelSelector = memo(function ModelSelector({
 		providers,
 		resolvedModel,
 		resolvedProvider,
+		preserveUnavailableProvider,
+		reasoningCapabilitySource,
+		rememberSelection,
 	]);
 
 	useEffect(() => {
