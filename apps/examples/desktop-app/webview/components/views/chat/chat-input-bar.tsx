@@ -193,7 +193,7 @@ const EFFORT_LEVELS: ReasoningEffortOption[] = [
 	DEFAULT_REASONING_EFFORT,
 	{ label: "Medium", value: "medium" },
 	{ label: "High", value: "high" },
-	{ label: "Extra", value: "xhigh" },
+	{ label: "XHigh", value: "xhigh" },
 ];
 const PROMPT_INPUT_COLLAPSED_ROWS = 1;
 const PROMPT_INPUT_EXPANDED_ROWS = 2;
@@ -273,7 +273,7 @@ function getActiveSlash(input: string, cursor: number): ActiveSlash | null {
 		return null;
 	}
 	const query = left.slice(slashIndex + 1);
-	// No whitespace allowed inside the query — once the user typed a space
+	// No whitespace allowed inside the query вЂ” once the user typed a space
 	// the slash command has been committed.
 	if (/\s/.test(query)) {
 		return null;
@@ -520,7 +520,7 @@ function ChatInputBarImpl({
 	);
 	const reportUnsupportedImages = useCallback(() => {
 		toast({
-			title: "This model doesn’t support image input",
+			title: "This model doesnвЂ™t support image input",
 			description:
 				"Choose a model that supports images or remove the images before sending." +
 				(executionTarget === "cloud"
@@ -668,7 +668,7 @@ function ChatInputBarImpl({
 		? `${activeSlash.slashIndex}:${activeSlash.query}`
 		: null;
 	// Slash commands resolve against locally installed skills/workflows, which
-	// the cloud sandbox cannot run — gate them like @-mentions.
+	// the cloud sandbox cannot run вЂ” gate them like @-mentions.
 	const slashOpen =
 		executionTarget === "local" &&
 		slashKey !== null &&
@@ -1489,7 +1489,7 @@ function ChatInputBarImpl({
 							}
 							placeholder={
 								speechInputProcessing
-									? t("Transcribing voice input…")
+									? t("Transcribing voice inputвЂ¦")
 									: needsCloudRepository
 										? t("Choose a repository")
 										: isBusy && variant !== "welcome"
@@ -1541,7 +1541,7 @@ function ChatInputBarImpl({
 								</AgentComposerStopButton>
 							)}
 							{/* The mic button only appears once a voice model is
-							    configured in Settings → Voice; unconfigured users
+							    configured in Settings в†’ Voice; unconfigured users
 							    don't get a dead control. Start with the configured provider;
 							    browser recognition is only a fallback for network failures. */}
 							{transcriptionTarget ? (
@@ -1589,7 +1589,7 @@ function ChatInputBarImpl({
 				{unsupportedDraftImageCount > 0 && (
 					<output className="block px-2 text-sm text-destructive">
 						{t(
-							"This model doesn’t support the attached images. Remove them or choose a model that supports images before sending.",
+							"This model doesnвЂ™t support the attached images. Remove them or choose a model that supports images before sending.",
 						)}
 					</output>
 				)}
@@ -1629,7 +1629,7 @@ function ChatInputBarImpl({
 							executionTarget === "cloud"
 								? t("Attach images")
 								: imagesUnsupported
-									? t("Attach files (this model doesn’t support images)")
+									? t("Attach files (this model doesnвЂ™t support images)")
 									: t("Attach files")
 						}
 						className="rounded-md p-2 text-muted-foreground hover:bg-surface-hover"
@@ -1787,7 +1787,7 @@ export const ChatInputBar = memo(ChatInputBarImpl);
 
 // Memoized: the selectors load/hold the full provider-model catalog, so they
 // should not re-render for every keystroke in the composer textarea.
-/** Sentinel provider-picker row that opens Settings → Providers instead of selecting. */
+/** Sentinel provider-picker row that opens Settings в†’ Providers instead of selecting. */
 const ADD_PROVIDER_OPTION_VALUE = "__add-provider__";
 
 const ModelSelector = memo(function ModelSelector({
@@ -1818,7 +1818,7 @@ const ModelSelector = memo(function ModelSelector({
 	onModelReadyChange: (ready: boolean) => void;
 	onModelSupportsReasoningChange: (supportsReasoning: boolean | null) => void;
 	onModelSupportsImagesChange: (supported: boolean | null) => void;
-	/** Opens Settings → Providers; adds a "set up another provider" row when set. */
+	/** Opens Settings в†’ Providers; adds a "set up another provider" row when set. */
 	onOpenModelSettings?: () => void;
 }) {
 	const t = useTranslation();
@@ -2069,7 +2069,7 @@ const ModelSelector = memo(function ModelSelector({
 	]);
 	// The picker can intentionally hide catalog models (the ClinePass offer
 	// is exactly its subscribed/free tiers), but the active model must stay
-	// visible and selectable — e.g. a hydrated session configured with a
+	// visible and selectable вЂ” e.g. a hydrated session configured with a
 	// model outside the current offer or missing from the catalog. Surface it
 	// under its own section so the selected value always exists in the list.
 	const visibleModelPicker = useMemo((): ModelPickerData => {
@@ -2200,8 +2200,8 @@ const ModelSelector = memo(function ModelSelector({
 
 	// The remembered selection (what new sessions default to) is only written
 	// from the explicit picker handlers below. Mirroring every provider/model
-	// prop change here would also capture passive changes — most notably
-	// opening an existing session, whose config drives these props — silently
+	// prop change here would also capture passive changes вЂ” most notably
+	// opening an existing session, whose config drives these props вЂ” silently
 	// replacing the user's chosen default with whatever model that session
 	// happened to use. It also skips automatic Cloud fallbacks, so the Cloud
 	// default keeps following the local model and ClinePass subscription.

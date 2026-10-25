@@ -238,9 +238,11 @@ function StaleProviderComposer({
 }
 
 it.each([
-	"welcome",
-	"conversation",
-] as const)("handles a removed provider in the %s composer without losing reasoning metadata", async (variant) => {
+	{ variant: "welcome", level: "high", label: "High" },
+	{ variant: "welcome", level: "xhigh", label: "XHigh" },
+	{ variant: "conversation", level: "high", label: "High" },
+	{ variant: "conversation", level: "xhigh", label: "XHigh" },
+] as const)("handles a removed provider in the $variant composer at $level", async ({ variant, level, label }) => {
 	window.localStorage.setItem(
 		MODEL_SELECTION_STORAGE_KEY,
 		JSON.stringify({
@@ -293,12 +295,13 @@ it.each([
 		);
 		const high = Array.from(
 			document.querySelectorAll<HTMLElement>('[role="option"]'),
-		).find((option) => option.textContent === "High");
+		).find((option) => option.textContent === label);
 		expect(high).toBeDefined();
 		await act(async () => high?.click());
 		expect(
 			container.querySelector('[aria-label="Thinking level"]')?.textContent,
-		).toContain("High");
+		).toContain(label);
+		expect(JSON.parse(window.localStorage.getItem(REASONING_SELECTION_STORAGE_KEY) ?? "{}")["local-lab"]).toBe(level);
 	} else {
 		expect(readModelSelectionStorageFromWindow().lastProvider).toBe(
 			"openai-compatible",
@@ -775,7 +778,7 @@ describe("ChatInputBar", () => {
 			]);
 		});
 		expect(container.querySelector("output")?.textContent).toContain(
-			"doesn’t support",
+			"doesnвЂ™t support",
 		);
 		const textarea = container.querySelector("textarea");
 		await act(async () => {
@@ -827,7 +830,7 @@ describe("ChatInputBar", () => {
 
 	it("does not send when Enter commits an IME composition", async () => {
 		const onSend = vi.fn();
-		await renderVoiceComposer({ onSend, prompt: "你好" });
+		await renderVoiceComposer({ onSend, prompt: "дЅ еҐЅ" });
 		const textarea = container.querySelector("textarea");
 		await act(async () => {
 			textarea?.dispatchEvent(
@@ -856,7 +859,7 @@ describe("ChatInputBar", () => {
 				new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
 			);
 		});
-		expect(onSend).toHaveBeenCalledWith("你好");
+		expect(onSend).toHaveBeenCalledWith("дЅ еҐЅ");
 	});
 
 	it("allows a parent session with a running child agent to be stopped", async () => {
@@ -948,7 +951,7 @@ describe("ChatInputBar", () => {
 		expect(onAttachFiles).not.toHaveBeenCalled();
 		expect(toastMock).toHaveBeenCalledWith(
 			expect.objectContaining({
-				title: "This model doesn’t support image input",
+				title: "This model doesnвЂ™t support image input",
 			}),
 		);
 		expect(toastMock.mock.calls.at(-1)?.[0]?.description).not.toContain(
@@ -1642,7 +1645,7 @@ describe("ChatInputBar", () => {
 		expect(
 			container.querySelector('output[aria-live="polite"]'),
 		).not.toBeNull();
-		expect(textarea?.placeholder).toBe("Transcribing voice input…");
+		expect(textarea?.placeholder).toBe("Transcribing voice inputвЂ¦");
 
 		await act(async () => {
 			speechInputMockState.current?.onStreamingEnd?.();
@@ -3263,7 +3266,7 @@ describe("ChatInputBar", () => {
 				provider: "cline-pass",
 			});
 
-			// The session's configured model stays active…
+			// The session's configured model stays activeвЂ¦
 			expect(onModelChange).not.toHaveBeenCalled();
 			const modelTrigger = container.querySelector<HTMLButtonElement>(
 				'[aria-label^="Model:"]',
@@ -3272,7 +3275,7 @@ describe("ChatInputBar", () => {
 				expect(modelTrigger?.textContent).toContain("Stale Legacy");
 			});
 
-			// …and the picker surfaces it under its own section instead of
+			// вЂ¦and the picker surfaces it under its own section instead of
 			// selecting a value that does not exist in the list.
 			await act(async () => modelTrigger?.click());
 			const panel = document.querySelector('[role="dialog"]');

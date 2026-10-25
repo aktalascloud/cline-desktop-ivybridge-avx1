@@ -1,14 +1,19 @@
 # Cline Desktop Changelog
 
+## 1.0.4
+
+- New-chat defaults discard removed providers and restore reasoning selection for configured local models. The top level is explicitly labelled XHigh. Historical session routes and separate voice settings are preserved.
+- Новые чаты используют настроенного провайдера вместо удалённого: выбор рассуждений локальной модели снова доступен, включая XHigh. Настройки старых диалогов и отдельного голосового профиля сохранены.
+
 ## 1.0.3
 
 - Recorded Whisper-compatible voice input with a separate speech provider, local 16 kHz mono PCM WAV conversion and draft protection. Streaming voice remains available; recordings do not send an agent message automatically.
-- Голосовой ввод через отдельный Whisper-совместимый провайдер, локальное преобразование записи в PCM WAV (моно, 16 кГц) и защита черновика. Потоковый режим сохранён; распознавание не отправляет сообщение агенту автоматически.
+- Р“РѕР»РѕСЃРѕРІРѕР№ РІРІРѕРґ С‡РµСЂРµР· РѕС‚РґРµР»СЊРЅС‹Р№ Whisper-СЃРѕРІРјРµСЃС‚РёРјС‹Р№ РїСЂРѕРІР°Р№РґРµСЂ, Р»РѕРєР°Р»СЊРЅРѕРµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ Р·Р°РїРёСЃРё РІ PCM WAV (РјРѕРЅРѕ, 16 РєР“С†) Рё Р·Р°С‰РёС‚Р° С‡РµСЂРЅРѕРІРёРєР°. РџРѕС‚РѕРєРѕРІС‹Р№ СЂРµР¶РёРј СЃРѕС…СЂР°РЅС‘РЅ; СЂР°СЃРїРѕР·РЅР°РІР°РЅРёРµ РЅРµ РѕС‚РїСЂР°РІР»СЏРµС‚ СЃРѕРѕР±С‰РµРЅРёРµ Р°РіРµРЅС‚Сѓ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё.
 
 ## 1.0.1
 
 - Unofficial Cline Desktop AVX1 RU, based on upstream 0.0.48. English/Russian interface, a shared fork profile for Desktop/CLI/Hub, signed fork updates, Windows worktree/SQLite fixes, MCP OAuth issuer binding, first-turn CLI timeout and updated security dependencies. Ivy Bridge fat-LTO profile; no LLM throughput gain is claimed.
-- Неофициальный Cline Desktop AVX1 RU на базе upstream 0.0.48. Русский/английский интерфейс, общий профиль форка для Desktop/CLI/Hub, собственные подписанные обновления, исправления worktree/SQLite в Windows, привязка MCP OAuth к issuer, таймаут первого запроса CLI и обновления безопасности. Профиль Ivy Bridge с fat LTO; рост LLM tokens/s не заявляется.
+- РќРµРѕС„РёС†РёР°Р»СЊРЅС‹Р№ Cline Desktop AVX1 RU РЅР° Р±Р°Р·Рµ upstream 0.0.48. Р СѓСЃСЃРєРёР№/Р°РЅРіР»РёР№СЃРєРёР№ РёРЅС‚РµСЂС„РµР№СЃ, РѕР±С‰РёР№ РїСЂРѕС„РёР»СЊ С„РѕСЂРєР° РґР»СЏ Desktop/CLI/Hub, СЃРѕР±СЃС‚РІРµРЅРЅС‹Рµ РїРѕРґРїРёСЃР°РЅРЅС‹Рµ РѕР±РЅРѕРІР»РµРЅРёСЏ, РёСЃРїСЂР°РІР»РµРЅРёСЏ worktree/SQLite РІ Windows, РїСЂРёРІСЏР·РєР° MCP OAuth Рє issuer, С‚Р°Р№РјР°СѓС‚ РїРµСЂРІРѕРіРѕ Р·Р°РїСЂРѕСЃР° CLI Рё РѕР±РЅРѕРІР»РµРЅРёСЏ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё. РџСЂРѕС„РёР»СЊ Ivy Bridge СЃ fat LTO; СЂРѕСЃС‚ LLM tokens/s РЅРµ Р·Р°СЏРІР»СЏРµС‚СЃСЏ.
 
 ## 0.0.48
 
@@ -50,7 +55,7 @@
 - Turning reasoning off no longer fails with a 400 error on GPT-6 Astra, GPT-6.1 Sol, Claude Fable 5 or Claude Opus 5.5
 - The background service no longer crashes about 3 seconds after an MCP server or hook quits before reading all of its input
 - Settings migrated from the VS Code extension no longer add an empty SAP AI Core provider
-- Refreshed the model catalog. Adds Claude Haiku 5.5. Default models change for Google Vertex AI (Claude Sonnet 5.5 → Claude Haiku 5.5), Cortecs, DevPass (LLM Gateway), Eden AI, GitHub Copilot, LLM Gateway, NanoGPT, OpenCode Go, Requesty, and Vivgrid (most now Claude Haiku 5.5)
+- Refreshed the model catalog. Adds Claude Haiku 5.5. Default models change for Google Vertex AI (Claude Sonnet 5.5 в†’ Claude Haiku 5.5), Cortecs, DevPass (LLM Gateway), Eden AI, GitHub Copilot, LLM Gateway, NanoGPT, OpenCode Go, Requesty, and Vivgrid (most now Claude Haiku 5.5)
 
 ## 0.0.44
 
@@ -65,7 +70,7 @@
 
 ## 0.0.43
 
-- Existing users get a one-time **What's new** dialog introducing Connectors, with connector logos, a clickable example prompt, and an **Open Connectors** button. You can replay it from **Settings → About → Show what's new**
+- Existing users get a one-time **What's new** dialog introducing Connectors, with connector logos, a clickable example prompt, and an **Open Connectors** button. You can replay it from **Settings в†’ About в†’ Show what's new**
 
 ## 0.0.42
 
@@ -79,7 +84,7 @@
 - Cloud sessions can now use the same models as Cline on the web. The model picker lists **Cline Usage-Billing**, **ClinePass**, and **ClineFree** models (organization accounts don't get ClinePass), instead of only Cline. A new Cloud session waits until a model is ready before sending, and you can retry if the model list fails to load
 - An unsent prompt is no longer lost when you switch to another session and back. **New** in the sidebar returns to your unfinished draft; **Cmd/Ctrl+N** still starts a fresh session
 - Sessions you start in the app are now highlighted in the sidebar while open, instead of only sessions reopened from history. They also no longer get marked unread by their own messages
-- **Customize → Connectors** now matches the Skills, Plugins, and MCP tabs, with search, a refresh button, and an Installed section. A new Suggested section offers ready-made connector combos (such as incident root-cause analysis or organizing your day), each with an example prompt and one-click installs for its connectors
+- **Customize в†’ Connectors** now matches the Skills, Plugins, and MCP tabs, with search, a refresh button, and an Installed section. A new Suggested section offers ready-made connector combos (such as incident root-cause analysis or organizing your day), each with an example prompt and one-click installs for its connectors
 - Marketplace rows now show what type each item is, so same-named entries like the Figma MCP server and the Figma connector are easy to tell apart. Category filters moved into a single dropdown
 - A connector's details now show how many tools it adds to new sessions, instead of the catalog's total tool count
 - Agent teams stay fast in long sessions and while teammates are streaming. Existing team data is compacted automatically the first time it's opened
@@ -103,7 +108,7 @@
 ## 0.0.38
 
 - Linux on ARM is now supported: each release ships arm64 `.deb` and `.rpm` packages alongside the x64 ones, and they auto-update like the others
-- Web search settings moved from **General** to **Customize → Tools**, next to the other built-in tools. That page shows whether your provider supports search, and links to provider settings when it doesn't
+- Web search settings moved from **General** to **Customize в†’ Tools**, next to the other built-in tools. That page shows whether your provider supports search, and links to provider settings when it doesn't
 - Connectors are labeled **Beta**, and opening the marketplace from Connectors now shows only connectors
 - Pressing **Stop** right after sending a prompt now stops the turn. Before, a stop that landed while the turn was still being set up was ignored: the agent kept editing in the background, and reverting failed with "Wait for all turns in this workspace to finish before restoring it"
 - Inserting a slash command no longer deletes the text after your cursor
@@ -122,8 +127,8 @@
 
 - Settings has a new **About** page. It shows your version and channel, has **Check for updates** and **Restart to update** buttons, and lists the release notes for recent versions with links to each GitHub release and the full changelog. **Report an issue** is there too
 - After an update, a one-time **What's new** dialog now catches you up on recent features. The first one covers SSH remotes, worktrees, pull request status in the composer, and parallel sub-agents. To see it again, use **Highlights** on the About page
-- On macOS, **Help → Export Diagnostics…** now opens the diagnostics export directly, so you don't have to find it in Settings
-- On Amazon Bedrock, OpenAI models reached through inference profiles (`us.openai.…`, `global.openai.…`) no longer fail with "Unknown parameter: 'reasoningConfig'" when reasoning effort is set
+- On macOS, **Help в†’ Export DiagnosticsвЂ¦** now opens the diagnostics export directly, so you don't have to find it in Settings
+- On Amazon Bedrock, OpenAI models reached through inference profiles (`us.openai.вЂ¦`, `global.openai.вЂ¦`) no longer fail with "Unknown parameter: 'reasoningConfig'" when reasoning effort is set
 
 ## 0.0.36
 
@@ -136,9 +141,9 @@
 
 ## 0.0.35
 
-- Cline Desktop now runs on Linux. Each release ships x64 `.deb` and `.rpm` packages alongside the macOS and Windows builds. **Open folder…** uses the native GTK picker, and updates download in the background and install when you choose **Restart now**, so you are never hit with a surprise password prompt. There is no AppImage for now
+- Cline Desktop now runs on Linux. Each release ships x64 `.deb` and `.rpm` packages alongside the macOS and Windows builds. **Open folderвЂ¦** uses the native GTK picker, and updates download in the background and install when you choose **Restart now**, so you are never hit with a surprise password prompt. There is no AppImage for now
 - Plugin slash commands now work in the desktop app. Commands a plugin registers, like `/goal`, used to be sent to the model as plain text; they now run the plugin's handler, show its reply, and start a turn only when the command asks for one. Enabled plugin commands appear in the slash menu, skills and workflows in that menu now come from the conversation's own workspace (including worktrees), and a broken plugin no longer makes every slash prompt fail
-- Settings has a new **Diagnostics** row. **Export…** writes a single text file to your Downloads folder with the app version, OS, settings, recent sidecar and hub logs, and the manifests of the sessions you pick. API keys, credential-shaped values, your prompts, and your home directory path are stripped, so the file is safe to attach to a GitHub issue
+- Settings has a new **Diagnostics** row. **ExportвЂ¦** writes a single text file to your Downloads folder with the app version, OS, settings, recent sidecar and hub logs, and the manifests of the sessions you pick. API keys, credential-shaped values, your prompts, and your home directory path are stripped, so the file is safe to attach to a GitHub issue
 - Voice input works again with provider-backed transcription, and it streams live. OpenAI, Vercel AI Gateway, and ElevenLabs transcribe as you speak; when the network drops mid-recording, the app falls back to the browser's recognizer and retries the provider next time. The model picker labels which voice models are realtime and which transcribe recordings
 - Your reasoning effort choice is now remembered per provider. Reopening a session reset the thinking picker to Low, and that Low was sent with your next message; switching providers now applies the effort you last picked for that provider
 - Model lists for LiteLLM, Baseten, Hicap, Poolside, Ollama, and LM Studio now show the actual error when your endpoint can't be reached, instead of an empty list or a placeholder model. The app also trusts your operating system's certificate store, so endpoints signed by a corporate CA stop failing with "unable to get local issuer certificate"
@@ -161,40 +166,40 @@
 
 ## 0.0.33
 
-- Start a task in its own git worktree. The welcome screen's “Work in” switch (next to the folder and branch chips) now offers Local or Worktree; pick Worktree and the first prompt of a new thread cuts a fresh `cline/<id>` branch off the current one, creates a worktree under `~/.cline/worktrees/`, and runs the task there, so the agent never touches your working tree. The conversation chip shows `<repo> / cline/<id>` with the full path in its tooltip. Deleting the task removes its worktree and branch (discarding uncommitted changes in it), unless another session still lives there. Only new threads are affected — follow-ups and reopened sessions stay where they are
-- Long sessions in the desktop app now compact automatically. Auto-compaction had never actually run here: the sidecar opted sessions into checkpoints but never into compaction, so the 90% trigger was never installed and long conversations simply ran out of room. This was not a recent regression — the gap dated to compaction becoming opt-in in core back in April
-- On Windows, launching Cline while it is already running now brings the existing window to the front instead of starting a second copy. Closing the window hides Cline to the tray rather than quitting, so every subsequent launch from Start, the taskbar, or a shortcut started another full app — another tray icon, another backend process, all on the same Hub. Open and close a few times and the tray filled with identical icons while several idle copies kept running. Cline Beta still runs side by side with stable
-- Signing in no longer fails when the app is still starting up. A click that landed while the backend was booting (or being restarted after a failed first start) returned “desktop backend endpoint not ready” even though the connection succeeded moments later. The app now waits for a usable connection with bounded retries, restarts a backend that died before it was ready, and allows a longer window for slow login-shell profiles and for the sign-in browser round trip
-- Starting a brand-new chat on an SSH host works. A new chat on a connected remote failed immediately with “Unknown session” because the app asked the remote for the transcript of a session it had not created yet, and that rejection aborted startup before the session could be created. A missing transcript on that first read is now treated as an empty one; any other read failure still stops before creating a session
-- “Check for Updates…” is now in the app menu on macOS (under About Cline) and the tray menu on every platform. The label reflects what the updater is doing — Checking for Updates…, or Downloading Update vX.Y.Z… — and is disabled while either is in progress. Cline still checks on its own shortly after launch and every two hours
+- Start a task in its own git worktree. The welcome screen's вЂњWork inвЂќ switch (next to the folder and branch chips) now offers Local or Worktree; pick Worktree and the first prompt of a new thread cuts a fresh `cline/<id>` branch off the current one, creates a worktree under `~/.cline/worktrees/`, and runs the task there, so the agent never touches your working tree. The conversation chip shows `<repo> / cline/<id>` with the full path in its tooltip. Deleting the task removes its worktree and branch (discarding uncommitted changes in it), unless another session still lives there. Only new threads are affected вЂ” follow-ups and reopened sessions stay where they are
+- Long sessions in the desktop app now compact automatically. Auto-compaction had never actually run here: the sidecar opted sessions into checkpoints but never into compaction, so the 90% trigger was never installed and long conversations simply ran out of room. This was not a recent regression вЂ” the gap dated to compaction becoming opt-in in core back in April
+- On Windows, launching Cline while it is already running now brings the existing window to the front instead of starting a second copy. Closing the window hides Cline to the tray rather than quitting, so every subsequent launch from Start, the taskbar, or a shortcut started another full app вЂ” another tray icon, another backend process, all on the same Hub. Open and close a few times and the tray filled with identical icons while several idle copies kept running. Cline Beta still runs side by side with stable
+- Signing in no longer fails when the app is still starting up. A click that landed while the backend was booting (or being restarted after a failed first start) returned вЂњdesktop backend endpoint not readyвЂќ even though the connection succeeded moments later. The app now waits for a usable connection with bounded retries, restarts a backend that died before it was ready, and allows a longer window for slow login-shell profiles and for the sign-in browser round trip
+- Starting a brand-new chat on an SSH host works. A new chat on a connected remote failed immediately with вЂњUnknown sessionвЂќ because the app asked the remote for the transcript of a session it had not created yet, and that rejection aborted startup before the session could be created. A missing transcript on that first read is now treated as an empty one; any other read failure still stops before creating a session
+- вЂњCheck for UpdatesвЂ¦вЂќ is now in the app menu on macOS (under About Cline) and the tray menu on every platform. The label reflects what the updater is doing вЂ” Checking for UpdatesвЂ¦, or Downloading Update vX.Y.ZвЂ¦ вЂ” and is disabled while either is in progress. Cline still checks on its own shortly after launch and every two hours
 - Deleting the session you are currently viewing now returns you to the new-task view instead of leaving its chat on screen. This only affected sessions started by sending a prompt in that pane; sessions opened from history already closed correctly
 - On macOS, a fullscreen window now leaves fullscreen before hiding on close, instead of leaving an empty fullscreen space behind
-- Cloud sessions are hidden from the sidebar, history, and search whenever Cloud is turned off, rather than lingering there. No session data is deleted and no remote runs are stopped — turning Cloud back on restores them
+- Cloud sessions are hidden from the sidebar, history, and search whenever Cloud is turned off, rather than lingering there. No session data is deleted and no remote runs are stopped вЂ” turning Cloud back on restores them
 - Cline runs on older Linux x64 machines again: the bundled helpers are now built for pre-AVX2 CPUs, and the Linux SSH remote helpers are compressed, making the download smaller
 - Agent Skills, rules, and MCP servers from `.cline/rules` are picked up consistently, including global rules created in a OneDrive-redirected Documents folder on Windows
 - Single-choice questions from the agent now submit as soon as you click an option, and accept a typed answer when none of the offered ones fit. Multiple-choice questions still use Submit
-- A model turn that hits its output-token limit before making a tool call no longer kills the run — it is retried up to three times with a reminder to be concise, and models with a large advertised output limit get a bigger default output budget
+- A model turn that hits its output-token limit before making a tool call no longer kills the run вЂ” it is retried up to three times with a reminder to be concise, and models with a large advertised output limit get a bigger default output budget
 - Compaction no longer silently falls back to truncation partway through a long session. The summarizer kept the credentials captured when the session started, so once they refreshed its request failed and the error was swallowed; it now follows the session's current credentials and model
 - Deleting a session from history now actually removes it, instead of the row reappearing on the next refresh
 - Sub-agents you configure yourself no longer ask you to approve their individual tool calls after you have already approved the delegation
 - The environment selector renders Cloud in uppercase, and the workspace selector's labels use matching font sizes
-- Refreshed the model catalog: 203 to 209 providers and 6,079 to 6,237 models. Kimi For Coding splits into separate kimi.com and kimi.ai providers, and AI21 Labs, ainetcafe, Inco, OCI Generative AI, Tempr, and Vispark are new. The resolved default model changes for 36 providers that do not pin one — most landing on DeepSeek V4.1 Flash, GLM 5.3 Flash, or MiMo V2.6 Flash. If you use one of those without pinning a model, expect a different default
+- Refreshed the model catalog: 203 to 209 providers and 6,079 to 6,237 models. Kimi For Coding splits into separate kimi.com and kimi.ai providers, and AI21 Labs, ainetcafe, Inco, OCI Generative AI, Tempr, and Vispark are new. The resolved default model changes for 36 providers that do not pin one вЂ” most landing on DeepSeek V4.1 Flash, GLM 5.3 Flash, or MiMo V2.6 Flash. If you use one of those without pinning a model, expect a different default
 
 ## 0.0.32
 
-- Cline starts again after updating. In 0.0.31 the app could fail at launch with "desktop backend exited before publishing its endpoint" and never reach the workspace picker. Cline runs its own copy of the Cline Hub in the background, and the two halves had been built from different copies of the same code — so the Hub announced one build identity while the app expected another, the app shut down the very Hub it had just started, and startup timed out reporting "No compatible hub runtime is available". Both halves now load the same copy of that code, and the real compiled backend is now booted end-to-end in CI on every change so the two cannot drift apart again
+- Cline starts again after updating. In 0.0.31 the app could fail at launch with "desktop backend exited before publishing its endpoint" and never reach the workspace picker. Cline runs its own copy of the Cline Hub in the background, and the two halves had been built from different copies of the same code вЂ” so the Hub announced one build identity while the app expected another, the app shut down the very Hub it had just started, and startup timed out reporting "No compatible hub runtime is available". Both halves now load the same copy of that code, and the real compiled backend is now booted end-to-end in CI on every change so the two cannot drift apart again
 
 ## 0.0.31
 
-- Cline can now work on a remote machine over SSH, with the app itself staying local. Add and test a host under **Settings → Remote**, then pick it from the environment selector beside the workspace picker on the welcome screen — saving or testing a profile does not activate it. The connection opens at the remote user's home directory; **Add project…** in the workspace picker browses that machine for a project, and **Local** disconnects. Agent tools, workspace discovery, Git metadata, and session persistence all run on the host while approvals and live session events return to the desktop, because only the authenticated Cline Hub protocol is forwarded through the tunnel. SSH config aliases work: leave **Port** blank to use the alias's own configuration, or enter one to override it. Recent and last-used workspaces are remembered separately per host. Host metadata lives at `~/.cline/data/settings/remote-environments.json` (mode `0600`) and records an identity-file path, never private-key contents; the host key must already be trusted by your SSH client, and unknown or changed keys are rejected. On first connect Cline uploads a self-contained helper to `~/.cline/remote/` — no `apt`, `npm`, root access, global CLI install, or public port — and caches it for faster reconnects, leaving any existing Cline CLI hub on that account running. Linux x64 and arm64 hosts are supported (32-bit Raspberry Pi operating systems are not; macOS hosts need a locally built helper via `CLINE_REMOTE_HELPER_BINARY`). File attachments and opening a remote file in a local editor are not available in remote sessions yet — text, images, file mentions and search, Git branch operations, session history, and remote agent tools are
+- Cline can now work on a remote machine over SSH, with the app itself staying local. Add and test a host under **Settings в†’ Remote**, then pick it from the environment selector beside the workspace picker on the welcome screen вЂ” saving or testing a profile does not activate it. The connection opens at the remote user's home directory; **Add projectвЂ¦** in the workspace picker browses that machine for a project, and **Local** disconnects. Agent tools, workspace discovery, Git metadata, and session persistence all run on the host while approvals and live session events return to the desktop, because only the authenticated Cline Hub protocol is forwarded through the tunnel. SSH config aliases work: leave **Port** blank to use the alias's own configuration, or enter one to override it. Recent and last-used workspaces are remembered separately per host. Host metadata lives at `~/.cline/data/settings/remote-environments.json` (mode `0600`) and records an identity-file path, never private-key contents; the host key must already be trusted by your SSH client, and unknown or changed keys are rejected. On first connect Cline uploads a self-contained helper to `~/.cline/remote/` вЂ” no `apt`, `npm`, root access, global CLI install, or public port вЂ” and caches it for faster reconnects, leaving any existing Cline CLI hub on that account running. Linux x64 and arm64 hosts are supported (32-bit Raspberry Pi operating systems are not; macOS hosts need a locally built helper via `CLINE_REMOTE_HELPER_BINARY`). File attachments and opening a remote file in a local editor are not available in remote sessions yet вЂ” text, images, file mentions and search, Git branch operations, session history, and remote agent tools are
 - Sub-agents spawned in the same step now run at the same time instead of one after another, so delegating three independent pieces of work takes as long as the slowest one rather than the sum of all three. Tools that must run in order still do, and only back-to-back parallel calls overlap
 
 ## 0.0.30
 
-- Windows updates no longer fail with "Error opening file for writing". The installer hook meant to stop the running backend never terminated anything: Tauri ships a 32-bit NSIS installer, so its PowerShell ran under WOW64, where `Get-Process` reports an empty path for every 64-bit process — the filter matched no sidecar on any x64 machine. The installer then wrote over an executable the detached Hub daemon still held open, which is why updating from 0.0.25 through 0.0.28 failed exactly as 0.0.24 did. The installer now asks the Windows Restart Manager which processes hold this install's files and shuts those down; that is bitness-independent, covers the connector processes the Hub spawns, and leaves a side-by-side Cline Beta alone. If Restart Manager itself fails you get a Retry/Cancel prompt rather than a half-replaced install
-- On Windows, Cline no longer runs a program out of your workspace when it means to run the system one. Windows resolves a bare program name through the child process's working directory before it searches PATH, and Cline runs `rg`, `git`, and `powershell` with your workspace as that directory — so a repository that happened to contain its own `rg.exe` would have that copy executed as soon as the workspace was indexed. Cline now opts out of current-directory executable search at startup, and every process it spawns inherits the setting
-- Long sessions now compact when they actually need to rather than running out of room. The trigger compared a character-based estimate of the transcript (~3 characters per token) against the model's context limit, so content that tokenizes far denser than that — disassembly, image dumps, minified sources — could fill the real context window while the estimate stayed under the threshold and compaction never fired; the turn was then squeezed down to a handful of output tokens. The trigger now also uses the token count the provider itself reports, and how much history is kept is scaled by how far off the estimate turned out to be. The summarizer's output budget also doubled, so a model that reasons before answering can no longer spend the whole budget thinking and return no summary at all
-- A tool that streams its output no longer keeps spinning after it has finished. When a tool streamed everything as it went, its completion event carried no final output, which chat read as "still running" — so the tool kept its running presentation, spinner included, for the rest of the turn
+- Windows updates no longer fail with "Error opening file for writing". The installer hook meant to stop the running backend never terminated anything: Tauri ships a 32-bit NSIS installer, so its PowerShell ran under WOW64, where `Get-Process` reports an empty path for every 64-bit process вЂ” the filter matched no sidecar on any x64 machine. The installer then wrote over an executable the detached Hub daemon still held open, which is why updating from 0.0.25 through 0.0.28 failed exactly as 0.0.24 did. The installer now asks the Windows Restart Manager which processes hold this install's files and shuts those down; that is bitness-independent, covers the connector processes the Hub spawns, and leaves a side-by-side Cline Beta alone. If Restart Manager itself fails you get a Retry/Cancel prompt rather than a half-replaced install
+- On Windows, Cline no longer runs a program out of your workspace when it means to run the system one. Windows resolves a bare program name through the child process's working directory before it searches PATH, and Cline runs `rg`, `git`, and `powershell` with your workspace as that directory вЂ” so a repository that happened to contain its own `rg.exe` would have that copy executed as soon as the workspace was indexed. Cline now opts out of current-directory executable search at startup, and every process it spawns inherits the setting
+- Long sessions now compact when they actually need to rather than running out of room. The trigger compared a character-based estimate of the transcript (~3 characters per token) against the model's context limit, so content that tokenizes far denser than that вЂ” disassembly, image dumps, minified sources вЂ” could fill the real context window while the estimate stayed under the threshold and compaction never fired; the turn was then squeezed down to a handful of output tokens. The trigger now also uses the token count the provider itself reports, and how much history is kept is scaled by how far off the estimate turned out to be. The summarizer's output budget also doubled, so a model that reasons before answering can no longer spend the whole budget thinking and return no summary at all
+- A tool that streams its output no longer keeps spinning after it has finished. When a tool streamed everything as it went, its completion event carried no final output, which chat read as "still running" вЂ” so the tool kept its running presentation, spinner included, for the rest of the turn
 - Refreshed Cline's logo and app icons throughout the app, the Dock and taskbar, and the installer
 - The CoreWeave provider's branding and setup links now match CoreWeave's current documentation, and Weights & Biases gained a direct link to its API key page from provider setup
 
@@ -202,77 +207,77 @@
 
 - Queued messages can now be sent into the running turn with Enter. While the agent is working, pressing Enter with an empty composer steers the first message in the queue, so it is picked up at the next turn boundary instead of waiting for the whole task to finish; the composer placeholder says so whenever the queue is non-empty. The queue head is claimed atomically, so a fast second Enter can't steer a message that has already left the queue, and a steer that fails now surfaces as a toast rather than silently doing nothing
 - The macOS Dock icon now has the standard margin other apps use. The bundled icon and the selectable runtime icons (Classic, Chip, Hologram, Midnight) were edge-to-edge, so Cline rendered visibly larger than its neighbours in the Dock. Windows keeps its existing artwork
-- The session sidebar's sort toggle now shows the mode a click switches to, not the one already active — a folder icon while sorted by time, a clock while grouped by project
+- The session sidebar's sort toggle now shows the mode a click switches to, not the one already active вЂ” a folder icon while sorted by time, a clock while grouped by project
 
 ## 0.0.28
 
-- The app no longer gets stuck on "Desktop backend unavailable" when the backend is slow to start. The window asked for the backend's address exactly once and the shell stops waiting after about 15 seconds, so on a slower machine — where starting the hub pushed past that — you were left on the error screen until you relaunched, and the relaunch could lose the same race. Connection attempts now keep retrying and re-resolve the address each time, so a backend that has since restarted is reached at its current one
+- The app no longer gets stuck on "Desktop backend unavailable" when the backend is slow to start. The window asked for the backend's address exactly once and the shell stops waiting after about 15 seconds, so on a slower machine вЂ” where starting the hub pushed past that вЂ” you were left on the error screen until you relaunched, and the relaunch could lose the same race. Connection attempts now keep retrying and re-resolve the address each time, so a backend that has since restarted is reached at its current one
 - Confirming text with a Chinese or Japanese IME no longer sends the message. The Enter that commits an in-progress composition also reached the composer, so choosing a candidate fired off a half-typed message; Enter and the arrow keys now belong to the IME while you are composing
 - The model picker refreshes its list every time you open it, instead of staying frozen until you restart the app. The Recommended and Free groupings come from a live feed, so a newly promoted free model would otherwise not show up for the rest of the session
 - Signing in with Cline now explains what the plan includes. The sign-in card lists the regular free model promotions, ClinePass for generous usage across open-weight models like DeepSeek, Kimi, and GLM, and that no API key is needed; the last onboarding step then shows the current free models alongside a ClinePass summary. This only appears when you sign in with Cline, not when you bring your own API key
 - Cline Pass now starts you on a model from your subscription. Its model list carries both subscription and free models and the default was simply the most recently published entry, so a subscriber who never picked a model was left on a free model instead of the tier they pay for
 - A turn that fails partway through with a temporary provider error is now retried up to three times instead of failing the task. A single rate-limit response passed along by a provider gateway previously ended the turn outright. A turn that has already produced output is never retried, so nothing is duplicated
 - Long responses stream faster. Every chunk of a streaming reply was being handed to client-side hooks as a round trip carrying a full copy of the session, with the agent waiting on each one before continuing
-- The command-running tool now tells the model which PowerShell edition it is talking to — `Windows PowerShell (powershell.exe)` versus `PowerShell (pwsh.exe)` — and to write commands directly rather than wrapping them in a second shell invocation, which was corrupting pipelines that use `$_`
-- Refreshed the model catalog. Adds three providers (Infer by Flow7, Melious, and Wallaby) and takes the catalog from 5,923 to 6,079 models. The resolved default model changes for 33 providers, most of them landing on DeepSeek V4.1 Flash — among them Hugging Face, Fireworks, Requesty, Cortecs, CrossModel, DigitalOcean, Eden AI, and OpenCode Go — while NVIDIA moves to GLM 5.3 Flash and NanoGPT to GPT Astra. If you use a provider without pinning a model, expect a different default
+- The command-running tool now tells the model which PowerShell edition it is talking to вЂ” `Windows PowerShell (powershell.exe)` versus `PowerShell (pwsh.exe)` вЂ” and to write commands directly rather than wrapping them in a second shell invocation, which was corrupting pipelines that use `$_`
+- Refreshed the model catalog. Adds three providers (Infer by Flow7, Melious, and Wallaby) and takes the catalog from 5,923 to 6,079 models. The resolved default model changes for 33 providers, most of them landing on DeepSeek V4.1 Flash вЂ” among them Hugging Face, Fireworks, Requesty, Cortecs, CrossModel, DigitalOcean, Eden AI, and OpenCode Go вЂ” while NVIDIA moves to GLM 5.3 Flash and NanoGPT to GPT Astra. If you use a provider without pinning a model, expect a different default
 
 ## 0.0.27
 
-- An expired Cline sign-in now produces one actionable error instead of two dead ends. A turn that fails before the runtime takes the prompt was reported twice — the hub's detail-less `run.failed` appended a bubble, then the send RPC resolved with the real error and overwrote the error banner underneath it — so you got a vague bubble stacked on a detailed banner. The failure now renders exactly once, upgrading in place when the detailed report arrives. Credential failures also carry a fix button: **Sign in to Cline** for the Cline provider (Settings → API Providers reads a stale token as "Signed in via browser", so there is nothing to fix there), **Open model settings** for others, and local-CLI providers keep pointing at their CLI. Sessions that fail to start over credentials get the same hint and action
+- An expired Cline sign-in now produces one actionable error instead of two dead ends. A turn that fails before the runtime takes the prompt was reported twice вЂ” the hub's detail-less `run.failed` appended a bubble, then the send RPC resolved with the real error and overwrote the error banner underneath it вЂ” so you got a vague bubble stacked on a detailed banner. The failure now renders exactly once, upgrading in place when the detailed report arrives. Credential failures also carry a fix button: **Sign in to Cline** for the Cline provider (Settings в†’ API Providers reads a stale token as "Signed in via browser", so there is nothing to fix there), **Open model settings** for others, and local-CLI providers keep pointing at their CLI. Sessions that fail to start over credentials get the same hint and action
 - The Account page now offers a sign-in prompt when your Cline refresh token is rejected, instead of an error card whose **Retry** failed the same way. A rejected refresh was falling back to the persisted access token, which is dead too, so the account request 401'd; a rejected refresh now reports as signed out. Transient refresh failures still fall back
-- Signing out of Cline and Cline Pass now sticks. Sign-out removes the provider entry, but the runtime re-imports missing providers from the classic extension's stored credentials on every command, so you appeared signed straight back in — the same root cause as the ChatGPT/Codex fix in 0.0.26, which only cleared Codex secrets. Cline Pass sign-out did nothing at all, because its credentials live under the Cline provider entry rather than its own
-- The settings sidebar's **Models** section is now **API Providers**, with an icon to match — it is where you configure providers and their credentials, not where you pick a model
-- A failed voice input now shows a "Speech input failed" toast in chat with the actual error, instead of dropping you into Settings → Voice. Any error that wasn't a browser exception was treated as a configuration problem, even though the microphone is already gated on a configured transcription model — so a connection or transcription failure interrupted the chat and hid the real reason. Your draft and the microphone button stay put so you can retry; microphone-permission guidance is unchanged
-- OpenCode Go models work again. Requests were missing the `x-opencode-session` header Go requires to route a conversation ("Request is missing x-opencode-session and cannot be routed efficiently"), and every model was sent to `/chat/completions` because catalog normalization discarded the per-model adapter declaration — so Muse Spark, GPT, and Grok models that expect `/responses`, and MiniMax/Qwen models that expect `/messages`, failed with internal server errors. Model-level protocol routing is now preserved end to end, retries reuse the same session identity, and Go Qwen entries that omit the declaration fall back to Messages
+- Signing out of Cline and Cline Pass now sticks. Sign-out removes the provider entry, but the runtime re-imports missing providers from the classic extension's stored credentials on every command, so you appeared signed straight back in вЂ” the same root cause as the ChatGPT/Codex fix in 0.0.26, which only cleared Codex secrets. Cline Pass sign-out did nothing at all, because its credentials live under the Cline provider entry rather than its own
+- The settings sidebar's **Models** section is now **API Providers**, with an icon to match вЂ” it is where you configure providers and their credentials, not where you pick a model
+- A failed voice input now shows a "Speech input failed" toast in chat with the actual error, instead of dropping you into Settings в†’ Voice. Any error that wasn't a browser exception was treated as a configuration problem, even though the microphone is already gated on a configured transcription model вЂ” so a connection or transcription failure interrupted the chat and hid the real reason. Your draft and the microphone button stay put so you can retry; microphone-permission guidance is unchanged
+- OpenCode Go models work again. Requests were missing the `x-opencode-session` header Go requires to route a conversation ("Request is missing x-opencode-session and cannot be routed efficiently"), and every model was sent to `/chat/completions` because catalog normalization discarded the per-model adapter declaration вЂ” so Muse Spark, GPT, and Grok models that expect `/responses`, and MiniMax/Qwen models that expect `/messages`, failed with internal server errors. Model-level protocol routing is now preserved end to end, retries reuse the same session identity, and Go Qwen entries that omit the declaration fall back to Messages
 - Added Crusoe as an OpenAI-compatible provider
-- Settings switches are lighter in light mode and are now a shared native control — real keyboard, label, and form behavior, a guaranteed 24px hit area, and support for reduced-motion and forced-colors
+- Settings switches are lighter in light mode and are now a shared native control вЂ” real keyboard, label, and form behavior, a guaranteed 24px hit area, and support for reduced-motion and forced-colors
 - The welcome screen's eye color matches the dark theme, and its animation no longer triggers layout work each frame
 
 ## 0.0.26
 
-- The composer now shows the current branch's GitHub pull request — PR number, merge status, changed-line totals, and CI checks. Click through to open it in your browser, or expand CI to inspect individual checks and their logs; status refreshes every 30 seconds while visible, on window focus, and on demand. If the branch has no PR, **Create PR** opens GitHub's comparison form. Requires the GitHub CLI (`gh`) installed and signed in, plus a GitHub.com `origin` remote; the row hides itself on the default branch, detached HEAD, and unsupported repositories. Cline does not push commits or submit the PR for you
-- The Customize view's Tools, Skills, and Rules tabs now read as one consistent list instead of three different ones, matching the pattern Plugins already used. Tools gets a search bar that filters both sections and per-section Enable all/Disable all that only touches what's visible; Skills gets an in-place enable/disable toggle — previously the desktop app had no concept of a disabled skill, so disabled ones were hidden and unreachable — and the same Copy path / Uninstall menu Plugins use. Tabs are reordered to Tools, Plugins, Skills, Rules, MCP, Hooks and open on Tools, and the sidebar's "New Task" button is now "New Session"
-- Deleting a queued prompt no longer leaves it in the transcript as a message that never ran. The sidecar inferred a queued prompt had started whenever the pending list shrank and its head changed — which is exactly what deleting the first queued prompt (or discarding the queue) looks like. It now relies only on the runtime's real start event
+- The composer now shows the current branch's GitHub pull request вЂ” PR number, merge status, changed-line totals, and CI checks. Click through to open it in your browser, or expand CI to inspect individual checks and their logs; status refreshes every 30 seconds while visible, on window focus, and on demand. If the branch has no PR, **Create PR** opens GitHub's comparison form. Requires the GitHub CLI (`gh`) installed and signed in, plus a GitHub.com `origin` remote; the row hides itself on the default branch, detached HEAD, and unsupported repositories. Cline does not push commits or submit the PR for you
+- The Customize view's Tools, Skills, and Rules tabs now read as one consistent list instead of three different ones, matching the pattern Plugins already used. Tools gets a search bar that filters both sections and per-section Enable all/Disable all that only touches what's visible; Skills gets an in-place enable/disable toggle вЂ” previously the desktop app had no concept of a disabled skill, so disabled ones were hidden and unreachable вЂ” and the same Copy path / Uninstall menu Plugins use. Tabs are reordered to Tools, Plugins, Skills, Rules, MCP, Hooks and open on Tools, and the sidebar's "New Task" button is now "New Session"
+- Deleting a queued prompt no longer leaves it in the transcript as a message that never ran. The sidecar inferred a queued prompt had started whenever the pending list shrank and its head changed вЂ” which is exactly what deleting the first queued prompt (or discarding the queue) looks like. It now relies only on the runtime's real start event
 - A session forked from a checkpoint restore no longer comes back stuck on "Thinking...". Sessions that materialize with seeded history never passed their status when persisting, so the row and manifest were written as "running" while the live session was idle; resuming from that manifest then showed a session that was never going to finish
-- Sending an image with no text no longer fails with "session input requires a prompt string" — the composer asks for a message instead of letting the request through to a backend that rejects it
-- Image attachments in formats the model pipeline can't read (HEIC, TIFF, SVG, BMP, ICO, and friends) are now rejected at attach time — by picker, paste, or drag-and-drop — instead of failing later in the turn. Files whose type has to be inferred from the extension are classified the same way
+- Sending an image with no text no longer fails with "session input requires a prompt string" вЂ” the composer asks for a message instead of letting the request through to a backend that rejects it
+- Image attachments in formats the model pipeline can't read (HEIC, TIFF, SVG, BMP, ICO, and friends) are now rejected at attach time вЂ” by picker, paste, or drag-and-drop вЂ” instead of failing later in the turn. Files whose type has to be inferred from the extension are classified the same way
 - Signing out of ChatGPT (Codex) now sticks. Sign-out removes the provider entry, but the runtime re-imports any missing provider from the classic extension's stored credentials on every command, so the next action signed you straight back in. The legacy Codex credentials are now cleared too, and a failed clear reports the sign-out as failed instead of quietly succeeding
-- Auth failures on providers that log in through a local CLI — Claude Code, Codex CLI, OpenCode — now point you at that CLI instead of Settings → Models, where there is nothing to fix. "OAuth session expired", "Not logged in · Please run /login", and similar messages are also recognized as credential failures now, so they get a hint at all
+- Auth failures on providers that log in through a local CLI вЂ” Claude Code, Codex CLI, OpenCode вЂ” now point you at that CLI instead of Settings в†’ Models, where there is nothing to fix. "OAuth session expired", "Not logged in В· Please run /login", and similar messages are also recognized as credential failures now, so they get a hint at all
 - Model lists now refresh from the live catalog for every provider that uses the shared catalog, not just Cline and Cline Pass. Providers with their own endpoint-owned model lists are unaffected, and the first providers listing is still network-free
 - Cline Pass and free models now report zero cost instead of the upstream provider's price
 - Session history rows no longer overlap their own hover metadata when a label is wider than the fixed label column
 - Scheduled sessions no longer stall out. The poller could stop advancing, and capacity waits were counted as run attempts, so a schedule could burn through its retries without ever running. Execution lifecycle and capacity claims are now fenced atomically. New recurring schedules also default to your local timezone instead of UTC; existing schedules without a timezone keep it that way when edited
 - Automation event acceptance is now atomic and retryable, so an event can't be half-accepted and lost if delivery fails mid-way
-- Nested PowerShell commands no longer flood errors and look like a hang. Commands run through an outer PowerShell bootstrap, so a nested `powershell -Command "... $_ ..."` had `$_` interpolated away by the outer parser before the inner shell saw it — a `Where-Object { $_.Name ... }` pipeline then errored once per item over a large tree while still exiting 0. Redundant nested invocations are now unwrapped and run directly, only when that provably preserves semantics (same PowerShell edition, no profile loading, fully quoted command). Cline is also told which edition it's actually on — Windows PowerShell vs. Microsoft PowerShell — and to stop wrapping commands in a shell it's already running in
+- Nested PowerShell commands no longer flood errors and look like a hang. Commands run through an outer PowerShell bootstrap, so a nested `powershell -Command "... $_ ..."` had `$_` interpolated away by the outer parser before the inner shell saw it вЂ” a `Where-Object { $_.Name ... }` pipeline then errored once per item over a large tree while still exiting 0. Redundant nested invocations are now unwrapped and run directly, only when that provably preserves semantics (same PowerShell edition, no profile loading, fully quoted command). Cline is also told which edition it's actually on вЂ” Windows PowerShell vs. Microsoft PowerShell вЂ” and to stop wrapping commands in a shell it's already running in
 - Prompt telemetry to Cline's tracing backend is now limited to Cline and Cline Pass requests. Turns run against your own provider keys are not traced
-- Cline Pass now appears in the composer's provider picker alongside Cline. One Cline sign-in configures both — Cline Pass stores its credentials under the Cline account rather than having its own — but the picker only listed providers with their own saved settings entry, and onboarding writes just the Cline one. A new Cline Pass user therefore saw a single row
-- The composer's provider picker has a **Set up another provider** row at the bottom that opens Settings → Models. The picker only lists what you have already configured, so there was no way to reach the rest of the catalog from the composer
+- Cline Pass now appears in the composer's provider picker alongside Cline. One Cline sign-in configures both вЂ” Cline Pass stores its credentials under the Cline account rather than having its own вЂ” but the picker only listed providers with their own saved settings entry, and onboarding writes just the Cline one. A new Cline Pass user therefore saw a single row
+- The composer's provider picker has a **Set up another provider** row at the bottom that opens Settings в†’ Models. The picker only lists what you have already configured, so there was no way to reach the rest of the catalog from the composer
 - Dropped the "Configured" checkmark from the composer's provider picker (added in 0.0.25). Every row in that picker has a saved settings entry, so for anyone who set their providers up in the app every row carried the same green check and it read as decoration. Settings is still where provider readiness is shown, and it distinguishes a real credential from an entry a legacy migration left behind
 
 ## 0.0.25
 
 - ChatGPT Subscription (Codex) now lists only the models your plan can actually use. Two separate paths filled the picker from the shared OpenAI catalog, so GPT-4o, GPT-4.1, and `chatgpt-image-latest` showed up alongside the Codex models, and the runtime lost the Codex context caps. The model rules also match what the backend now accepts: `gpt-5.4` and `gpt-5.4-mini` were retired for ChatGPT accounts on 2026-08-31 and are gone, the default moves to `gpt-5.6-terra`, and every Codex model is capped at the real 400K/272K/128K backend budget instead of inheriting the API's 1.05M limits
-- Windows updates no longer fail with "Error opening file for writing". The compiled sidecar re-executes itself as the detached Cline Hub daemon, which outlives the app by design, and Tauri's NSIS installer only kills the main binary — so the daemon still held `code-sidecar.exe` and the install stopped until you killed the process by hand. The installer now stops it first, matched on the full path so updating one channel does not take down a side-by-side Cline Beta's sessions
-- Your prompt is no longer lost when a send fails before the turn starts — switching to Codex and having the OAuth refresh throw, for instance. The runtime never took the prompt, so post-send hydration wiped the optimistic bubble and you had to retype it. The text and attachments now come back to the composer, merged with anything you attached while the send was pending, and left alone if you have already started typing something else
-- Providers that authenticate through a local CLI — Claude Code, Codex CLI — can now start sessions without an API key. They showed as Configured in Settings via their local-auth capability, but session start still refused them with "Missing API key"
+- Windows updates no longer fail with "Error opening file for writing". The compiled sidecar re-executes itself as the detached Cline Hub daemon, which outlives the app by design, and Tauri's NSIS installer only kills the main binary вЂ” so the daemon still held `code-sidecar.exe` and the install stopped until you killed the process by hand. The installer now stops it first, matched on the full path so updating one channel does not take down a side-by-side Cline Beta's sessions
+- Your prompt is no longer lost when a send fails before the turn starts вЂ” switching to Codex and having the OAuth refresh throw, for instance. The runtime never took the prompt, so post-send hydration wiped the optimistic bubble and you had to retype it. The text and attachments now come back to the composer, merged with anything you attached while the send was pending, and left alone if you have already started typing something else
+- Providers that authenticate through a local CLI вЂ” Claude Code, Codex CLI вЂ” can now start sessions without an API key. They showed as Configured in Settings via their local-auth capability, but session start still refused them with "Missing API key"
 - OpenCode is now treated as a local CLI provider rather than an OAuth one, so it shows the local CLI notice instead of a browser sign-in button that could not do anything. It authenticates from the credentials the opencode CLI itself stores
 - Session import from Claude Code, Codex, and opencode has its own page in Settings instead of a row buried in General
 - The composer's provider picker now marks which providers you have already configured
 - The model picker distinguishes models that share a name, and Cline Pass subscription models are listed separately from the free fallback tier
 - Published DMGs use the intended window layout and background again. Tauri skips the Finder AppleScript that applies them whenever `CI` is set, which GitHub Actions always sets, so every DMG since the artwork landed shipped with a stock Finder window even though the artwork was generated and validated
 - Cline's recommended, free, and subscribed model lists now ship with the app, so they are correct at first launch instead of waiting on a live catalog fetch
-- Refreshed the model catalog. Adds NaN (nan.builders) and changes the resolved default model for 36 providers — including Bedrock, Vertex, OpenRouter, Kilo, GitHub Copilot, Gemini, Cerebras, Fireworks, Requesty, and Vercel AI Gateway. Several move off Claude Fable 5.1 to GPT-6 Astra, Vertex goes to Gemini 3.8 Flash, and OpenRouter/Kilo to Inception Mercury 2.5. If you use one of those without pinning a model, expect a different default
+- Refreshed the model catalog. Adds NaN (nan.builders) and changes the resolved default model for 36 providers вЂ” including Bedrock, Vertex, OpenRouter, Kilo, GitHub Copilot, Gemini, Cerebras, Fireworks, Requesty, and Vercel AI Gateway. Several move off Claude Fable 5.1 to GPT-6 Astra, Vertex goes to Gemini 3.8 Flash, and OpenRouter/Kilo to Inception Mercury 2.5. If you use one of those without pinning a model, expect a different default
 
 ## 0.0.24
 
-- Fixed the live chat stream doubling text and dropping messages mid-turn. The sidecar has two Hub sockets that both receive a session's events — ClineCore's own client and the observer client — and a session that streams without a local send first (a run already in flight when you open the task, a resumed run, a scheduled run) had every delta rendered twice. The observer's copy is now skipped whenever ClineCore is subscribed to the session, asked directly rather than inferred from a timer, so long commands, slow first tokens, and unanswered tool approvals cannot let a duplicate slip through ahead of the core copy. Separately, when the sidecar was replaced under a live webview (crash-respawn, Hub drain-and-replace, stale-sidecar swap) its stream counter restarted at 1 and the webview silently discarded everything until the new process counted past the old run — this dropped your own message bubbles and tool rows, not just assistant text, which is why rows appeared to vanish mid-turn and come back afterwards
-- Fixed a queued prompt's own message vanishing from the chat. When you queue a prompt behind a running turn, the runtime drains the queue just before it answers the previous send, so the previous turn's completion path replaced the whole transcript from a canonical read that predated your queued message — erasing your bubble and leaving the reply streaming in under no user message. That path now defers to the newer turn instead of treating the transcript as its own. Two symptoms rode on the same bug: the composer no longer drops out of its busy state while the queued reply is still pending, and a finished reasoning row now reads "Thought for Ns" instead of a stuck "Thinking" — live rows are stamped on the webview's clock, so a sidecar whose clock trails it (a remote Hub, the browser-dev setup) no longer produces a negative duration that gets dropped
-- Cline no longer stops silently mid-task when a model gets stuck repeating itself. The loop detector stops a run after 5 identical tool calls and the mistake tracker after 6 consecutive failures, but the desktop never registered a decision callback, so the run just ended and the composer went idle with no message. You are now asked how to continue — "Try a different approach" or "Stop this run" — and the guidance is steered into the running turn so the model knows why it was paused instead of repeating the same call
+- Fixed the live chat stream doubling text and dropping messages mid-turn. The sidecar has two Hub sockets that both receive a session's events вЂ” ClineCore's own client and the observer client вЂ” and a session that streams without a local send first (a run already in flight when you open the task, a resumed run, a scheduled run) had every delta rendered twice. The observer's copy is now skipped whenever ClineCore is subscribed to the session, asked directly rather than inferred from a timer, so long commands, slow first tokens, and unanswered tool approvals cannot let a duplicate slip through ahead of the core copy. Separately, when the sidecar was replaced under a live webview (crash-respawn, Hub drain-and-replace, stale-sidecar swap) its stream counter restarted at 1 and the webview silently discarded everything until the new process counted past the old run вЂ” this dropped your own message bubbles and tool rows, not just assistant text, which is why rows appeared to vanish mid-turn and come back afterwards
+- Fixed a queued prompt's own message vanishing from the chat. When you queue a prompt behind a running turn, the runtime drains the queue just before it answers the previous send, so the previous turn's completion path replaced the whole transcript from a canonical read that predated your queued message вЂ” erasing your bubble and leaving the reply streaming in under no user message. That path now defers to the newer turn instead of treating the transcript as its own. Two symptoms rode on the same bug: the composer no longer drops out of its busy state while the queued reply is still pending, and a finished reasoning row now reads "Thought for Ns" instead of a stuck "Thinking" вЂ” live rows are stamped on the webview's clock, so a sidecar whose clock trails it (a remote Hub, the browser-dev setup) no longer produces a negative duration that gets dropped
+- Cline no longer stops silently mid-task when a model gets stuck repeating itself. The loop detector stops a run after 5 identical tool calls and the mistake tracker after 6 consecutive failures, but the desktop never registered a decision callback, so the run just ended and the composer went idle with no message. You are now asked how to continue вЂ” "Try a different approach" or "Stop this run" вЂ” and the guidance is steered into the running turn so the model knows why it was paused instead of repeating the same call
 - The `editor` tool's error message now names the file, says whether `old_text` was null or omitted, and states how to recover. Models that fill optional parameters with null (seen with kimi-k3) hit a terse "old_text is required" and re-sent the identical call until the loop detector stopped the run
-- Fixed your Cline Pass model selection being replaced when you start a new chat. Catalogs are discovery data, not validation — the bundled catalog can omit live Cline Pass models and refreshes can return partial lists, so a model missing from the catalog was treated as invalid and silently swapped for a default
+- Fixed your Cline Pass model selection being replaced when you start a new chat. Catalogs are discovery data, not validation вЂ” the bundled catalog can omit live Cline Pass models and refreshes can return partial lists, so a model missing from the catalog was treated as invalid and silently swapped for a default
 - Cline Desktop now has a custom title bar on Windows, with caption controls that follow the compact title-bar height in narrow windows and stay above overlays. The Windows taskbar icon was also updated
 - Token counts and costs now fill in for every session you can see. The sessions view only ever hydrated the four most recent rows, so every other row showed "-" and paging never asked for more; the visible page is now hydrated on demand, with reads capped and re-run when a session's status changes underneath them
-- Sessions imported from Claude Code, Codex, and opencode now say so in the chat, and their foreign history is summarized on the first resumed turn. Imported transcripts keep the source tool's own tool names and schemas, which a model continuing them may try to call — the summary runs once, the original transcript stays intact, and the "Thinking..." indicator reads "Summarizing the imported <tool> history..." while it happens
+- Sessions imported from Claude Code, Codex, and opencode now say so in the chat, and their foreign history is summarized on the first resumed turn. Imported transcripts keep the source tool's own tool names and schemas, which a model continuing them may try to call вЂ” the summary runs once, the original transcript stays intact, and the "Thinking..." indicator reads "Summarizing the imported <tool> history..." while it happens
 - Fixed session history rendering empty when one session had many subagent or team-task children. Child rows always sort after the root that spawned them, so a single busy session could hide itself and every older session from the sidebar with no way to load more
 - Checkpoints no longer re-hash every untracked file before each message. Checkpoint creation rebuilt a throwaway git index each turn, so multi-GB untracked data blocked every message for seconds to minutes (~90s in one report on a cloud-synced Windows workspace). One snapshot index is now kept per session, so from the second turn the cost is roughly git process overhead. Snapshot contents are byte-identical to before
 - Commands that background a child process (`cmd &`, `nohup`, and the same from Git Bash) no longer hang until the timeout. The inherited stdio pipes stay open after the shell exits, so the completion event never arrived even though the command was done; these now settle with the real exit code and a note that background output is no longer captured
@@ -289,26 +294,26 @@
 
 ## 0.0.23
 
-- Agent Plugins are now discovered and run by the shared Hub. Packages under `~/.agents/plugins` are validated from their `plugin.json`, their valid Agent Skills become available to the agent, and their stdio / Streamable HTTP / SSE MCP servers start automatically. Settings → Customize lists Agent Plugins separately from Cline Plugins, with each plugin's description, badge, and contributed tools, and enable/disable is Hub-managed per plugin. Workspace `.agents/plugins` directories are intentionally ignored
-- The "Cline Hub was updated" dialog no longer appears on every launch and reconnect. The app no longer prompts about a Hub running the same core version it does — a desktop and CLI release cut from different commits bundle the same core but never share a build fingerprint, so anyone with both installed got a dialog whose "Update and restart" looped on "no app update available". The build-mismatch dialog now also waits until an app update is actually staged, and "Later" sticks across session switches, reloads, and relaunches instead of resurfacing every time. A Hub the app genuinely cannot talk to still warns every time
-- Signing in now shows the device confirmation code in the app while you wait on the browser, so you can match it against the code the browser asks you to confirm — in onboarding, Account settings, and the provider list
-- Voice input failures caused by provider setup — missing credentials, transcription config — now take you straight to voice settings instead of a toast you cannot act on. Genuine microphone permission failures still toast, with a clearer message
+- Agent Plugins are now discovered and run by the shared Hub. Packages under `~/.agents/plugins` are validated from their `plugin.json`, their valid Agent Skills become available to the agent, and their stdio / Streamable HTTP / SSE MCP servers start automatically. Settings в†’ Customize lists Agent Plugins separately from Cline Plugins, with each plugin's description, badge, and contributed tools, and enable/disable is Hub-managed per plugin. Workspace `.agents/plugins` directories are intentionally ignored
+- The "Cline Hub was updated" dialog no longer appears on every launch and reconnect. The app no longer prompts about a Hub running the same core version it does вЂ” a desktop and CLI release cut from different commits bundle the same core but never share a build fingerprint, so anyone with both installed got a dialog whose "Update and restart" looped on "no app update available". The build-mismatch dialog now also waits until an app update is actually staged, and "Later" sticks across session switches, reloads, and relaunches instead of resurfacing every time. A Hub the app genuinely cannot talk to still warns every time
+- Signing in now shows the device confirmation code in the app while you wait on the browser, so you can match it against the code the browser asks you to confirm вЂ” in onboarding, Account settings, and the provider list
+- Voice input failures caused by provider setup вЂ” missing credentials, transcription config вЂ” now take you straight to voice settings instead of a toast you cannot act on. Genuine microphone permission failures still toast, with a clearer message
 - Fixed the scheduled-task report vanishing when a finished run's step collapsed
 - Fixed one wedged MCP server blocking the rest from shutting down, leaking their processes
 
 ## 0.0.22
 
-- Import your history from Claude Code, Codex, and opencode. An Import button in the Sessions header (and a row in Settings → General) scans your local stores from all three tools and turns the conversations you pick into fully resumable Cline sessions. Sessions are grouped per tool with select-all and a search across title, folder, and first prompt; already-imported ones are shown as such so re-opening the dialog is safe. Imported sessions resume on your configured provider and model, not the source tool's. If you have history from any of these tools, onboarding now offers the import as a step
+- Import your history from Claude Code, Codex, and opencode. An Import button in the Sessions header (and a row in Settings в†’ General) scans your local stores from all three tools and turns the conversations you pick into fully resumable Cline sessions. Sessions are grouped per tool with select-all and a search across title, folder, and first prompt; already-imported ones are shown as such so re-opening the dialog is safe. Imported sessions resume on your configured provider and model, not the source tool's. If you have history from any of these tools, onboarding now offers the import as a step
 - Runs of a schedule now fold into a single collapsible sidebar row named after the schedule, with its run count, instead of one row per run all carrying the same prompt title. Expanding lists them newest-first as "Run N" with the usual status dot, time, hover card, context menu, and delete; the group holding the active session opens on its own
 - Voice input now works on macOS. The app shipped without a microphone usage description or entitlement, so dictation failed silently
 - Web search is now on by default
 - The marketplace detail panel now opens on click rather than hover, with left-aligned content, a single "Learn more" link, and the selected entry staying open while you filter the list
-- When the Hub is older than the app, you are now offered a choice — replace it, with a count of the sessions that would be interrupted, or keep it running — instead of the app quietly working against stale code. Replacing drains the Hub first so in-flight turns finish
+- When the Hub is older than the app, you are now offered a choice вЂ” replace it, with a count of the sessions that would be interrupted, or keep it running вЂ” instead of the app quietly working against stale code. Replacing drains the Hub first so in-flight turns finish
 - Editing and resending a message now works on sessions with no checkpoint history, such as imported ones, instead of failing with "No checkpoint found at or before run N"
 - Fixed tool calling being silently disabled for Dify, SAP AI Core, opencode, and Codex CLI models. Their catalog entries declare no capabilities, and the empty list was read as an authoritative denial that stripped every tool from the request
 - Fixed images being dropped from file reads on models whose capability list is empty
 - The message the model receives when you reject a tool call now names the tool and reads as your decision rather than an error
-- Refreshed the model catalog. Adds eight providers (Bothub, OpenReason, SenseNova (China), TokenRouter, Vancine, Volcengine Ark Coding Plan, above.dev, and klokintegration.se) and changes the resolved default model for 36 providers — most consequentially Anthropic, which now resolves to Claude Fable 5.1 instead of Claude Opus 5, with Amazon Bedrock, Vertex, OpenRouter, Kilo Gateway, DevPass, DigitalOcean, CrossModel, and Eden AI following. If you use a provider without pinning a model, expect a different default
+- Refreshed the model catalog. Adds eight providers (Bothub, OpenReason, SenseNova (China), TokenRouter, Vancine, Volcengine Ark Coding Plan, above.dev, and klokintegration.se) and changes the resolved default model for 36 providers вЂ” most consequentially Anthropic, which now resolves to Claude Fable 5.1 instead of Claude Opus 5, with Amazon Bedrock, Vertex, OpenRouter, Kilo Gateway, DevPass, DigitalOcean, CrossModel, and Eden AI following. If you use a provider without pinning a model, expect a different default
 
 ## 0.0.21
 
@@ -318,23 +323,23 @@
 - You can now drop file attachments anywhere over the chat input, not just on the small attach target
 - Cline provider models now refresh from the live catalog, so newly released models show up without waiting for an app update
 - Provider 401/403 responses are now classified as authentication errors rather than generic request failures, so a bad or missing API key is distinguishable from a real provider outage
-- Fixed Langfuse tracing never initializing in release builds — the minified bundle broke tracer detection, so telemetry worked in dev and silently did nothing in the shipped app. Also updated for AI SDK 7's telemetry API
-- Refreshed the model catalog. Adds TokenGo and Volcengine Ark, and updates model lists, pricing, and the resolved default model for ~36 providers (including Hugging Face, Mistral, OpenRouter, Together, NanoGPT, Requesty, Baseten, Cloudflare Workers AI, and DigitalOcean) — if you use one of those without pinning a model, you will get a different default
+- Fixed Langfuse tracing never initializing in release builds вЂ” the minified bundle broke tracer detection, so telemetry worked in dev and silently did nothing in the shipped app. Also updated for AI SDK 7's telemetry API
+- Refreshed the model catalog. Adds TokenGo and Volcengine Ark, and updates model lists, pricing, and the resolved default model for ~36 providers (including Hugging Face, Mistral, OpenRouter, Together, NanoGPT, Requesty, Baseten, Cloudflare Workers AI, and DigitalOcean) вЂ” if you use one of those without pinning a model, you will get a different default
 
 ## 0.0.20
 
 - Customize now separates Cline Plugins from Agent Plugins discovered by the Hub. Agent Plugin switches use Hub-managed enablement, contributed skills appear in the Skills inventory, and connected desktop views refresh when Hub settings change
 - Cline Desktop now ships on Windows: releases include a code-signed x64 installer, and installed apps auto-update on the same feed macOS does
 - Windows shell fixes: background processes (the sidecar, git) no longer pop visible console windows; updates now download in the background and install when you restart the app; the MCP settings path falls back to `USERPROFILE` when `HOME` is unset
-- Tool results that return images — screenshots from browser or MCP tools — now render as inline images you can click to expand, with a carousel for stepping through multiple images, instead of raw base64 text
+- Tool results that return images вЂ” screenshots from browser or MCP tools вЂ” now render as inline images you can click to expand, with a carousel for stepping through multiple images, instead of raw base64 text
 - Session search now covers your full indexed history. The sidebar search icon opens the command bar (Cmd/Ctrl+P) with server-ranked results, instead of a sidebar-local dialog that first loaded every session into memory
 - Onboarding has a new GitHub integration step
-- Fixed scheduled tasks disappearing after the app updated — hub-managed schedules were being wiped by cron reconciliation on restart
+- Fixed scheduled tasks disappearing after the app updated вЂ” hub-managed schedules were being wiped by cron reconciliation on restart
 - Agent-created schedules now live in one user-level home (`~/.cline/schedules`) instead of being scattered across whichever chat folder created them, and they now appear on the Schedules page
 - A finished scheduled session now surfaces its final answer: the completing step auto-expands, is labeled "Scheduled task completed" (or failed), and its summary renders as markdown
 - Suggested routine templates now ask for a specific final report, so a scheduled run ends with something readable
 - Providers no longer show as "Configured" on the strength of a leftover settings entry with no real credentials, and the badge now updates live after connecting or saving credentials instead of waiting for a remount
-- Fixed OpenAI Codex (ChatGPT subscription) sign-in silently dead-ending when callback port 1455 was already in use — it now fails immediately with an actionable error, and OAuth redirect errors surface instead of a confusing "Missing authorization code"
+- Fixed OpenAI Codex (ChatGPT subscription) sign-in silently dead-ending when callback port 1455 was already in use вЂ” it now fails immediately with an actionable error, and OAuth redirect errors surface instead of a confusing "Missing authorization code"
 - Codex and OCA sign-ins are no longer dropped when a token refresh hits a transient network failure or server error
 - Checkpoint restore now refuses to reset your workspace when commits were made after the checkpoint, instead of silently knocking them off the branch
 - Fixed an enabled-but-offline remote MCP server stalling session startup until the session was torn down
@@ -347,20 +352,20 @@
 
 ## 0.0.19
 
-- Fixed the background Cline process ballooning in memory during long sessions — session status updates were carrying a full copy of the conversation transcript to every connected client, which on a multi-megabyte task could grow the process to tens of gigabytes. Status updates now carry only state (status, usage, model, workspace, checkpoint); the transcript is fetched on demand
+- Fixed the background Cline process ballooning in memory during long sessions вЂ” session status updates were carrying a full copy of the conversation transcript to every connected client, which on a multi-megabyte task could grow the process to tens of gigabytes. Status updates now carry only state (status, usage, model, workspace, checkpoint); the transcript is fetched on demand
 - Refreshed the model catalog. Adds seven providers (Agnes AI, Aixy, IteraCompute, LLM Tech, NeoSmith, Pendra, and Standard Compute) and updates model lists and pricing across providers. The resolved default model changes for ClinePass (now GLM 5.3), Z.ai, Hugging Face, evroc, LLM Gateway, NanoGPT, and Weights & Biases, so if you use one of those without pinning a model you will get a different default
 
 ## 0.0.18
 
 - The sidebar is time-sorted again by default, with collapsible Pinned / Scheduled / Tasks sections and a one-click toggle to switch to project grouping (the old dropdown is gone). Scheduled sessions are marked with a clock icon, and the list starts taller and grows to fill the sidebar instead of stranding rows over empty space
 - Session rows now show a trash button on hover for quick deletion, with the same confirmation the row's context menu uses
-- Customize is now your installed inventory only. Browsing moved to a dedicated Marketplace page — one list across plugins, MCP servers, and skills with type-filter and tag chips — and the two pages link to each other from their headers and from sidebar sub-tabs
+- Customize is now your installed inventory only. Browsing moved to a dedicated Marketplace page вЂ” one list across plugins, MCP servers, and skills with type-filter and tag chips вЂ” and the two pages link to each other from their headers and from sidebar sub-tabs
 - Schedule cards are now click targets: clicking a card anywhere outside its controls opens its details, the redundant eye button is gone, and the edit / run / pause / delete buttons are large enough to hit
 - Schedule details are one scrollable view instead of Overview/Runs tabs, showing the meta grid, the configuration, and the most recent runs with a "Show all N runs" expander
 - "Run now" now hands you into the session it starts
-- Scheduled and automation runs no longer render their internal `[SYSTEM]` steering messages as if you had typed them — a finished scheduled session reads as prompt, work summary, answer
+- Scheduled and automation runs no longer render their internal `[SYSTEM]` steering messages as if you had typed them вЂ” a finished scheduled session reads as prompt, work summary, answer
 - Fixed opening a scheduled session while it runs leaving it stuck on the thinking shimmer until you switched away and back
-- Fixed installing plugins and MCP servers from the Marketplace failing with `Executable not found in $PATH: "cline"` — installs now run in-process and no longer require a Cline CLI on your machine
+- Fixed installing plugins and MCP servers from the Marketplace failing with `Executable not found in $PATH: "cline"` вЂ” installs now run in-process and no longer require a Cline CLI on your machine
 - Fixed quitting the app beach-balling for several seconds
 - Cost estimates are no longer shown for subscription-billed providers (ClinePass, ChatGPT via Codex, and Claude Code), where an API-rate dollar figure read as a real charge on top of your subscription
 - Fixed hover cards flashing closed and reopening when clicked
@@ -369,9 +374,9 @@
 
 ## 0.0.17
 
-- Plugins, MCP, Skills, Rules, Hooks, and Tools are now one Customize hub with tabbed sections and live counts. Catalog-backed tabs show what you have installed followed by an inline Browse section, so installing something from the catalog immediately appears above — the separate Marketplace page is gone
+- Plugins, MCP, Skills, Rules, Hooks, and Tools are now one Customize hub with tabbed sections and live counts. Catalog-backed tabs show what you have installed followed by an inline Browse section, so installing something from the catalog immediately appears above вЂ” the separate Marketplace page is gone
 - Redesigned the Models page: providers are grouped into Connected, Popular, and All with their auth kind and configuration status instead of per-row toggles. OAuth providers now offer a browser sign-in rather than an API key field, with a collapsed manual-key escape hatch where supported, and explicit Connect / Disconnect / Sign out actions
-- Voice input moved to its own Settings → Voice page that only offers connected transcription-capable providers and preselects a default model. The composer's microphone button now appears only once a voice model is configured
+- Voice input moved to its own Settings в†’ Voice page that only offers connected transcription-capable providers and preselects a default model. The composer's microphone button now appears only once a voice model is configured
 - Sidebar sessions are always grouped by project, with pinned sessions leading each group and scheduled sessions marked by an inline clock. The Favorite action is now called Pin
 - New, Schedule, and Customize each got their own labeled row below the logo. New starts a fresh task and puts your cursor straight in the composer
 - Session search moved into a dialog behind the search icon in the logo row, and it now searches your full history instead of only the sessions already loaded in the sidebar
@@ -396,13 +401,13 @@
 
 ## 0.0.15
 
-- The app is now called Cline, renamed from Cline Code. Your settings, sessions, and credentials carry over untouched — only the name and icon change
+- The app is now called Cline, renamed from Cline Code. Your settings, sessions, and credentials carry over untouched вЂ” only the name and icon change
 - Refreshed app icons and branding
 - Reskinned the first-run onboarding, with an interactive welcome graphic
 - Plugins, MCP servers, and Skills are now one Plugins hub with a dedicated Marketplace page
 - The composer's model selector now leads with Recommended and Free tiers (Subscribed and Free on ClinePass), labeled by display name with descriptions, instead of an alphabetized list of raw model ids. Provider settings show the same badges and descriptions
 - Agents can now create and manage durable todos and one-time or recurring schedules
-- Fixed checkpoint restore wedging permanently. Sessions that were never prompted — and persistence-only updates — reported a bogus "running" status, so anything gated on an active turn stayed blocked forever
+- Fixed checkpoint restore wedging permanently. Sessions that were never prompted вЂ” and persistence-only updates вЂ” reported a bogus "running" status, so anything gated on an active turn stayed blocked forever
 - Fixed "No sessions found" flashing while session history was still loading
 - Fixed the work summary undercounting elapsed time when thinking before a tool call attached to the answer instead of the run
 - Fixed the settings gear keeping its hover state while the Account screen is open
@@ -411,29 +416,29 @@
 - Fixed multi-line code blocks collapsing onto a single line
 - Image, voice, and other non-chat models are no longer offered in chat model pickers
 - Fixed `PreToolUse` hook `contextModification` never reaching the model, and `PostToolUse` hook output and `cancel` control being discarded
-- Fixed provider-executed tool activity — every tool the Claude Code provider runs inside its own session — being dropped instead of shown
+- Fixed provider-executed tool activity вЂ” every tool the Claude Code provider runs inside its own session вЂ” being dropped instead of shown
 - PowerShell commands now fail fast on the first error instead of flooding output and still reporting success
 - Usage now displays the billed gateway cost
 - Refreshed the model catalog, which adds AMD, Arcee, Echo, Jalapeno, Kosmik, LLM Gateway, RunInfra, and SCNet as providers and updates model lists, pricing, and per-provider default models across the board
 
 ## 0.0.14
 
-- The app now posts native macOS notifications when a task finishes or needs your input, so you can leave Cline working in the background. Configure them under Settings → Notifications.
+- The app now posts native macOS notifications when a task finishes or needs your input, so you can leave Cline working in the background. Configure them under Settings в†’ Notifications.
 - Voice input: dictate into the composer with the microphone button and your speech is transcribed as you talk, using the provider and model you have configured.
 - Commands stream their output into the transcript as they run instead of appearing all at once when the command exits. Output keeps its terminal colors, is scrollable without being yanked back to the bottom, and a long-running command can be sent to the background with "Proceed while running" so the agent moves on while it finishes.
 - Models that support image generation can now produce images during a task, and they render inline in the transcript.
 - Finished agent runs collapse into a single "Worked for 4m 12s and made 14 tool calls" summary you can expand, so the final answer stays in view instead of being buried under the working rows.
 - Reasoning traces and tool rows now open and close with an animation instead of snapping, and respect your reduced-motion setting.
-- Redesigned the question card the agent shows when it needs a decision: options are selected explicitly and submitted with a button, multiple-choice questions are supported, and there are arrow-key and A–Z shortcuts. Internal request IDs, iteration counts, and timestamps no longer appear on the card.
-- The Web search toggle in Settings now explains that only providers with built-in web search honor it, and shows which of your connected providers are ready to use it — or warns you, with a link to Models, when none of them are.
-- Refreshed assistant markdown — chat-scaled headings, quieter code blocks with a hover copy button, and table cards — now rendered through the same pipeline as the rest of Cline, so the desktop app and the cloud dashboard finally look alike.
+- Redesigned the question card the agent shows when it needs a decision: options are selected explicitly and submitted with a button, multiple-choice questions are supported, and there are arrow-key and AвЂ“Z shortcuts. Internal request IDs, iteration counts, and timestamps no longer appear on the card.
+- The Web search toggle in Settings now explains that only providers with built-in web search honor it, and shows which of your connected providers are ready to use it вЂ” or warns you, with a link to Models, when none of them are.
+- Refreshed assistant markdown вЂ” chat-scaled headings, quieter code blocks with a hover copy button, and table cards вЂ” now rendered through the same pipeline as the rest of Cline, so the desktop app and the cloud dashboard finally look alike.
 - Message hover actions float over the transcript instead of reserving blank space under every message, so conversations pack more tightly.
 - Restyled session hover cards: they open immediately, drop the duplicated ID and updated time, and no longer animate as you move down the list.
 - There is now a separate "Cline Code Beta" app that installs side by side with this one and tracks the experimental branch. It identifies itself as beta in the sidebar, Settings, window title, and tray, so you always know which build you are in.
-- Fixed turns that settle through the event stream — queued prompts, and the first prompt of a fresh session — staying stuck on the streaming shimmer with no final output, healing only when you sent another message. The transcript now reconciles against the saved history as soon as the turn ends.
+- Fixed turns that settle through the event stream вЂ” queued prompts, and the first prompt of a fresh session вЂ” staying stuck on the streaming shimmer with no final output, healing only when you sent another message. The transcript now reconciles against the saved history as soon as the turn ends.
 - Fixed sessions being given the Yolo-mode system prompt whenever auto-approve was on, even though the runtime was started in Act mode. Auto-approval is now an independent tool policy and no longer changes the advertised mode.
 - `/skill` and `/workflow` commands no longer dump the whole skill body into the chat as your message. Your typed command stays as typed, the model loads the instructions through the skills tool, and sessions are no longer titled with the first line of a skill's markdown. Sessions saved before this fix render compactly too.
-- Fixed command execution breaking for an entire session when a model emitted a full command line with no separate arguments — anything containing a space failed with `ENOENT`.
+- Fixed command execution breaking for an entire session when a model emitted a full command line with no separate arguments вЂ” anything containing a space failed with `ENOENT`.
 - Restoring a checkpoint now trims the saved transcript too, so the chat no longer keeps showing turns whose file changes were just reverted.
 - Gemini custom base URLs work again, including host-root values saved before the SDK migration and proxy roots like `http://localhost:4000/gemini`, which were silently missing the API version segment and 404ing.
 - LiteLLM input token limits reported by the server are preserved instead of being replaced with a 128K default.
@@ -444,7 +449,7 @@
 
 - Added an app font size setting. A slider in Settings scales the interface, and your size is applied before the window paints, so launching no longer flashes at the old size first.
 - Models that support it can now search the web during a task. Turn it on with the Web Search toggle in Settings; the searches and their results appear in the transcript and are still there when you reopen the session.
-- Extended thinking budgets reach the provider again on Cline Pass — they had silently stopped applying when the gateway moved off the generic OpenAI-compatible path.
+- Extended thinking budgets reach the provider again on Cline Pass вЂ” they had silently stopped applying when the gateway moved off the generic OpenAI-compatible path.
 - Two Cline installs on different builds no longer shut each other's Hub down in a loop, which was killing live sessions with an abnormal disconnect.
 - The app no longer replaces a Hub that is still serving sessions. It attaches to it instead, and the swap happens once that Hub goes idle.
 - The "update required" dialog no longer interrupts when the Hub is only finishing an update on its own. This app is already the newer build, nothing was being asked of you, and the Hub replaces itself once its sessions end.
@@ -453,22 +458,22 @@
 
 ## 0.0.12
 
-- Every tool call now gets its own row in the transcript, with its own icon, status, and expandable detail — no more "Read 3 files · Ran 2 commands" grouping. Commands read like a terminal (`$ bun test`) with their captured output on expand, and edits show their diffs inline, one per hunk.
+- Every tool call now gets its own row in the transcript, with its own icon, status, and expandable detail вЂ” no more "Read 3 files В· Ran 2 commands" grouping. Commands read like a terminal (`$ bun test`) with their captured output on expand, and edits show their diffs inline, one per hunk.
 - Running tool rows are highlighted in brand violet and settle to gray when they finish; errors stay red.
-- File diffs — both in chat rows and the diff panel — now render through a shared syntax-highlighted renderer that follows the app's theme instead of the browser's.
+- File diffs вЂ” both in chat rows and the diff panel вЂ” now render through a shared syntax-highlighted renderer that follows the app's theme instead of the browser's.
 - Refreshed session transcript layout, message surfaces, and composer, with new Inter and Geist Mono typography.
 - The thinking indicator now stays up during quiet stretches of a turn, such as while tool arguments are streaming, so the turn no longer looks frozen.
 - Message actions (copy, fork, timestamp) no longer crowd the message text, and expanded panels render at full opacity instead of faded.
 - On the welcome screen the chat input is centered and top-aligned, and prompt suggestions are temporarily hidden.
-- The first turn of a fresh session no longer wedges the composer on "Agent is working…" forever.
+- The first turn of a fresh session no longer wedges the composer on "Agent is workingвЂ¦" forever.
 - Scheduled runs no longer appear in the session sidebar and history list.
-- Reconnecting to a stale managed Cline Hub daemon is fixed. When another Cline install ships a newer Hub, the app now prompts to update and restart — and stages the app update first, so it no longer relaunches into the same version and immediately re-prompts.
+- Reconnecting to a stale managed Cline Hub daemon is fixed. When another Cline install ships a newer Hub, the app now prompts to update and restart вЂ” and stages the app update first, so it no longer relaunches into the same version and immediately re-prompts.
 - The Hub daemon now shuts down cleanly instead of exiting with an error when a client is still connected.
 - The Claude Code provider is usable for agentic work again: sessions are anchored on the workspace folder, your `~/.claude` and project settings are loaded, and file edits under the workspace are allowed instead of every write being refused with no approval prompt.
 - Truncated tool-call JSON is now rejected instead of being silently "repaired" into wrong arguments.
 - Fixed strict providers (seen on Vercel with kimi-k3) rejecting a turn with "user message must have content" when a message held only empty text.
 - Fixed a mid-turn crash on streamed tool calls with non-zero indexes, hit through LiteLLM's Anthropic passthrough.
-- Compaction now respects your Max Output Tokens setting instead of a hardcoded 1024-token cap — reasoning models were spending the entire budget thinking, so no summary arrived and compaction was skipped every time.
+- Compaction now respects your Max Output Tokens setting instead of a hardcoded 1024-token cap вЂ” reasoning models were spending the entire budget thinking, so no summary arrived and compaction was skipped every time.
 - Vertex AI: added Fable 5 and custom model IDs, and the global-region picker no longer hides models from the live catalog.
 
 ## 0.0.11
@@ -485,24 +490,24 @@
 - Signing out is handled as a normal state rather than surfacing as a command error.
 - Native-feel and performance polish: the browser context menu is suppressed on app chrome (kept for text fields and selections), UI chrome is no longer text-selectable while chat content still is, inner scrollers no longer rubber-band the window, Settings/Sessions/Onboarding/Diff load lazily, the composer no longer flickers the caret on every keystroke, slash commands are cached across menu opens, and Escape closes the provider/model picker.
 - Tool output no longer nests its own scrollbar.
-- Prompts queued during a turn now survive being interrupted — they're preserved across aborts, drained after a turn aborts itself, and the stop is surfaced instead of the queue being silently dropped. Queued turns that fail are reported as failures.
+- Prompts queued during a turn now survive being interrupted вЂ” they're preserved across aborts, drained after a turn aborts itself, and the stop is surfaced instead of the queue being silently dropped. Queued turns that fail are reported as failures.
 - Session context stays durable across aborts and hub restarts.
 - A hung MCP server no longer takes down session creation, and stdio servers that were never configured get a 30-second initialize budget instead of blocking indefinitely.
 - Remote SSE MCP servers surface an OAuth authorization prompt on a 401 instead of failing outright.
 - LiteLLM requests route through Chat Completions instead of the Responses API.
 - Network interruptions mid-stream but before any model output are retried instead of failing the turn.
 - Checkpoints are picked up when git is initialized part-way through a session, and checkpoint diffs include files that were untracked when the snapshot was taken.
-- Scheduled run reports carry execution context — schedule metadata, durations, and lifecycle error details.
+- Scheduled run reports carry execution context вЂ” schedule metadata, durations, and lifecycle error details.
 
 ## 0.0.10
 
-- Remote MCP servers can now authenticate with OAuth from Settings → MCP — authorize a server, see its auth status, and cancel or retry a pending authorization. Servers that require a pre-registered OAuth client (client ID/secret) instead of dynamic registration are now supported, and stored tokens are invalidated when a server's client configuration changes.
+- Remote MCP servers can now authenticate with OAuth from Settings в†’ MCP вЂ” authorize a server, see its auth status, and cancel or retry a pending authorization. Servers that require a pre-registered OAuth client (client ID/secret) instead of dynamic registration are now supported, and stored tokens are invalidated when a server's client configuration changes.
 - MCP errors are now shown on the individual server rather than as a page-level error, and a server with invalid configuration is surfaced with its error instead of silently disappearing from the list.
-- Failed turns no longer fail silently. Sending a message with no model credentials — or any queued turn that fails — now shows an error in the transcript, enriched with the underlying cause and a pointer to Settings → Models.
+- Failed turns no longer fail silently. Sending a message with no model credentials вЂ” or any queued turn that fails вЂ” now shows an error in the transcript, enriched with the underlying cause and a pointer to Settings в†’ Models.
 - Fixed the first message of a chat (and some queued messages) rendering twice.
-- Fixed the composer getting stuck on "Agent is working…" after a turn already finished.
+- Fixed the composer getting stuck on "Agent is workingвЂ¦" after a turn already finished.
 - New "Connect a model" notice on the welcome screen when no provider has credentials, with one click to onboarding or model settings. It reacts live as you add credentials, and correctly recognizes Bedrock/Vertex and keyless local endpoints as already connected.
-- Added "Get an API key" links for popular providers in onboarding and Settings → Models, plus a link to the Cline dashboard from the Cline API key form.
+- Added "Get an API key" links for popular providers in onboarding and Settings в†’ Models, plus a link to the Cline dashboard from the Cline API key form.
 - The onboarding welcome step now explains what Cline is.
 - The stop button is now actually visible and clickable, Esc stops the current turn, and new shortcuts: Cmd/Ctrl+N for a new session, Cmd/Ctrl+, for settings.
 - Reasoning controls now resolve consistently across AI SDK providers, including Ollama, so effort levels and thinking on/off are honored wherever the provider supports them.
@@ -511,36 +516,36 @@
 
 ## 0.0.9
 
-- Cline Code now ships as a single universal macOS download that runs natively on both Apple Silicon and Intel — no more picking the right architecture. Existing per-architecture installs migrate to it automatically on their next update.
-- Session history can now be filtered by where a session came from — Desktop, CLI, extension, or scheduled — from a new filter control in the sidebar.
+- Cline Code now ships as a single universal macOS download that runs natively on both Apple Silicon and Intel вЂ” no more picking the right architecture. Existing per-architecture installs migrate to it automatically on their next update.
+- Session history can now be filtered by where a session came from вЂ” Desktop, CLI, extension, or scheduled вЂ” from a new filter control in the sidebar.
 - The composer now shows a token usage ring for the active model's context window, with cumulative cost, and it changes color as you approach the limit.
 - Skills now appear in the slash command menu alongside workflows, and commands that share a name are disambiguated instead of shadowing each other.
 - Installed plugins now show their real package names instead of all appearing as "index".
 - The agent header can be dragged to move the window again, including on read-only titles.
 - Chat message actions (copy, fork, edit, restore) no longer collide with the descenders of the message's last line.
-- Application errors are now reported in diagnostics, and the packaged app's telemetry configuration is baked into the sidecar at build time — previously the packaged build shipped with it empty, so no diagnostics were ever sent.
+- Application errors are now reported in diagnostics, and the packaged app's telemetry configuration is baked into the sidecar at build time вЂ” previously the packaged build shipped with it empty, so no diagnostics were ever sent.
 - Plan mode now hard-blocks file-editing shell commands rather than relying on prompting alone; read-only investigation still works.
-- Running out of context is now recovered from automatically — the run compacts and retries once instead of failing with a raw provider error.
+- Running out of context is now recovered from automatically вЂ” the run compacts and retries once instead of failing with a raw provider error.
 - Empty model responses are now retried on every provider, not just Ollama, fixing hard "Model returned empty response" failures on OpenRouter, Cline, and OpenAI-compatible endpoints.
 - Claude 4.6+ and 5.x models are no longer rejected with "thinking.type.enabled is not supported".
-- Bedrock prompt caching works again — cache reads and writes were always 0 — and Bedrock foundation models now route through geo inference profiles.
+- Bedrock prompt caching works again вЂ” cache reads and writes were always 0 вЂ” and Bedrock foundation models now route through geo inference profiles.
 - Reasoning models on OpenAI-compatible endpoints now get the correct token parameter, and models without image support substitute image content instead of failing.
 - Refreshed the bundled provider and model catalog, adding Infomaniak and SCX.ai.
 - Upgraded the model layer to AI SDK 7 and switched Ollama to the native provider.
 
 ## 0.0.8
 
-- Edit any earlier message in a conversation — the app forks the session at that point, rewinds the workspace to that run's checkpoint, and re-runs from your edited prompt. Restores are transactional and workspace-atomic, so a failed restore won't leave you half-rewound.
+- Edit any earlier message in a conversation вЂ” the app forks the session at that point, rewinds the workspace to that run's checkpoint, and re-runs from your edited prompt. Restores are transactional and workspace-atomic, so a failed restore won't leave you half-rewound.
 - Fixed long-running chat turns timing out mid-response.
-- Checkpoints are now created reliably — including after a restart, after compaction, and on the first turn of a resumed session — and restoring one rewinds the whole workspace, not just the conversation.
+- Checkpoints are now created reliably вЂ” including after a restart, after compaction, and on the first turn of a resumed session вЂ” and restoring one rewinds the whole workspace, not just the conversation.
 - Fixed checkpoint restores failing after you closed and reopened a session.
 - Reasoning controls (effort, thinking budget, on/off) now come from the shared model catalog, so each model gets exactly the reasoning options it actually supports instead of provider-specific guesses.
-- Errors from upstream providers forwarded through the gateway now show the real message (e.g. "This model's maximum context length is 40960 tokens…") instead of a raw validation dump or `[object Object]`.
+- Errors from upstream providers forwarded through the gateway now show the real message (e.g. "This model's maximum context length is 40960 tokensвЂ¦") instead of a raw validation dump or `[object Object]`.
 - Ollama: empty responses are retried automatically, and the response-start timeout is raised to 5 minutes so cold model loads don't error out.
 - OpenRouter now defaults to Anthropic Claude Sonnet 5.
 - Model pickers show proper display names for Cline free models and recommended models.
 - MCP servers now honor their configured per-server timeout.
-- Fixed API keys for several providers being lost when migrating from an older install — all secret-backed providers now migrate correctly.
+- Fixed API keys for several providers being lost when migrating from an older install вЂ” all secret-backed providers now migrate correctly.
 - Unknown or removed legacy model IDs now fall back to the default Cline model instead of failing.
 - Fixed agentic compaction not persisting reliably, so long conversations resume in the right state.
 - Fixed a `.clinerules` single file (the older format) aborting the whole rules and config scan.
@@ -556,24 +561,24 @@
 - You can favorite sessions, and sessions are now ordered by most recent activity with consistent status dot colors across views.
 - Subagent and teammate runs from a session now show up in the app with their status and results.
 - Chat polish: tool-specific icons on tool disclosures, elapsed thinking time and restyled reasoning sections, aligned timestamps, and message actions that no longer shift the layout while scrolling stays anchored to the conversation viewport.
-- Free Cline models are now supported and labeled "(free)" in model pickers, with a clear message — including reset time — when you hit the free-tier limit.
+- Free Cline models are now supported and labeled "(free)" in model pickers, with a clear message вЂ” including reset time вЂ” when you hit the free-tier limit.
 - Fixed the China/international endpoint toggles for Qwen, Moonshot, Z AI, and MiniMax being ignored, which silently routed regional users to the wrong host.
 - Fixed tool calls failing when a model emitted a line number as a string (e.g. `insert_line: "3"`), forcing the agent to waste a round trip retrying.
 - Refreshed the bundled provider and model catalog.
 
 ## 0.0.6
 
-- Queued messages now appear in a collapsible list above the composer with a count — expand it to edit, send-now, or delete individual queued turns.
+- Queued messages now appear in a collapsible list above the composer with a count вЂ” expand it to edit, send-now, or delete individual queued turns.
 - New sidebar update indicator: once an update has been downloaded, an accent-colored icon stays in the sidebar showing the new version with a one-click restart, so the update is still reachable after you dismiss the toast (and restart failures are now surfaced instead of silently doing nothing).
-- No more appearance flash on launch — the app paints in your saved (or system) light/dark theme before the first frame.
+- No more appearance flash on launch вЂ” the app paints in your saved (or system) light/dark theme before the first frame.
 - The header and sidebar now show the full workspace name and git branch, and lay out correctly on narrow windows; a transient git lookup no longer wipes a valid branch name back to "no git".
 - Cleaner collapsed-sidebar settings layout: compact width, left-aligned navigation, stacked account details.
-- Clarified the auto-update setting — it's now "Keep CLI up to date" and explains that it governs the `cline` terminal command, not the app itself (the app updates separately).
+- Clarified the auto-update setting вЂ” it's now "Keep CLI up to date" and explains that it governs the `cline` terminal command, not the app itself (the app updates separately).
 - Toggle switches now use a solid accent color when on, for clearer contrast.
 
 ## 0.0.5
 
-- Major performance overhaul: the app now feels snappy end-to-end. The animated background renders at a locked 60fps instead of ~10fps, typing in the composer no longer stutters (245 slow keystrokes → 3), streaming responses coalesce updates instead of re-rendering the whole chat per token, and app boot fetches the provider catalog once instead of three times.
+- Major performance overhaul: the app now feels snappy end-to-end. The animated background renders at a locked 60fps instead of ~10fps, typing in the composer no longer stutters (245 slow keystrokes в†’ 3), streaming responses coalesce updates instead of re-rendering the whole chat per token, and app boot fetches the provider catalog once instead of three times.
 - The native folder picker and command execution no longer freeze the app while the sidecar writes session logs or discovers your editor.
 - Fixed the composer getting stuck on "Agent is working..." after queued turns finished.
 - Added a Cline API key path to onboarding, and you can now cancel a pending browser sign-in instead of being stuck waiting for it.
@@ -583,7 +588,7 @@
 
 ## 0.0.4
 
-- Start chatting without opening a project folder — the app now supports workspace-free chat sessions.
+- Start chatting without opening a project folder вЂ” the app now supports workspace-free chat sessions.
 - New first-run onboarding flow to get you set up on launch.
 - Drag and drop files directly onto the chat to attach them.
 - Image attachments now display inline in the chat transcript.
@@ -599,10 +604,10 @@
 
 ## 0.0.3
 
-- The reasoning section in the chat transcript now reads simply "Thinking" — dropped the redundant status text and brain icon.
+- The reasoning section in the chat transcript now reads simply "Thinking" вЂ” dropped the redundant status text and brain icon.
 
 ## 0.0.2
 
 - First public release of Cline Code for macOS: a desktop app for running and inspecting Cline agent sessions, signed and notarized for Apple Silicon and Intel.
 - Automatic updates: the app checks on launch and every 2 hours, downloads new versions in the background, and prompts for a one-click restart. Ignored updates apply on the next launch.
-- Download the DMG once from GitHub Releases — every future release arrives automatically.
+- Download the DMG once from GitHub Releases вЂ” every future release arrives automatically.
