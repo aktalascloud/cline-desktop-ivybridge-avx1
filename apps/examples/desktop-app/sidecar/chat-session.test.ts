@@ -3,6 +3,7 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
+	realpathSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -2249,8 +2250,8 @@ describe("runtime slash command expansion on send", () => {
 	let originalClineDir: string;
 	beforeEach(() => {
 		originalClineDir = resolveClineDir();
-		const settingsRoot = mkdtempSync(
-			join(tmpdir(), "desktop-command-settings-"),
+		const settingsRoot = realpathSync.native(
+			mkdtempSync(join(tmpdir(), "desktop-command-settings-")),
 		);
 		tempRoots.push(settingsRoot);
 		setClineDir(settingsRoot);
@@ -2271,7 +2272,9 @@ describe("runtime slash command expansion on send", () => {
 	}
 
 	function createWorkspaceWithSkill(): string {
-		const workspace = mkdtempSync(join(tmpdir(), "desktop-slash-send-"));
+		const workspace = realpathSync.native(
+			mkdtempSync(join(tmpdir(), "desktop-slash-send-")),
+		);
 		tempRoots.push(workspace);
 		const skillDir = join(workspace, ".cline", "skills", "desktop-send-skill");
 		mkdirSync(skillDir, { recursive: true });
