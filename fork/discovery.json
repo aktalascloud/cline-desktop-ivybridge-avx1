@@ -1,0 +1,31 @@
+{
+  "checked_utc": "2026-10-25T04:29:43.884234+00:00",
+  "upstream_main_sha": "40c5d99031fe1128189c5b52e40638d2b7787754",
+  "main_changed": false,
+  "open_prs": 760,
+  "closed_pr_records_scanned": 400,
+  "closed_pr_boundary_page_included": true,
+  "open_issues_excluding_prs": 945,
+  "branches": 2445,
+  "official_releases": 464,
+  "forks_listed": 7744,
+  "active_forks_queried_live": 500,
+  "active_window_days": 30,
+  "forks_returned": 458,
+  "forks_http404": 42,
+  "open_fork_prs": 276,
+  "new_or_updated_fork_pr_records": 6,
+  "global_recent_commit_search_results": 8,
+  "global_results_match_project_dependencies": false,
+  "rustsec_database_sha": "21d909e4c8bd4e14c7aea58bf980c881a0053ab1",
+  "rustsec_database_unchanged": true,
+  "production_patches_integrated": 0,
+  "application_inputs_changed": false,
+  "rebuild_performed": false,
+  "notes": [
+    "Live discovery was repeated despite unchanged main; cached fork responses were not reused as proof.",
+    "404 fork responses remain unavailable, not implementation-reviewed.",
+    "Global CPU patches found belong to unrelated OS, emulator, DSP, ndarray or vector-search projects; none is a locked project dependency.",
+    "Discovery and downloaded diffs are not claimed as tested fixes."
+  ]
+}

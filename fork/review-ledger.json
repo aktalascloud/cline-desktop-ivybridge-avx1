@@ -217,5 +217,109 @@
     "verification": "Full PR structure/dependency lock and 103-line error/tool regression test reviewed. Production correction lives in new external AI SDK packages, with broad provider/ai upgrades and mixed old/new transitive versions. External implementation/license/regressions remain unqualified; not integrated. The frozen OpenAI-compatible dependency set passed installed offline fixtures.",
     "refresh_date": "2026-10-25",
     "main_changed": false
+  },
+  {
+    "url": "https://github.com/Exios66/cline/pull/22",
+    "sha": "2026ff185341e6ec04a756a226e9f587c26781da",
+    "purpose": "Bump launch-editor from 2.8.0 to 2.14.2 in /webview-ui",
+    "origin": "third-party-fork-pr",
+    "status": "not-applicable-to-current-desktop-lock",
+    "verification": "Full small legacy webview-ui npm lock diff reviewed: launch-editor 2.14.2, picocolors 1.1.1, shell-quote 1.12.0. Repo Apache-2.0; changed libraries MIT/ISC. This lock is not our Windows Desktop build input; current shell-quote floor already 1.12.0. No implementation or runtime fix imported."
+  },
+  {
+    "url": "https://github.com/presidio-oss/hai-build-codegen/pull/42",
+    "sha": "eb5ab3dbc30e30158c8f6c282371d7da1e906926",
+    "purpose": "Merge from Cline",
+    "origin": "third-party-fork-pr",
+    "status": "unqualified-large-upstream-sync",
+    "verification": "Metadata screening only: 877-file upstream synchronization, not an isolated fix. Full implementation, license compatibility and regressions were not qualified; not downloaded as an applied patch and not integrated."
+  },
+  {
+    "url": "https://github.com/amaybaum-dev/cline/pull/10",
+    "sha": "d441f336dd11f43a0e0e616084e0d6e1f65b11f9",
+    "purpose": "Update dependency dompurify to v3.4.0",
+    "origin": "third-party-fork-pr",
+    "status": "already-newer-dependency-floor",
+    "verification": "Full small legacy webview-ui lock diff reviewed, including unrelated optional WASI metadata. Repo Apache-2.0, DOMPurify dual MPL-2.0/Apache-2.0. Proposed 3.4.0 is older than our pinned 3.4.17. No patch imported or fix attributed to this fork."
+  },
+  {
+    "url": "https://github.com/amaybaum-dev/cline/pull/8",
+    "sha": "ae70ed0d0d544c9bf0adb79ef97d9fff777e3a3f",
+    "purpose": "Update dependency posthog-js to v1.268.1",
+    "origin": "third-party-fork-pr",
+    "status": "deferred-legacy-telemetry-lock-change",
+    "verification": "Full small legacy webview-ui lock diff reviewed, including optional WASI additions. PostHog changes 1.268.0 to 1.268.1; its package says SEE LICENSE. External implementation/license effects and Desktop regressions are unqualified. Not integrated."
+  },
+  {
+    "url": "https://github.com/amaybaum-dev/cline/pull/2",
+    "sha": "2f8fab8e0e3e6c5e57877aeb5cf8bbbdb27eac2c",
+    "purpose": "Update dependency mintlify to v4.2.563",
+    "origin": "third-party-fork-pr",
+    "status": "unqualified-docs-only-lock-churn",
+    "verification": "Applicability screening: a 326194-byte docs/package-lock.json rewrite with broad transitive churn. This is not a Desktop runtime patch. Full dependency implementation/license compatibility was not reviewed; not integrated."
+  },
+  {
+    "url": "https://github.com/Plinqx/axiom-cline/pull/14",
+    "sha": "396f9aae5762b680d5f0cec045585b7896fd7c81",
+    "purpose": "chore(deps): bump follow-redirects from 1.16.0 to 1.16.1 in /docs",
+    "origin": "third-party-fork-pr",
+    "status": "already-covered-by-current-floor",
+    "verification": "Full small docs lock diff reviewed: follow-redirects 1.16.0 to 1.16.1, MIT package in Apache-2.0 fork. Our Bun workspace override already pins 1.16.1; no additional patch imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14391",
+    "sha": "1f3c6f9d3f8a640b3087665705cf743deb346ffa",
+    "purpose": "Cline /model selection breaks bun",
+    "origin": "official-upstream-issue",
+    "status": "tracked-by-deferred-pr-14903",
+    "verification": "Historical CLI 3.0.64 OpenTUI text-node report. Candidate #14903 has the same head as the prior review and remains renderer-qualification work; no new implementation or fix applied."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/13503",
+    "sha": "1f3c6f9d3f8a640b3087665705cf743deb346ffa",
+    "purpose": "Cline not passing any IDE context to AI agent",
+    "origin": "official-upstream-issue",
+    "status": "screened-vscode-ide-context",
+    "verification": "Historical VS Code 4.1.x IDE context report; not a demonstrated Windows Desktop regression. No applicable patch qualified."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/13536",
+    "sha": "1f3c6f9d3f8a640b3087665705cf743deb346ffa",
+    "purpose": "Not able to restore chat",
+    "origin": "official-upstream-issue",
+    "status": "discovered-unqualified-restore-report",
+    "verification": "Historical VS Code checkpoint message-mapping report. No Desktop reproduction or implementation fix qualified; do not claim that profile migration tests prove this restore scenario."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/13545",
+    "sha": "1f3c6f9d3f8a640b3087665705cf743deb346ffa",
+    "purpose": "editor: insert_line cannot append at EOF by the documented method",
+    "origin": "official-upstream-issue",
+    "status": "discovered-unqualified-editor-boundary-report",
+    "verification": "Read the historical insert_line EOF/documentation mismatch report. No current Desktop implementation fix or boundary reproduction qualified; no safety limits changed."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/13548",
+    "sha": "1f3c6f9d3f8a640b3087665705cf743deb346ffa",
+    "purpose": "the context will be limited to 128K",
+    "origin": "official-upstream-issue",
+    "status": "discovered-unqualified-context-override-report",
+    "verification": "Historical beta VS Code custom-context report. Our custom local model has explicit context metadata; this does not establish a fix for the reported VS Code scenario. No patch applied."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15271",
+    "sha": "1f3c6f9d3f8a640b3087665705cf743deb346ffa",
+    "purpose": "CLI: publish musl Linux builds (bun-linux-x64-musl / bun-linux-arm64-musl)",
+    "origin": "official-upstream-issue",
+    "status": "not-applicable-to-windows-profile",
+    "verification": "musl/glibc packaging report is covered by reviewed PR #15328. This Windows-only NSIS channel does not add unqualified musl binaries."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15327",
+    "sha": "1f3c6f9d3f8a640b3087665705cf743deb346ffa",
+    "purpose": "OpenAI Compatible Base URL and API Key inputs automatically reset to default values",
+    "origin": "official-upstream-issue",
+    "status": "not-reproduced-in-isolated-fork-dom-probe",
+    "verification": "Read the Desktop 0.0.48 issue and its comment. Two isolated React/jsdom scenarios passed: built-in OpenAI-compatible and custom local provider, focus/edit/blur, changed key and URL, stale catalog props. Native macOS/WebKit behavior remains unverified; no bug fix is claimed. Live local endpoint was read-only checked and preserved."
   }
 ]
