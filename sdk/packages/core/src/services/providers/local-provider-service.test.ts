@@ -1763,7 +1763,7 @@ describe("audio transcription", () => {
 
 	it("does not invent builtin realtime models for a custom speech endpoint", async () => {
 		LlmsModels.registerProvider({
-			provider: {id: "local-recording", source: "file", name: "Local speech", protocol: "openai-chat", client: "openai-compatible", capabilities: []},
+			provider: {id: "local-recording", source: "file", name: "Local speech", defaultModelId: "whisper-1", protocol: "openai-chat", client: "openai-compatible", capabilities: []},
 			models: {"whisper-1": {id: "whisper-1", name: "Whisper", operation: "transcription", modalities: {input: ["audio"], output: ["text"]}}},
 		});
 		const result = await getLocalTranscriptionModels("local-recording", {providerId: "local-recording", routingProviderId: "openai-native", modelId: "whisper-1"});
