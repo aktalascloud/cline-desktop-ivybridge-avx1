@@ -17,7 +17,6 @@
   "native_default_tests": 5,
   "speedup_claim": null,
   "pending": [
-    "latest CI completion",
     "native GUI input restoration",
     "user decision on inherited S3-shaped records and public history/tags",
     "safe original-profile migration and single-active-Startup cutover",
@@ -72,5 +71,12 @@
     "desktop_launched_via_wmi_outside_codex_job": true,
     "cli_doctor_and_tui_passed": true,
     "protocol_fixture_passed": true
+  },
+  "ci": {
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40146288668",
+    "status": "success",
+    "source_sha": "09e652230d98421beb6dc37aebef8588a19a7fb5",
+    "signature_verified": true,
+    "tamper_rejected": true
   }
 }
