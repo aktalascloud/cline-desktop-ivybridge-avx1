@@ -70,9 +70,11 @@ try {
     if($LASTEXITCODE){throw 'Production frontend build failed'}
     Push-Location $app
     try {
+      bun x vitest run --maxWorkers=1 --reporter=verbose --config vitest.config.ts sidecar/chat-session.test.ts
+      if($LASTEXITCODE){throw 'Session runtime tests failed'}
       bun x vitest run --maxWorkers=1 --config vitest.config.ts webview/components/views/chat/chat-input-bar.test.tsx
       if($LASTEXITCODE){throw 'Composer tests failed'}
-      bun x vitest run --maxWorkers=2 --exclude webview/components/views/chat/chat-input-bar.test.tsx --config vitest.config.ts
+      bun x vitest run --maxWorkers=2 --exclude webview/components/views/chat/chat-input-bar.test.tsx --exclude sidecar/chat-session.test.ts --config vitest.config.ts
       if($LASTEXITCODE){throw 'Desktop tests failed'}
     }
     finally {Pop-Location}
