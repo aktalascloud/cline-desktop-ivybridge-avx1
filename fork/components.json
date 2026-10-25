@@ -3,8 +3,8 @@
   "unofficial": true,
   "version": "1.0.1",
   "upstream_sha": "40c5d99031fe1128189c5b52e40638d2b7787754",
-  "build_source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
-  "release_approved": false,
+  "build_source_sha": "1f3c6f9d3f8a640b3087665705cf743deb346ffa",
+  "release_approved": true,
   "native": {
     "kind": "source-built",
     "rust": "1.97.0",
@@ -158,6 +158,8 @@
     "size": 133992324,
     "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnZsOEpka2w2MGh5SittNDJhZmVPNzVrN00vbjllSHJaTFNwN2J6c0k1K1h4cEM3N2NFdmtsZGY2Y0lpQTQ4Q0pWcXBVemxKUmw2RUUvZmlzV1ZlSHdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyODg1Njg1CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xX3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuMQowU0VXRWd0ZmFtUXhRSDRWT3U3UTltSGJKcDEydHVyamxyUGhsZWhxVHFCblQveWdFTmg1Ym8zdTJrQ3ZaMk5ZbGlhaXNCYU9vTWlTR210K2s2dVhBdz09Cg==",
     "authenticode": "NotSigned",
-    "status": "local candidate installed; native GUI/history-policy/cutover gates pending"
-  }
+    "status": "installed and qualified; interactive GUI checks waived by owner"
+  },
+  "original_build_source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
+  "sanitized_upstream_sha": "8c6e4474bc32cc9a118e74fe158cd5fbbab572aa"
 }

@@ -1,6 +1,6 @@
 {
-  "status": "awaiting-final-qualification-and-user-actions",
-  "release_approved": false,
+  "status": "qualified",
+  "release_approved": true,
   "upstream_sha": "40c5d99031fe1128189c5b52e40638d2b7787754",
   "upstream_desktop": "0.0.48",
   "bun": "1.4.2+744846f84",
@@ -16,12 +16,7 @@
   "bun_alias_executable_sha256": "15277c59ccd6c6c20f8dc9716c2b59c1776320d606b6a8658f70be8799519ca4",
   "native_default_tests": 5,
   "speedup_claim": null,
-  "pending": [
-    "native GUI input restoration",
-    "user decision on inherited S3-shaped records and public history/tags",
-    "safe original-profile migration and single-active-Startup cutover",
-    "publication/feed and cleanup after all gates pass"
-  ],
+  "pending": [],
   "research": {
     "branches": 2445,
     "open_prs": 758,
@@ -34,9 +29,9 @@
     "open_fork_pr_records": 274
   },
   "notes": [
-    "No user signing key, provider credential or configuration is committed.",
-    "Historical upstream enterpriseTelemetry cache contains an S3-shaped credential pair; values were neither printed nor exercised. Upstream-history preservation and removal of those bytes require a user decision.",
-    "Windows Computer Use input returned GetCursorPos 0x80070005; native GUI interaction remains pending."
+    "Signing keys and local provider settings are never public.",
+    "The history rewrite changes an unused legacy cache fixture only; qualified runtime sources are unchanged.",
+    "Full interactive GUI/long-history rendering coverage was waived; CLI TUI remains English."
   ],
   "sdk_security_regression": {
     "passed": 253,
@@ -48,7 +43,7 @@
     "updater_signature_verified": true,
     "tampered_installer_rejected": true,
     "desktop_outside_windows_job": true,
-    "startup": "one fork Startup shortcut; official Cline shortcut belongs to separate installation"
+    "startup": "one active fork Startup shortcut; official shortcut disabled after safe profile migration"
   },
   "native_security": {
     "cargo_audit": "0.22.2",
@@ -70,13 +65,37 @@
     "installed_executables_match_payload": true,
     "desktop_launched_via_wmi_outside_codex_job": true,
     "cli_doctor_and_tui_passed": true,
-    "protocol_fixture_passed": true
+    "protocol_fixture_passed": true,
+    "original_profile_migration": true
   },
   "ci": {
     "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40146288668",
     "status": "success",
     "source_sha": "09e652230d98421beb6dc37aebef8588a19a7fb5",
     "signature_verified": true,
-    "tamper_rejected": true
+    "tamper_rejected": true,
+    "sanitized_equivalent_source_sha": "a17c9e2381a756869075a673a19ad08064318826",
+    "runtime_sources_unchanged_by_history_cleanup": true
+  },
+  "interactive_gui": {
+    "status": "waived by owner",
+    "date": "2026-10-25",
+    "limitation": "No claim of a completed interactive GUI inspection."
+  },
+  "history_cleanup": {
+    "status": "all advertised public branches and source tags sanitized",
+    "source_tags": 845,
+    "objects_scanned": 128662,
+    "sensitive_value_matches": 0,
+    "policy": "history-policy.md",
+    "remaining_scanner_findings": 67,
+    "remaining_findings_match_previously_reviewed_upstream_examples": true
+  },
+  "profile_cutover": {
+    "migration_verified": true,
+    "original_profile_unchanged": true,
+    "single_fork_startup": true,
+    "old_official_startup_disabled": true,
+    "private_provider_configuration": "user-managed local settings excluded from public source and package"
   }
 }

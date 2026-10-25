@@ -37,3 +37,8 @@ installation/publication. Retain Git history, tags and licenses.
 The only daily trigger is the local Codex chat heartbeat at 09:00 Asia/Bishkek,
 UTC+06. No workflow cron or independent Windows build loop is used. The agent
 owns research, code adaptation, repairs, qualification and publication.
+
+Every daily cycle reviews upstream PRs/issues and active forks/their PRs even
+when main is unchanged. An identical build fingerprint skips rebuilding only.
+Interactive GUI checks were waived by the owner; record coverage honestly.
+Integrate upstream through the [sanitized-history procedure](history-policy.md).
