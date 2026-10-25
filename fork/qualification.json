@@ -81,13 +81,12 @@
     "original_profile_migration": true
   },
   "ci": {
-    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40146288668",
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40159106309",
     "status": "success",
-    "source_sha": "09e652230d98421beb6dc37aebef8588a19a7fb5",
+    "source_sha": "57d0721af3a7490b57d17cb98ece226f83edb23b",
     "signature_verified": true,
     "tamper_rejected": true,
-    "sanitized_equivalent_source_sha": "a17c9e2381a756869075a673a19ad08064318826",
-    "runtime_sources_unchanged_by_history_cleanup": true
+    "post_history_cleanup": true
   },
   "interactive_gui": {
     "status": "waived by owner",
@@ -118,5 +117,21 @@
     "changed_heads": 2,
     "discussion_only_updates": 1,
     "additional_patches_integrated": 0
+  },
+  "previous_ci": {
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40146288668",
+    "status": "success",
+    "source_sha": "09e652230d98421beb6dc37aebef8588a19a7fb5",
+    "signature_verified": true,
+    "tamper_rejected": true,
+    "sanitized_equivalent_source_sha": "a17c9e2381a756869075a673a19ad08064318826",
+    "runtime_sources_unchanged_by_history_cleanup": true
+  },
+  "publication": {
+    "version": "1.0.1",
+    "tag": "avx1-v1.0.1",
+    "asset_count": 1,
+    "anonymous_download_sha256_verified": true,
+    "fork_feed_and_signature_verified": true
   }
 }
