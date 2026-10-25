@@ -52,7 +52,13 @@
   },
   "cli_profile_default_verified": true,
   "local_reasoning_request_fixture": {
-    "levels": ["none", "low", "medium", "high", "xhigh"],
+    "levels": [
+      "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh"
+    ],
     "installed_cli_wire_values_verified": true,
     "real_inference_performed": false,
     "local_custom_provider_single_model_and_reasoning_catalog_verified": true
@@ -103,5 +109,14 @@
     "single_fork_startup": true,
     "old_official_startup_disabled": true,
     "private_provider_configuration": "user-managed local settings excluded from public source and package"
+  },
+  "open_pr_refresh": {
+    "date": "2026-10-25",
+    "main_unchanged": true,
+    "open_prs": 760,
+    "new_prs": 2,
+    "changed_heads": 2,
+    "discussion_only_updates": 1,
+    "additional_patches_integrated": 0
   }
 }

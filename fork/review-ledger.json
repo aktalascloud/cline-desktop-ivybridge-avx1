@@ -10,7 +10,7 @@
   {
     "url": "https://github.com/cline/cline/pull/15146",
     "sha": "f417a565ce25aa7ffd70b6e9c112fe9e86f591e2",
-    "purpose": "security(desktop): bump next 16.2.11 \u2192 16.3.8 (8 Dependabot advisories, re-cut of #14753)",
+    "purpose": "security(desktop): bump next 16.2.11 → 16.3.8 (8 Dependabot advisories, re-cut of #14753)",
     "origin": "official-upstream-pr",
     "status": "adapted-upstream-pr",
     "verification": "Initial adaptation to 16.3.8 superseded by pinned 16.4.3 after advisory review; frozen install and production static export passed."
@@ -167,5 +167,55 @@
     "purpose": "Bundle logger and optional gateway workers without checkout-machine paths",
     "status": "tested",
     "verification": "Real bundled/compiled pino file transport test; generated runtime privacy scan; full-package scan required."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14903",
+    "sha": "4840ebf477530cb2e44d153f3d9965a1027b0b40",
+    "purpose": "fix(cli): prevent model selector crash with zero token limits",
+    "origin": "official-upstream-pr",
+    "status": "deferred-renderer-qualification",
+    "verification": "Full 3-file diff reviewed: guards zero maxInputTokens in OpenTUI JSX. Head unchanged since previous discovery. Not applied to the frozen candidate; renderer-specific Bun/Vitest regression qualification remains required.",
+    "refresh_date": "2026-10-25",
+    "main_changed": false
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15328",
+    "sha": "5e3d3240aee969153c69cb64e03a6e96ebe36a80",
+    "purpose": "cli: publish musl builds for Linux",
+    "origin": "official-upstream-pr",
+    "status": "not-applicable-to-windows-profile",
+    "verification": "Full 6-file implementation reviewed: musl detection, npm libc selection, OpenTUI define and publish matrices. No Windows/AVX1 benefit; Linux musl helpers are not qualified or added.",
+    "refresh_date": "2026-10-25",
+    "main_changed": false
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14994",
+    "sha": "c45916c47c8082b10d4a6bb1a86e09350339ed5c",
+    "purpose": "feat(ollama): support custom num_ctx and num_predict via config fields to prevent cutoffs",
+    "origin": "official-upstream-pr",
+    "status": "rejected-as-is",
+    "verification": "Full 6-file diff reviewed: two prebuilt .bun-cache binaries, ProviderConfig weakened to any, Ollama options injected globally, non-finite option values permitted. Not integrated; a typed Ollama-only adaptation requires separate tests.",
+    "refresh_date": "2026-10-25",
+    "main_changed": false
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/12682",
+    "sha": "1a474c02578f456b7ddd695aad288b4a68f3475a",
+    "purpose": "fix(webview): use radiogroup/radio ARIA roles for Plan/Act mode toggle",
+    "origin": "official-upstream-pr",
+    "status": "not-applicable-to-desktop",
+    "verification": "Full 3-file diff reviewed: VS Code-only Plan/Act roles, keyboard handlers and e2e selectors. Does not modify Desktop; complete radio keyboard behavior is not qualified.",
+    "refresh_date": "2026-10-25",
+    "main_changed": false
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15326",
+    "sha": "d249dfdc452a3eb665e50c6323f9373e89906e7d",
+    "purpose": "fix(llms): handle Gemini in-stream errors before tool execution",
+    "origin": "official-upstream-pr",
+    "status": "deferred-dependency-implementation-review",
+    "verification": "Full PR structure/dependency lock and 103-line error/tool regression test reviewed. Production correction lives in new external AI SDK packages, with broad provider/ai upgrades and mixed old/new transitive versions. External implementation/license/regressions remain unqualified; not integrated. The frozen OpenAI-compatible dependency set passed installed offline fixtures.",
+    "refresh_date": "2026-10-25",
+    "main_changed": false
   }
 ]
