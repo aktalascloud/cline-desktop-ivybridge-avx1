@@ -5,7 +5,10 @@ branches and source tags on 2026-10-25. Remote-config runtime cache paths and
 the exact inherited credential values were removed with git-filter-repo 2.47.0.
 No credential was used or checked against an external service.
 
-All 845 existing source tag names are retained. Commit and tag object hashes
+All 845 existing source tag names are retained. Redundant raw copies of 2444
+upstream feature branches are removed from this fork; `avx1` and sanitized
+`main` remain. Their original branch tips are retained in the private bundle.
+Commit and tag object hashes
 can change; rewritten tag signatures cannot authenticate their original objects.
 The complete original history is preserved in an ACL-protected local bundle,
 never as a public backup ref. Licenses and notices are retained.
