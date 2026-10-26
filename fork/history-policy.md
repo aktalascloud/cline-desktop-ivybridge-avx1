@@ -32,13 +32,15 @@ this is not a claim of zero scanner findings.
 
 ## Future upstream updates
 
-Never merge raw upstream ancestry into `avx1`. Fetch selected upstream heads
-and source tags into a private bare snapshot, preserve and verify a protected
-original bundle, then run `sanitize-upstream.py` with private replacement input.
-Keep the same path filters and tool version so ancestry mapping is reproducible.
-Review new findings and scan all reachable objects before merging the sanitized
-head. Do not publish replacement files, raw refs, runtime caches or scan excerpts
-containing values. Push only reviewed branch/tag refs; never use `push --mirror`.
+Never merge raw upstream ancestry into `avx1`. Archive new original commits in a protected incremental bundle in addition to the original archive. Use the same pinned git-filter-repo 2.47.0, private replacements and path filters.
+
+For updates descending from a previously verified pair, use `sanitize-upstream.py --raw-base <original SHA> --sanitized-base <verified public SHA>` on a disposable bare snapshot. It filters only the new range and anchors it to the existing public history. Every excluded parent must be that verified base; an unmapped old side-branch parent is rejected before rewriting. Never guess a mapping or splice raw ancestry into the public branch. Additional merge boundaries require independently verified anchors.
+
+This avoids reprocessing unchanged history and keeps published commit mapping stable. A full replay with a different ref graph/order can change SHA references inside old commit messages. A clean final tree alone does not prove matching ancestry. Historical Windows-invalid paths and case-colliding branch names also make full replay unsuitable for routine Windows updates.
+
+The 2026-10-26 update maps original `dab482348ffd83d1065dfcf8b538076608925a79` to `5e411e5e0111f1adf366475c6bb3fc72c52dfb4c`, anchored at the verified pair above. All 238 new objects (9,457,491 bytes) were checked for removed sensitive values in UTF-8/UTF-16, with zero matches. Its tree matched independent full sanitization. A real-Git regression verifies redaction, base ancestry, excluded paths and rejection of an unmapped old parent.
+
+Scan newly reachable objects and changed source findings before integration or push; reuse the recorded scan of the unchanged verified base. Private replacements, raw refs and sensitive scan excerpts never enter the public tree. Push reviewed refs only, never `push --mirror`.
 
 Rewriting this fork's advertised refs does not erase the official upstream,
 other clones, GitHub caches or objects retained by the shared fork network.

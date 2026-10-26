@@ -1,7 +1,8 @@
 param(
   [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string]$SourceSha,
   [ValidateSet('default','ivy-thin8','ivy-thin1','ivy-fat1')][string]$Profile='ivy-fat1',
-  [switch]$SkipPrepare
+  [switch]$SkipPrepare,
+  [ValidateSet('minimal','full')][string]$Checks='minimal'
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
@@ -12,6 +13,13 @@ $env:PATH="$env:VCToolsInstallDir\bin\Hostx64\x64;${env:ProgramFiles}\Git\usr\bi
 Push-Location $root
 try {
   if((git rev-parse HEAD).Trim() -ne $SourceSha){throw 'Checkout does not match the pinned source SHA'}
+  $configuration=Get-Content "$app/src-tauri/tauri.conf.json" -Raw|ConvertFrom-Json
+  $package=Get-Content "$app/package.json" -Raw|ConvertFrom-Json
+  $changelogVersion=[regex]::Match((Get-Content "$app/CHANGELOG.md" -Raw),'(?m)^## ([^\r\n ]+)').Groups[1].Value
+  if($package.version -ne $configuration.version -or $package.version -ne $changelogVersion){throw 'Package, native and changelog versions must match before building'}
+  $baseline=(Get-Content "$PSScriptRoot/components.json" -Raw|ConvertFrom-Json).build_source_sha
+  $nativeChanges=@(git diff --name-only $baseline -- apps/examples/desktop-app/src-tauri/src apps/examples/desktop-app/src-tauri/Cargo.toml apps/examples/desktop-app/src-tauri/Cargo.lock apps/examples/desktop-app/src-tauri/build.rs rust-toolchain.toml)
+
   if((bun --version).Trim() -ne '1.4.2'){throw 'Bun 1.4.2 is required'}
   if((node --version).Trim() -ne 'v24.20.0'){throw 'Node 24.20.0 is required'}
   if((python --version).Trim() -ne 'Python 3.13.14'){throw 'Python 3.13.14 is required'}
@@ -48,38 +56,10 @@ try {
     $env:MAKENSIS_PATH=Join-Path $root '.build-cache\nsis\nsis-3.13\makensis.exe'
     bun -F @cline/code test:windows-installer
     if($LASTEXITCODE){throw 'Real Windows installer hook tests failed'}
-    bun -F @cline/code typecheck
-    if($LASTEXITCODE){throw 'Type checking failed'}
-    bun -F @cline/cli typecheck
-    if($LASTEXITCODE){throw 'CLI type checking failed'}
-    Push-Location (Join-Path $root 'apps\cli')
-    try {
-      bun test script/distribution-bootstrap.test.ts
-      if($LASTEXITCODE){throw 'Fork profile bootstrap tests failed'}
-      bun x vitest run --config vitest.config.ts src/runtime/run-agent.test.ts src/commands/update.test.ts
-      if($LASTEXITCODE){throw 'CLI cancellation/update regression tests failed'}
-    } finally {Pop-Location}
-    Push-Location (Join-Path $root 'sdk')
-    try {
-      bun -F @cline/core typecheck
-      if($LASTEXITCODE){throw 'Core type checking failed'}
-      bun -F @cline/core test:unit --maxWorkers=4 src/extensions/mcp src/services/workspace src/runtime/host/local-runtime-host.test.ts src/services/providers/local-provider-service.test.ts
-      if($LASTEXITCODE){throw 'MCP/workspace/runtime regression tests failed'}
-      bun -F @cline/llms test src/transcription.test.ts
-      if($LASTEXITCODE){throw 'Transcription transport regression tests failed'}
-    } finally {Pop-Location}
+    & "$PSScriptRoot/validate-windows.ps1" -Mode $Checks -BaselineSha $baseline
     bun -F @cline/code build:web
     if($LASTEXITCODE){throw 'Production frontend build failed'}
-    Push-Location $app
-    try {
-      bun x vitest run --maxWorkers=1 --reporter=verbose --config vitest.config.ts sidecar/chat-session.test.ts
-      if($LASTEXITCODE){throw 'Session runtime tests failed'}
-      bun x vitest run --maxWorkers=1 --config vitest.config.ts webview/components/views/chat/chat-input-bar.test.tsx
-      if($LASTEXITCODE){throw 'Composer tests failed'}
-      bun x vitest run --maxWorkers=2 --exclude webview/components/views/chat/chat-input-bar.test.tsx --exclude sidecar/chat-session.test.ts --config vitest.config.ts
-      if($LASTEXITCODE){throw 'Desktop tests failed'}
-    }
-    finally {Pop-Location}
+
   }
   $env:RUSTFLAGS="--remap-path-prefix=$root=/src/cline"
   if($env:CARGO_HOME){$env:RUSTFLAGS+=" --remap-path-prefix=$env:CARGO_HOME=/src/cargo"}
@@ -94,13 +74,15 @@ try {
   }
   Push-Location $app
   try {
-    cargo test --locked --release --manifest-path src-tauri\Cargo.toml
-    if($LASTEXITCODE){throw 'Native tests failed'}
+    if($Checks -eq 'full' -or $nativeChanges.Count){
+      cargo test --locked --release --manifest-path src-tauri\Cargo.toml
+      if($LASTEXITCODE){throw 'Native tests failed'}
+    }
     bun tauri build --bundles nsis --config src-tauri\tauri.prepared.conf.json --verbose -- --locked
     if($LASTEXITCODE){throw 'Native installer build failed'}
   }finally{Pop-Location}
   $target=if($env:CARGO_TARGET_DIR){$env:CARGO_TARGET_DIR}else{"$app\src-tauri\target"}
-  $installers=@(Get-ChildItem "$target\release\bundle\nsis" -Filter '*.exe')
+  $installers=@(Get-ChildItem "$target\release\bundle\nsis" -Filter ("Cline Desktop AVX1 RU_"+$configuration.version+"_x64-setup.exe"))
   if($installers.Count -ne 1){throw 'Expected one NSIS installer'}
   $output=Join-Path $root 'dist\avx1';New-Item -ItemType Directory -Path $output -Force|Out-Null
   $exe=Join-Path $output 'Cline-Desktop-AVX1-RU-Setup.exe';Copy-Item -LiteralPath $installers[0].FullName -Destination $exe -Force

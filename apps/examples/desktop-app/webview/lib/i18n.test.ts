@@ -37,4 +37,15 @@ describe("fork localization", () => {
 			"сеанс",
 		]);
 	});
+	it("formats new file/model counters in both languages", () => {
+		expect(
+			[1, 2, 5].map((count) => translate("{count} files", "ru", { count })),
+		).toEqual(["1 файл", "2 файла", "5 файлов"]);
+		expect(translate("{count} files", "en", { count: 1 })).toBe("1 file");
+		expect(translate("{count} files", "en", { count: 2 })).toBe("2 files");
+		expect(translate("{count} more files", "en", { count: 1 })).toBe(
+			"1 more file",
+		);
+		expect(translate("{count} models", "ru", { count: 21 })).toBe("21 модель");
+	});
 });

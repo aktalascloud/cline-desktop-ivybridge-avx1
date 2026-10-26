@@ -1,0 +1,8 @@
+{
+  "{count} files__one": "{count} file",
+  "{count} files__other": "{count} files",
+  "{count} more files__one": "{count} more file",
+  "{count} more files__other": "{count} more files",
+  "{count} models__one": "{count} model",
+  "{count} models__other": "{count} models"
+}

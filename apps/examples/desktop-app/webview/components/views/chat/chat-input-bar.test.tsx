@@ -20,6 +20,7 @@ import {
 	parseModelSelectionStorage,
 	REASONING_SELECTION_STORAGE_KEY,
 	readModelSelectionStorageFromWindow,
+	selectChatModel,
 } from "@/lib/model-selection";
 import type { ProviderModel } from "@/lib/provider-schema";
 import {
@@ -2916,6 +2917,7 @@ describe("ChatInputBar", () => {
 			provider: string;
 			onModelChange?: ReturnType<typeof vi.fn>;
 			onProviderChange?: ReturnType<typeof vi.fn>;
+			status?: "idle" | "running";
 		}) => {
 			await act(async () => {
 				root.render(
@@ -2948,7 +2950,7 @@ describe("ChatInputBar", () => {
 							promptsInQueue={[]}
 							provider={props.provider}
 							reasoningEffort="low"
-							status="idle"
+							status={props.status ?? "idle"}
 							summary={{ toolCalls: 0, tokensIn: 0, tokensOut: 0 }}
 							thinking={false}
 						/>
@@ -2960,6 +2962,24 @@ describe("ChatInputBar", () => {
 				expect(loadProviderModelCatalogMock).toHaveBeenCalled();
 			});
 		};
+
+		it("switches to a model chosen in Settings once the running turn ends", async () => {
+			const onModelChange = vi.fn();
+			const onProviderChange = vi.fn();
+			const props = {
+				model: "openai/gpt-5",
+				provider: "cline-pass",
+				onModelChange,
+				onProviderChange,
+			};
+			await renderComposer({ ...props, status: "running" });
+			await act(async () => selectChatModel("cline", "test-model"));
+			expect(onProviderChange).not.toHaveBeenCalledWith("cline");
+
+			await renderComposer({ ...props, status: "idle" });
+			expect(onProviderChange).toHaveBeenCalledWith("cline");
+			expect(onModelChange).toHaveBeenCalledWith("test-model");
+		});
 
 		beforeEach(() => {
 			// The ClinePass offer: one subscribed and one free model, stamped

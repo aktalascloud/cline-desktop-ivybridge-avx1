@@ -2,11 +2,11 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import ru from "./locales/ru.json";
+import en from "./locales/en.json";
 
 export type InterfaceLanguage = "en" | "ru";
 const STORAGE_KEY = "cline-avx1-interface-language";
 const EVENT = "cline-avx1-language-change";
-const catalog: Readonly<Record<string, string>> = ru;
 let cachedLanguage: InterfaceLanguage | undefined;
 
 export function readLanguage(): InterfaceLanguage {
@@ -71,16 +71,16 @@ export function translate(
 	language: InterfaceLanguage,
 	parameters?: Readonly<Record<string, string | number>>,
 ): string {
+	const catalog: Readonly<Record<string, string>> = language === "ru" ? ru : en;
 	const key = text.trim().replace(/\s+/g, " ");
 	const pluralKey =
 		typeof parameters?.count === "number"
 			? `${key}__${new Intl.PluralRules(language).select(parameters.count)}`
 			: key;
 	const lookupKey = Object.hasOwn(catalog, pluralKey) ? pluralKey : key;
-	const translated =
-		language === "ru" && Object.hasOwn(catalog, lookupKey)
-			? catalog[lookupKey]
-			: sourceText(key);
+	const translated = Object.hasOwn(catalog, lookupKey)
+		? catalog[lookupKey]
+		: sourceText(key);
 	const leading = text.match(/^\s*/)?.[0] ?? "";
 	const trailing = text.match(/\s*$/)?.[0] ?? "";
 	const result = leading + translated + trailing;

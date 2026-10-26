@@ -1,6 +1,7 @@
 "use client";
 import { t, useTranslation } from "@/lib/i18n";
 
+
 import { AgentConversationHeader, SessionStatus } from "@cline/ui";
 import {
 	AlertCircle,
@@ -9,6 +10,7 @@ import {
 	ChevronRight,
 	Clock3,
 	CornerUpLeft,
+	FileDiff,
 	FolderTree,
 	Loader2,
 	MoreHorizontal,
@@ -53,6 +55,9 @@ type AgentHeaderProps = {
 	filesOpen?: boolean;
 	/** Where to look up the branch's pull request for the PR menu button. */
 	pullRequest?: { cwd: string; branch: string | null };
+	/** Shown with the session's line counts once it has changes. */
+	onToggleChanges?: () => void;
+	changesOpen?: boolean;
 	showSessionActions?: boolean;
 	status?: ChatSessionStatus;
 	diff?: {
@@ -87,6 +92,8 @@ function AgentHeaderImpl({
 	onToggleFiles,
 	filesOpen = false,
 	pullRequest,
+	onToggleChanges,
+	changesOpen = false,
 	showSessionActions = true,
 	status,
 	diff,
@@ -155,58 +162,56 @@ function AgentHeaderImpl({
 							onOpenAgentSession={onOpenAgentSession}
 							onOpenChange={onAgentsOpenChange}
 						/>
-						{/* One control for changes: it opens the workspace panel (which
-						    lands on the first diff) and carries the session's line counts. */}
+						{/* "What did the agent do" and "browse or commit the repo" are
+						    separate questions, so each gets its own control. */}
+						{onToggleChanges && hasChanges ? (
+							<Button
+								aria-label={`${changesOpen ? "Hide" : "Show"} changes: ${additions} additions, ${deletions} deletions`}
+								aria-pressed={changesOpen}
+								className="h-7 gap-1.5 px-2"
+								id="toggle-changes"
+								onClick={onToggleChanges}
+								size="sm"
+								title={changesOpen ? t("Hide changes") : t("Show changes")}
+								type="button"
+								variant="toolbar"
+							>
+								<FileDiff className="size-4" />
+								<span className="flex items-center gap-1 font-mono text-xs">
+									<span className="text-chart-2">+{additions}</span>
+									<span className="text-destructive">-{deletions}</span>
+								</span>
+							</Button>
+						) : null}
 						{onToggleFiles ? (
 							<Button
-								aria-label={`${filesOpen ? "Hide" : "Show"} project files${
-									hasChanges
-										? `: ${additions} additions, ${deletions} deletions`
-										: ""
-								}`}
-								aria-pressed={filesOpen}
-								className={cn(
-									"text-muted-foreground transition-colors hover:text-foreground",
-									hasChanges && "h-7 gap-1.5 px-2",
-									filesOpen && "bg-secondary text-foreground",
-								)}
-								id="toggle-project-files"
-								onClick={onToggleFiles}
-								size={hasChanges ? "sm" : "icon-sm"}
-								title={
+								aria-label={
 									filesOpen ? t("Hide project files") : t("Show project files")
 								}
+								aria-pressed={filesOpen}
+								id="toggle-project-files"
+								onClick={onToggleFiles}
+								size="icon-xs"
+								title={filesOpen ? t("Hide project files") : t("Show project files")}
 								type="button"
-								variant="ghost"
+								variant="toolbar"
 							>
 								<FolderTree className="size-4" />
-								{hasChanges ? (
-									<span className="flex items-center gap-1 font-mono text-xs">
-										<span className="text-chart-2">+{additions}</span>
-										<span className="text-destructive">-{deletions}</span>
-									</span>
-								) : null}
 							</Button>
 						) : null}
 						{onToggleTerminal ? (
 							<Button
-								aria-label={
-									terminalOpen ? t("Hide terminal") : t("Show terminal")
-								}
+								aria-label={terminalOpen ? t("Hide terminal") : t("Show terminal")}
 								aria-pressed={terminalOpen}
-								className={cn(
-									"text-muted-foreground transition-colors hover:text-foreground",
-									terminalOpen && "bg-secondary text-foreground",
-								)}
 								onClick={onToggleTerminal}
-								size="icon-sm"
+								size="icon-xs"
 								title={
 									terminalShortcut
 										? `Toggle terminal (${terminalShortcut})`
 										: t("Toggle terminal")
 								}
 								type="button"
-								variant="ghost"
+								variant="toolbar"
 							>
 								<SquareTerminal className="size-4" />
 							</Button>
@@ -228,10 +233,9 @@ function AgentHeaderImpl({
 						) : (
 							<Button
 								aria-label={t("New session")}
-								className="flex items-center gap-1 rounded-md text-sm text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
 								onClick={() => onNewThread?.()}
-								size="icon-sm"
-								variant="ghost"
+								size="icon-xs"
+								variant="toolbar"
 							>
 								<Plus className="size-4" />
 							</Button>
@@ -329,9 +333,7 @@ function AgentHeaderImpl({
 						onClick={triggerDeleteSession}
 					>
 						<Trash2 className="size-4" />
-						<span>
-							{deletingSession ? t("Deleting...") : t("Delete session")}
-						</span>
+						<span>{deletingSession ? t("Deleting...") : t("Delete session")}</span>
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
@@ -428,12 +430,12 @@ function AgentActivityStatus({
 			<PopoverTrigger asChild>
 				<Button
 					aria-label={label}
-					className="flex items-center gap-1.5 rounded-md bg-secondary px-2 py-1 text-xs font-mono text-muted-foreground transition-colors hover:bg-secondary/80"
+					className="h-7 gap-1.5 px-2 font-mono text-xs"
 					id="agent-activity"
 					size="sm"
 					title={label}
 					type="button"
-					variant="secondary"
+					variant="toolbar"
 				>
 					<Bot aria-hidden="true" className="size-3 shrink-0" />
 					<span className="text-foreground">{activity.total}</span>
@@ -469,9 +471,7 @@ function AgentActivityStatus({
 				id="agent-activity-panel"
 			>
 				<div className="border-b border-border/70 px-3 py-2">
-					<div className="text-sm font-medium text-foreground">
-						{t("Agents")}
-					</div>
+					<div className="text-sm font-medium text-foreground">{t("Agents")}</div>
 					<div className="mt-0.5 text-[11px] text-muted-foreground">
 						{label}
 					</div>
@@ -509,8 +509,7 @@ function AgentRoster({
 		return (
 			<div className="flex items-center gap-2 px-3 py-4 text-xs text-muted-foreground">
 				<Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
-				{t("Loading agents...")}
-			</div>
+				{t("Loading agents...")}</div>
 		);
 	}
 
@@ -554,8 +553,7 @@ function AgentRoster({
 					className="border-t border-border/70 px-3 py-2 text-[11px] text-muted-foreground"
 					id="agent-roster-stale"
 				>
-					{t("Could not refresh — showing the last known agents. ")}
-					{error}
+					{t("Could not refresh — showing the last known agents. ")}{error}
 				</div>
 			) : null}
 		</>

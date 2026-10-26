@@ -16,6 +16,7 @@ import {
 	CircleUserRound,
 	Clock3,
 	Cloud,
+	Cpu,
 	Filter,
 	FolderTree,
 	GitFork,
@@ -38,6 +39,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import {
+	Fragment,
 	type ReactNode,
 	useCallback,
 	useEffect,
@@ -86,6 +88,10 @@ import { normalizeTitle } from "@/components/utils";
 import {
 	CUSTOMIZATION_SECTION_LABELS,
 	CUSTOMIZATION_SECTIONS,
+	isProviderSection,
+	PROVIDER_SECTION_LABELS,
+	PROVIDER_SECTIONS,
+	readProviderSectionInUse,
 	SETTINGS_SECTIONS,
 	type SettingsSection,
 } from "@/components/views/settings/sections";
@@ -160,6 +166,7 @@ function hubPort(url: string | null): string | null {
 const SETTINGS_SECTION_ICONS = {
 	General: SlidersHorizontal,
 	Providers: Plug,
+	"Local Models": Cpu,
 	Voice: Mic,
 	Keybindings: Keyboard,
 	Channels: Radio,
@@ -239,6 +246,50 @@ function SettingsSectionNavigation({
 		);
 	};
 
+	const renderProvidersGroup = () => {
+		const open = isProviderSection(activeSection);
+		return (
+			<Fragment key="providers">
+				<Button
+					aria-label={t("Provider")}
+					className={cn(
+						"min-w-0 justify-start",
+						open && "bg-surface-hover-lighter text-sidebar-foreground",
+					)}
+					onClick={() => onSelect(readProviderSectionInUse())}
+					title={t("Provider")}
+					type="button"
+					variant="sidebarItem"
+				>
+					<Plug className="size-4 shrink-0" />
+					<span className="truncate">{t("Provider")}</span>
+				</Button>
+				{open
+					? PROVIDER_SECTIONS.map((section) => (
+							<Button
+								aria-current={activeSection === section ? "page" : undefined}
+								aria-label={PROVIDER_SECTION_LABELS[section]}
+								className={cn(
+									"min-w-0 justify-start pl-8!",
+									activeSection === section &&
+										"bg-surface-hover text-sidebar-foreground",
+								)}
+								key={section}
+								onClick={() => onSelect(section)}
+								title={PROVIDER_SECTION_LABELS[section]}
+								type="button"
+								variant="sidebarItem"
+							>
+								<span className="truncate">
+									{PROVIDER_SECTION_LABELS[section]}
+								</span>
+							</Button>
+						))
+					: null}
+			</Fragment>
+		);
+	};
+
 	return (
 		<nav
 			aria-label={t("Settings sections")}
@@ -259,7 +310,12 @@ function SettingsSectionNavigation({
 			    reachable. */}
 			{SETTINGS_SECTIONS.filter(
 				(section) => collapsed || section !== "Schedules",
-			).map(renderSectionButton)}
+			).map((section) => {
+				if (collapsed || !isProviderSection(section)) {
+					return renderSectionButton(section);
+				}
+				return section === "Account" ? renderProvidersGroup() : null;
+			})}
 			{collapsed ? (
 				<>
 					<div className="my-2 h-px w-6 shrink-0 bg-sidebar-border" />

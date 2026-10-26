@@ -1,5 +1,10 @@
 # Cline Desktop Changelog
 
+## 1.0.5
+
+- Updated upstream Desktop, session reattachment/cancellation, Changes pane and optional local-runtime management. Added trust/junction guards and SQLite cleanup; improved PowerShell exit codes, cancellation hooks, inventory refresh and Russian translation. Component-aware validation and pinned dependency caches.
+- Обновлены Desktop, восстановление и отмена сессий, панель изменений и дополнительное управление локальными средами. Добавлены проверки доверенного окна и junction, закрытие SQLite, исправления PowerShell, hooks отмены, обновления списка инструментов и русский перевод. Проверки по изменённым компонентам и кэши закреплённых зависимостей.
+
 ## 1.0.4
 
 - New-chat defaults discard removed providers and restore reasoning selection for configured local models. The top level is explicitly labelled XHigh. Historical session routes and separate voice settings are preserved.

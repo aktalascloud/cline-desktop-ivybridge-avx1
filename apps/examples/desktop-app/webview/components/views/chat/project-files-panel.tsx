@@ -38,12 +38,6 @@ import { desktopClient } from "@/lib/desktop-client";
 import type { SessionFileDiff } from "@/lib/session-diff";
 import { cn } from "@/lib/utils";
 import {
-	clampWorkspacePanelWidth,
-	hasStoredWorkspacePanelWidth,
-	readWorkspacePanelWidth,
-	writeWorkspacePanelWidth,
-} from "@/lib/workspace-panel";
-import {
 	LOCAL_WORKSPACE_ENVIRONMENT_ID,
 	resolveWorkspaceFilePath,
 } from "@/lib/workspace-paths";
@@ -54,6 +48,7 @@ import {
 	SOURCE_CONTROL_STATUS_CLASS,
 	SourceControlColumn,
 } from "./source-control-column";
+import { WorkspacePanelFrame } from "./workspace-panel-frame";
 
 type ProjectEntry = {
 	name: string;
@@ -159,7 +154,6 @@ export function ProjectFilesPanel({
 }: ProjectFilesPanelProps) {
 	const t = useTranslation();
 	const [view, setView] = useState<PanelView>("source-control");
-	const [width, setWidth] = useState(readWorkspacePanelWidth);
 	const [directories, setDirectories] = useState<Map<string, DirectoryState>>(
 		() => new Map(),
 	);
@@ -175,9 +169,6 @@ export function ProjectFilesPanel({
 	const [copied, setCopied] = useState(false);
 	const [opening, setOpening] = useState(false);
 	const [pendingDiscard, setPendingDiscard] = useState<SourceControlFile[]>([]);
-	const dragStateRef = useRef<{ startX: number; startWidth: number } | null>(
-		null,
-	);
 	// Bumped per key whenever its cache entry is dropped, so a read that was
 	// already in flight cannot land on top of a fresher one.
 	const readGenerationRef = useRef(new Map<string, number>());
@@ -368,28 +359,6 @@ export function ProjectFilesPanel({
 	useEffect(() => {
 		if (view === "files") reloadDirectories();
 	}, [view]);
-
-	// Until the user drags it, the panel tracks its share of the main content area as
-	// the window resizes or the app sidebar collapses.
-	useEffect(() => {
-		const follow = () =>
-			setWidth((current) =>
-				hasStoredWorkspacePanelWidth()
-					? clampWorkspacePanelWidth(current)
-					: readWorkspacePanelWidth(),
-			);
-		window.addEventListener("resize", follow);
-		const main = document.querySelector('[data-slot="sidebar-inset"]');
-		const observer =
-			main && typeof ResizeObserver !== "undefined"
-				? new ResizeObserver(follow)
-				: null;
-		if (main) observer?.observe(main);
-		return () => {
-			window.removeEventListener("resize", follow);
-			observer?.disconnect();
-		};
-	}, []);
 
 	useEffect(() => {
 		void loadDirectory(workspaceRoot);
@@ -758,22 +727,6 @@ export function ProjectFilesPanel({
 		}
 	}, [activePath, environmentId]);
 
-	const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
-		dragStateRef.current = { startX: event.clientX, startWidth: width };
-		event.currentTarget.setPointerCapture(event.pointerId);
-	};
-	const handleResizeMove = (event: React.PointerEvent<HTMLDivElement>) => {
-		const drag = dragStateRef.current;
-		if (!drag) return;
-		setWidth(
-			clampWorkspacePanelWidth(drag.startWidth + (drag.startX - event.clientX)),
-		);
-	};
-	const handleResizeEnd = () => {
-		if (dragStateRef.current) writeWorkspacePanelWidth(width);
-		dragStateRef.current = null;
-	};
-
 	const renderEntries = (path: string, depth: number) => {
 		const state = directories.get(path);
 		if (!state?.entries) {
@@ -895,18 +848,7 @@ export function ProjectFilesPanel({
 			: null;
 
 	return (
-		<aside
-			className="relative col-start-2 row-span-2 row-start-1 flex min-h-0 border-l border-border bg-background"
-			id="project-files-panel"
-			style={{ width }}
-		>
-			<div
-				aria-hidden
-				className="absolute inset-y-0 -left-1 z-10 w-2 cursor-col-resize hover:bg-primary/30"
-				onPointerDown={handleResizeStart}
-				onPointerMove={handleResizeMove}
-				onPointerUp={handleResizeEnd}
-			/>
+		<WorkspacePanelFrame id="project-files-panel">
 			<div
 				className="flex shrink-0 flex-col border-r border-border bg-sidebar/40"
 				style={{ width: COLUMN_WIDTH }}
@@ -1278,7 +1220,7 @@ export function ProjectFilesPanel({
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</aside>
+		</WorkspacePanelFrame>
 	);
 }
 

@@ -1,6 +1,6 @@
 "use client";
-import { readLanguage } from "@/lib/i18n";
 import { t, useTranslation } from "@/lib/i18n";
+
 
 import type {
 	ClineAccountBalance,
@@ -10,6 +10,7 @@ import type {
 	ClineAccountPaymentTransaction,
 	ClineAccountUsageTransaction,
 	ClineAccountUser,
+	UserCurrentPlan,
 } from "@cline/core";
 import {
 	AlertCircle,
@@ -22,6 +23,7 @@ import {
 	Plus,
 	Receipt,
 	RefreshCw,
+	Sparkles,
 	User,
 	UserCircleIcon,
 } from "lucide-react";
@@ -31,9 +33,14 @@ import { useClineSignIn } from "@/hooks/use-cline-sign-in";
 import { useOAuthUserCode } from "@/hooks/use-oauth-user-code";
 import { isClineAccountNotAuthenticatedResult } from "@/lib/cline-account-state";
 import { desktopClient, openExternalUrl } from "@/lib/desktop-client";
-import { invalidateProviderCatalogCache } from "@/lib/provider-model-catalog";
+import { buildModelPickerData } from "@/lib/featured-models";
+import {
+	invalidateProviderCatalogCache,
+	loadProviderModels,
+} from "@/lib/provider-model-catalog";
 import { cn } from "@/lib/utils";
 import { PageFrame, PageHeader } from "../page-layout";
+import { InUseBadge } from "./in-use-badge";
 
 const DASHBOARD_URL = "https://app.cline.bot/dashboard";
 const USAGE_DASHBOARD_URL = "https://app.cline.bot/dashboard/usage";
@@ -43,6 +50,8 @@ const ORGANIZATION_CREDITS_URL =
 	"https://app.cline.bot/dashboard/organization?tab=credits&redirect=true";
 const CREATE_ORGANIZATION_URL = "https://app.cline.bot/onboarding?step=1";
 const CREATE_ACCOUNT_URL = "https://app.cline.bot";
+const CLINE_PASS_URL =
+	"https://app.cline.bot/dashboard/subscription?personal=true";
 
 function normalizeAccountViewError(error: unknown): Error {
 	const message = error instanceof Error ? error.message : String(error);
@@ -148,6 +157,24 @@ async function fetchPaymentTransactions(): Promise<
 	);
 }
 
+/** The models a ClinePass subscription includes, or null without one. */
+async function fetchClinePassModels(): Promise<string[] | null> {
+	const plan = await desktopClient.invoke<UserCurrentPlan | undefined>(
+		"cline_account",
+		{ action: "clineAccount", operation: "fetchCurrentUserPlan" },
+	);
+	const entitlements = plan?.plan?.entitlements as
+		| { cline_pass?: { enabled?: boolean } }
+		| undefined;
+	if (!entitlements?.cline_pass?.enabled) {
+		return null;
+	}
+	const models = await loadProviderModels("cline-pass").catch(() => []);
+	return buildModelPickerData("cline-pass", models)
+		.options.filter((option) => option.section === "subscribed")
+		.map((option) => option.label.replace(/^cline-pass\//, ""));
+}
+
 async function switchActiveAccount(
 	organizationId: string | null,
 ): Promise<void> {
@@ -177,6 +204,8 @@ export function AccountView() {
 	const [organizations, setOrganizations] = useState<
 		ClineAccountOrganization[]
 	>([]);
+	const [clinePassModels, setClinePassModels] = useState<string[] | null>(null);
+	const clinePassGenerationRef = useRef(0);
 	const [overviewLoading, setOverviewLoading] = useState(true);
 	const [overviewError, setOverviewError] = useState<string | null>(null);
 	// Signed out is an expected state carried by a typed sidecar result (or a
@@ -211,6 +240,8 @@ export function AccountView() {
 		setBalance(null);
 		setOrganizationBalance(null);
 		setOrganizations([]);
+		clinePassGenerationRef.current += 1;
+		setClinePassModels(null);
 		setUsageTransactions([]);
 		setUsageLoaded(false);
 		setUsageError(null);
@@ -233,6 +264,16 @@ export function AccountView() {
 				setSignedOut(true);
 				return;
 			}
+			// The subscription card is optional, so it neither delays nor breaks the page.
+			const generation = ++clinePassGenerationRef.current;
+			void fetchClinePassModels().then(
+				(models) => {
+					if (clinePassGenerationRef.current === generation) {
+						setClinePassModels(models);
+					}
+				},
+				() => {},
+			);
 			const [balanceData, orgsData] = await Promise.all([
 				fetchAccountBalance(),
 				fetchAccountOrganizations(),
@@ -419,7 +460,7 @@ export function AccountView() {
 	// -- Formatters --
 
 	const formatDate = (dateStr: string) => {
-		return new Date(dateStr).toLocaleDateString(readLanguage(), {
+		return new Date(dateStr).toLocaleDateString("en-US", {
 			month: "short",
 			day: "numeric",
 			year: "numeric",
@@ -427,7 +468,7 @@ export function AccountView() {
 	};
 
 	const formatTime = (dateStr: string) => {
-		return new Date(dateStr).toLocaleTimeString(readLanguage(), {
+		return new Date(dateStr).toLocaleTimeString("en-US", {
 			hour: "numeric",
 			minute: "2-digit",
 		});
@@ -458,8 +499,7 @@ export function AccountView() {
 				className="flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-sm font-medium text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
 			>
 				<RefreshCw className="h-4 w-4" />
-				{t("Retry")}
-			</button>
+				{t("Retry")}</button>
 		</div>
 	);
 
@@ -471,13 +511,9 @@ export function AccountView() {
 				</div>
 				<div>
 					<h3 className="text-lg font-semibold text-foreground">
-						{t("Sign in to Cline")}
-					</h3>
+						{t("Sign in to Cline")}</h3>
 					<p className="mt-2 text-sm text-muted-foreground">
-						{t(
-							"Connect your Cline account to review credits, usage, billing, and organization details.",
-						)}
-					</p>
+						{t("Connect your Cline account to review credits, usage, billing, and organization details.")}</p>
 				</div>
 				<div className="flex flex-wrap items-center justify-center gap-2">
 					<button
@@ -566,8 +602,7 @@ export function AccountView() {
 				<Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
 			) : input.active ? (
 				<span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
-					{t("Active")}
-				</span>
+					{t("Active")}</span>
 			) : (
 				<span className="text-xs text-muted-foreground">{t("Switch")}</span>
 			)}
@@ -577,7 +612,13 @@ export function AccountView() {
 	return (
 		<PageFrame contentClassName="max-w-3xl">
 			<PageHeader
-				title={t("Account")}
+				description={
+					user
+						? undefined
+						: t("The latest models from Anthropic, OpenAI, Google, and more with one account. Pay as you go, or subscribe with ClinePass.")
+				}
+				meta={<InUseBadge section="Account" />}
+				title={t("Cline Account")}
 				actions={
 					user ? (
 						<button
@@ -649,8 +690,7 @@ export function AccountView() {
 											{user.email}
 										</p>
 										<p className="mt-2 text-xs text-muted-foreground">
-											{t("Member since ")}
-											{formatDate(user.createdAt)}
+											{t("Member since ")}{formatDate(user.createdAt)}
 										</p>
 									</div>
 									<button
@@ -663,6 +703,48 @@ export function AccountView() {
 									</button>
 								</div>
 							</div>
+
+							{clinePassModels ? (
+								<div className="rounded-lg border border-border p-5">
+									<div className="mb-4 flex items-center justify-between">
+										<div className="flex items-center gap-3">
+											<Sparkles className="h-5 w-5 text-primary" />
+											<h3 className="text-sm font-semibold text-foreground">
+												{t("ClinePass")}</h3>
+											<span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
+												{t("Active")}</span>
+										</div>
+										<button
+											type="button"
+											onClick={() => void openExternalUrl(CLINE_PASS_URL)}
+											className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
+										>
+											{t("Manage")}<ExternalLink className="h-3.5 w-3.5" />
+										</button>
+									</div>
+									{clinePassModels.length > 0 ? (
+										<>
+											<p className="mb-2 text-xs font-medium text-muted-foreground">
+												{t("Included models")}</p>
+											<div className="flex flex-wrap gap-1.5">
+												{clinePassModels.map((model) => (
+													<span
+														className="rounded-md border border-border px-2 py-0.5 text-xs text-foreground"
+														key={model}
+													>
+														{model}
+													</span>
+												))}
+											</div>
+										</>
+									) : null}
+									<p className="mt-3 text-xs text-muted-foreground">
+										{activeOrganization
+											? t("Organization accounts can't use ClinePass. Switch to your personal account below to use it.")
+											: t("Choose the ClinePass provider to use these. Other models use your credits.")}
+									</p>
+								</div>
+							) : null}
 
 							{/* Balance Card */}
 							{displayedBalance !== null && (
@@ -688,8 +770,7 @@ export function AccountView() {
 											className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-surface-hover hover:text-foreground transition-colors"
 										>
 											<Plus className="h-3.5 w-3.5" />
-											{t("Credit")}
-										</button>
+											{t("Credit")}</button>
 									</div>
 									<div className="flex items-baseline gap-2">
 										<span className="text-3xl font-bold text-foreground">
@@ -698,9 +779,8 @@ export function AccountView() {
 									</div>
 									{activeOrganization && balance && (
 										<p className="mt-2 text-xs text-muted-foreground">
-											{t("Personal account: ")}
-											{formatCreditBalance(balance.balance)} {t("credits")}
-										</p>
+											{t("Personal account: ")}{formatCreditBalance(balance.balance)}{" "}
+											{t("credits")}</p>
 									)}
 								</div>
 							)}
@@ -711,8 +791,7 @@ export function AccountView() {
 									<div className="flex items-center gap-3">
 										<Building className="h-5 w-5 text-muted-foreground" />
 										<h3 className="text-sm font-semibold text-foreground">
-											{t("Organizations")}
-										</h3>
+											{t("Organizations")}</h3>
 									</div>
 									<button
 										type="button"
@@ -722,8 +801,7 @@ export function AccountView() {
 										className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-surface-hover hover:text-foreground "
 									>
 										<Plus className="h-3.5 w-3.5" />
-										{t("Create")}
-									</button>
+										{t("Create")}</button>
 								</div>
 								<div className="flex flex-col gap-2">
 									{renderAccountRow({
@@ -759,9 +837,7 @@ export function AccountView() {
 					<p className="mb-6 text-sm text-muted-foreground">
 						{activeOrganization
 							? `Recent API usage and token consumption for ${activeOrganization.name}.`
-							: t(
-									"Recent API usage and token consumption across all providers.",
-								)}
+							: t("Recent API usage and token consumption across all providers.")}
 					</p>
 					{usageLoading && renderLoading()}
 					{usageError && renderError(usageError, loadUsage)}
@@ -775,8 +851,7 @@ export function AccountView() {
 							</div>
 							{usageTransactions.length === 0 ? (
 								<p className="px-4 py-8 text-center text-sm text-muted-foreground">
-									{t("No usage transactions yet.")}
-								</p>
+									{t("No usage transactions yet.")}</p>
 							) : (
 								<div className="divide-y divide-border">
 									{usageTransactions.map((tx) => (
@@ -793,7 +868,7 @@ export function AccountView() {
 												</p>
 											</div>
 											<div className="text-right text-muted-foreground">
-												{tx.totalTokens.toLocaleString(readLanguage())}
+												{tx.totalTokens.toLocaleString()}
 											</div>
 											<div className="text-right text-foreground font-medium">
 												{formatCreditBalance(tx.creditsUsed)}
@@ -812,8 +887,7 @@ export function AccountView() {
 									onClick={() => void openExternalUrl(USAGE_DASHBOARD_URL)}
 									className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground"
 								>
-									{t("See More")}
-									<ExternalLink className="h-3.5 w-3.5" />
+									{t("See More")}<ExternalLink className="h-3.5 w-3.5" />
 								</button>
 							</div>
 						</div>
@@ -825,8 +899,7 @@ export function AccountView() {
 			{activeTab === "billing" && (
 				<div>
 					<p className="mb-6 text-sm text-muted-foreground">
-						{t("Payment history and credit purchases.")}
-					</p>
+						{t("Payment history and credit purchases.")}</p>
 					{billingLoading && renderLoading()}
 					{billingError && renderError(billingError, loadBilling)}
 					{!billingLoading &&
@@ -834,8 +907,7 @@ export function AccountView() {
 						billingLoaded &&
 						(paymentTransactions.length === 0 ? (
 							<p className="py-8 text-center text-sm text-muted-foreground">
-								{t("No payment transactions yet.")}
-							</p>
+								{t("No payment transactions yet.")}</p>
 						) : (
 							<div className="rounded-lg border border-border overflow-hidden">
 								<div className="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-border bg-secondary/50 px-4 py-2.5 text-xs font-medium text-muted-foreground">

@@ -30,6 +30,7 @@ import type {
 	ChatSessionStatus,
 } from "@/lib/chat-schema";
 import { formatRunError } from "@/lib/run-error";
+import type { SessionChangeSet } from "@/lib/session-changes";
 import type { SessionImportTool } from "@/lib/session-import";
 import { cn } from "@/lib/utils";
 import { ImportedSessionNotice } from "./imported-session-notice";
@@ -50,6 +51,7 @@ import {
 } from "./messages/tool-approval-panel";
 import { ToolMessageBlock } from "./messages/tool-message-block";
 import { buildToolPresentation } from "./messages/tool-summaries";
+import { TurnReceipt } from "./messages/turn-receipt";
 import { WorkBlock } from "./messages/work-block";
 import { TranscriptOutline } from "./transcript-outline";
 
@@ -92,6 +94,12 @@ type ChatMessagesProps = {
 	) => void | Promise<void>;
 	/** Opens the settings page that fixes a credential failure. */
 	onFixCredentials?: (target: "account" | "models") => void;
+	/**
+	 * What the last turn changed, fetched after the turn's latest activity;
+	 * drives the receipt under it.
+	 */
+	lastTurnChanges?: SessionChangeSet;
+	onReviewLastTurn?: (path?: string) => void;
 };
 
 type AskQuestionRequestItem = {
@@ -129,6 +137,8 @@ function ChatMessagesImpl({
 	errorAction,
 	onProceedWhileRunning,
 	onFixCredentials,
+	lastTurnChanges,
+	onReviewLastTurn,
 }: ChatMessagesProps) {
 	const t = useTranslation();
 	const hasMessages = messages.length > 0;
@@ -276,6 +286,14 @@ function ChatMessagesImpl({
 		() => buildUserRunCountMap(messages),
 		[messages],
 	);
+	// Shown only once the latest turn finishes; sending the next message
+	// starts a new turn, which hides it until that turn's changes arrive.
+	const showLastTurnReceipt =
+		Boolean(onReviewLastTurn) &&
+		(lastTurnChanges?.files.length ?? 0) > 0 &&
+		status !== "starting" &&
+		status !== "running" &&
+		status !== "stopping";
 
 	useEffect(() => {
 		void sessionId;
@@ -729,6 +747,21 @@ function ChatMessagesImpl({
 										</MessageScrollerItem>
 									);
 								})}
+								{showLastTurnReceipt && lastTurnChanges && onReviewLastTurn ? (
+									<MessageScrollerItem
+										// The turn's last message floats its timestamp and
+										// actions over whatever follows; the receipt sits
+										// below them, leaving the same 6px gap the actions
+										// row keeps above itself (6px offset + 32px row).
+										className="pt-7"
+										messageId="last-turn-receipt"
+									>
+										<TurnReceipt
+											changes={lastTurnChanges}
+											onReview={onReviewLastTurn}
+										/>
+									</MessageScrollerItem>
+								) : null}
 								{/* Lives inside the transcript column and mirrors a
 								    reasoning/tool trigger's geometry exactly (icon slot,
 								    min-height, padding), so the first real row replaces it

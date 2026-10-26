@@ -32,12 +32,14 @@ import {
 	setStoredAppIcon,
 } from "@/lib/app-icon";
 import { desktopClient } from "@/lib/desktop-client";
+import { readModelSelectionStorageFromWindow } from "@/lib/model-selection";
 import { resetOnboarding } from "@/lib/onboarding";
 import {
 	getProviderAuthKind,
 	isProviderConnected,
 	runProviderOAuthLogin,
 } from "@/lib/provider-connection";
+import { normalizeProviderId } from "@/lib/provider-id";
 import {
 	invalidateProviderCatalogCache,
 	notifyVoiceInputSettingsChanged,
@@ -73,6 +75,7 @@ import { DebugContent } from "./debug-view";
 import { HubPanel } from "./hub-panel";
 import { ImportContent } from "./import-view";
 import { KeybindingsContent } from "./keybindings-view";
+import { LocalModelsContent } from "./local-models-view";
 import { NotificationSettings } from "./notification-settings";
 import {
 	ProviderDetailContent,
@@ -144,6 +147,9 @@ export function SettingsView({
 	>(null);
 	const [selectedProviderId, setSelectedProviderId] = useState<string | null>(
 		null,
+	);
+	const [inUseProviderId] = useState(() =>
+		normalizeProviderId(readModelSelectionStorageFromWindow().lastProvider),
 	);
 	const [addingProvider, setAddingProvider] = useState(false);
 	// Bumped by every optimistic provider mutation and catalog load. An
@@ -445,9 +451,13 @@ export function SettingsView({
 	);
 
 	// The detail panel is always open: with no explicit selection, default to
-	// the first connected provider (the one in use), then the first provider.
+	// the provider the chat uses, then the first connected one, then the first.
 	const effectiveSelectedProviderId =
 		selectedProviderId ??
+		providers.find(
+			(provider) =>
+				provider.id === inUseProviderId && isProviderConnected(provider),
+		)?.id ??
 		providers.find(isProviderConnected)?.id ??
 		providers[0]?.id ??
 		null;
@@ -632,6 +642,8 @@ export function SettingsView({
 				{providerContent}
 				{addProviderDialog}
 			</>
+		) : activeNav === "Local Models" ? (
+			<LocalModelsContent />
 		) : activeNav === "Voice" ? (
 			<VoiceInputContent
 				onOpenModelProviders={() => onNavigateSection("Providers")}
@@ -971,7 +983,7 @@ function GeneralSettingsContent() {
 					</div>
 				</div>
 				<div className="border-b py-4">
-					<p className="text-base font-semibold text-foreground">CLI / Hub</p>
+					<p className="text-base font-semibold text-foreground">{t("CLI / Hub")}</p>
 					<p className="mt-1 text-sm text-muted-foreground">
 						{t(
 							"The CLI and Hub are updated together with this fork through the signed Desktop installer.",
