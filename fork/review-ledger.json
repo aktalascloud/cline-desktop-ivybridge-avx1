@@ -240,7 +240,8 @@
     "purpose": "Update dependency dompurify to v3.4.0",
     "origin": "third-party-fork-pr",
     "status": "already-newer-dependency-floor",
-    "verification": "Full small legacy webview-ui lock diff reviewed, including unrelated optional WASI metadata. Repo Apache-2.0, DOMPurify dual MPL-2.0/Apache-2.0. Proposed 3.4.0 is older than our pinned 3.4.17. No patch imported or fix attributed to this fork."
+    "verification": "Full small legacy webview-ui lock diff reviewed, including unrelated optional WASI metadata. Repo Apache-2.0, DOMPurify dual MPL-2.0/Apache-2.0. Proposed 3.4.0 is older than our pinned 3.4.17. No patch imported or fix attributed to this fork.",
+    "last_checked_utc": "2026-10-26T04:53:29.614664+00:00"
   },
   {
     "url": "https://github.com/amaybaum-dev/cline/pull/8",
@@ -248,7 +249,8 @@
     "purpose": "Update dependency posthog-js to v1.268.1",
     "origin": "third-party-fork-pr",
     "status": "deferred-legacy-telemetry-lock-change",
-    "verification": "Full small legacy webview-ui lock diff reviewed, including optional WASI additions. PostHog changes 1.268.0 to 1.268.1; its package says SEE LICENSE. External implementation/license effects and Desktop regressions are unqualified. Not integrated."
+    "verification": "Full small legacy webview-ui lock diff reviewed, including optional WASI additions. PostHog changes 1.268.0 to 1.268.1; its package says SEE LICENSE. External implementation/license effects and Desktop regressions are unqualified. Not integrated.",
+    "last_checked_utc": "2026-10-26T04:53:29.614664+00:00"
   },
   {
     "url": "https://github.com/amaybaum-dev/cline/pull/2",
@@ -529,5 +531,181 @@
     "origin": "upstream-issue",
     "status": "reviewed-no-qualified-new-fix",
     "verification": "Description and full paginated comment thread inspected; implementation claims limited to reproduced scope"
+  },
+  {
+    "url": "https://github.com/presidio-oss/hai-build-codegen/pull/42",
+    "sha": "6c6c7ab10b58562edb30484861dff8e48469c84b",
+    "purpose": "Broad upstream sync exceeds GitHub full-diff API 300-file limit",
+    "origin": "third-party-fork-pr",
+    "status": "screened-deferred",
+    "verification": "Not fully semantically qualified; deferred, not applied"
+  },
+  {
+    "url": "https://github.com/amaybaum-dev/cline/pull/2",
+    "sha": "4747fbbfb75e201cfb54dfcbb7b6f2ec607d1774",
+    "purpose": "Legacy VS Code/docs lockfile update outside Desktop inputs",
+    "origin": "third-party-fork-pr",
+    "status": "screened-not-included",
+    "verification": "Full lockfile diff inspected for scope; no compatible Desktop patch selected"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/120",
+    "sha": "4abdc74b3b7b409f1a393a20c470c43340778e89",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/119",
+    "sha": "f3e51409c4cd45ce749f80acf214609877ba1a10",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/118",
+    "sha": "169efe47e324ff8c3ab7a974c0a830836b87e236",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/117",
+    "sha": "7c2a477589e213ee036b5eee225c327fd5913950",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/116",
+    "sha": "35efb82a3b9e290895d1666d62ea65d7841fad22",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/115",
+    "sha": "7e89528f727c70da1d37167c3b401bda5a58f0ab",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/113",
+    "sha": "e0f7a846acba6675ecd6b6887a50052d0e4f0d78",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/114",
+    "sha": "c1d45326e1aa88756c0e861f92bf551def3ee873",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/112",
+    "sha": "55efd04a98f828588695b18d3c313728bfc2944f",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/111",
+    "sha": "fd73666cd7ec965cc780ebb43dd01b17e6b35b25",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/110",
+    "sha": "771f2de80f84013e7ac4e03193f4c08e0cfa02df",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/109",
+    "sha": "07146eb95f570bb0c6ef7e88e79549ccec48954f",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/108",
+    "sha": "a275684b439d8c136e05b65682c11fda34d12d86",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/107",
+    "sha": "cdf0818bf0d54fa8e6447267d844a818228e17cc",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/106",
+    "sha": "dea69faf226473cda64b3fe21f31ec2f78760b5f",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/105",
+    "sha": "683b00d9c3e00ed9f2020a9bec5eb78a219e19df",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/104",
+    "sha": "c60f66e287dc282edbc6ebb70ddbebe5809fcdd2",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/103",
+    "sha": "701201bea24a7adefbf88631807819caa8eb37ed",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/oskarkocol/cline-contrib/pull/102",
+    "sha": "d0fe944f91e3134b8f2a4176b0364f080310d5d5",
+    "purpose": "Generated catalog pricing only; no local transport behavior change",
+    "origin": "third-party-fork-pr",
+    "status": "reviewed-pricing-data-not-included",
+    "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
+  },
+  {
+    "url": "https://github.com/chanhong/cline/pull/2",
+    "sha": "dab482348ffd83d1065dfcf8b538076608925a79",
+    "purpose": "Broad upstream sync; head equals selected official upstream main",
+    "origin": "third-party-fork-pr",
+    "status": "covered-via-upstream-not-a-separate-patch",
+    "verification": "Same raw head covered through sanitized main; no independently qualified third-party patch"
   }
 ]
