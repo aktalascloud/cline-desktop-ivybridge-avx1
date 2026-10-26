@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const read = vi.hoisted(() => vi.fn());
 vi.mock("@cline/core", () => ({
+	toProviderConfig: (settings: { provider: string }) => ({
+		providerId: settings.provider,
+	}),
 	ProviderSettingsManager: class {
 		getProviderSettings = read;
 	},
@@ -20,6 +23,7 @@ describe("local sampling connection refresh", () => {
 			thinking: true,
 			reasoningEffort: "xhigh",
 			providerConfig: {
+				providerId: "local-test",
 				apiKey: "private-test-key",
 				sampling: { temperature: 1 },
 			},
@@ -27,6 +31,7 @@ describe("local sampling connection refresh", () => {
 		expect(refreshLocalSamplingConfig(config)).toEqual({
 			...config,
 			providerConfig: {
+				providerId: "local-test",
 				apiKey: "private-test-key",
 				sampling: { temperature: 0.7 },
 			},

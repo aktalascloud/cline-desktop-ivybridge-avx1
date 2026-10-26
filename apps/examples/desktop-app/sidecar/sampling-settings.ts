@@ -1,4 +1,4 @@
-import { ProviderSettingsManager } from "@cline/core";
+import { ProviderSettingsManager, toProviderConfig } from "@cline/core";
 import type { JsonRecord } from "./types";
 
 /** Refresh only local sampling defaults; never replace credentials or historical routes. */
@@ -17,6 +17,17 @@ export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
 			: {};
 	return {
 		...config,
-		providerConfig: { ...existing, sampling: settings.sampling ?? {} },
+		providerConfig: {
+			...toProviderConfig(
+				{
+					...settings,
+					model: String(config.model ?? config.modelId ?? settings.model ?? ""),
+				},
+				{ includeKnownModels: false },
+			),
+			...existing,
+			providerId: id,
+			sampling: settings.sampling ?? {},
+		},
 	};
 }

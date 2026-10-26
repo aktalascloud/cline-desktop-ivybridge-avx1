@@ -1711,7 +1711,7 @@ async function handleSend(
 	let nextConfig = request.config
 		? mergeSessionConfig(session?.config ?? {}, request.config)
 		: session?.config;
-	if (binding.kind === "local" && nextConfig)
+	if (binding.kind === "local" && nextConfig && !session?.busy)
 		nextConfig = refreshLocalSamplingConfig(nextConfig);
 	const providerChanged = Boolean(
 		session &&
