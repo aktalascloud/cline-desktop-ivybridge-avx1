@@ -125,7 +125,7 @@
     "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.6",
     "asset_sha256": "86f892e10d9a4807d4fc0bb0a2cb3b8a3c9211302ecd4cdd3c5e5229ea93858a",
     "asset_count": 1,
-    "anonymous_download_verified": false
+    "anonymous_download_verified": true
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -203,6 +203,33 @@
     "real_model_quality_benchmark": false,
     "native_gui": "waived",
     "authenticode": "NotSigned",
-    "new_dependency_changes": false
+    "new_dependency_changes": false,
+    "ci_test_counts": {
+      "source_sha": "bb4fc2a8f631b4b2e5f2706a0b7b03790a02ba1c",
+      "run_id": 40367170240,
+      "cli": 30,
+      "core": 261,
+      "core_skipped": 3,
+      "shared": 56,
+      "llms": 168,
+      "desktop": 221,
+      "desktop_suites": [
+        100,
+        74,
+        47
+      ],
+      "raw_suite_summaries": [
+        "30 passed (30)",
+        "261 passed | 3 skipped (264)",
+        "56 passed (56)",
+        "168 passed (168)",
+        "100 passed (100)",
+        "74 passed (74)",
+        "47 passed (47)"
+      ]
+    },
+    "author_template_reset": "verified offline with the installed template; normal -> Ultra -> normal is byte-identical after reset",
+    "real_inference": false,
+    "ultra_effort_scope": "xhigh only"
   }
 }
