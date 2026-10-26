@@ -1,7 +1,7 @@
 {
   "status": "qualified",
   "release_approved": true,
-  "upstream_sha": "40c5d99031fe1128189c5b52e40638d2b7787754",
+  "upstream_sha": "dab482348ffd83d1065dfcf8b538076608925a79",
   "upstream_desktop": "0.0.48",
   "bun": "1.4.2+744846f84",
   "rust": "1.97.0",
@@ -76,9 +76,9 @@
     "anonymous_download_verified": true
   },
   "ci": {
-    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40204788866",
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40268477624",
     "status": "success",
-    "source_sha": "7a4ee28447acb12a555961c454a5b385a7963e97",
+    "source_sha": "81a6b4268ff19dd977f618a209ab11159462943a",
     "signature_verified": true,
     "tamper_rejected": true
   },
@@ -121,11 +121,11 @@
     "post_history_cleanup": true
   },
   "publication": {
-    "version": "1.0.4",
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.4",
-    "asset_sha256": "1393fc153e01ce211cd76cb0318c0e7770087dc18b55de6d7a87a5977cffa936",
+    "version": "1.0.5",
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.5",
+    "asset_sha256": "fae39cd519056bd420b45fdb5192194384e3ac4848f6b5c1f87abc078a75bca7",
     "asset_count": 1,
-    "anonymous_download_verified": true
+    "anonymous_download_verified": false
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -152,5 +152,35 @@
     "headless_chromium_levels": 5,
     "native_interactive_click": "waived",
     "desktop_ci_tests_passed": 1946
+  },
+  "daily_20261026": {
+    "validation_mode": "component-aware minimal",
+    "desktop_tests_passed": 496,
+    "core_tests_passed": 660,
+    "core_tests_skipped": 6,
+    "cli_tests_passed": 38,
+    "shared_tests_passed": 56,
+    "llms_tests_passed": 125,
+    "windows_installer_tests_passed": 6,
+    "bootstrap_tests_passed": 3,
+    "logger_worker_tests_passed": 1,
+    "native_behavior_tests": "reused: unchanged Rust source/dependencies/profile from 1.0.4; new native binary compiled and started on Ivy Bridge",
+    "headless_reasoning_languages": [
+      "en",
+      "ru"
+    ],
+    "installed_reasoning_levels": 5,
+    "new_optimization_benchmark": false,
+    "upstream_commits": 10,
+    "additional_open_prs": [
+      15330,
+      15332,
+      15335
+    ],
+    "whole_workspace_dependency_advisories": 66,
+    "new_dependency_findings": 0,
+    "rustsec_database_unchanged": "21d909e4c8bd4e14c7aea58bf980c881a0053ab1",
+    "native_interactive_gui": "waived",
+    "external_ollama_lmstudio_runtimes": "not installed or hardware-qualified"
   }
 }

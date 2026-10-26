@@ -337,5 +337,197 @@
     "origin": "local-fork-patch",
     "status": "included",
     "verification": "Failing regression reproduced; 73 composer tests pass, including High selection and historical route preservation; production frontend, typecheck, native tests, CI and installed offline protocol checks"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15295",
+    "sha": "9beea0300bb0c5125451cb8e0858d1bbd8898208",
+    "purpose": "fix(desktop): skip routine hub polling in diagnostics exports (#15295)",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15337",
+    "sha": "2b997083f32e5c2fb80c2bafcfb1bd5059e44d0d",
+    "purpose": "fix(desktop): use '+' in the Linux nightly version so the rpm bundler accepts it (#15337)",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15339",
+    "sha": "4c0ac7e2ad41584fb55b0e4d4dd6fbede4631c1c",
+    "purpose": "fix(desktop): hide model-only system messages from the transcript (#15339)",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15322",
+    "sha": "ac996847bd81bc3de4b12939d5a55a718a0d2c55",
+    "purpose": "feat(desktop): separate Changes pane and a last-turn receipt in the transcript (#15322)",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15336",
+    "sha": "c0a4ec16326b09cc5b6109bdcc87af0c9a847185",
+    "purpose": "fix(desktop): strip the user_input envelope before truncating the live session title (#15336)",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15302",
+    "sha": "c497ca3ddc97ac13d993d13dcccda422e95d0205",
+    "purpose": "feat(vscode): pick the cloud task model in Settings (#15302)",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15321",
+    "sha": "5988f929b31fa324dff950c01ca49858d8fb673e",
+    "purpose": "Desktop: Local Models page (Ollama + LM Studio) and Provider settings group (#15321)",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15342",
+    "sha": "7a43f44434d24caa153a0f1cb61821208392d4a2",
+    "purpose": "fix(desktop): wrap long lines in the file and diff viewers (#15342)",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15244",
+    "sha": "dffb93e7f7210a730c7fdca27140a5c1b7d12945",
+    "purpose": "fix: stop tasks from getting stuck when they're opened in two apps or an app closes mid-task (#15244)",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/commit/dab482348ffd83d1065dfcf8b538076608925a79",
+    "sha": "dab482348ffd83d1065dfcf8b538076608925a79",
+    "purpose": "chore(sdk): release v0.2.0",
+    "origin": "official-upstream-main",
+    "status": "integrated-sanitized-main",
+    "verification": "Full source delta reviewed; generated catalogs checked as literal AST data; selected regressions/typechecks, production build, installed offline protocol; licenses retained"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15330",
+    "sha": "b8236a1310942fb74431aeb5e19a506ff12cd85c",
+    "purpose": "Preserve native PowerShell exit codes",
+    "origin": "official-upstream-pr",
+    "status": "adapted-open-upstream-pr",
+    "verification": "Full diff and implementation reviewed, Apache-2.0; real PowerShell process/core hook/UI regressions passed at the frozen source"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15332",
+    "sha": "569354bd59c97618444596874002e70931f2f020",
+    "purpose": "Run configured TaskCancel hooks on clean abort",
+    "origin": "official-upstream-pr",
+    "status": "adapted-open-upstream-pr",
+    "verification": "Full diff and implementation reviewed, Apache-2.0; real PowerShell process/core hook/UI regressions passed at the frozen source"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15335",
+    "sha": "8edeaddd2288630812715fff06a68e1299480818",
+    "purpose": "Keep background inventory refresh from flickering loading feedback; request count unchanged",
+    "origin": "official-upstream-pr",
+    "status": "adapted-open-upstream-pr",
+    "verification": "Full diff and implementation reviewed, Apache-2.0; real PowerShell process/core hook/UI regressions passed at the frozen source"
+  },
+  {
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/commit/81a6b4268ff19dd977f618a209ab11159462943a",
+    "sha": "81a6b4268ff19dd977f618a209ab11159462943a",
+    "purpose": "Trust boundary for local-runtime commands, junction preflight, owned SQLite closure, EN/RU counters, anchored incremental history import, focused CI and pinned caches",
+    "origin": "local-fork-patch",
+    "status": "included",
+    "verification": "16 trust-boundary cases; real filesystem junction fixture; locale placeholder/plural tests; real-Git positive/negative sanitization test; package signature/privacy and installed smoke"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15334",
+    "sha": "7ef3b0d53e10c2e65823183627a031b0b78b91b4",
+    "purpose": "Deferred: two-sided compaction estimate lacks cached-prefix accounting/previous-request comparison; see issue 14979 discussion",
+    "origin": "official-upstream-pr",
+    "status": "deferred-not-included",
+    "verification": "Scope/discussion reviewed; no claim that a downloaded patch is a verified fix"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15331",
+    "sha": "fd4f05d7cf8accb2ef57acacc891d85d429d12fc",
+    "purpose": "Deferred: seeded-prompt hook dispatch changes overlap new orchestration behavior; no qualified adaptation this cycle",
+    "origin": "official-upstream-pr",
+    "status": "deferred-not-included",
+    "verification": "Scope/discussion reviewed; no claim that a downloaded patch is a verified fix"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15297",
+    "sha": "8c20e1ba831849bc96f4d29c6806ea4d99977d68",
+    "purpose": "Deferred: strict positive-only integer contract needs compatibility review for zero-valued CLI options",
+    "origin": "official-upstream-pr",
+    "status": "deferred-not-included",
+    "verification": "Scope/discussion reviewed; no claim that a downloaded patch is a verified fix"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15340",
+    "sha": "2492ddaf6fc277643f0ef5b445ee1843515a8571",
+    "purpose": "Reviewed scope is direct Anthropic cache options, outside selected local transport; not applied this cycle",
+    "origin": "official-upstream-pr",
+    "status": "deferred-not-included",
+    "verification": "Scope/discussion reviewed; no claim that a downloaded patch is a verified fix"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15341",
+    "sha": "4933097f4658a1220b7507529b2b9ba17697232b",
+    "purpose": "ClinePass subscription/onboarding behavior outside selected local transport; not applied",
+    "origin": "official-upstream-pr",
+    "status": "deferred-not-included",
+    "verification": "Scope/discussion reviewed; no claim that a downloaded patch is a verified fix"
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/13482",
+    "sha": null,
+    "purpose": "Stale-bot update only; no reproduced new implementation",
+    "origin": "upstream-issue",
+    "status": "reviewed-no-qualified-new-fix",
+    "verification": "Description and full paginated comment thread inspected; implementation claims limited to reproduced scope"
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14947",
+    "sha": null,
+    "purpose": "Cloud VS Code paused-workspace reconnect, outside local Desktop path",
+    "origin": "upstream-issue",
+    "status": "reviewed-no-qualified-new-fix",
+    "verification": "Description and full paginated comment thread inspected; implementation claims limited to reproduced scope"
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15307",
+    "sha": null,
+    "purpose": "Anthropic caching issue tracked with competing PRs; local transport unaffected",
+    "origin": "upstream-issue",
+    "status": "reviewed-no-qualified-new-fix",
+    "verification": "Description and full paginated comment thread inspected; implementation claims limited to reproduced scope"
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15327",
+    "sha": null,
+    "purpose": "Custom provider retained; prior focus probe passed, adjacent provider UI regressions pass; no reproduced native macOS fix claimed",
+    "origin": "upstream-issue",
+    "status": "reviewed-no-qualified-new-fix",
+    "verification": "Description and full paginated comment thread inspected; implementation claims limited to reproduced scope"
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15329",
+    "sha": null,
+    "purpose": "GNOME/Wayland notification behavior not reproduced on Windows",
+    "origin": "upstream-issue",
+    "status": "reviewed-no-qualified-new-fix",
+    "verification": "Description and full paginated comment thread inspected; implementation claims limited to reproduced scope"
   }
 ]

@@ -1,11 +1,11 @@
 {
-  "version": "1.0.4",
-  "notes": "Fix removed-provider defaults and reasoning selection for local models. / Исправлен выбор провайдера и reasoning для новых чатов с локальными моделями.",
-  "pub_date": "2026-10-25T15:21:15.878557Z",
+  "version": "1.0.5",
+  "notes": "Upstream session recovery/Changes; Windows exit codes, cancellation hooks, local-runtime safety and RU updates. / Восстановление сессий и изменения, PowerShell, отмена, защита локальных сред и русский перевод.",
+  "pub_date": "2026-10-26T04:48:53.853755Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmd2Q3NVdDA0RWM1cGY2enUyaU93YnpFU3FlNTNaTGxsdUJLZWg5OHpnQTNyTmJhM2pRYmhxRFdXSm1rOFlScXVHUmROMDhkOHlqSXRRc1drT0ZnZVEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTQxMjE5CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC40X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuNApuM24zNzgxNFp6OEhwMzhNaGttbVZpU3REaVVlemRkclhEaVdDT2ppYjI5N2dTMHJJblVxeFI1aU5IZDBMQit4VjBOUkxEU0I1OWpZOGs1UjFmNnRBdz09Cg==",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.4/Cline-Desktop-AVX1-RU-Setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYm5JWVg2bjFzY3FXNDNjamozK1lSQzB3cTRvVG5yVjlPOHk2eEs2MTJXUXpicnR3WURFd1RLNCtRZkZPdS9DcEd4elhnbTBMdFdua1FFMWFuNFErWUFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTg5MDA5CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC41X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuNQozbXdzTFpPMm45SFBLR2M2K3F1SEZWa2xtdVp4eVJyejB1cGlvemJXL0o2WDR2RVhYMklYdUtLck9UZWVZcGQzU0k4Yko3M0h2MDVKVmJyYzNINWxEZz09Cg==",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.5/Cline-Desktop-AVX1-RU-Setup.exe"
     }
   }
 }

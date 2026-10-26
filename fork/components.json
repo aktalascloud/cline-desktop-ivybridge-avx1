@@ -1,9 +1,9 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.4",
-  "upstream_sha": "40c5d99031fe1128189c5b52e40638d2b7787754",
-  "build_source_sha": "7a4ee28447acb12a555961c454a5b385a7963e97",
+  "version": "1.0.5",
+  "upstream_sha": "dab482348ffd83d1065dfcf8b538076608925a79",
+  "build_source_sha": "81a6b4268ff19dd977f618a209ab11159462943a",
   "release_approved": true,
   "native": {
     "kind": "source-built",
@@ -35,7 +35,7 @@
       "fork storage bootstrap before imports",
       "official auto-update disabled for fork distribution"
     ],
-    "sha256": "cfb1d91971f55ab6d8abdb0b37a12e3f50becfebbe1e0c15d79e86bd1b034006"
+    "sha256": "6174d63e8cdcd86f0287b530e70784573fcabf7bc778183df5116385d42e99c6"
   },
   "backend": {
     "kind": "source-built JS bundle",
@@ -147,21 +147,21 @@
   ],
   "selected_npm": [],
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "83bb097e56a8dd610717b20aa4becc2553adfc49331d510fde1d35ba77da89ff",
+  "bun_lock_sha256": "7ab27d6caa01374517e8dc5acc9bdc15e54f7cdf0ef8223e65899634485c97c0",
   "cuda_used": false,
   "llm_models_included": false,
   "authenticode": "NotSigned; Tauri updater signature is a separate verification mechanism",
   "updater_zip_support": false,
   "installer": {
     "filename": "Cline-Desktop-AVX1-RU-Setup.exe",
-    "sha256": "1393fc153e01ce211cd76cb0318c0e7770087dc18b55de6d7a87a5977cffa936",
-    "size": 134825330,
-    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmd2Q3NVdDA0RWM1cGY2enUyaU93YnpFU3FlNTNaTGxsdUJLZWg5OHpnQTNyTmJhM2pRYmhxRFdXSm1rOFlScXVHUmROMDhkOHlqSXRRc1drT0ZnZVEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTQxMjE5CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC40X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuNApuM24zNzgxNFp6OEhwMzhNaGttbVZpU3REaVVlemRkclhEaVdDT2ppYjI5N2dTMHJJblVxeFI1aU5IZDBMQit4VjBOUkxEU0I1OWpZOGs1UjFmNnRBdz09Cg==",
+    "sha256": "fae39cd519056bd420b45fdb5192194384e3ac4848f6b5c1f87abc078a75bca7",
+    "size": 133865635,
+    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYm5JWVg2bjFzY3FXNDNjamozK1lSQzB3cTRvVG5yVjlPOHk2eEs2MTJXUXpicnR3WURFd1RLNCtRZkZPdS9DcEd4elhnbTBMdFdua1FFMWFuNFErWUFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTg5MDA5CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC41X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuNQozbXdzTFpPMm45SFBLR2M2K3F1SEZWa2xtdVp4eVJyejB1cGlvemJXL0o2WDR2RVhYMklYdUtLck9UZWVZcGQzU0k4Yko3M0h2MDVKVmJyYzNINWxEZz09Cg==",
     "authenticode": "NotSigned",
-    "status": "installed upgrade and offline protocol tests qualified; interactive GUI waived"
+    "status": "installed upgrade, offline protocol and privacy checks passed; interactive GUI waived"
   },
   "original_build_source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
-  "sanitized_upstream_sha": "8c6e4474bc32cc9a118e74fe158cd5fbbab572aa",
+  "sanitized_upstream_sha": "5e411e5e0111f1adf366475c6bb3fc72c52dfb4c",
   "voice_input": {
     "source": "local fork patch",
     "modes": [
@@ -180,6 +180,20 @@
     "source": "local fork patch",
     "new_chat": "configured providers only",
     "historical_session_route": "preserved",
-    "composer_tests_passed": 73
-  }
+    "composer_tests_passed": 74
+  },
+  "new_dependencies": [
+    {
+      "name": "ollama",
+      "version": "0.6.4",
+      "license": "MIT",
+      "kind": "JavaScript client, source bundled; no runtime server or models shipped"
+    },
+    {
+      "name": "whatwg-fetch",
+      "version": "3.6.20",
+      "license": "MIT",
+      "kind": "JavaScript dependency"
+    }
+  ]
 }
