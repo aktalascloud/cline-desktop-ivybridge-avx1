@@ -17,17 +17,30 @@ export const OpenAIChatSamplingSchema = z
 
 export type OpenAIChatSampling = z.infer<typeof OpenAIChatSamplingSchema>;
 
-/** Request-owned parameters win over persisted defaults, including numeric zero. */
+/** Request controls win, except the provider output cap also bounds automatic budgets. */
 export function withOpenAIChatSampling(
 	body: Record<string, unknown>,
 	defaults: unknown,
 ): Record<string, unknown> {
 	if (defaults === undefined) return body;
 	const sampling = OpenAIChatSamplingSchema.parse(defaults);
-	return {
+	const result: Record<string, unknown> = {
 		...sampling,
 		...Object.fromEntries(
 			Object.entries(body).filter(([, v]) => v !== undefined),
 		),
 	};
+	if (sampling.max_tokens !== undefined) {
+		const key =
+			typeof body.max_completion_tokens === "number"
+				? "max_completion_tokens"
+				: "max_tokens";
+		const requested = body[key];
+		result[key] =
+			typeof requested === "number"
+				? Math.min(requested, sampling.max_tokens)
+				: sampling.max_tokens;
+		if (key === "max_completion_tokens") delete result.max_tokens;
+	}
+	return result;
 }

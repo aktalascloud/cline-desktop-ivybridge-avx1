@@ -164,7 +164,7 @@ export function SamplingSettings({
 				<h3 className="font-semibold">{t("Sampling settings")}</h3>
 				<p className="my-2 text-xs text-muted-foreground">
 					{t(
-						"Empty: inherit server settings. Applies to the next request; explicit session parameters take precedence.",
+						"Empty: inherit server settings. Applies to the next request. The output limit caps automatic budgets; other explicit session parameters take precedence.",
 					)}
 				</p>
 				{loading ? (

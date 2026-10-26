@@ -1165,11 +1165,11 @@
 	"Seed": "Seed",
 	"Thinking token limit": "Лимит thinking-токенов",
 	"Server default": "Как на сервере",
-	"Empty: inherit server settings. Applies to the next request; explicit session parameters take precedence.": "Пусто — настройки сервера. Применяется со следующего запроса; явные параметры сессии имеют приоритет.",
 	"Thinking token limit: 0 means no cap. High and XHigh may be equivalent on the server.": "Лимит thinking-токенов: 0 — без ограничения. High и XHigh могут совпадать на сервере.",
 	"Sampling requires an OpenAI-compatible Chat provider": "Нужен провайдер OpenAI-compatible Chat",
 	"Failed to load sampling settings": "Не удалось загрузить параметры генерации",
 	"Failed to save sampling settings": "Не удалось сохранить параметры генерации",
 	"Presence penalty": "Штраф за присутствие",
-	"Repetition penalty": "Штраф за повторения"
+	"Repetition penalty": "Штраф за повторения",
+	"Empty: inherit server settings. Applies to the next request. The output limit caps automatic budgets; other explicit session parameters take precedence.": "Пусто — настройки сервера. Применяется со следующего запроса. Максимум токенов ограничивает автобюджет; остальные явные параметры сессии имеют приоритет."
 }

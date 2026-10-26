@@ -291,7 +291,7 @@ const LOCAL_SAMPLING_FIELDS: ProviderConfigField[] = [
 	label: label!,
 	type: "number",
 	description:
-		"Empty: inherit server settings. Applies to the next request; explicit session parameters take precedence.",
+		"Empty: inherit server settings. Applies to the next request. The output limit caps automatic budgets; other explicit session parameters take precedence.",
 	placeholder: "Server default",
 }));
 

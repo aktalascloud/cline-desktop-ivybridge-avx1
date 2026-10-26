@@ -4,6 +4,20 @@ import {
 	withOpenAIChatSampling,
 } from "./openai-chat-sampling";
 describe("OpenAI Chat sampling defaults", () => {
+	it("caps automatic output budgets without exceeding tighter request limits", () => {
+		expect(
+			withOpenAIChatSampling({ max_tokens: 23871 }, { max_tokens: 2048 }),
+		).toEqual({ max_tokens: 2048 });
+		expect(
+			withOpenAIChatSampling({ max_tokens: 128 }, { max_tokens: 2048 }),
+		).toEqual({ max_tokens: 128 });
+		expect(
+			withOpenAIChatSampling(
+				{ max_completion_tokens: 4096 },
+				{ max_tokens: 2048 },
+			),
+		).toEqual({ max_completion_tokens: 2048 });
+	});
 	it("retains explicit request controls, tools, stream and reasoning", () => {
 		const body = {
 			temperature: 0,
