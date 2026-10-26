@@ -22,7 +22,7 @@ text providers are configured separately. The server must actually support STT.
 ## Installation
 
 Download the [current release](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) or its
-[Windows x64 installer](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.5/Cline-Desktop-AVX1-RU-Setup.exe).
+[Windows x64 installer](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.6/Cline-Desktop-AVX1-RU-Setup.exe).
 Tested target: Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 and Microsoft WebView2.
 
 The fork uses its own application ID, signed Tauri update feed, data directory
@@ -35,6 +35,7 @@ Tauri signatures do not imply a publicly trusted Authenticode certificate.
 - [undici 7.30.1 security floor](https://github.com/cline/cline/pull/15287).
 - [Transcript regression checks](https://github.com/cline/cline/pull/15223); the production fix is already in upstream main.
 - New-chat defaults discard removed providers, restoring reasoning selection for configured local models; historical sessions retain their route.
+- 1.0.6: provider-local sampling controls beside thinking, including until-done output and opt-in author Ultra for XHigh on compatible local endpoints. RU/EN controls and installed request values tested; no model-quality improvement claim.
 - 1.0.5: upstream session recovery/Changes and optional local-runtime UI; PowerShell exit codes, TaskCancel hooks, inventory feedback, trust/junction guards, SQLite closure and more Russian UI.
 - Local changes: EN/RU localization, fork update isolation, deterministic SQLite connection closure, safe Windows worktree cleanup and MCP OAuth issuer binding with SDK 1.32.2.
 

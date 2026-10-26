@@ -76,9 +76,9 @@
     "anonymous_download_verified": true
   },
   "ci": {
-    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40268477624",
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40367170240",
     "status": "success",
-    "source_sha": "81a6b4268ff19dd977f618a209ab11159462943a",
+    "source_sha": "bb4fc2a8f631b4b2e5f2706a0b7b03790a02ba1c",
     "signature_verified": true,
     "tamper_rejected": true
   },
@@ -121,11 +121,11 @@
     "post_history_cleanup": true
   },
   "publication": {
-    "version": "1.0.5",
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.5",
-    "asset_sha256": "fae39cd519056bd420b45fdb5192194384e3ac4848f6b5c1f87abc078a75bca7",
+    "version": "1.0.6",
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.6",
+    "asset_sha256": "86f892e10d9a4807d4fc0bb0a2cb3b8a3c9211302ecd4cdd3c5e5229ea93858a",
     "asset_count": 1,
-    "anonymous_download_verified": true
+    "anonymous_download_verified": false
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -182,5 +182,27 @@
     "rustsec_database_unchanged": "21d909e4c8bd4e14c7aea58bf980c881a0053ab1",
     "native_interactive_gui": "waived",
     "external_ollama_lmstudio_runtimes": "not installed or hardware-qualified"
+  },
+  "sampling_1_0_6": {
+    "local_wire_regressions": 29,
+    "ui_and_refresh_regressions": 16,
+    "headless_chromium_languages": [
+      "en",
+      "ru"
+    ],
+    "fields": 9,
+    "installed_wire_levels": 1,
+    "installed_wire_modes": [
+      "explicit cap",
+      "until done",
+      "Ultra on",
+      "Ultra off"
+    ],
+    "profile_preserved": true,
+    "native_behavior_tests": "reused from 1.0.4: Rust source/dependencies/profile unchanged; version/assets relinked",
+    "real_model_quality_benchmark": false,
+    "native_gui": "waived",
+    "authenticode": "NotSigned",
+    "new_dependency_changes": false
   }
 }

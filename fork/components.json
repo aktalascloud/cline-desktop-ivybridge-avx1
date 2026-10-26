@@ -1,9 +1,9 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.5",
+  "version": "1.0.6",
   "upstream_sha": "dab482348ffd83d1065dfcf8b538076608925a79",
-  "build_source_sha": "81a6b4268ff19dd977f618a209ab11159462943a",
+  "build_source_sha": "bb4fc2a8f631b4b2e5f2706a0b7b03790a02ba1c",
   "release_approved": true,
   "native": {
     "kind": "source-built",
@@ -22,7 +22,8 @@
     ],
     "c_flags": "ring cc defaults observed: /MD /O2 /Brepro and vendor warning/function flags; no global CFLAGS override",
     "pgo": false,
-    "affinity_or_numa_pinning": false
+    "affinity_or_numa_pinning": false,
+    "executable_sha256": "d64b7e021db7acc57f59be4f28e42702ab2524717eba10e8dbbc1daab373d693"
   },
   "cli_and_hub": {
     "version": "3.0.73",
@@ -35,7 +36,7 @@
       "fork storage bootstrap before imports",
       "official auto-update disabled for fork distribution"
     ],
-    "sha256": "6174d63e8cdcd86f0287b530e70784573fcabf7bc778183df5116385d42e99c6"
+    "sha256": "caa9d849e42e481cd750cb66445fd6ae6ccad878ed04571c5b4409c901b138f8"
   },
   "backend": {
     "kind": "source-built JS bundle",
@@ -195,5 +196,24 @@
       "license": "MIT",
       "kind": "JavaScript dependency"
     }
-  ]
+  ],
+  "sampling_controls": {
+    "source": "local fork patch",
+    "protocol": "OpenAI-compatible Chat",
+    "fields": [
+      "temperature",
+      "top_p",
+      "top_k",
+      "min_p",
+      "max_tokens",
+      "seed",
+      "presence_penalty",
+      "repetition_penalty",
+      "reasoning_budget_tokens"
+    ],
+    "empty_max_tokens": "until done, wire -1; requires compatible endpoint; remaining context applies",
+    "private_presets_not_bundled": true,
+    "global_server_settings_unchanged": true,
+    "author_mode": "Ultra, opt-in and xhigh only; original messages/attachments retained"
+  }
 }
