@@ -229,3 +229,14 @@ describe("OpenAI-compatible local sampling wire", () => {
 		expect(body).not.toHaveProperty("reasoning_budget_tokens");
 	});
 });
+
+it("forwards until-done mode to a compatible endpoint without an automatic client budget", async () => {
+	const body = await wireBody({
+		modelId: "fixture-unlisted",
+		reasoning: { effort: "xhigh" },
+		reasoningOptions: undefined,
+		sampling: { max_tokens: 0 },
+	});
+	expect(body.max_tokens).toBe(-1);
+	expect(body.reasoning_effort).toBe("xhigh");
+});

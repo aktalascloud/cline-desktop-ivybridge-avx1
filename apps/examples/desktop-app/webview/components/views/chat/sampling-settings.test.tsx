@@ -40,7 +40,7 @@ describe("sampling controls", () => {
 				{ temperature: "0", seed: "0", top_p: "", top_k: "20" },
 				{ temperature: "1", top_p: "0.95", top_k: "20" },
 			),
-		).toEqual({ temperature: 0, seed: 0, top_p: null });
+		).toEqual({ temperature: 0, seed: 0, top_p: null, max_tokens: 0 });
 	});
 	it.each([
 		["temperature", "-1"],
@@ -49,7 +49,7 @@ describe("sampling controls", () => {
 		["top_k", "1.5"],
 		["top_k", "65"],
 		["min_p", "-0.1"],
-		["max_tokens", "0"],
+		["max_tokens", "-1"],
 		["seed", "NaN"],
 		["reasoning_budget_tokens", "-1"],
 	])("rejects invalid %s=%s", (key, value) => {
@@ -85,7 +85,7 @@ describe("sampling controls", () => {
 		await act(async () => button("Save").click());
 		expect(mocks.invoke).toHaveBeenCalledWith("save_provider_settings", {
 			provider: "local-test",
-			settings: { sampling: { temperature: 0.7 } },
+			settings: { sampling: { temperature: 0.7, max_tokens: 0 } },
 		});
 		expect(mocks.invalidate).toHaveBeenCalledOnce();
 	});

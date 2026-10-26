@@ -19,7 +19,7 @@ export const SAMPLING_FIELDS = [
 	{ key: "top_p", label: "Top-p", min: 0, max: 1, step: 0.01 },
 	{ key: "top_k", label: "Top-k", min: 1, max: 64, step: 1 },
 	{ key: "min_p", label: "Min-p", min: 0, max: 1, step: 0.01 },
-	{ key: "max_tokens", label: "Max tokens", min: 1, max: 2147483647, step: 1 },
+	{ key: "max_tokens", label: "Max tokens", min: 0, max: 2147483647, step: 1 },
 	{
 		key: "presence_penalty",
 		label: "Presence penalty",
@@ -51,6 +51,10 @@ export function samplingPatch(
 	const patch: Record<string, number | null> = {};
 	for (const field of SAMPLING_FIELDS) {
 		const raw = (draft[field.key] ?? "").trim();
+		if (field.key === "max_tokens" && !raw) {
+			patch[field.key] = 0;
+			continue;
+		}
 		if (raw === (initial[field.key] ?? "").trim()) continue;
 		if (!raw) {
 			patch[field.key] = null;
@@ -106,7 +110,10 @@ export function SamplingSettings({
 				const values = Object.fromEntries(
 					SAMPLING_FIELDS.map((f) => [
 						f.key,
-						String(entry?.configValues?.[`sampling.${f.key}`] ?? ""),
+						f.key === "max_tokens" &&
+						entry?.configValues?.["sampling.max_tokens"] === 0
+							? ""
+							: String(entry?.configValues?.[`sampling.${f.key}`] ?? ""),
 					]),
 				);
 				setInitial(values);
@@ -186,7 +193,9 @@ export function SamplingSettings({
 									max={f.max}
 									step={f.step}
 									className="w-32 rounded border bg-background px-2 py-1"
-									placeholder={t("Server default")}
+									placeholder={t(
+										f.key === "max_tokens" ? "Until done" : "Server default",
+									)}
 									value={draft[f.key] ?? ""}
 									disabled={saving}
 									onChange={(e) =>
@@ -198,6 +207,11 @@ export function SamplingSettings({
 						<p className="my-2 text-xs text-muted-foreground">
 							{t(
 								"Thinking token limit: 0 means no cap. High and XHigh may be equivalent on the server.",
+							)}
+						</p>
+						<p className="my-2 text-xs text-muted-foreground">
+							{t(
+								"Max tokens: empty or 0 means until done. Requires an endpoint accepting max_tokens=-1; available context still applies.",
 							)}
 						</p>
 						<button

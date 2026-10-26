@@ -9,7 +9,7 @@ export const OpenAIChatSamplingSchema = z
 		top_p: z.number().finite().min(0).max(1).optional(),
 		top_k: z.number().int().min(1).max(64).optional(),
 		min_p: z.number().finite().min(0).max(1).optional(),
-		max_tokens: z.number().int().positive().max(2147483647).optional(),
+		max_tokens: z.number().int().nonnegative().max(2147483647).optional(),
 		seed: z.number().int().min(0).max(2147483647).optional(),
 		reasoning_budget_tokens: z.number().int().min(0).max(2147483647).optional(),
 	})
@@ -30,7 +30,11 @@ export function withOpenAIChatSampling(
 			Object.entries(body).filter(([, v]) => v !== undefined),
 		),
 	};
-	if (sampling.max_tokens !== undefined) {
+	if (sampling.max_tokens === 0) {
+		// Strata/local compatible endpoints use -1 for the remaining context, without a client cap.
+		delete result.max_completion_tokens;
+		result.max_tokens = -1;
+	} else if (sampling.max_tokens !== undefined) {
 		const key =
 			typeof body.max_completion_tokens === "number"
 				? "max_completion_tokens"

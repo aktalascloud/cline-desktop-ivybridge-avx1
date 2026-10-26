@@ -291,8 +291,10 @@ const LOCAL_SAMPLING_FIELDS: ProviderConfigField[] = [
 	label: label!,
 	type: "number",
 	description:
-		"Empty: inherit server settings. Applies to the next request. The output limit caps automatic budgets; other explicit session parameters take precedence.",
-	placeholder: "Server default",
+		key === "max_tokens"
+			? "Max tokens: empty or 0 means until done. Requires an endpoint accepting max_tokens=-1; available context still applies."
+			: "Empty: inherit server settings. Applies to the next request. The output limit caps automatic budgets; other explicit session parameters take precedence.",
+	placeholder: key === "max_tokens" ? "Until done" : "Server default",
 }));
 
 const API_KEY_CONFIG_FIELD: ProviderConfigField = {

@@ -2,8 +2,8 @@
 
 ## 1.0.6
 
-- Provider-local sampling controls next to thinking: temperature, top-p/top-k/min-p, output/thinking limits, seed and repetition penalties. Empty fields inherit server defaults; no server configuration changes.
-- Настройки генерации рядом с thinking: температура, top-p/top-k/min-p, лимиты ответа и рассуждений, seed и штрафы повторений. Пустые поля наследуют настройки сервера; глобальные настройки не изменяются.
+- Provider-local sampling controls next to thinking: temperature, top-p/top-k/min-p, output/thinking limits, seed and repetition penalties. Empty Max tokens means until done on compatible local endpoints; other empty fields inherit defaults. No server configuration changes.
+- Настройки генерации рядом с thinking: температура, top-p/top-k/min-p, лимиты ответа и рассуждений, seed и штрафы повторений. Пустой Max tokens — до завершения на совместимом локальном сервере; остальные пустые поля наследуют настройки. Глобальные настройки не изменяются.
 
 ## 1.0.5
 

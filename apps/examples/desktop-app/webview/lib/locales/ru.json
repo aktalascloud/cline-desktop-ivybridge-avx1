@@ -1171,5 +1171,7 @@
 	"Failed to save sampling settings": "Не удалось сохранить параметры генерации",
 	"Presence penalty": "Штраф за присутствие",
 	"Repetition penalty": "Штраф за повторения",
-	"Empty: inherit server settings. Applies to the next request. The output limit caps automatic budgets; other explicit session parameters take precedence.": "Пусто — настройки сервера. Применяется со следующего запроса. Максимум токенов ограничивает автобюджет; остальные явные параметры сессии имеют приоритет."
+	"Empty: inherit server settings. Applies to the next request. The output limit caps automatic budgets; other explicit session parameters take precedence.": "Пусто — настройки сервера. Применяется со следующего запроса. Максимум токенов ограничивает автобюджет; остальные явные параметры сессии имеют приоритет.",
+	"Until done": "До завершения",
+	"Max tokens: empty or 0 means until done. Requires an endpoint accepting max_tokens=-1; available context still applies.": "Max tokens: пусто или 0 — до завершения. Сервер должен поддерживать max_tokens=-1; доступный контекст остаётся границей."
 }

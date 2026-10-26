@@ -4,6 +4,14 @@ import {
 	withOpenAIChatSampling,
 } from "./openai-chat-sampling";
 describe("OpenAI Chat sampling defaults", () => {
+	it("unlimited mode replaces automatic client budgets with the local endpoint sentinel", () => {
+		expect(
+			withOpenAIChatSampling(
+				{ max_tokens: 23871, reasoning_effort: "xhigh", stream: true },
+				{ max_tokens: 0 },
+			),
+		).toEqual({ max_tokens: -1, reasoning_effort: "xhigh", stream: true });
+	});
 	it("caps automatic output budgets without exceeding tighter request limits", () => {
 		expect(
 			withOpenAIChatSampling({ max_tokens: 23871 }, { max_tokens: 2048 }),
@@ -60,7 +68,7 @@ describe("OpenAI Chat sampling defaults", () => {
 		{ top_k: 1.5 },
 		{ min_p: -1 },
 		{ seed: -1 },
-		{ max_tokens: 0 },
+		{ max_tokens: -1 },
 		{ reasoning_budget_tokens: -1 },
 		{ unknown: 1 },
 	])("rejects invalid persisted defaults %o", (value) => {
