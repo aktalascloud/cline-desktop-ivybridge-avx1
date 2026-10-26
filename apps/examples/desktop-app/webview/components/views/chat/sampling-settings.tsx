@@ -77,9 +77,11 @@ export function samplingPatch(
 export function SamplingSettings({
 	provider,
 	disabled,
+	onEnableUltra,
 }: {
 	provider: string;
 	disabled?: boolean;
+	onEnableUltra?: () => void;
 }) {
 	const t = useTranslation();
 	const [open, setOpen] = useState(false);
@@ -89,6 +91,8 @@ export function SamplingSettings({
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState("");
 	const [supported, setSupported] = useState(false);
+	const [authorMode, setAuthorMode] = useState("");
+	const [initialAuthorMode, setInitialAuthorMode] = useState("");
 	useEffect(() => {
 		setOpen(false);
 	}, [provider]);
@@ -107,6 +111,10 @@ export function SamplingSettings({
 						(f) => f.path === "sampling.temperature",
 					) === true;
 				setSupported(available);
+				const mode =
+					entry?.configValues?.authorReasoningMode === "ultra" ? "ultra" : "";
+				setAuthorMode(mode);
+				setInitialAuthorMode(mode);
 				const values = Object.fromEntries(
 					SAMPLING_FIELDS.map((f) => [
 						f.key,
@@ -134,12 +142,19 @@ export function SamplingSettings({
 		setSaving(true);
 		try {
 			const sampling = samplingPatch(draft, initial);
-			if (Object.keys(sampling).length) {
+			const modeChanged = authorMode !== initialAuthorMode;
+			if (Object.keys(sampling).length || modeChanged) {
 				await desktopClient.invoke("save_provider_settings", {
 					provider,
-					settings: { sampling },
+					settings: {
+						sampling,
+						...(modeChanged
+							? { authorReasoningMode: authorMode === "ultra" ? "ultra" : null }
+							: {}),
+					},
 				});
 				invalidateProviderCatalogCache();
+				if (modeChanged && authorMode === "ultra") onEnableUltra?.();
 			}
 			setOpen(false);
 		} catch (e) {
@@ -180,6 +195,24 @@ export function SamplingSettings({
 					<p>{t("Sampling requires an OpenAI-compatible Chat provider")}</p>
 				) : (
 					<>
+						<label className="my-2 flex items-center justify-between gap-3 text-sm">
+							<span>{t("Author reasoning mode")}</span>
+							<select
+								aria-label={t("Author reasoning mode")}
+								className="w-32 rounded border bg-background px-2 py-1"
+								disabled={saving}
+								value={authorMode}
+								onChange={(e) => setAuthorMode(e.target.value)}
+							>
+								<option value="">{t("Standard")}</option>
+								<option value="ultra">Ultra</option>
+							</select>
+						</label>
+						<p className="my-2 text-xs text-muted-foreground">
+							{t(
+								"Ultra requires a compatible author template and XHigh. None, Low, Medium and High stay unchanged. Start a new chat after switching author modes.",
+							)}
+						</p>
 						{SAMPLING_FIELDS.map((f) => (
 							<label
 								key={f.key}

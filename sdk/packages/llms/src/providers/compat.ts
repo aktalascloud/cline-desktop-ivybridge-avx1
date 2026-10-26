@@ -503,6 +503,7 @@ function buildGatewayConfig(config: ProviderConfig) {
 		models: buildGatewayModels(providerId, config),
 		options: {
 			sampling: config.sampling,
+			authorReasoningMode: config.authorReasoningMode,
 			region: config.region ?? config.gcp?.region,
 			project: config.gcp?.projectId,
 			projectId: config.gcp?.projectId,

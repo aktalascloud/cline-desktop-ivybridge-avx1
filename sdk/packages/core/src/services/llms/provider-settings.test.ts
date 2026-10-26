@@ -121,3 +121,23 @@ describe("local sampling settings", () => {
 		).toBe(false);
 	});
 });
+
+it("keeps the opt-in author mode distinct from API reasoning effort", () => {
+	const parsed = safeParseSettings({
+		provider: "local-test",
+		authorReasoningMode: "ultra",
+		reasoning: { enabled: true, effort: "xhigh" },
+	});
+	expect(parsed.success).toBe(true);
+	if (!parsed.success) return;
+	expect(toProviderConfig(parsed.data)).toMatchObject({
+		authorReasoningMode: "ultra",
+		reasoningEffort: "xhigh",
+	});
+	expect(
+		safeParseSettings({
+			provider: "local-test",
+			authorReasoningMode: "invented",
+		}).success,
+	).toBe(false);
+});

@@ -525,7 +525,7 @@ function ConfigFieldRow({
 					<option value="">{t("Not set")}</option>
 					{field.options?.map((option) => (
 						<option key={String(option.value)} value={String(option.value)}>
-							{option.label}
+							{t(option.label)}
 						</option>
 					))}
 				</select>

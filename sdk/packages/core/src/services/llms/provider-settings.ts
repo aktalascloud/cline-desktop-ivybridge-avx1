@@ -142,6 +142,7 @@ export type ModelCatalogConfig = ModelCatalogSettings;
 export const ProviderSettingsSchema = z.object({
 	provider: ProviderIdSchema,
 	sampling: Llms.OpenAIChatSamplingSchema.optional(),
+	authorReasoningMode: z.enum(["ultra"]).optional(),
 	apiKey: z.string().optional(),
 	auth: AuthSettingsSchema.optional(),
 	model: z.string().optional(),
@@ -265,6 +266,7 @@ export function toProviderConfig(
 		timeoutMs: settings.timeout,
 		maxOutputTokens: settings.maxTokens,
 		sampling: settings.sampling,
+		authorReasoningMode: settings.authorReasoningMode,
 		maxInputTokens: settings.contextWindow,
 		thinking: settings.reasoning?.enabled,
 		reasoningEffort,

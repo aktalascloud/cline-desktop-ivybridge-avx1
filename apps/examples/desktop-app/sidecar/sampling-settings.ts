@@ -28,6 +28,7 @@ export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
 			...existing,
 			providerId: id,
 			sampling: settings.sampling ?? {},
+			authorReasoningMode: settings.authorReasoningMode,
 		},
 	};
 }

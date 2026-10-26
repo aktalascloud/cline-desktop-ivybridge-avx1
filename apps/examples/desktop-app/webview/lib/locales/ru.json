@@ -1173,5 +1173,9 @@
 	"Repetition penalty": "Штраф за повторения",
 	"Empty: inherit server settings. Applies to the next request. The output limit caps automatic budgets; other explicit session parameters take precedence.": "Пусто — настройки сервера. Применяется со следующего запроса. Максимум токенов ограничивает автобюджет; остальные явные параметры сессии имеют приоритет.",
 	"Until done": "До завершения",
-	"Max tokens: empty or 0 means until done. Requires an endpoint accepting max_tokens=-1; available context still applies.": "Max tokens: пусто или 0 — до завершения. Сервер должен поддерживать max_tokens=-1; доступный контекст остаётся границей."
+	"Max tokens: empty or 0 means until done. Requires an endpoint accepting max_tokens=-1; available context still applies.": "Max tokens: пусто или 0 — до завершения. Сервер должен поддерживать max_tokens=-1; доступный контекст остаётся границей.",
+	"Author reasoning mode": "Авторский режим рассуждений",
+	"Ultra (author template)": "Ultra (авторский шаблон)",
+	"Standard": "Обычный",
+	"Ultra requires a compatible author template and XHigh. None, Low, Medium and High stay unchanged. Start a new chat after switching author modes.": "Ultra требует совместимый авторский шаблон и XHigh. None, Low, Medium и High работают как обычно. После смены авторского режима начните новый чат."
 }

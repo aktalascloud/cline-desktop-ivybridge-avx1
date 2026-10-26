@@ -134,6 +134,8 @@ export interface TokenConfig {
  * Reasoning/thinking model configuration
  */
 export interface ReasoningConfig {
+	/** Opt-in prompt mode for compatible author templates, used with XHigh only. */
+	authorReasoningMode?: "ultra";
 	/** Reasoning effort level */
 	reasoningEffort?: ReasoningEffort;
 	/** Extended thinking budget in tokens */

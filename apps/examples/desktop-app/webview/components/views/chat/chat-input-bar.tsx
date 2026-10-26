@@ -1764,7 +1764,13 @@ function ChatInputBarImpl({
 					</Select>
 					{executionTarget !== "cloud" &&
 					environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID ? (
-						<SamplingSettings provider={provider} disabled={isBusy} />
+						<SamplingSettings
+							provider={provider}
+							disabled={isBusy}
+							onEnableUltra={() =>
+								onReasoningChange({ thinking: true, reasoningEffort: "xhigh" })
+							}
+						/>
 					) : null}
 					{/* The chip controls this computer's runtime, which SSH sessions don't use. */}
 					{executionTarget !== "cloud" &&

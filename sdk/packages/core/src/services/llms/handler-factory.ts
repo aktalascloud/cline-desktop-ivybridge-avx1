@@ -40,6 +40,7 @@ function buildGatewayProviderOptions(
 	const options: Record<string, unknown> = {
 		region: config.region,
 		sampling: config.sampling,
+		authorReasoningMode: config.authorReasoningMode,
 		apiLine: config.apiLine,
 		openRouterProviderSorting: config.openRouterProviderSorting,
 		modelCatalog: config.modelCatalog,

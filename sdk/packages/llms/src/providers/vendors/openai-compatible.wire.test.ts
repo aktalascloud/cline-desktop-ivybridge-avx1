@@ -41,6 +41,7 @@ async function wireBody(input: {
 	reasoningOptions: readonly ModelReasoningOption[] | undefined;
 	capabilities?: ModelInfo["capabilities"];
 	sampling?: Record<string, number>;
+	authorReasoningMode?: "ultra";
 }): Promise<Record<string, unknown>> {
 	const providerId = input.providerId ?? PROVIDER_ID;
 	const configuredModel = input.reasoningOptions || input.capabilities;
@@ -58,7 +59,10 @@ async function wireBody(input: {
 				providerId,
 				apiKey: "test-key",
 				fetch: fetchStub,
-				options: { sampling: input.sampling },
+				options: {
+					sampling: input.sampling,
+					authorReasoningMode: input.authorReasoningMode,
+				},
 				// A config model overrides a builtin of the same id, so these
 				// definitions decide what the gateway sees regardless of the catalog.
 				...(configuredModel
@@ -239,4 +243,24 @@ it("forwards until-done mode to a compatible endpoint without an automatic clien
 	});
 	expect(body.max_tokens).toBe(-1);
 	expect(body.reasoning_effort).toBe("xhigh");
+});
+
+it.each([
+	"none",
+	"low",
+	"medium",
+	"high",
+	"xhigh",
+] as const)("author Ultra preserves the API effort %s and activates only for High/XHigh", async (effort) => {
+	const body = await wireBody({
+		modelId: "fixture-unlisted",
+		reasoning: effort === "none" ? { enabled: false } : { effort },
+		reasoningOptions: undefined,
+		authorReasoningMode: "ultra",
+	});
+	expect(body.reasoning_effort).toBe(effort);
+	const messages = body.messages as Array<{ content: unknown }>;
+	expect(messages.filter((m) => m.content === "{REASON:ultra}")).toHaveLength(
+		effort === "xhigh" ? 1 : 0,
+	);
 });

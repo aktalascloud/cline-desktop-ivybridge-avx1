@@ -3413,3 +3413,35 @@ describe("provider-local sampling persistence", () => {
 		}
 	});
 });
+
+it("persists and clears the author mode without altering sampling or credentials", async () => {
+	const { manager, cleanup } = makeTempManager();
+	try {
+		manager.saveProviderSettings({
+			provider: "local-test",
+			apiKey: "test-only",
+			sampling: { max_tokens: 0 },
+		});
+		await saveLocalProviderSettings(manager, {
+			providerId: "local-test",
+			authorReasoningMode: "ultra",
+		});
+		expect(manager.getProviderSettings("local-test")).toMatchObject({
+			apiKey: "test-only",
+			sampling: { max_tokens: 0 },
+			authorReasoningMode: "ultra",
+		});
+		await saveLocalProviderSettings(manager, {
+			providerId: "local-test",
+			authorReasoningMode: null,
+		});
+		expect(
+			manager.getProviderSettings("local-test")?.authorReasoningMode,
+		).toBeUndefined();
+		expect(manager.getProviderSettings("local-test")?.sampling).toEqual({
+			max_tokens: 0,
+		});
+	} finally {
+		cleanup();
+	}
+});

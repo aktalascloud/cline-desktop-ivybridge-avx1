@@ -276,6 +276,15 @@ function readProviderConfigFields(
 	return fields.filter(isProviderConfigField);
 }
 
+const AUTHOR_MODE_FIELD: ProviderConfigField = {
+	path: "authorReasoningMode",
+	label: "Author reasoning mode",
+	type: "select",
+	options: [{ label: "Ultra (author template)", value: "ultra" }],
+	description:
+		"Ultra requires a compatible author template and XHigh. None, Low, Medium and High stay unchanged. Start a new chat after switching author modes.",
+};
+
 const LOCAL_SAMPLING_FIELDS: ProviderConfigField[] = [
 	["temperature", "Temperature"],
 	["top_p", "Top-p"],
@@ -1020,7 +1029,7 @@ export async function listLocalProviders(
 					...((persistedSettings?.client ?? info?.client) ===
 						"openai-compatible" &&
 					(persistedSettings?.protocol ?? info?.protocol) === "openai-chat"
-						? LOCAL_SAMPLING_FIELDS
+						? [...LOCAL_SAMPLING_FIELDS, AUTHOR_MODE_FIELD]
 						: []),
 				];
 				return {
@@ -1385,6 +1394,11 @@ async function saveLocalProviderSettingsUnlocked(
 			if (val.length === 0) delete next[key];
 			else next[key] = request[key];
 		}
+	}
+
+	if (Object.hasOwn(request, "authorReasoningMode")) {
+		if (request.authorReasoningMode === null) delete next.authorReasoningMode;
+		else next.authorReasoningMode = request.authorReasoningMode;
 	}
 
 	// Scalar passthrough fields

@@ -54,3 +54,29 @@ describe("local sampling connection refresh", () => {
 		expect(refreshLocalSamplingConfig(config)).toBe(config);
 	});
 });
+
+it("clears Ultra in a live session when the provider mode is switched off", () => {
+	read.mockReturnValue({
+		client: "openai-compatible",
+		protocol: "openai-chat",
+		authorReasoningMode: "ultra",
+	});
+	const base = {
+		provider: "local-test",
+		model: "historical-model",
+		reasoningEffort: "xhigh",
+		providerConfig: { providerId: "local-test", apiKey: "private-test-key" },
+	};
+	const ultra = refreshLocalSamplingConfig(base);
+	expect(
+		(ultra.providerConfig as Record<string, unknown>).authorReasoningMode,
+	).toBe("ultra");
+	read.mockReturnValue({
+		client: "openai-compatible",
+		protocol: "openai-chat",
+	});
+	const off = refreshLocalSamplingConfig(ultra);
+	expect(JSON.stringify(off)).toBe(
+		JSON.stringify(refreshLocalSamplingConfig(base)),
+	);
+});

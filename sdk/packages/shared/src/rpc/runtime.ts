@@ -345,6 +345,8 @@ export interface SaveProviderSettingsActionRequest {
 	baseUrl?: string;
 	headers?: Record<string, string>;
 	timeout?: number;
+	/** Opt-in author template mode; null clears the default. */
+	authorReasoningMode?: "ultra" | null;
 	/** OpenAI Chat sampling defaults; null values clear individual overrides. */
 	sampling?: {
 		presence_penalty?: number | null;

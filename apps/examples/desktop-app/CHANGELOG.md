@@ -2,6 +2,8 @@
 
 ## 1.0.6
 
+- Optional Ultra author-template mode with XHigh; ordinary None/Low/Medium remain unchanged.
+- Дополнительный режим авторского шаблона Ultra с XHigh; обычные None/Low/Medium сохранены.
 - Provider-local sampling controls next to thinking: temperature, top-p/top-k/min-p, output/thinking limits, seed and repetition penalties. Empty Max tokens means until done on compatible local endpoints; other empty fields inherit defaults. No server configuration changes.
 - Настройки генерации рядом с thinking: температура, top-p/top-k/min-p, лимиты ответа и рассуждений, seed и штрафы повторений. Пустой Max tokens — до завершения на совместимом локальном сервере; остальные пустые поля наследуют настройки. Глобальные настройки не изменяются.
 

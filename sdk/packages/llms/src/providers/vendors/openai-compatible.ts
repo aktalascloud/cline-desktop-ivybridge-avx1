@@ -1,3 +1,4 @@
+import { withAuthorReasoningMode } from "../routing/author-reasoning-mode";
 import { withOpenAIChatSampling } from "../routing/openai-chat-sampling";
 import { createGateway } from "@ai-sdk/gateway";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
@@ -250,7 +251,10 @@ export async function createOpenAICompatibleProviderModule(
 		includeUsage: true,
 		transformRequestBody: (body: Record<string, unknown>) =>
 			withMaxCompletionTokensForReasoningModels(
-				withOpenAIChatSampling(body, config.options?.sampling),
+				withAuthorReasoningMode(
+					withOpenAIChatSampling(body, config.options?.sampling),
+					config.options?.authorReasoningMode,
+				),
 			),
 	} as never);
 	const useOpenRouterImageTransport =
