@@ -40,6 +40,7 @@ async function wireBody(input: {
 	reasoning: GatewayStreamRequest["reasoning"];
 	reasoningOptions: readonly ModelReasoningOption[] | undefined;
 	capabilities?: ModelInfo["capabilities"];
+	sampling?: Record<string, number>;
 }): Promise<Record<string, unknown>> {
 	const providerId = input.providerId ?? PROVIDER_ID;
 	const configuredModel = input.reasoningOptions || input.capabilities;
@@ -57,6 +58,7 @@ async function wireBody(input: {
 				providerId,
 				apiKey: "test-key",
 				fetch: fetchStub,
+				options: { sampling: input.sampling },
 				// A config model overrides a builtin of the same id, so these
 				// definitions decide what the gateway sees regardless of the catalog.
 				...(configuredModel
@@ -181,5 +183,49 @@ describe("OpenAI-compatible reasoning disable wire contract", () => {
 			capabilities: ["text"],
 		});
 		expect(body).not.toHaveProperty("reasoning_effort");
+	});
+});
+
+describe("OpenAI-compatible local sampling wire", () => {
+	it("forwards all sampling defaults through the real adapter, retaining explicit request max_tokens", async () => {
+		const body = await wireBody({
+			modelId: "fixture-unlisted",
+			reasoning: { effort: "xhigh" },
+			reasoningOptions: undefined,
+			sampling: {
+				temperature: 0.7,
+				top_p: 0.9,
+				top_k: 20,
+				min_p: 0.05,
+				max_tokens: 4096,
+				seed: 0,
+				reasoning_budget_tokens: 1024,
+				repetition_penalty: 1,
+				presence_penalty: 0,
+			},
+		});
+		expect(body).toMatchObject({
+			temperature: 0.7,
+			top_p: 0.9,
+			top_k: 20,
+			min_p: 0.05,
+			max_tokens: 16,
+			seed: 0,
+			reasoning_budget_tokens: 1024,
+			repetition_penalty: 1,
+			presence_penalty: 0,
+			reasoning_effort: "xhigh",
+			stream: true,
+		});
+	});
+	it("does not add sampling fields when unset", async () => {
+		const body = await wireBody({
+			modelId: "fixture-unlisted",
+			reasoning: { enabled: false },
+			reasoningOptions: undefined,
+		});
+		expect(body.reasoning_effort).toBe("none");
+		expect(body).not.toHaveProperty("min_p");
+		expect(body).not.toHaveProperty("reasoning_budget_tokens");
 	});
 });

@@ -345,6 +345,18 @@ export interface SaveProviderSettingsActionRequest {
 	baseUrl?: string;
 	headers?: Record<string, string>;
 	timeout?: number;
+	/** OpenAI Chat sampling defaults; null values clear individual overrides. */
+	sampling?: {
+		presence_penalty?: number | null;
+		repetition_penalty?: number | null;
+		temperature?: number | null;
+		top_p?: number | null;
+		top_k?: number | null;
+		min_p?: number | null;
+		max_tokens?: number | null;
+		seed?: number | null;
+		reasoning_budget_tokens?: number | null;
+	};
 	// Reasoning/thinking configuration
 	reasoning?: {
 		enabled?: boolean;

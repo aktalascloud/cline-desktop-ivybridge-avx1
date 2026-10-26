@@ -1,3 +1,4 @@
+import { withOpenAIChatSampling } from "../routing/openai-chat-sampling";
 import { createGateway } from "@ai-sdk/gateway";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { LanguageModelV4 } from "@ai-sdk/provider";
@@ -247,7 +248,10 @@ export async function createOpenAICompatibleProviderModule(
 		...(config.headers ? { headers: config.headers } : {}),
 		...(providerFetch ? { fetch: providerFetch } : {}),
 		includeUsage: true,
-		transformRequestBody: withMaxCompletionTokensForReasoningModels,
+		transformRequestBody: (body: Record<string, unknown>) =>
+			withMaxCompletionTokensForReasoningModels(
+				withOpenAIChatSampling(body, config.options?.sampling),
+			),
 	} as never);
 	const useOpenRouterImageTransport =
 		context.provider.metadata?.imageTransport === "openrouter" &&

@@ -1732,9 +1732,15 @@ describe("audio transcription", () => {
 	});
 
 	it("saves batch-only transcription for recorded voice input", async () => {
-        await saveVoiceInputSettings(manager, {providerId: "groq", modelId: "whisper-large-v3"});
-        expect(manager.getVoiceInputSettings()).toMatchObject({providerId: "groq", modelId: "whisper-large-v3"});
-    });
+		await saveVoiceInputSettings(manager, {
+			providerId: "groq",
+			modelId: "whisper-large-v3",
+		});
+		expect(manager.getVoiceInputSettings()).toMatchObject({
+			providerId: "groq",
+			modelId: "whisper-large-v3",
+		});
+	});
 
 	it.each([
 		["groq", "realtime-whisper"],
@@ -1763,11 +1769,30 @@ describe("audio transcription", () => {
 
 	it("does not invent builtin realtime models for a custom speech endpoint", async () => {
 		LlmsModels.registerProvider({
-			provider: {id: "local-recording", source: "file", name: "Local speech", defaultModelId: "whisper-1", protocol: "openai-chat", client: "openai-compatible", capabilities: []},
-			models: {"whisper-1": {id: "whisper-1", name: "Whisper", operation: "transcription", modalities: {input: ["audio"], output: ["text"]}}},
+			provider: {
+				id: "local-recording",
+				source: "file",
+				name: "Local speech",
+				defaultModelId: "whisper-1",
+				protocol: "openai-chat",
+				client: "openai-compatible",
+				capabilities: [],
+			},
+			models: {
+				"whisper-1": {
+					id: "whisper-1",
+					name: "Whisper",
+					operation: "transcription",
+					modalities: { input: ["audio"], output: ["text"] },
+				},
+			},
 		});
-		const result = await getLocalTranscriptionModels("local-recording", {providerId: "local-recording", routingProviderId: "openai-native", modelId: "whisper-1"});
-		expect(result.models.map(model => model.id)).toEqual(["whisper-1"]);
+		const result = await getLocalTranscriptionModels("local-recording", {
+			providerId: "local-recording",
+			routingProviderId: "openai-native",
+			modelId: "whisper-1",
+		});
+		expect(result.models.map((model) => model.id)).toEqual(["whisper-1"]);
 	});
 
 	it("rejects a voice input selection that is not an audio-to-text model", async () => {
@@ -3336,5 +3361,55 @@ describe("refreshProviderModelsFromSource", () => {
 		expect(await readModelsFile(resolveModelsRegistryPath(manager))).toEqual(
 			modelsState,
 		);
+	});
+});
+
+describe("provider-local sampling persistence", () => {
+	it("merges, clears and validates sampling without losing credentials or speech settings", async () => {
+		const { manager, cleanup } = makeTempManager();
+		try {
+			manager.saveProviderSettings({
+				provider: "local-test",
+				apiKey: "test-only",
+				client: "openai-compatible",
+				protocol: "openai-chat",
+				sampling: { top_k: 20, temperature: 1 },
+			});
+			manager.saveProviderSettings({
+				provider: "speech-test",
+				apiKey: "speech-test-only",
+			});
+			await saveLocalProviderSettings(manager, {
+				providerId: "local-test",
+				sampling: { temperature: 0, seed: 0 },
+			});
+			expect(manager.getProviderSettings("local-test")).toMatchObject({
+				apiKey: "test-only",
+				sampling: { temperature: 0, top_k: 20, seed: 0 },
+			});
+			await saveLocalProviderSettings(manager, {
+				providerId: "local-test",
+				sampling: { top_k: null },
+			});
+			expect(manager.getProviderSettings("local-test")?.sampling).toEqual({
+				temperature: 0,
+				seed: 0,
+			});
+			await expect(
+				saveLocalProviderSettings(manager, {
+					providerId: "local-test",
+					sampling: { top_p: 2 },
+				}),
+			).rejects.toThrow();
+			expect(manager.getProviderSettings("local-test")?.sampling).toEqual({
+				temperature: 0,
+				seed: 0,
+			});
+			expect(manager.getProviderSettings("speech-test")?.apiKey).toBe(
+				"speech-test-only",
+			);
+		} finally {
+			cleanup();
+		}
 	});
 });

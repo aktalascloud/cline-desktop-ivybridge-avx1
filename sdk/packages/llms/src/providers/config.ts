@@ -120,6 +120,8 @@ export interface ModelConfig {
  * Token limits configuration
  */
 export interface TokenConfig {
+	/** Optional OpenAI Chat defaults for local compatible endpoints. */
+	sampling?: import("./routing/openai-chat-sampling").OpenAIChatSampling;
 	/** Maximum input tokens (overrides model default) */
 	maxInputTokens?: number;
 	/** Maximum output tokens (overrides model default) */

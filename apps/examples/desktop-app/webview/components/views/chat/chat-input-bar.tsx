@@ -87,6 +87,7 @@ import { transcribeRecordedAudio } from "@/lib/recorded-transcription";
 import { startStreamingTranscription } from "@/lib/streaming-transcription";
 import { cn } from "@/lib/utils";
 import { LOCAL_WORKSPACE_ENVIRONMENT_ID } from "@/lib/workspace-paths";
+import { SamplingSettings } from "./sampling-settings";
 import { LocalModelIndicator } from "./local-model-indicator";
 import { TokenUsageRing } from "./token-usage-ring";
 import { WorkspaceSelector as WorkspaceSelectorImpl } from "./workspace-selector";
@@ -833,19 +834,30 @@ function ChatInputBarImpl({
 	}, []);
 
 	const speechActiveRef = useRef(false);
-	const handleSpeechInputActiveChange = useCallback((active: boolean) => {
-		if (!transcriptionTarget?.supportsStreaming) {
-			if (active && !speechActiveRef.current) handleStreamingTranscriptionStart();
-			if (!active) handleStreamingTranscriptionEnd();
-		}
-		speechActiveRef.current = active;
-		setSpeechInputActive(active);
-	}, [transcriptionTarget?.supportsStreaming, handleStreamingTranscriptionStart, handleStreamingTranscriptionEnd]);
+	const handleSpeechInputActiveChange = useCallback(
+		(active: boolean) => {
+			if (!transcriptionTarget?.supportsStreaming) {
+				if (active && !speechActiveRef.current)
+					handleStreamingTranscriptionStart();
+				if (!active) handleStreamingTranscriptionEnd();
+			}
+			speechActiveRef.current = active;
+			setSpeechInputActive(active);
+		},
+		[
+			transcriptionTarget?.supportsStreaming,
+			handleStreamingTranscriptionStart,
+			handleStreamingTranscriptionEnd,
+		],
+	);
 
-	const handleVoiceTranscriptionChange = useCallback((text: string, source?: "speech-recognition" | "media-recorder") => {
-		handleStreamingTranscriptionChange(text);
-		if (source === "media-recorder") handleStreamingTranscriptionEnd();
-	}, [handleStreamingTranscriptionChange, handleStreamingTranscriptionEnd]);
+	const handleVoiceTranscriptionChange = useCallback(
+		(text: string, source?: "speech-recognition" | "media-recorder") => {
+			handleStreamingTranscriptionChange(text);
+			if (source === "media-recorder") handleStreamingTranscriptionEnd();
+		},
+		[handleStreamingTranscriptionChange, handleStreamingTranscriptionEnd],
+	);
 
 	const handleStartStreamingTranscription = useCallback(() => {
 		const generation = transcriptionGenerationRef.current;
@@ -1571,8 +1583,16 @@ function ChatInputBarImpl({
 									onStreamingEnd={handleStreamingTranscriptionEnd}
 									onStreamingStart={handleStreamingTranscriptionStart}
 									onTranscriptionChange={handleVoiceTranscriptionChange}
-                                    onAudioRecorded={transcriptionTarget.supportsStreaming ? undefined : transcribeRecordedAudio}
-									recordingMode={transcriptionTarget.supportsStreaming ? "streaming" : "media-recorder"}
+									onAudioRecorded={
+										transcriptionTarget.supportsStreaming
+											? undefined
+											: transcribeRecordedAudio
+									}
+									recordingMode={
+										transcriptionTarget.supportsStreaming
+											? "streaming"
+											: "media-recorder"
+									}
 									title={`${t("Voice input")}: ${transcriptionTarget.providerName} / ${transcriptionTarget.modelName}`}
 								/>
 							) : null}
@@ -1742,6 +1762,10 @@ function ChatInputBarImpl({
 							))}
 						</SelectContent>
 					</Select>
+					{executionTarget !== "cloud" &&
+					environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID ? (
+						<SamplingSettings provider={provider} disabled={isBusy} />
+					) : null}
 					{/* The chip controls this computer's runtime, which SSH sessions don't use. */}
 					{executionTarget !== "cloud" &&
 					environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID &&

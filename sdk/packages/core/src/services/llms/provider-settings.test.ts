@@ -98,3 +98,26 @@ describe("provider settings", () => {
 		});
 	});
 });
+
+describe("local sampling settings", () => {
+	it("validates and projects provider defaults without changing reasoning", () => {
+		const parsed = safeParseSettings({
+			provider: "local-test",
+			client: "openai-compatible",
+			protocol: "openai-chat",
+			sampling: { temperature: 0, seed: 0, reasoning_budget_tokens: 0 },
+			reasoning: { enabled: true, effort: "xhigh" },
+		});
+		expect(parsed.success).toBe(true);
+		if (!parsed.success) return;
+		expect(toProviderConfig(parsed.data)).toMatchObject({
+			sampling: { temperature: 0, seed: 0, reasoning_budget_tokens: 0 },
+			thinking: true,
+			reasoningEffort: "xhigh",
+		});
+		expect(
+			safeParseSettings({ provider: "local-test", sampling: { top_k: 65 } })
+				.success,
+		).toBe(false);
+	});
+});

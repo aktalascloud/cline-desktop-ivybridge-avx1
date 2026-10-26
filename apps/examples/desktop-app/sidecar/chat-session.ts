@@ -62,6 +62,7 @@ import {
 } from "./context";
 import { isCloudAgentsEnabled } from "./feature-flags";
 import { readSessionManifest, sharedSessionDataDir } from "./paths";
+import { refreshLocalSamplingConfig } from "./sampling-settings";
 import { runPluginSlashCommand } from "./plugin-commands";
 import { derivePromptFromMessages } from "./session-data/common";
 import { persistSessionMessages } from "./session-data/messages";
@@ -1707,9 +1708,11 @@ async function handleSend(
 	if (!delivery && session?.busy) {
 		delivery = "queue";
 	}
-	const nextConfig = request.config
+	let nextConfig = request.config
 		? mergeSessionConfig(session?.config ?? {}, request.config)
 		: session?.config;
+	if (binding.kind === "local" && nextConfig)
+		nextConfig = refreshLocalSamplingConfig(nextConfig);
 	const providerChanged = Boolean(
 		session &&
 			request.config &&
@@ -1732,7 +1735,12 @@ async function handleSend(
 		}
 	}
 	try {
-		if ((request.config || binding.kind === "ssh") && nextConfig) {
+		if (
+			(request.config ||
+				binding.kind === "ssh" ||
+				nextConfig !== session?.config) &&
+			nextConfig
+		) {
 			if (providerChanged && session) {
 				await rebuildSessionForProviderChange(
 					ctx,

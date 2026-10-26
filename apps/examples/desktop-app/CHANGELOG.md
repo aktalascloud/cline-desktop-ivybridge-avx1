@@ -1,5 +1,10 @@
 # Cline Desktop Changelog
 
+## 1.0.6
+
+- Provider-local sampling controls next to thinking: temperature, top-p/top-k/min-p, output/thinking limits, seed and repetition penalties. Empty fields inherit server defaults; no server configuration changes.
+- Настройки генерации рядом с thinking: температура, top-p/top-k/min-p, лимиты ответа и рассуждений, seed и штрафы повторений. Пустые поля наследуют настройки сервера; глобальные настройки не изменяются.
+
 ## 1.0.5
 
 - Updated upstream Desktop, session reattachment/cancellation, Changes pane and optional local-runtime management. Added trust/junction guards and SQLite cleanup; improved PowerShell exit codes, cancellation hooks, inventory refresh and Russian translation. Component-aware validation and pinned dependency caches.

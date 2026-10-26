@@ -276,6 +276,25 @@ function readProviderConfigFields(
 	return fields.filter(isProviderConfigField);
 }
 
+const LOCAL_SAMPLING_FIELDS: ProviderConfigField[] = [
+	["temperature", "Temperature"],
+	["top_p", "Top-p"],
+	["top_k", "Top-k"],
+	["min_p", "Min-p"],
+	["max_tokens", "Max tokens"],
+	["seed", "Seed"],
+	["presence_penalty", "Presence penalty"],
+	["repetition_penalty", "Repetition penalty"],
+	["reasoning_budget_tokens", "Thinking token limit"],
+].map(([key, label]) => ({
+	path: `sampling.${key}`,
+	label: label!,
+	type: "number",
+	description:
+		"Empty: inherit server settings. Applies to the next request; explicit session parameters take precedence.",
+	placeholder: "Server default",
+}));
+
 const API_KEY_CONFIG_FIELD: ProviderConfigField = {
 	path: "apiKey",
 	label: "API Key",
@@ -993,9 +1012,15 @@ export async function listLocalProviders(
 					info?.capabilities,
 					persistedSettings?.capabilities,
 				);
-				const configFields =
-					readProviderConfigFields(info?.metadata) ??
-					fallbackProviderConfigFields(info);
+				const configFields = [
+					...(readProviderConfigFields(info?.metadata) ??
+						fallbackProviderConfigFields(info)),
+					...((persistedSettings?.client ?? info?.client) ===
+						"openai-compatible" &&
+					(persistedSettings?.protocol ?? info?.protocol) === "openai-chat"
+						? LOCAL_SAMPLING_FIELDS
+						: []),
+				];
 				return {
 					provider: {
 						id,
@@ -1137,9 +1162,10 @@ export async function getLocalTranscriptionModels(
 	const modelMap = await resolveProviderModelMap(id, config);
 	const models = toSortedProviderModels({
 		...modelMap,
-		...(providerConfig.routingProviderId && providerConfig.routingProviderId !== id
-            ? {}
-            : LlmsModels.getBuiltinStreamingTranscriptionModels(id)),
+		...(providerConfig.routingProviderId &&
+		providerConfig.routingProviderId !== id
+			? {}
+			: LlmsModels.getBuiltinStreamingTranscriptionModels(id)),
 	});
 	return {
 		providerId: id,
@@ -1378,6 +1404,7 @@ async function saveLocalProviderSettingsUnlocked(
 		"auth",
 		"headers",
 		"reasoning",
+		"sampling",
 		"aws",
 		"gcp",
 		"azure",

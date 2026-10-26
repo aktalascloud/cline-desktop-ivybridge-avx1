@@ -147,6 +147,10 @@ export {
 	type ClineWebSearchResult,
 	createCline,
 } from "./providers/vendors/cline";
+export {
+	OpenAIChatSamplingSchema,
+	type OpenAIChatSampling,
+} from "./providers/routing/openai-chat-sampling";
 export { LangfuseAttributesSpanProcessor } from "./services/LangfuseAttributesSpanProcessor";
 export {
 	disposeLangfuseTelemetry,
