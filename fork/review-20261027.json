@@ -86,10 +86,10 @@
     {
       "url": "https://github.com/cline/cline/pull/15345",
       "sha": "7a4835e4ac823b3d45984ca737efd6632bf67bad",
-      "status": "integrated-awaiting-final-qualification",
-      "purpose": "CLI-only loopback opt-in, bounded ephemeral per-session shell snapshot; SDK/remote defaults unchanged. Runtime patch retained; docs differ locally.",
+      "status": "integrated-qualified-on-windows",
+      "purpose": "CLI-only loopback opt-in, bounded ephemeral per-session shell snapshot; SDK/remote defaults unchanged. Runtime patch retained; SDK docs adapted locally.",
       "diff_sha256": "afd2a4c5c6754d5edd0efd85ee9f02336d0896bd3493933e94055cee47789983",
-      "verification": "Targeted local Core 103 passed/2 conditional skipped, LLM/telemetry 101 passed for selected changes; CI/installed/package gates pending"
+      "verification": "Exact-source Windows CI 40450801815; targeted regressions/typecheck; production frontend; signed NSIS; installed offline tool/MCP/stream/cancellation; anonymous package/signature verification."
     },
     {
       "url": "https://github.com/cline/cline/pull/15375",
@@ -206,10 +206,10 @@
     {
       "url": "https://github.com/cline/cline/pull/15363",
       "sha": "f9d2879e5b7cf742003c921f6df817a90258ffa3",
-      "status": "integrated-awaiting-final-qualification",
+      "status": "integrated-qualified-on-windows",
       "purpose": "Adapted to exact 5.10.1 in the existing Langfuse 5.x family; same AI SDK 7 peer, patched otel chain, 66 to 65 audit entries.",
       "diff_sha256": "ea7425da203523d3814d1fd79afc73703aa35d884418df1142cd40d3d75d36e7",
-      "verification": "Targeted local Core 103 passed/2 conditional skipped, LLM/telemetry 101 passed for selected changes; CI/installed/package gates pending"
+      "verification": "Exact-source Windows CI 40450801815; targeted regressions/typecheck; production frontend; signed NSIS; installed offline tool/MCP/stream/cancellation; anonymous package/signature verification."
     },
     {
       "url": "https://github.com/cline/cline/pull/15287",
@@ -326,10 +326,10 @@
     {
       "url": "https://github.com/cline/cline/pull/15347",
       "sha": "5eda8284c6c8dd1b333b94f0e3732cf47b039a6c",
-      "status": "integrated-awaiting-final-qualification",
+      "status": "integrated-qualified-on-windows",
       "purpose": "Both MCP transports paginate; own repeated-cursor/type/page-limit guards added with real transport regressions.",
       "diff_sha256": "e85f172f8c2c5b2af17ff4ab321ac5c065aebb3fadff3d65d5eda07168798e66",
-      "verification": "Targeted local Core 103 passed/2 conditional skipped, LLM/telemetry 101 passed for selected changes; CI/installed/package gates pending"
+      "verification": "Exact-source Windows CI 40450801815; targeted regressions/typecheck; production frontend; signed NSIS; installed offline tool/MCP/stream/cancellation; anonymous package/signature verification."
     },
     {
       "url": "https://github.com/cline/cline/pull/15340",
@@ -342,10 +342,10 @@
     {
       "url": "https://github.com/cline/cline/pull/15296",
       "sha": "3aa08f0a76009c308127703130cac74ae4b1e1c7",
-      "status": "integrated-awaiting-final-qualification",
+      "status": "integrated-qualified-on-windows",
       "purpose": "Already merged in the four newly sanitized main commits; macOS-only duplicate menu callback removed.",
       "diff_sha256": "d020a06e4ee3b15a51d4ab842b4252fdeb8c3140ebebd46945a68bff7c1a07d8",
-      "verification": "Targeted local Core 103 passed/2 conditional skipped, LLM/telemetry 101 passed for selected changes; CI/installed/package gates pending"
+      "verification": "Exact-source Windows CI 40450801815; targeted regressions/typecheck; production frontend; signed NSIS; installed offline tool/MCP/stream/cancellation; anonymous package/signature verification. macOS-only implementation reviewed; no macOS runtime verification."
     },
     {
       "url": "https://github.com/amaybaum-dev/cline/pull/10",
@@ -476,5 +476,16 @@
     }
   ],
   "global_search_applicable_patches": 0,
-  "global_search_scope": "Ivy Bridge game generator ISA rejection and SoX DSD DSP kernels are not dependencies of this project; neither applied."
+  "global_search_scope": "Ivy Bridge game generator ISA rejection and SoX DSD DSP kernels are not dependencies of this project; neither applied.",
+  "additional_reference_repositories": [
+    {
+      "repo": "TheHubUser4860938/Strata-Mnemosyne",
+      "head_sha": "2ac28be317c8ecbabc935f6153333506fb80f3e2",
+      "checked_utc": "2026-10-27T05:05:15.016336+00:00",
+      "status": "reviewed-no-open-or-recent-closed-prs",
+      "issues_status": "disabled",
+      "purpose": "Read-only Adaptive API reference; backend owned by user, no memory port",
+      "source_code_imported": false
+    }
+  ]
 }

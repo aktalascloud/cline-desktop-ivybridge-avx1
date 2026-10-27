@@ -125,7 +125,9 @@
     "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.7",
     "asset_sha256": "dd951ff1ec61e1adb7ba6212b802b759fefb8df592951805bd18feb81b817dec",
     "asset_count": 1,
-    "anonymous_download_verified": false
+    "anonymous_download_verified": true,
+    "feed_signature_verified": true,
+    "source_tag_verified": true
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -252,6 +254,17 @@
     "native_gui": "waived",
     "authenticode": "NotSigned",
     "research_semantic_review_scoped": true,
-    "review_ledger": "fork/review-20261027.json"
+    "review_ledger": "fork/review-20261027.json",
+    "additional_reference_repositories": [
+      {
+        "repo": "TheHubUser4860938/Strata-Mnemosyne",
+        "head_sha": "2ac28be317c8ecbabc935f6153333506fb80f3e2",
+        "checked_utc": "2026-10-27T05:05:15.016336+00:00",
+        "status": "reviewed-no-open-or-recent-closed-prs",
+        "issues_status": "disabled",
+        "purpose": "Read-only Adaptive API reference; backend owned by user, no memory port",
+        "source_code_imported": false
+      }
+    ]
   }
 }
