@@ -1,9 +1,9 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.8",
+  "version": "1.0.9",
   "upstream_sha": "c35b729049c7bb26c340df63ea9235c40b32dd29",
-  "build_source_sha": "6439433d55e161ecbdfeda639adae698906d7057",
+  "build_source_sha": "27ea890e0206ab5873e1792529c7a592514b3ee4",
   "release_approved": true,
   "native": {
     "kind": "source-built",
@@ -23,7 +23,7 @@
     "c_flags": "ring cc defaults observed: /MD /O2 /Brepro and vendor warning/function flags; no global CFLAGS override",
     "pgo": false,
     "affinity_or_numa_pinning": false,
-    "executable_sha256": "752ae80bb8099e93f65dbbeb58f90e2284adf5c8c29c4723cc4fbeabe7ccb8b6"
+    "executable_sha256": "42767b844dde97832ae52d9f85e0e4eccb6e5cd83bf691bb8a84a3c80b8ad36d"
   },
   "cli_and_hub": {
     "version": "3.0.74",
@@ -36,7 +36,7 @@
       "fork storage bootstrap before imports",
       "official auto-update disabled for fork distribution"
     ],
-    "sha256": "24fd0d676456763ddb8691af59d94b71a17c41ec24a8cdd06b86e84751151c49"
+    "sha256": "79f63741f1dfd9704fd93a8ba27398089ac387402e0d229da8eefe09d29f3f7d"
   },
   "backend": {
     "kind": "source-built JS bundle",
@@ -45,7 +45,7 @@
       "minify",
       "no telemetry credentials inlined"
     ],
-    "sha256": "a542e08af55d1ba2941d4923a9719eab098ca01b5037623749ab5331bdce672c"
+    "sha256": "97e5fe4a9ad621c5152aa3a8bdff67d6982c9ca5bf601ca2b60a228bcb960aa3"
   },
   "frontend": {
     "kind": "source-built static export",
@@ -149,7 +149,7 @@
   ],
   "selected_npm": [],
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "915537f7a4a4d1feb9a40cd5aa066032b047381275b94696afc4a766b7f70ee5",
+  "bun_lock_sha256": "d64b82027e2bdec1eb85f90d2a196baa3cd1faa290cb88e6f6e116938a7f2d2c",
   "cuda_used": false,
   "llm_models_included": false,
   "authenticode": "NotSigned; Tauri updater signature is a separate verification mechanism",
@@ -260,8 +260,15 @@
       "upstream_path": "crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi",
       "tauri_cli": "2.12.3",
       "original_sha256": "8ae02c66f8adb4a0d15d97f984fbacd2b44262d8a4d03fefaf6177f67f7008e5",
-      "change": "currentUser RequestExecutionLevel user -> admin; installation scope, registry and data directories unchanged",
-      "license": "Apache-2.0 OR MIT; upstream notices retained by dependency license inventory"
+      "change": "currentUser requests admin; existing installations use the stock in-place update path before the legacy uninstall page; all other template bytes unchanged",
+      "license": "Apache-2.0 OR MIT; upstream notices retained by dependency license inventory",
+      "installer_revision": 2
     }
+  },
+  "agent_completion": {
+    "source": "local fork patch",
+    "thinking_only_final": "up to two context-preserving continuations; explicit failure if exhausted",
+    "completed_tool_replay": false,
+    "cancellation_preserved": true
   }
 }

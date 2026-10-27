@@ -22,7 +22,7 @@ text providers are configured separately. The server must actually support STT.
 ## Installation
 
 Download the [current release](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) or its
-[Windows x64 installer](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.7/Cline-Desktop-AVX1-RU-Setup.exe).
+[Windows x64 installer](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.9/Cline-Desktop-AVX1-RU-Setup.exe).
 Tested target: Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 and Microsoft WebView2.
 
 The fork uses its own application ID, signed Tauri update feed, data directory
@@ -35,7 +35,7 @@ Tauri signatures do not imply a publicly trusted Authenticode certificate.
 - [undici 7.30.1 security floor](https://github.com/cline/cline/pull/15287).
 - [Transcript regression checks](https://github.com/cline/cline/pull/15223); the production fix is already in upstream main.
 - New-chat defaults discard removed providers, restoring reasoning selection for configured local models; historical sessions retain their route.
-- 1.0.8: installer requests UAC administrator rights, keeps the existing per-user directory and closes only that installation's Desktop/CLI/Hub processes. Fixes error 234 after closing the window; hidden/elevated x64 Hub and other-install isolation tested.
+- 1.0.9: reasoning-only replies trigger bounded continuation instead of empty success; exhausted retries surface a real error. Installer requests UAC administrator rights, keeps the existing per-user directory and closes only that installation's Desktop/CLI/Hub processes. Fixes error 234 after closing the window; hidden/elevated x64 Hub and other-install isolation tested.
 - 1.0.7: separate stock None/Low/Medium/High/XHigh, author Ultra and backend Adaptive (`reason_mode=auto`) on explicitly compatible local models. No client memory/router. Shell environments are session-local; MCP tool catalogs follow guarded pagination; compatible Langfuse adapter updated. [Reviewed changes](fork/review-20261027.json).
 - 1.0.6: provider-local sampling controls beside thinking, including until-done output and opt-in author Ultra for XHigh on compatible local endpoints. RU/EN controls and installed request values tested; no model-quality improvement claim.
 - 1.0.5: upstream session recovery/Changes and optional local-runtime UI; PowerShell exit codes, TaskCancel hooks, inventory feedback, trust/junction guards, SQLite closure and more Russian UI.

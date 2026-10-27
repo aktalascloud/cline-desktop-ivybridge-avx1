@@ -76,9 +76,9 @@
     "anonymous_download_verified": true
   },
   "ci": {
-    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40459538454",
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40473372364",
     "status": "success",
-    "source_sha": "6439433d55e161ecbdfeda639adae698906d7057",
+    "source_sha": "27ea890e0206ab5873e1792529c7a592514b3ee4",
     "signature_verified": true,
     "tamper_rejected": true
   },
@@ -121,9 +121,9 @@
     "post_history_cleanup": true
   },
   "publication": {
-    "version": "1.0.8",
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.8",
-    "asset_sha256": "27e3d2f604399dd1363d2f9c3ca4cc147eade406caf3a959971cbec05796d805",
+    "version": "1.0.9",
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.9",
+    "asset_sha256": "beb64736910317664b4a8d65fd424a59eade2eee0e40ada7da1b2f0f8e5126a6",
     "asset_count": 1,
     "anonymous_download_verified": false
   },
@@ -268,6 +268,25 @@
   "installer_1_0_8": {
     "regressions": 8,
     "medium_and_elevated_tokens": true,
+    "real_x86_nsis_x64_owners": true,
+    "hidden_hub_auto_closed": true,
+    "other_installation_preserved": true,
+    "update_profile_byte_identical": true,
+    "uac_execution_level": "requireAdministrator",
+    "production_frontend": true,
+    "installed_protocol_and_reasoning": true,
+    "real_llm_inference": false,
+    "second_machine_execution": "not directly tested; isolated regression reproduces the hidden-Hub lock",
+    "authenticode": "NotSigned",
+    "new_performance_claim": false
+  },
+  "agent_1_0_9": {
+    "regressions": 10,
+    "medium_and_elevated_tokens": true,
+    "reasoning_only_unit_tests": 160,
+    "ui_targeted_tests": 115,
+    "compiled_completion_replay": true,
+    "private_user_chat_published": false,
     "real_x86_nsis_x64_owners": true,
     "hidden_hub_auto_closed": true,
     "other_installation_preserved": true,

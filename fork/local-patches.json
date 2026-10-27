@@ -1,0 +1,29 @@
+{
+  "source_sha": "27ea890e0206ab5873e1792529c7a592514b3ee4",
+  "patches": [
+    {
+      "id": "reasoning-only-completion",
+      "origin": "local fork",
+      "purpose": "Do not complete a run with only reasoning: bounded context-preserving continuation, then explicit failure",
+      "verification": [
+        "160 agent runtime tests",
+        "115 targeted UI tests",
+        "compiled and installed HTTP SSE replay: one harmless tool call, reasoning-only finish, recovered final result",
+        "permanent reasoning-only replies produce a failed run, never empty success",
+        "cancellation, media and provider-executed activity preserved"
+      ],
+      "real_model_quality_benchmark": false
+    },
+    {
+      "id": "windows-installer-close-and-uac",
+      "origin": "local fork plus pinned MIT Tauri template",
+      "purpose": "Request administrator rights, close exact-install runtime files and update existing installations in place before old uninstaller guards",
+      "verification": [
+        "10 real x86 NSIS/x64 process cases at ordinary and elevated rights",
+        "original 1.0.7 guard reproduced and bypassed with in-place update",
+        "actual PE manifest requireAdministrator",
+        "preserved-profile installation over previous version"
+      ]
+    }
+  ]
+}
