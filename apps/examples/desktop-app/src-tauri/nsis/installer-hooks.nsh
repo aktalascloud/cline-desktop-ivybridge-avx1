@@ -3,6 +3,15 @@
 !define AVX1_AUTOSTART_LINK "Cline Desktop AVX1 RU.lnk"
 !endif
 
+; Existing installations use Tauri's normal in-place updater path. This
+; bypasses older uninstallers that only reject a hidden Hub instead of
+; closing it. The preinstall hook below then owns shutdown before writes.
+!macro AVX1_DETECT_EXISTING_INSTALLATION
+  ${If} ${FileExists} "$INSTDIR\${MAINBINARYNAME}.exe"
+    StrCpy $UpdateMode 1
+  ${EndIf}
+!macroend
+
 ; The bundled cline-cli.exe runs the desktop backend and, as a detached
 ; daemon, the Hub, which outlives the desktop. Stop users of every installed
 ; executable before replacing any: stopping only the CLI first leaves the

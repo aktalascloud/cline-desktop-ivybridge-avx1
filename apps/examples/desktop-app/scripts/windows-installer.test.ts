@@ -35,6 +35,8 @@ const children: ChildProcess[] = [];
 let root: string;
 let fixture: string;
 let installer: string;
+let legacyUninstaller: string | undefined;
+let bridgeSerial = 0;
 
 function nsisString(value: string): string {
 	return value.replaceAll("$", "$$").replaceAll('"', '$\\"');
@@ -89,6 +91,87 @@ async function start(dir: string, name: string): Promise<ChildProcess> {
 	return child;
 }
 
+async function buildLegacyBridge(oldDirectory: string): Promise<string> {
+	if (!legacyUninstaller) {
+		const oldHook = path.join(root, "original-1.0.7-hook.nsh");
+		const original = Bun.spawnSync(
+			[
+				"git",
+				"show",
+				"a26a46d2ffa302980ff4cca12eb5af19113d6669:apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh",
+			],
+			{ cwd: path.dirname(lockfile) },
+		);
+		expect(original.exitCode).toBe(0);
+		writeFileSync(oldHook, original.stdout);
+		legacyUninstaller = path.join(root, "old-uninstall.exe");
+		const seed = path.join(root, "old-seed.exe");
+		const script = path.join(root, "old-seed.nsi");
+		writeFileSync(
+			script,
+			`
+Unicode true
+RequestExecutionLevel user
+!include FileFunc.nsh
+!define LANG_RUSSIAN 1049
+!define AVX1_AUTOSTART_LINK "Cline AVX1 legacy fixture-${process.pid}.lnk"
+!include "${nsisString(oldHook)}"
+!define MAINBINARYNAME "cline-app"
+Name "Old Cline hook fixture"
+OutFile "${nsisString(seed)}"
+Section
+ WriteUninstaller "${nsisString(legacyUninstaller)}"
+SectionEnd
+Section "Uninstall"
+ !insertmacro NSIS_HOOK_PREUNINSTALL
+ FileOpen $0 "$INSTDIR\\legacy-uninstall-ran" w
+ FileWrite $0 "completed"
+ FileClose $0
+SectionEnd
+`,
+		);
+		expect(await run(nsis, ["/V2", script])).toBe(0);
+		expect(await run(seed, ["/S"])).toBe(0);
+	}
+	const serial = ++bridgeSerial;
+	const bridge = path.join(root, `bridge-${serial}.exe`);
+	const script = path.join(root, `bridge-${serial}.nsi`);
+	writeFileSync(
+		script,
+		`
+Unicode true
+RequestExecutionLevel user
+!include FileFunc.nsh
+!define LANG_RUSSIAN 1049
+!include "${nsisString(hook)}"
+!define MAINBINARYNAME "cline-app"
+Name "Legacy uninstall transition"
+OutFile "${nsisString(bridge)}"
+Var UpdateMode
+Section
+ StrCpy $UpdateMode 0
+ !insertmacro AVX1_DETECT_EXISTING_INSTALLATION
+ StrCmp $UpdateMode 1 skip_legacy
+ ExecWait '"${nsisString(legacyUninstaller)}" /S _?=$INSTDIR' $0
+ StrCmp $0 0 skip_legacy
+  SetErrorLevel $0
+  Quit
+ skip_legacy:
+ !insertmacro NSIS_HOOK_PREINSTALL
+ ClearErrors
+ FileOpen $0 "$INSTDIR\\cline-cli.exe" w
+ IfErrors 0 +3
+  SetErrorLevel 44
+  Quit
+ FileWrite $0 "replaced"
+ FileClose $0
+SectionEnd
+`,
+	);
+	expect(await run(nsis, ["/V2", script])).toBe(0);
+	return bridge;
+}
+
 test("locked Tauri CLI is the version whose NSIS pin this suite mirrors", () => {
 	const resolved = readFileSync(lockfile, "utf8").match(
 		/"@tauri-apps\/cli": \["@tauri-apps\/cli@([^"]+)"/,
@@ -111,10 +194,18 @@ test("production template requests UAC without changing current-user installatio
 	const elevated =
 		'!if "${INSTALLMODE}" == "currentUser"\n  RequestExecutionLevel admin';
 	expect(template.includes(elevated)).toBe(true);
-	const original = template.replace(
-		elevated,
-		'!if "${INSTALLMODE}" == "currentUser"\n  RequestExecutionLevel user',
+	expect(template).toContain(
+		"  !insertmacro AVX1_DETECT_EXISTING_INSTALLATION\n\n  ; Abort downgrades",
 	);
+	expect(template).toContain(
+		"  ; In update mode, always proceeds without uninstalling\n  ${If} $UpdateMode = 1\n    Goto reinst_done",
+	);
+	const original = template
+		.replace("  !insertmacro AVX1_DETECT_EXISTING_INSTALLATION\n\n", "")
+		.replace(
+			elevated,
+			'!if "${INSTALLMODE}" == "currentUser"\n  RequestExecutionLevel user',
+		);
 	expect(createHash("sha256").update(original).digest("hex")).toBe(
 		provenance.original_sha256,
 	);
@@ -297,6 +388,61 @@ SectionEnd
 		expect(readFileSync(path.join(dir, "cline-cli.exe"), "utf8")).toBe(
 			"replaced",
 		);
+	}, 120_000);
+
+	test("updates over the real 1.0.7 hidden-Hub guard without invoking its uninstaller", async () => {
+		const old = path.join(root, "legacy 'quoted' $ space (测试)");
+		const owner = await start(old, "cline-cli.exe");
+		copyFileSync(fixture, path.join(old, "cline-app.exe"));
+		const beta = await start(`${old} Beta`, "cline-cli.exe");
+		writeFileSync(path.join(old, "user-state.json"), "kept");
+		const bridge = await buildLegacyBridge(old);
+		expect(await run(legacyUninstaller!, ["/S", `_?=${old}`])).toBe(2);
+		expect(owner.exitCode).toBeNull();
+		expect(await run(bridge, ["/S", `/D=${old}`])).toBe(0);
+		await waitFor(() => owner.exitCode !== null || owner.signalCode !== null);
+		expect(existsSync(path.join(old, "legacy-uninstall-ran"))).toBe(false);
+		expect(readFileSync(path.join(old, "user-state.json"), "utf8")).toBe(
+			"kept",
+		);
+		expect(readFileSync(path.join(old, "cline-cli.exe"), "utf8")).toBe(
+			"replaced",
+		);
+		expect(beta.exitCode).toBeNull();
+	}, 120_000);
+
+	test("keeps fresh installs separate from in-place update detection", async () => {
+		const probe = path.join(root, "mode-probe.exe");
+		const script = path.join(root, "mode-probe.nsi");
+		writeFileSync(
+			script,
+			`
+Unicode true
+RequestExecutionLevel user
+!include FileFunc.nsh
+!define LANG_RUSSIAN 1049
+!include "${nsisString(hook)}"
+!define MAINBINARYNAME "cline-app"
+Var UpdateMode
+Name "Update mode probe"
+OutFile "${nsisString(probe)}"
+Section
+ StrCpy $UpdateMode 0
+ !insertmacro AVX1_DETECT_EXISTING_INSTALLATION
+ CreateDirectory "$INSTDIR"
+ FileOpen $0 "$INSTDIR\\mode" w
+ FileWrite $0 "$UpdateMode"
+ FileClose $0
+SectionEnd
+`,
+		);
+		expect(await run(nsis, ["/V2", script])).toBe(0);
+		const dir = path.join(root, "mode probe");
+		expect(await run(probe, ["/S", `/D=${dir}`])).toBe(0);
+		expect(readFileSync(path.join(dir, "mode"), "utf8")).toBe("0");
+		copyFileSync(fixture, path.join(dir, "cline-app.exe"));
+		expect(await run(probe, ["/S", `/D=${dir}`])).toBe(0);
+		expect(readFileSync(path.join(dir, "mode"), "utf8")).toBe("1");
 	}, 120_000);
 
 	// Only silent mode is automatable: passive (/P, what the Tauri updater

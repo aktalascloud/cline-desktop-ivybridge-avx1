@@ -532,6 +532,8 @@ Function .onInit
     !insertmacro MULTIUSER_INIT
   !endif
 
+  !insertmacro AVX1_DETECT_EXISTING_INSTALLATION
+
   ; Abort downgrades if they are disabled, in the modes that skip the reinstall page choice:
   ; silent, passive and update
   !if "${ALLOWDOWNGRADES}" == "false"
