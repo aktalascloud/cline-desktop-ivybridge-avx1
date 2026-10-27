@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const read = vi.hoisted(() => vi.fn());
 vi.mock("@cline/core", () => ({
+	readModelsFileSync: () => ({
+		providers: {
+			"local-test": {
+				models: { "historical-model": { supportsAuthorModes: true } },
+			},
+		},
+	}),
+	resolveModelsRegistryPath: () => "fixture-model-registry",
 	toProviderConfig: (settings: { provider: string }) => ({
 		providerId: settings.provider,
 	}),
@@ -55,7 +63,7 @@ describe("local sampling connection refresh", () => {
 	});
 });
 
-it("clears Ultra in a live session when the provider mode is switched off", () => {
+it("makes Ultra an explicit session choice while High/XHigh ignore the old global toggle", () => {
 	read.mockReturnValue({
 		client: "openai-compatible",
 		protocol: "openai-chat",
@@ -67,16 +75,35 @@ it("clears Ultra in a live session when the provider mode is switched off", () =
 		reasoningEffort: "xhigh",
 		providerConfig: { providerId: "local-test", apiKey: "private-test-key" },
 	};
-	const ultra = refreshLocalSamplingConfig(base);
+	expect(
+		(refreshLocalSamplingConfig(base).providerConfig as Record<string, unknown>)
+			.authorReasoningMode,
+	).toBeUndefined();
+	const ultra = refreshLocalSamplingConfig({
+		...base,
+		reasoningEffort: "ultra",
+	});
 	expect(
 		(ultra.providerConfig as Record<string, unknown>).authorReasoningMode,
 	).toBe("ultra");
-	read.mockReturnValue({
-		client: "openai-compatible",
-		protocol: "openai-chat",
+	const stock = refreshLocalSamplingConfig({
+		...ultra,
+		reasoningEffort: "xhigh",
 	});
-	const off = refreshLocalSamplingConfig(ultra);
-	expect(JSON.stringify(off)).toBe(
+	expect(JSON.stringify(stock)).toBe(
 		JSON.stringify(refreshLocalSamplingConfig(base)),
 	);
+	expect(
+		(
+			refreshLocalSamplingConfig({ ...base, reasoningEffort: "high" })
+				.providerConfig as Record<string, unknown>
+		).authorReasoningMode,
+	).toBeUndefined();
+	expect(() =>
+		refreshLocalSamplingConfig({
+			...base,
+			model: "unverified-model",
+			reasoningEffort: "ultra",
+		}),
+	).toThrow("not enabled");
 });

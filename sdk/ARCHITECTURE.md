@@ -1324,3 +1324,8 @@ effect when constructing child tools. Inherited runtime hooks are unchanged.
 ### CLI first-turn cancellation
 
 The one-shot CLI initializes a non-interactive session without a prompt, records its session ID, arms its timeout, and submits the first turn through `send()`. This prevents the first streamed request from running to completion inside `start()` before the host can cancel it. Core callers that intentionally pass a prompt to `start()` retain the existing behavior; single-run finalization and first-prompt/title persistence remain in Core.
+
+
+### Owning-session CLI shell context
+
+The local CLI explicitly captures its launch environment at session start/restore. Hub transport validates the bounded snapshot and passes it only through ephemeral local-runtime options. Built-in shell executors replace inherited Hub environment with that snapshot; nested shell tools retain the same owner context. SDK and remote clients keep existing defaults unless the supported local CLI opt-in applies. This does not change approvals, hooks, MCP launchers, global process.env, or persisted session records.

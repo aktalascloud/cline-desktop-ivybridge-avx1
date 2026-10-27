@@ -1,4 +1,9 @@
-import { ProviderSettingsManager, toProviderConfig } from "@cline/core";
+import {
+	ProviderSettingsManager,
+	toProviderConfig,
+	readModelsFileSync,
+	resolveModelsRegistryPath,
+} from "@cline/core";
 import type { JsonRecord } from "./types";
 
 /** Refresh only local sampling defaults; never replace credentials or historical routes. */
@@ -11,6 +16,23 @@ export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
 		settings.protocol !== "openai-chat"
 	)
 		return config;
+	if (
+		config.thinking !== false &&
+		["ultra", "adaptive"].includes(String(config.reasoningEffort))
+	) {
+		const models =
+			readModelsFileSync(
+				resolveModelsRegistryPath(new ProviderSettingsManager()),
+			).providers[id]?.models ?? {};
+		const modelId = String(
+			config.model ?? config.modelId ?? settings.model ?? "",
+		);
+		const model = Object.entries(models).find(
+			([key, value]) => (value.id?.trim() || key.trim()) === modelId,
+		)?.[1];
+		if (model?.supportsAuthorModes !== true)
+			throw new Error("Author reasoning modes are not enabled for this model.");
+	}
 	const existing =
 		config.providerConfig && typeof config.providerConfig === "object"
 			? (config.providerConfig as JsonRecord)
@@ -28,7 +50,12 @@ export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
 			...existing,
 			providerId: id,
 			sampling: settings.sampling ?? {},
-			authorReasoningMode: settings.authorReasoningMode,
+			authorReasoningMode:
+				config.thinking !== false &&
+				(config.reasoningEffort === "ultra" ||
+					config.reasoningEffort === "adaptive")
+					? config.reasoningEffort
+					: undefined,
 		},
 	};
 }

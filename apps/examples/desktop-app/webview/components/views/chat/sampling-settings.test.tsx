@@ -103,35 +103,27 @@ describe("sampling controls", () => {
 	});
 });
 
-it("saves opt-in Ultra and enables XHigh without replacing personal instructions", async () => {
+it("sampling controls do not persist a hidden author mode", async () => {
 	mocks.catalog.mockResolvedValue({
 		providers: [
 			{
 				id: "local-test",
 				configFields: [{ path: "sampling.temperature" }],
-				configValues: {},
+				configValues: { authorReasoningMode: "ultra" },
 			},
 		],
 	});
 	mocks.invoke.mockResolvedValue({});
-	const enable = vi.fn();
 	await act(async () =>
-		root.render(
-			<SamplingSettings provider="local-test" onEnableUltra={enable} />,
-		),
+		root.render(<SamplingSettings provider="local-test" />),
 	);
 	await act(async () => button("Sampling settings").click());
-	const select = document.querySelector(
-		'select[aria-label="Author reasoning mode"]',
-	) as HTMLSelectElement;
-	await act(async () => {
-		select.value = "ultra";
-		select.dispatchEvent(new Event("change", { bubbles: true }));
-	});
+	expect(
+		document.querySelector('select[aria-label="Author reasoning mode"]'),
+	).toBeNull();
 	await act(async () => button("Save").click());
 	expect(mocks.invoke).toHaveBeenCalledWith("save_provider_settings", {
 		provider: "local-test",
-		settings: { sampling: { max_tokens: 0 }, authorReasoningMode: "ultra" },
+		settings: { sampling: { max_tokens: 0 } },
 	});
-	expect(enable).toHaveBeenCalledOnce();
 });

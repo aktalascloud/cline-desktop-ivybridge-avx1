@@ -7,9 +7,11 @@ export function withAuthorReasoningMode(
 	mode: unknown,
 ): Record<string, unknown> {
 	if (mode === undefined) return body;
-	if (mode !== "ultra") throw new Error("Unsupported author reasoning mode");
+	if (mode !== "ultra" && mode !== "adaptive")
+		throw new Error("Unsupported author reasoning mode");
 	if (body.reasoning_effort !== "xhigh") return body;
 	if (!Array.isArray(body.messages)) return body;
+	if (mode === "adaptive") return { ...body, reason_mode: "auto" };
 	const index = body.messages.findIndex((message) => message?.role === "user");
 	if (index < 0) return body;
 	return {

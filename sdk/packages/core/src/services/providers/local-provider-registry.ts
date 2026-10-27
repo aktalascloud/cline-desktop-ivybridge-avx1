@@ -57,6 +57,7 @@ export const StoredModelEntrySchema = z
 		supportsVision: z.boolean().optional(),
 		supportsAttachments: z.boolean().optional(),
 		supportsReasoning: z.boolean().optional(),
+		supportsAuthorModes: z.boolean().optional(),
 		operation: ModelOperationSchema.optional(),
 		operationModes: z.array(ModelOperationModeSchema).optional(),
 		modalities: ModelModalitiesSchema.optional(),
@@ -253,6 +254,7 @@ export function toProviderModel(
 		| "contextWindow"
 		| "capabilities"
 		| "thinkingConfig"
+		| "metadata"
 		| "operation"
 		| "operationModes"
 		| "modalities"
@@ -275,6 +277,9 @@ export function toProviderModel(
 			info.thinkingConfig != null
 				? true
 				: declaredCapability(info.capabilities, "reasoning"),
+		...(info.metadata?.supportsAuthorModes === true
+			? { supportsAuthorModes: true }
+			: {}),
 		operationModes: info.operationModes,
 		inputModalities: info.modalities?.input,
 		outputModalities: info.modalities?.output,
@@ -400,6 +405,9 @@ function toStoredModelInfo(
 	return {
 		id: modelId,
 		name: model?.name ?? modelId,
+		...(model?.supportsAuthorModes === true
+			? { metadata: { supportsAuthorModes: true } }
+			: {}),
 		...(model?.maxTokens !== undefined ? { maxTokens: model.maxTokens } : {}),
 		...(model?.contextWindow !== undefined
 			? { contextWindow: model.contextWindow }

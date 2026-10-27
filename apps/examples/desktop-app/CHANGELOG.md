@@ -2,6 +2,8 @@
 
 ## 1.0.7
 
+- Separate None/Low/Medium/High/XHigh/Ultra/Adaptive choices. Stock High/XHigh no longer inherit a provider-wide Ultra toggle; author extensions are model-opt-in and session-owned. Adaptive sends reason_mode=auto to the backend; no client picker or memory is included.
+- Отдельные None/Low/Medium/High/XHigh/Ultra/Adaptive. Обычные High/XHigh больше не наследуют глобальный Ultra; расширения включаются для совместимой модели и выбираются в чате. Adaptive передаёт reason_mode=auto бэкенду; клиентского подбора и памяти нет.
 - Updated embedded CLI to 3.0.74 and integrated the upstream menu-handler correction. MCP now discovers all tool pages with loop/page guards; CLI shell environments are session-scoped, and Langfuse 5.10.1 removes an obsolete provider-utils chain. Strata sampling, until-done output and opt-in XHigh Ultra are preserved.
 - Встроенный CLI обновлён до 3.0.74, добавлено upstream-исправление обработки меню. MCP получает все страницы инструментов с защитой от зацикливания; окружение shell изолировано между CLI-сессиями, Langfuse 5.10.1 убирает старую цепочку provider-utils. Сохранены параметры Strata, ответ до завершения и Ultra только для XHigh.
 

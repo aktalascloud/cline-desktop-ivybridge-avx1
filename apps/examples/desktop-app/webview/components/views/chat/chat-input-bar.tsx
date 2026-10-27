@@ -200,6 +200,8 @@ const EFFORT_LEVELS: ReasoningEffortOption[] = [
 	{ label: "Medium", value: "medium" },
 	{ label: "High", value: "high" },
 	{ label: "XHigh", value: "xhigh" },
+	{ label: "Ultra · DavidAU", value: "ultra" },
+	{ label: "Adaptive", value: "adaptive" },
 ];
 const PROMPT_INPUT_COLLAPSED_ROWS = 1;
 const PROMPT_INPUT_EXPANDED_ROWS = 2;
@@ -479,6 +481,7 @@ function ChatInputBarImpl({
 		provider: string;
 		model: string;
 		supported: boolean | null;
+		authorModesSupported?: boolean | null;
 	} | null>(null);
 	const modelSupportsReasoning =
 		reasoningCapability?.provider === provider &&
@@ -486,16 +489,20 @@ function ChatInputBarImpl({
 			? reasoningCapability.supported
 			: null;
 	const handleModelSupportsReasoningChange = useCallback(
-		(supported: boolean | null) => {
+		(
+			supported: boolean | null,
+			authorModesSupported: boolean | null = null,
+		) => {
 			setReasoningCapability((current) => {
 				if (
 					current?.provider === provider &&
 					current.model === model &&
-					current.supported === supported
+					current.supported === supported &&
+					current.authorModesSupported === authorModesSupported
 				) {
 					return current;
 				}
-				return { provider, model, supported };
+				return { provider, model, supported, authorModesSupported };
 			});
 		},
 		[model, provider],
@@ -895,6 +902,16 @@ function ChatInputBarImpl({
 		});
 	}, []);
 
+	const authorModesSupported =
+		executionTarget === "local" &&
+		environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID &&
+		reasoningCapability?.provider === provider &&
+		reasoningCapability?.model === model &&
+		reasoningCapability.authorModesSupported === true;
+	const availableEfforts = EFFORT_LEVELS.filter(
+		(option) =>
+			!["ultra", "adaptive"].includes(option.value) || authorModesSupported,
+	);
 	const effortIndex = useMemo(
 		() => resolveEffortIndex(thinking, reasoningEffort),
 		[reasoningEffort, thinking],
@@ -924,6 +941,8 @@ function ChatInputBarImpl({
 			if (modelSupportsReasoning !== true) {
 				return;
 			}
+			if (["ultra", "adaptive"].includes(value) && !authorModesSupported)
+				return;
 			const nextOption = EFFORT_LEVELS.find((option) => option.value === value);
 			if (nextOption) {
 				onReasoningChange(buildReasoningConfig(nextOption));
@@ -937,7 +956,7 @@ function ChatInputBarImpl({
 				}
 			}
 		},
-		[modelSupportsReasoning, onReasoningChange, provider],
+		[modelSupportsReasoning, onReasoningChange, provider, authorModesSupported],
 	);
 
 	const seededReasoningProviderRef = useRef<string | null>(null);
@@ -950,7 +969,7 @@ function ChatInputBarImpl({
 		if (!unset && seededReasoningProviderRef.current === normalizedId) {
 			return;
 		}
-		seededReasoningProviderRef.current = normalizedId;
+
 		// The thread's config is rebuilt on every mount (and session hydration
 		// only restores provider/model), so seed the effort from the last value
 		// the user picked for this provider before falling back to the default.
@@ -964,15 +983,46 @@ function ChatInputBarImpl({
 		if (!unset && !remembered) {
 			return;
 		}
+		if (
+			remembered &&
+			["ultra", "adaptive"].includes(remembered.value) &&
+			reasoningCapability?.authorModesSupported == null
+		)
+			return;
+		seededReasoningProviderRef.current = normalizedId;
+		const selected =
+			remembered &&
+			["ultra", "adaptive"].includes(remembered.value) &&
+			!authorModesSupported
+				? EFFORT_LEVELS.find((v) => v.value === "xhigh")
+				: remembered;
 		onReasoningChange(
-			buildReasoningConfig(remembered ?? DEFAULT_REASONING_EFFORT),
+			buildReasoningConfig(selected ?? DEFAULT_REASONING_EFFORT),
 		);
 	}, [
+		authorModesSupported,
+		reasoningCapability?.authorModesSupported,
 		modelSupportsReasoning,
 		onReasoningChange,
 		provider,
 		reasoningEffort,
 		thinking,
+	]);
+
+	useEffect(() => {
+		if (
+			reasoningCapability?.provider === provider &&
+			reasoningCapability?.model === model &&
+			reasoningCapability.authorModesSupported === false &&
+			["ultra", "adaptive"].includes(reasoningEffort ?? "")
+		)
+			onReasoningChange({ thinking: true, reasoningEffort: "xhigh" });
+	}, [
+		reasoningCapability,
+		provider,
+		model,
+		reasoningEffort,
+		onReasoningChange,
 	]);
 
 	// Focus the composer on mount/variant change and when text is injected
@@ -1751,26 +1801,34 @@ function ChatInputBarImpl({
 						>
 							<Brain className="size-3" />
 							<span className="group-data-[compact]/composer:sr-only">
-								<SelectValue>{effortLabel}</SelectValue>
+								<SelectValue>{t(effortLabel)}</SelectValue>
 							</span>
 						</SelectTrigger>
 						<SelectContent align="start">
-							{EFFORT_LEVELS.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
-									{option.label}
+							{availableEfforts.map((option) => (
+								<SelectItem
+									key={option.value}
+									value={option.value}
+									title={
+										option.value === "adaptive"
+											? t(
+													"Adaptive requires backend support for reason_mode=auto; no client routing or memory.",
+												)
+											: option.value === "ultra"
+												? t(
+														"Author mode for compatible DavidAU models; stock High and XHigh stay unchanged.",
+													)
+												: undefined
+									}
+								>
+									{t(option.label)}
 								</SelectItem>
 							))}
 						</SelectContent>
 					</Select>
 					{executionTarget !== "cloud" &&
 					environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID ? (
-						<SamplingSettings
-							provider={provider}
-							disabled={isBusy}
-							onEnableUltra={() =>
-								onReasoningChange({ thinking: true, reasoningEffort: "xhigh" })
-							}
-						/>
+						<SamplingSettings provider={provider} disabled={isBusy} />
 					) : null}
 					{/* The chip controls this computer's runtime, which SSH sessions don't use. */}
 					{executionTarget !== "cloud" &&
@@ -1866,7 +1924,10 @@ const ModelSelector = memo(function ModelSelector({
 	onProviderChange: (provider: string) => void;
 	onModelChange: (model: string) => void;
 	onModelReadyChange: (ready: boolean) => void;
-	onModelSupportsReasoningChange: (supportsReasoning: boolean | null) => void;
+	onModelSupportsReasoningChange: (
+		supportsReasoning: boolean | null,
+		supportsAuthorModes?: boolean | null,
+	) => void;
 	onModelSupportsImagesChange: (supported: boolean | null) => void;
 	/** Opens Settings в†’ Providers; adds a "set up another provider" row when set. */
 	onOpenModelSettings?: () => void;
@@ -2389,8 +2450,15 @@ const ModelSelector = memo(function ModelSelector({
 				normalizedProvider,
 				model,
 			),
+			modelDetails[normalizedProvider]?.some((v) => v.id === model)
+				? modelDetails[normalizedProvider]?.find((v) => v.id === model)
+						?.supportsAuthorModes === true
+				: reasoningCapabilitySource === "fallback"
+					? false
+					: null,
 		);
 	}, [
+		modelDetails,
 		model,
 		onModelSupportsReasoningChange,
 		normalizedProvider,

@@ -601,3 +601,8 @@ No message text leaves the client: `textSignature` and `session.input_sent`'s
 (`packages/core/src/services/telemetry/stall-signals.ts`).
 
 Voice input accepts dedicated audio-to-text models in streaming or recorded-file mode. Recorded audio uses the selected provider through `transcribeConfiguredVoiceInput`; it never changes the text-chat provider. Desktop submits the completed recording through the host SDK and keeps the draft protected while recognition runs. Custom transcription endpoints advertise their explicit model catalog, without unrelated builtin realtime models.
+
+
+## Local CLI shell environment snapshots
+
+`ClineCoreOptions.hub.captureShellEnvironment` is an explicit opt-in callback. It is honored only for CLI clients using a discovered loopback Hub; explicit/remote endpoints and the default SDK do not capture ambient environment. The CLI opts in when it creates its Core. Each session start/restore takes a fresh bounded immutable snapshot (4096 entries, 256 KiB, string values without NUL). Built-in shell children use that replacement environment, including nested shell tools; absent variables are not inherited from another Hub client. The snapshot is ephemeral, is not session metadata, and never mutates the Hub process environment. Hooks and MCP process environments are unchanged. Do not log or serialize environment contents as diagnostics.

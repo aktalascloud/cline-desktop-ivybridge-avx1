@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { withAuthorReasoningMode } from "./author-reasoning-mode";
 describe("author reasoning mode", () => {
+	it("sends Adaptive only as backend-owned auto steering, without persona injection", () => {
+		const body = {
+			reasoning_effort: "xhigh",
+			messages: [{ role: "user", content: "original task" }],
+			stream: true,
+		};
+		expect(withAuthorReasoningMode(body, "adaptive")).toEqual({
+			...body,
+			reason_mode: "auto",
+		});
+		expect(body).not.toHaveProperty("reason_mode");
+	});
 	it("inserts a separate user control after the system without altering images, tools or history", () => {
 		const messages = [
 			{ role: "system", content: "user style" },

@@ -131,9 +131,11 @@ it("keeps the opt-in author mode distinct from API reasoning effort", () => {
 	expect(parsed.success).toBe(true);
 	if (!parsed.success) return;
 	expect(toProviderConfig(parsed.data)).toMatchObject({
-		authorReasoningMode: "ultra",
 		reasoningEffort: "xhigh",
 	});
+	expect(toProviderConfig(parsed.data)).not.toHaveProperty(
+		"authorReasoningMode",
+	);
 	expect(
 		safeParseSettings({
 			provider: "local-test",

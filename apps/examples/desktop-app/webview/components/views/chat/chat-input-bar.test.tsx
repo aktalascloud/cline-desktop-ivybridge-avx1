@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { LOCAL_WORKSPACE_ENVIRONMENT_ID } from "@/lib/workspace-paths";
 
 import { CLINE_DEFAULT_MODEL_ID } from "@cline/shared/browser";
 import {
@@ -205,6 +206,7 @@ function StaleProviderComposer({
 	return (
 		<WorkspaceProvider value={workspaceValue}>
 			<ChatInputBar
+				environmentId={LOCAL_WORKSPACE_ENVIRONMENT_ID}
 				attachments={[]}
 				gitBranch="main"
 				mode="act"
@@ -243,7 +245,11 @@ it.each([
 	{ variant: "welcome", level: "xhigh", label: "XHigh" },
 	{ variant: "conversation", level: "high", label: "High" },
 	{ variant: "conversation", level: "xhigh", label: "XHigh" },
-] as const)("handles a removed provider in the $variant composer at $level", async ({ variant, level, label }) => {
+] as const)("handles a removed provider in the $variant composer at $level", async ({
+	variant,
+	level,
+	label,
+}) => {
 	window.localStorage.setItem(
 		MODEL_SELECTION_STORAGE_KEY,
 		JSON.stringify({
@@ -302,7 +308,11 @@ it.each([
 		expect(
 			container.querySelector('[aria-label="Thinking level"]')?.textContent,
 		).toContain(label);
-		expect(JSON.parse(window.localStorage.getItem(REASONING_SELECTION_STORAGE_KEY) ?? "{}")["local-lab"]).toBe(level);
+		expect(
+			JSON.parse(
+				window.localStorage.getItem(REASONING_SELECTION_STORAGE_KEY) ?? "{}",
+			)["local-lab"],
+		).toBe(level);
 	} else {
 		expect(readModelSelectionStorageFromWindow().lastProvider).toBe(
 			"openai-compatible",
@@ -1756,16 +1766,29 @@ describe("ChatInputBar", () => {
 	});
 
 	it("records batch voice locally and inserts text only after recognition", async () => {
-		loadProviderModelCatalogMock.mockResolvedValue(providerCatalog({
-			providerId: "local-recording", providerName: "Local speech", modelId: "whisper-1",
-			modelName: "Whisper", supportsStreaming: false,
-		}));
+		loadProviderModelCatalogMock.mockResolvedValue(
+			providerCatalog({
+				providerId: "local-recording",
+				providerName: "Local speech",
+				modelId: "whisper-1",
+				modelName: "Whisper",
+				supportsStreaming: false,
+			}),
+		);
 		const onSend = vi.fn();
-		await renderVoiceComposer({prompt: "alpha omega", onSend});
-		await vi.waitFor(() => expect(speechInputMockState.current?.recordingMode).toBe("media-recorder"));
-		expect(speechInputMockState.current?.onAudioRecorded).toEqual(expect.any(Function));
+		await renderVoiceComposer({ prompt: "alpha omega", onSend });
+		await vi.waitFor(() =>
+			expect(speechInputMockState.current?.recordingMode).toBe(
+				"media-recorder",
+			),
+		);
+		expect(speechInputMockState.current?.onAudioRecorded).toEqual(
+			expect.any(Function),
+		);
 		expect(speechInputMockState.current?.fallbackOnNetworkError).toBe(false);
-		const textarea = container.querySelector<HTMLTextAreaElement>('textarea[role="combobox"]');
+		const textarea = container.querySelector<HTMLTextAreaElement>(
+			'textarea[role="combobox"]',
+		);
 		textarea?.setSelectionRange(6, 6);
 		await act(async () => speechInputMockState.current?.onActiveChange?.(true));
 		expect(textarea?.readOnly).toBe(true);
@@ -1773,7 +1796,12 @@ describe("ChatInputBar", () => {
 			speechInputMockState.current?.onProcessingChange?.(true);
 			speechInputMockState.current?.onActiveChange?.(true);
 		});
-		await act(async () => speechInputMockState.current?.onTranscriptionChange?.("hello", "media-recorder"));
+		await act(async () =>
+			speechInputMockState.current?.onTranscriptionChange?.(
+				"hello",
+				"media-recorder",
+			),
+		);
 		expect(textarea?.value).toBe("alpha hello omega");
 		await act(async () => {
 			speechInputMockState.current?.onProcessingChange?.(false);
@@ -3800,4 +3828,57 @@ describe("ChatInputBar compact layout", () => {
 			vi.unstubAllGlobals();
 		}
 	});
+});
+
+it("offers separate author modes only for an opted-in model and returns to stock levels", async () => {
+	const detail = {
+		id: "private-model",
+		name: "Private model",
+		supportsReasoning: true,
+		supportsAuthorModes: true,
+	};
+	loadProviderModelCatalogMock.mockResolvedValue({
+		providers: [],
+		enabledProviderIds: ["local-lab"],
+		providerModels: { "local-lab": ["private-model"] },
+		providerNames: { "local-lab": "Local lab" },
+		providerReasoningModels: { "local-lab": ["private-model"] },
+		providerModelDetails: { "local-lab": [detail] },
+	});
+	loadProviderModelsMock.mockResolvedValue([detail]);
+	await act(async () =>
+		root.render(<StaleProviderComposer variant="welcome" />),
+	);
+	await vi.waitFor(() =>
+		expect(
+			container.querySelector<HTMLButtonElement>(
+				'[aria-label="Thinking level"]',
+			)?.disabled,
+		).toBe(false),
+	);
+	for (const [label, value] of [
+		["Ultra · DavidAU", "ultra"],
+		["XHigh", "xhigh"],
+		["Adaptive", "adaptive"],
+		["High", "high"],
+	]) {
+		await act(async () =>
+			container
+				.querySelector<HTMLButtonElement>('[aria-label="Thinking level"]')
+				?.click(),
+		);
+		const option = Array.from(
+			document.querySelectorAll<HTMLElement>('[role="option"]'),
+		).find((v) => v.textContent === label);
+		expect(option).toBeDefined();
+		await act(async () => option?.click());
+		expect(
+			container.querySelector('[aria-label="Thinking level"]')?.textContent,
+		).toContain(label);
+		expect(
+			JSON.parse(
+				window.localStorage.getItem(REASONING_SELECTION_STORAGE_KEY) ?? "{}",
+			)["local-lab"],
+		).toBe(value);
+	}
 });

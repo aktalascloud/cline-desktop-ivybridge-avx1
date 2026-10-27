@@ -41,7 +41,7 @@ async function wireBody(input: {
 	reasoningOptions: readonly ModelReasoningOption[] | undefined;
 	capabilities?: ModelInfo["capabilities"];
 	sampling?: Record<string, number>;
-	authorReasoningMode?: "ultra";
+	authorReasoningMode?: "ultra" | "adaptive";
 }): Promise<Record<string, unknown>> {
 	const providerId = input.providerId ?? PROVIDER_ID;
 	const configuredModel = input.reasoningOptions || input.capabilities;
@@ -263,4 +263,20 @@ it.each([
 	expect(messages.filter((m) => m.content === "{REASON:ultra}")).toHaveLength(
 		effort === "xhigh" ? 1 : 0,
 	);
+});
+
+it("sends Adaptive as backend reason_mode=auto without an Ultra tag or client picker", async () => {
+	const body = await wireBody({
+		modelId: "fixture-unlisted",
+		reasoning: { effort: "xhigh" },
+		reasoningOptions: undefined,
+		authorReasoningMode: "adaptive",
+	});
+	expect(body.reasoning_effort).toBe("xhigh");
+	expect(body.reason_mode).toBe("auto");
+	expect(
+		(body.messages as Array<{ content: unknown }>).some(
+			(m) => m.content === "{REASON:ultra}",
+		),
+	).toBe(false);
 });

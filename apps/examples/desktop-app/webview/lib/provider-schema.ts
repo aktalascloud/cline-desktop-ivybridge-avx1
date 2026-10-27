@@ -29,6 +29,7 @@ export interface ProviderModel {
 	supportsAttachments?: boolean;
 	supportsVision?: boolean;
 	supportsReasoning?: boolean;
+	supportsAuthorModes?: boolean;
 	inputModalities?: ModelModality[];
 	outputModalities?: ModelModality[];
 }

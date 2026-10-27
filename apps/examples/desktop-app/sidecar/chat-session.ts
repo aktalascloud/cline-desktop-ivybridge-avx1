@@ -492,6 +492,7 @@ function isoTimestampToMs(
 function readReasoningEffort(
 	value: unknown,
 ): "low" | "medium" | "high" | "xhigh" | undefined {
+	if (value === "ultra" || value === "adaptive") return "xhigh";
 	if (
 		value === "low" ||
 		value === "medium" ||
@@ -1046,7 +1047,7 @@ async function handleStart(
 	const config =
 		binding.kind === "ssh"
 			? await withRemoteProviderCredentials(request.config)
-			: request.config;
+			: refreshLocalSamplingConfig(request.config);
 	// Workspace discovery must happen where the files live. Local desktop
 	// sessions keep the eager prompt path; SSH sessions leave a blank prompt for
 	// the remote Hub's LocalRuntimeHost bootstrap to compose from remote metadata.

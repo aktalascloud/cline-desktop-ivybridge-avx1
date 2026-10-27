@@ -266,7 +266,7 @@ export function toProviderConfig(
 		timeoutMs: settings.timeout,
 		maxOutputTokens: settings.maxTokens,
 		sampling: settings.sampling,
-		authorReasoningMode: settings.authorReasoningMode,
+		// Legacy provider-wide author mode is intentionally not projected. Modes are session-owned.
 		maxInputTokens: settings.contextWindow,
 		thinking: settings.reasoning?.enabled,
 		reasoningEffort,

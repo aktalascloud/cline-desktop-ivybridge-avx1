@@ -3235,3 +3235,26 @@ describe("queue steering routing", () => {
 		}
 	});
 });
+
+it("normalizes only virtual Ultra/Adaptive into native XHigh at the Core boundary", () => {
+	for (const mode of ["ultra", "adaptive"]) {
+		expect(
+			buildSessionConnectionUpdate({
+				provider: "fixture",
+				model: "fixture",
+				thinking: true,
+				reasoningEffort: mode,
+			}),
+		).toMatchObject({ thinking: true, reasoningEffort: "xhigh" });
+	}
+	for (const mode of ["high", "xhigh"]) {
+		expect(
+			buildSessionConnectionUpdate({
+				provider: "fixture",
+				model: "fixture",
+				thinking: true,
+				reasoningEffort: mode,
+			}),
+		).toMatchObject({ thinking: true, reasoningEffort: mode });
+	}
+});
