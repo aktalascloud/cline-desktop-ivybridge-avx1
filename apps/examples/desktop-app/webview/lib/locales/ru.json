@@ -1183,5 +1183,8 @@
 	"Author mode for compatible DavidAU models; stock High and XHigh stay unchanged.": "Авторский режим для совместимых моделей DavidAU; обычные High и XHigh остаются штатными.",
 	"Adaptive": "Адаптивный",
 	"Adaptive mode is selected by your backend; no client routing or memory.": "Адаптивный режим выбирает ваш бэкенд; в клиенте нет подбора режимов и памяти.",
-	"Adaptive requires backend support for reason_mode=auto; no client routing or memory.": "Adaptive требует поддержки reason_mode=auto на бэкенде; клиент не выбирает режимы и не добавляет память."
+	"Adaptive requires backend support for reason_mode=auto; no client routing or memory.": "Adaptive требует поддержки reason_mode=auto на бэкенде; клиент не выбирает режимы и не добавляет память.",
+	"The model repeatedly returned reasoning without an answer or tool calls. The task was not completed.": "Модель несколько раз вернула только рассуждения без ответа или вызовов инструментов. Задача не выполнена.",
+	"The run failed: The model repeatedly returned reasoning without an answer or tool calls. The task was not completed.": "Задача не выполнена: модель несколько раз вернула только рассуждения без ответа или вызовов инструментов.",
+	"The model returned reasoning without an answer. Requesting continuation.": "Модель вернула рассуждения без ответа. Запрашиваю продолжение."
 }

@@ -21,6 +21,11 @@ if(@($changed|Where-Object {$_ -like 'sdk/*'}).Count){
  foreach($package in @('shared','llms','core')){Invoke-Check "$package typecheck" $root @('-F',"@cline/$package",'typecheck')}
 }
 Invoke-Check 'CLI compatibility typecheck' $root @('-F','@cline/cli','typecheck')
+if(@($changed|Where-Object {$_ -like 'sdk/packages/agents/*'}).Count){
+ Invoke-Check 'Agent runtime typecheck' $root @('-F','@cline/agents','typecheck')
+ $agentTests=@('src/agent-runtime.test.ts')+@(Changed-Tests 'sdk/packages/agents')
+ Invoke-Check 'Agent loop and completion regressions' "$root/sdk/packages/agents" (@('x','vitest','run','--maxWorkers=2','--config','vitest.config.ts')+@($agentTests|Sort-Object -Unique))
+}
 Invoke-Check 'Distribution profile bootstrap' "$root/apps/cli" @('test','script/distribution-bootstrap.test.ts')
 $cliTests=@('src/runtime/run-agent.test.ts','src/commands/update.test.ts')+@(Changed-Tests 'apps/cli')
 if($Mode -eq 'full'){$cliTests=@('src/runtime','src/commands','src/utils/hooks.test.ts')}

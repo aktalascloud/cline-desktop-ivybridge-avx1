@@ -98,6 +98,12 @@ const PROVIDER_ERROR_RETRY_MAX_DELAY_MS = 15_000;
 const CONTENT_FILTER_EMPTY_TURN_MESSAGE =
 	"Model returned no content because the response was blocked by a content filter. Retrying is unlikely to help — try rephrasing the request.";
 
+const REASONING_ONLY_RECOVERY_LIMIT = 2;
+const REASONING_ONLY_RECOVERY_NUDGE =
+	"Your previous response contained only internal reasoning and no answer or tool action. The user's task is not complete. Continue with the next necessary tool calls, or provide the actual final result. Do not repeat work that already succeeded.";
+const REASONING_ONLY_FAILURE_MESSAGE =
+	"The model repeatedly returned reasoning without an answer or tool calls. The task was not completed.";
+
 /**
  * Terminal message when a context-window overflow cannot be recovered because
  * there is no conversation history to compact — the system prompt, tools, and
@@ -835,6 +841,7 @@ export class AgentRuntime {
 			await this.flushPendingHookContexts();
 
 			let finalAssistantMessage: AgentMessage | undefined;
+			let reasoningOnlyRecoveries = 0;
 
 			while (
 				this.config.maxIterations === undefined ||
@@ -946,6 +953,7 @@ export class AgentRuntime {
 				// A turn that yields tool calls is progress: reset the cut-off streak.
 				if (toolCalls.length > 0) {
 					this.maxTokensRecoveryCount = 0;
+					reasoningOnlyRecoveries = 0;
 				}
 				this.state.pendingToolCalls = toolCalls.map((part) => part.toolCallId);
 
@@ -956,6 +964,45 @@ export class AgentRuntime {
 						iteration: this.state.iteration,
 						toolCallCount: 0,
 					});
+					// Thinking blocks are transcript content, but they are not a final
+					// answer. Never report an empty successful run merely because the
+					// provider ended a reasoning-only response with a normal finish.
+					// Provider-executed activity and media must not be replayed.
+					const onlyInternalContent =
+						message.content.some((part) => part.type === "reasoning") &&
+						message.content.every(
+							(part) =>
+								part.type === "reasoning" ||
+								(part.type === "text" && !part.text.trim()),
+						);
+					if (onlyInternalContent && !this.hasModelToolActivity(message)) {
+						if (finishReason === "content-filter") {
+							this.state.lastFinishReason = finishReason;
+							throw new Error(CONTENT_FILTER_EMPTY_TURN_MESSAGE);
+						}
+						if (reasoningOnlyRecoveries >= REASONING_ONLY_RECOVERY_LIMIT) {
+							this.state.lastFinishReason = finishReason;
+							throw new Error(REASONING_ONLY_FAILURE_MESSAGE);
+						}
+						reasoningOnlyRecoveries += 1;
+						await this.emit({
+							type: "status-notice",
+							snapshot: this.snapshot(),
+							message:
+								"The model returned reasoning without an answer. Requesting continuation.",
+							metadata: {
+								kind: "reasoning_only_recovery",
+								attempt: reasoningOnlyRecoveries,
+								maxRetries: REASONING_ONLY_RECOVERY_LIMIT,
+							},
+						});
+						this.throwIfAborted();
+						await this.addUserReminderMessage(REASONING_ONLY_RECOVERY_NUDGE, {
+							displayRole: "system",
+						});
+						continue;
+					}
+					reasoningOnlyRecoveries = 0;
 					const completionReminderMessages =
 						this.getCompletionReminderMessages();
 					if (completionReminderMessages.length > 0) {

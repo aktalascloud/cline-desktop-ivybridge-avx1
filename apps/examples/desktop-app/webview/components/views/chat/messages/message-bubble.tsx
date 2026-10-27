@@ -201,13 +201,14 @@ export const MessageBubble = memo(function MessageBubble({
 	if (isSystemSteeringMessage(message)) {
 		return null;
 	}
-	const displayContent = formatChatMessageContent(
+	const formattedContent = formatChatMessageContent(
 		message.role,
 		message.content,
 		message.meta?.providerId,
 		message.meta?.providerAuth,
 		message.meta?.messageKind,
 	);
+	const displayContent = isError ? t(formattedContent) : formattedContent;
 	const credentialAction =
 		isError &&
 		onFixCredentials &&

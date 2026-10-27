@@ -1,5 +1,12 @@
 # Cline Desktop Changelog
 
+## 1.0.9
+
+- Reasoning-only model replies no longer count as a completed answer. The agent preserves context and requests a bounded continuation; repeated empty visible results fail explicitly. Cancellation, provider-executed activity and completed tool results remain protected.
+- Ответ модели только с рассуждениями больше не считается выполненной задачей. Агент сохраняет контекст и запрашивает продолжение; после ограниченного числа повторов показывает явную ошибку. Сохранены отмена, ограничения инструментов и уже полученные результаты.
+- Windows installer requests administrator rights, closes only its own runtime and updates existing installations in place, avoiding the legacy 1.0.7 uninstaller lock.
+- Установщик запрашивает права администратора, закрывает компоненты только своей установки и обновляет её поверх старой, обходя блокировку деинсталлятора 1.0.7.
+
 ## 1.0.8
 
 - Windows installer now requests administrator rights while preserving the existing per-user installation. Automatically closes the exact installed Desktop/CLI/Hub files, including a hidden Hub after the window exits; other installations and user data remain untouched.

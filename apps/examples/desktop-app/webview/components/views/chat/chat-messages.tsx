@@ -856,7 +856,7 @@ function ChatMessagesImpl({
 								{shouldShowErrorBanner ? (
 									<div className="cline-chat-selectable mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
 										{lastErrorMessage?.content !== error ? (
-											<p>{error}</p>
+											<p>{t(error ?? "")}</p>
 										) : null}
 										{errorAction ? (
 											<Button
