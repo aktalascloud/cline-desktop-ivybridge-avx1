@@ -38,6 +38,7 @@ if(@($changed|Where-Object {$_ -like 'sdk/packages/shared/*'}).Count){
 }
 if(@($changed|Where-Object {$_ -like 'sdk/packages/llms/*'}).Count){
  $llmsTests=@('src/providers/builtins.test.ts','src/providers/model-capabilities.test.ts','src/providers/ai-sdk-reasoning.test.ts','src/providers/ai-sdk.tool-calls.test.ts','src/transcription.test.ts')+@(Changed-Tests 'sdk/packages/llms')
+ if('sdk/packages/llms/package.json' -in $changed){$llmsTests+=@('src/services/langfuse-telemetry.test.ts','src/services/langfuse-telemetry.integration.test.ts')}
  Invoke-Check 'Provider/catalog compatibility' "$root/sdk/packages/llms" (@('x','vitest','run','--maxWorkers=2','--config','vitest.config.ts')+@($llmsTests|Sort-Object -Unique))
 }
 # These two suites have real timers and a large module graph; isolate them.

@@ -2,8 +2,8 @@
 
 ## 1.0.7
 
-- Updated embedded CLI to 3.0.74 and integrated the upstream menu-handler correction. Local Strata sampling, until-done output and opt-in XHigh Ultra are preserved.
-- Встроенный CLI обновлён до 3.0.74, добавлено upstream-исправление обработки меню. Сохранены параметры Strata, ответ до завершения и дополнительный Ultra только для XHigh.
+- Updated embedded CLI to 3.0.74 and integrated the upstream menu-handler correction. MCP now discovers all tool pages with loop/page guards; CLI shell environments are session-scoped, and Langfuse 5.10.1 removes an obsolete provider-utils chain. Strata sampling, until-done output and opt-in XHigh Ultra are preserved.
+- Встроенный CLI обновлён до 3.0.74, добавлено upstream-исправление обработки меню. MCP получает все страницы инструментов с защитой от зацикливания; окружение shell изолировано между CLI-сессиями, Langfuse 5.10.1 убирает старую цепочку provider-utils. Сохранены параметры Strata, ответ до завершения и Ultra только для XHigh.
 
 ## 1.0.6
 

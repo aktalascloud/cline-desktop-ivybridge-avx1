@@ -8,7 +8,10 @@ import {
 } from "@cline/shared";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { ReadResourceResultSchema } from "@modelcontextprotocol/sdk/types.js";
+import {
+	ReadResourceResultSchema,
+	type Tool,
+} from "@modelcontextprotocol/sdk/types.js";
 import { createMcpAppsClientCapabilities } from "./apps";
 import {
 	createMcpOAuthClientInformation,
@@ -202,6 +205,23 @@ class NewlineMessageParser {
 	}
 }
 
+const MAX_TOOL_LIST_PAGES = 256;
+function checkedToolCursor(
+	next: unknown,
+	seen: Set<string>,
+	pages: number,
+): string | undefined {
+	if (next === undefined) return undefined;
+	if (typeof next !== "string")
+		throw new Error("MCP tools/list returned an invalid pagination cursor.");
+	if (seen.has(next))
+		throw new Error("MCP tools/list returned a repeated pagination cursor.");
+	if (pages >= MAX_TOOL_LIST_PAGES)
+		throw new Error("MCP tools/list exceeded the pagination page limit.");
+	seen.add(next);
+	return next;
+}
+
 class StdioMcpClient implements McpServerClient {
 	private readonly registration: McpServerRegistration;
 	private process?: ChildProcessWithoutNullStreams;
@@ -362,15 +382,19 @@ class StdioMcpClient implements McpServerClient {
 	}
 
 	async listTools(): Promise<readonly McpToolDescriptor[]> {
-		const result = (await this.request("tools/list")) as {
-			tools?: Array<{
-				name?: string;
-				description?: string;
-				inputSchema?: Record<string, unknown>;
-				_meta?: Record<string, unknown>;
-			}>;
-		};
-		return (result.tools ?? [])
+		const tools: Partial<McpToolDescriptor>[] = [];
+		let cursor: string | undefined;
+		const seen = new Set<string>();
+		let pages = 0;
+		do {
+			const result = (await this.request(
+				"tools/list",
+				cursor === undefined ? undefined : { cursor },
+			)) as { tools?: Partial<McpToolDescriptor>[]; nextCursor?: string };
+			tools.push(...(result.tools ?? []));
+			cursor = checkedToolCursor(result.nextCursor, seen, ++pages);
+		} while (cursor !== undefined);
+		return tools
 			.filter(
 				(
 					tool,
@@ -852,10 +876,19 @@ class SdkUrlMcpClient implements McpServerClient {
 	async listTools(): Promise<readonly McpToolDescriptor[]> {
 		const client = await this.ensureConnectedClient();
 		try {
-			const result = await client.listTools(undefined, {
-				timeout: this.requestTimeoutMs,
-			});
-			return result.tools.map((tool) => ({
+			const tools: Tool[] = [];
+			let cursor: string | undefined;
+			const seen = new Set<string>();
+			let pages = 0;
+			do {
+				const result = await client.listTools(
+					cursor === undefined ? undefined : { cursor },
+					{ timeout: this.requestTimeoutMs },
+				);
+				tools.push(...result.tools);
+				cursor = checkedToolCursor(result.nextCursor, seen, ++pages);
+			} while (cursor !== undefined);
+			return tools.map((tool) => ({
 				name: tool.name,
 				description: tool.description,
 				inputSchema:
