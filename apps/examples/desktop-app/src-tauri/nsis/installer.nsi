@@ -266,6 +266,7 @@ Function PageReinstall
   ; related to current installed version if detected and whether
   ; we are downgrading or not.
   ${If} $PassiveMode = 1
+  ${OrIf} $UpdateMode = 1
     Call PageLeaveReinstall
   ${Else}
     nsDialogs::Create 1018

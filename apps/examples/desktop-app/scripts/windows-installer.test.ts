@@ -200,7 +200,14 @@ test("production template requests UAC without changing current-user installatio
 	expect(template).toContain(
 		"  ; In update mode, always proceeds without uninstalling\n  ${If} $UpdateMode = 1\n    Goto reinst_done",
 	);
+	expect(template).toContain(
+		"  ${If} $PassiveMode = 1\n  ${OrIf} $UpdateMode = 1\n    Call PageLeaveReinstall",
+	);
 	const original = template
+		.replace(
+			"  ${If} $PassiveMode = 1\n  ${OrIf} $UpdateMode = 1\n    Call PageLeaveReinstall",
+			"  ${If} $PassiveMode = 1\n    Call PageLeaveReinstall",
+		)
 		.replace("  !insertmacro AVX1_DETECT_EXISTING_INSTALLATION\n\n", "")
 		.replace(
 			elevated,
