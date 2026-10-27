@@ -1,9 +1,9 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.6",
-  "upstream_sha": "dab482348ffd83d1065dfcf8b538076608925a79",
-  "build_source_sha": "bb4fc2a8f631b4b2e5f2706a0b7b03790a02ba1c",
+  "version": "1.0.7",
+  "upstream_sha": "c35b729049c7bb26c340df63ea9235c40b32dd29",
+  "build_source_sha": "a26a46d2ffa302980ff4cca12eb5af19113d6669",
   "release_approved": true,
   "native": {
     "kind": "source-built",
@@ -23,10 +23,10 @@
     "c_flags": "ring cc defaults observed: /MD /O2 /Brepro and vendor warning/function flags; no global CFLAGS override",
     "pgo": false,
     "affinity_or_numa_pinning": false,
-    "executable_sha256": "d64b7e021db7acc57f59be4f28e42702ab2524717eba10e8dbbc1daab373d693"
+    "executable_sha256": "27238795dcfe2e44ce184a21510787d0930faed2ae56e17c66d197e81bd2720f"
   },
   "cli_and_hub": {
-    "version": "3.0.73",
+    "version": "3.0.74",
     "kind": "JavaScript/TypeScript compiled from source into embedded prebuilt Bun",
     "target": "bun-windows-x64-baseline",
     "flags": [
@@ -36,7 +36,7 @@
       "fork storage bootstrap before imports",
       "official auto-update disabled for fork distribution"
     ],
-    "sha256": "caa9d849e42e481cd750cb66445fd6ae6ccad878ed04571c5b4409c901b138f8"
+    "sha256": "6db13d2b72abccee27e23ef65f7cc1e0a7b0c943523b36936ddc285688339c49"
   },
   "backend": {
     "kind": "source-built JS bundle",
@@ -44,7 +44,8 @@
       "target=bun",
       "minify",
       "no telemetry credentials inlined"
-    ]
+    ],
+    "sha256": "8fb7738e72fca36334464a76cf4ee764e8f78e70a32212bd07462d6f1dbe6a25"
   },
   "frontend": {
     "kind": "source-built static export",
@@ -148,7 +149,7 @@
   ],
   "selected_npm": [],
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "7ab27d6caa01374517e8dc5acc9bdc15e54f7cdf0ef8223e65899634485c97c0",
+  "bun_lock_sha256": "ee7b3e0e640ad4962ed435d71671fe2bda099799228ab7056cd8064756da1f6c",
   "cuda_used": false,
   "llm_models_included": false,
   "authenticode": "NotSigned; Tauri updater signature is a separate verification mechanism",
@@ -214,6 +215,38 @@
     "empty_max_tokens": "until done, wire -1; requires compatible endpoint; remaining context applies",
     "private_presets_not_bundled": true,
     "global_server_settings_unchanged": true,
-    "author_mode": "Ultra, opt-in and xhigh only; original messages/attachments retained"
-  }
+    "author_mode": "Separate Ultra choice, no provider-global override; High/XHigh stock"
+  },
+  "reasoning_modes": {
+    "stock": [
+      "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh"
+    ],
+    "ultra": "explicit compatible model capability; xhigh + synthetic author control",
+    "adaptive": "explicit compatible model capability; xhigh + reason_mode=auto; backend support required",
+    "no_client_classifier_or_memory": true,
+    "legacy_global_ultra_ignored": true
+  },
+  "daily_patches": [
+    {
+      "pr": 15296,
+      "url": "https://github.com/cline/cline/pull/15296"
+    },
+    {
+      "pr": 15345,
+      "url": "https://github.com/cline/cline/pull/15345"
+    },
+    {
+      "pr": 15347,
+      "url": "https://github.com/cline/cline/pull/15347"
+    },
+    {
+      "pr": 15363,
+      "url": "https://github.com/cline/cline/pull/15363"
+    }
+  ],
+  "langfuse_adapter": "5.10.1; compatible v5 family, adapted from PR15363"
 }

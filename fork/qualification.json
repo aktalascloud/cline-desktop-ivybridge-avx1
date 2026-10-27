@@ -1,8 +1,8 @@
 {
   "status": "qualified",
   "release_approved": true,
-  "upstream_sha": "dab482348ffd83d1065dfcf8b538076608925a79",
-  "upstream_desktop": "0.0.48",
+  "upstream_sha": "c35b729049c7bb26c340df63ea9235c40b32dd29",
+  "upstream_desktop": "0.0.49",
   "bun": "1.4.2+744846f84",
   "rust": "1.97.0",
   "cpu_features": {
@@ -76,9 +76,9 @@
     "anonymous_download_verified": true
   },
   "ci": {
-    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40367170240",
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40450801815",
     "status": "success",
-    "source_sha": "bb4fc2a8f631b4b2e5f2706a0b7b03790a02ba1c",
+    "source_sha": "a26a46d2ffa302980ff4cca12eb5af19113d6669",
     "signature_verified": true,
     "tamper_rejected": true
   },
@@ -121,11 +121,11 @@
     "post_history_cleanup": true
   },
   "publication": {
-    "version": "1.0.6",
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.6",
-    "asset_sha256": "86f892e10d9a4807d4fc0bb0a2cb3b8a3c9211302ecd4cdd3c5e5229ea93858a",
+    "version": "1.0.7",
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.7",
+    "asset_sha256": "dd951ff1ec61e1adb7ba6212b802b759fefb8df592951805bd18feb81b817dec",
     "asset_count": 1,
-    "anonymous_download_verified": true
+    "anonymous_download_verified": false
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -231,5 +231,27 @@
     "author_template_reset": "verified offline with the installed template; normal -> Ultra -> normal is byte-identical after reset",
     "real_inference": false,
     "ultra_effort_scope": "xhigh only"
+  },
+  "daily_1_0_7": {
+    "desktop_targeted_tests": 192,
+    "provider_wire_tests": 31,
+    "provider_settings_tests": 8,
+    "installed_reasoning_modes": 7,
+    "same_session_transitions": 9,
+    "languages": [
+      "en",
+      "ru"
+    ],
+    "production_frontend": true,
+    "profile_preserved": true,
+    "private_capability_migration": true,
+    "workspace_audit_before": 66,
+    "workspace_audit_after": 65,
+    "new_advisories": 0,
+    "real_model_quality_or_speed_benchmark": false,
+    "native_gui": "waived",
+    "authenticode": "NotSigned",
+    "research_semantic_review_scoped": true,
+    "review_ledger": "fork/review-20261027.json"
   }
 }

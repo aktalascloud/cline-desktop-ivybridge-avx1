@@ -1,7 +1,7 @@
 # Cline Desktop AVX1 RU
 
 Неофициальный форк [Cline](https://github.com/cline/cline) для Windows x64,
-на базе Desktop 0.0.48 и актуального main. Цель — Ivy Bridge с AVX, F16C,
+на базе Desktop 0.0.49 и актуального main. Цель — Ivy Bridge с AVX, F16C,
 SSE4.2 и POPCNT без требования AVX2/FMA. [English](README.md).
 
 В комплект входят Desktop, CLI, Hub и служба приложения. Поддержка локальных
@@ -23,7 +23,7 @@ streaming, инструменты и MCP. Адрес провайдера и л�
 ## Установка
 
 Скачайте [текущий выпуск](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) или
-[установщик Windows x64](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.6/Cline-Desktop-AVX1-RU-Setup.exe). Проверяемая система — Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 и WebView2.
+[установщик Windows x64](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.7/Cline-Desktop-AVX1-RU-Setup.exe). Проверяемая система — Windows 10 LTSC 19044 x64, Xeon E5-2697 v2 и WebView2.
 
 У форка собственные ID приложения, подписанные обновления, каталог данных и
 один ярлык автозапуска. Другая установка Cline сохраняется отдельно.
@@ -35,6 +35,7 @@ streaming, инструменты и MCP. Адрес провайдера и л�
 - [Обновление undici до 7.30.1](https://github.com/cline/cline/pull/15287).
 - [Проверки дублирования истории](https://github.com/cline/cline/pull/15223): само исправление уже присутствует в upstream main.
 - Новые чаты больше не восстанавливают удалённого провайдера: работает выбор reasoning настроенной локальной модели. Настройки старых диалогов сохраняются.
+- 1.0.7: отдельные None/Low/Medium/High/XHigh, авторский Ultra и Adaptive бэкенда (`reason_mode=auto`) для явно совместимых локальных моделей. Без клиентского роутера и памяти. Окружение shell изолировано по сессиям, каталог MCP поддерживает защищённую пагинацию, обновлён совместимый адаптер Langfuse. [Реестр проверки](fork/review-20261027.json).
 - 1.0.6: параметры генерации рядом с thinking и ответ до завершения на совместимом локальном сервере; дополнительный авторский Ultra только для XHigh. Проверены RU/EN и параметры запросов установленного CLI; улучшение качества модели не заявляется.
 - 1.0.5: восстановление сессий, панель изменений и дополнительные локальные среды; коды PowerShell, hooks отмены, индикатор обновления, защита команд/junction, закрытие SQLite и расширенный русский перевод.
 - Наши изменения: RU/EN, отдельные обновления форка, закрытие SQLite-соединений, безопасная работа с worktree в Windows и привязка MCP OAuth к issuer с SDK 1.32.2.

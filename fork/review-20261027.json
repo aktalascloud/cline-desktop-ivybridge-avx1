@@ -1,0 +1,480 @@
+{
+  "date": "2026-10-27",
+  "source_sha": "a26a46d2ffa302980ff4cca12eb5af19113d6669",
+  "discovery_finished": "2026-10-27T02:59:04.985254+00:00",
+  "counts": {
+    "releases": {
+      "records": 468,
+      "pages": 5
+    },
+    "pulls-recent-closed": {
+      "records": 400,
+      "pages": 4
+    },
+    "pulls-open": {
+      "records": 783,
+      "pages": 8
+    },
+    "branches": {
+      "records": 2465,
+      "pages": 25
+    },
+    "issues-open": {
+      "records": 1729,
+      "pages": 18
+    },
+    "forks-all": {
+      "records": 7778,
+      "pages": 78
+    }
+  },
+  "active_forks_live": 518,
+  "fork_http404": 43,
+  "issue_catalog": 519,
+  "issue_enabled": 7,
+  "issue_disabled": 512,
+  "semantic_review_is_scoped": true,
+  "pull_requests": [
+    {
+      "url": "https://github.com/cline/cline/pull/15349",
+      "sha": "c039aca1c4a82af278221fb1849c7927540ff83e",
+      "status": "rejected-implementation",
+      "purpose": "Regex matching is not an AST invariant engine; workflow runs unpinned npx and reports fabricated success after scanner failure. Not integrated or executed.",
+      "diff_sha256": "bd567320aebc3a2027ee538129d87fec12135289a699b7584598a310785d95c9",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15376",
+      "sha": "ab2fa3f3e90876a7d9911e9bd8d48522240df848",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "869bca66f0db4305a3745c61306f37ff993b288a1e9d517a2c3f50a5f833abde",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15305",
+      "sha": "c1cc7797e64a3daee3eaa5ef9df610c48e336701",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "19cb684642cff14b3e6a52e45404017a87ad87a06357d43f14b1cd3ce5824ba5",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15304",
+      "sha": "4ba49e2cd5ecce8bd1a53b6212d59dc31300369c",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "5770180af30673f4839f41459cbce06f88ece82af2a4b3dd66b98297ab14483e",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15371",
+      "sha": "f7bacd34f144442b801faf083b0365e0bae8024f",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "4a71b42cf79c32e8ba826626f07bfc5270fbc756f4e4317dbd5c440cf6ac92d3",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15369",
+      "sha": "0ba8a2184621a9d0bb0a9d012750f696a3f05f10",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "2e3a8b6c1944e27dadcfee4bd831d5c31764746d51fc557aa1c10320558b2ef9",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15345",
+      "sha": "7a4835e4ac823b3d45984ca737efd6632bf67bad",
+      "status": "integrated-awaiting-final-qualification",
+      "purpose": "CLI-only loopback opt-in, bounded ephemeral per-session shell snapshot; SDK/remote defaults unchanged. Runtime patch retained; docs differ locally.",
+      "diff_sha256": "afd2a4c5c6754d5edd0efd85ee9f02336d0896bd3493933e94055cee47789983",
+      "verification": "Targeted local Core 103 passed/2 conditional skipped, LLM/telemetry 101 passed for selected changes; CI/installed/package gates pending"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15375",
+      "sha": "9d8fbaac1bf53ebe82f9c849c2f42c7cf4768274",
+      "status": "deferred-unqualified",
+      "purpose": "Full runtime changes reviewed: retry/billing/context event contracts overlap. No combined end-to-end cancellation, accounting and compaction qualification performed; not merged.",
+      "diff_sha256": "6d244858d15678559527dbebc1bc9be00f98140a433a5a826b68447310393ecd",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15374",
+      "sha": "bfb3c10844916daf29e63119adc5404f7fd48b92",
+      "status": "deferred-unqualified",
+      "purpose": "Full runtime changes reviewed: retry/billing/context event contracts overlap. No combined end-to-end cancellation, accounting and compaction qualification performed; not merged.",
+      "diff_sha256": "d502655cd446f75d195709c7d5442fd73ab1a24ebae5d8308dde8abe332ce80f",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15373",
+      "sha": "51ede38a493c49271837804bc232ec776e26e642",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "dcabffc02e851e7ef2f460c7b6f2d8cc42c58a05655cb487bab7ef49e38e2e4d",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15217",
+      "sha": "c31fc6920a784dafac8d27650ec74fa9175f0221",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "0f2b164c34ed8426bb95f1118815e76512ba044a0bc6c32038eb4e9f54120f44",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15361",
+      "sha": "0fc727efd3f3aba03e25f4fa5e96c0d3ba1fe4b3",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "b4534b32f83b8db2cd2ef88cd0eca34a7022329f5be9cc9dff96a9a9466f3a18",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15368",
+      "sha": "04e0a31243bc534fd8fd292aa30c1266fecce016",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "66f6fc61316c85452e7fb41696041a7054e4abead5462e019119046931d61b2b",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15317",
+      "sha": "6763361f37300eb921099cff7c955f1a720c3ad1",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "a5e25ea5d85380c402c1b3e7ef1a2f420e94d2f0de1a1b85dfaf315b7e7b6a19",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15364",
+      "sha": "53030e642ca1e86983078e7d7e2c8602c3e47001",
+      "status": "deferred-unqualified",
+      "purpose": "Full runtime changes reviewed: retry/billing/context event contracts overlap. No combined end-to-end cancellation, accounting and compaction qualification performed; not merged.",
+      "diff_sha256": "8156c8573b56da082b6fc1e26ee917e5733a60ad7d9defec37f4157f9f7f0a11",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15367",
+      "sha": "5ea42d6275e77f30fa8e3594a7adbad1be8d4f14",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "2a3e5ceadaaebfb2e2e69077b1c5a59a8c95167da89360d1c710ce8faded6048",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15366",
+      "sha": "f34a04774ba7b4e0a2de5ad72895222948d0bb03",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "6a9e536dfb9235a22294aa63c672ddd1b39dd38e2486c6940d68c3aa7b734394",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15095",
+      "sha": "8aa28b7877cb378f0aecc66bd78057a9ddaf6d47",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": null,
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15365",
+      "sha": "5dbd6cb89acd3ac7bba2c44114870f61f3a160e4",
+      "status": "deferred-no-packaged-removal",
+      "purpose": "Optional peer remains a dev dependency used by this monorepo bundler; manifest-only move would not establish removal of SAP/node-forge from our package.",
+      "diff_sha256": "e11a0c9232c7f93a710693b178cabc6c18b2da3a335f5c541b1d94e4aaa68da6",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15362",
+      "sha": "cca3d2ada9829de41948bccd3ae00deacb2e0eca",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "be62ba21b6f1a764eca289d6473fd4234f45fcd3202d62a489431b924a804524",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15043",
+      "sha": "75004f346c4c3a71082b13eee67b487d6bc54f4c",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "b06721cc46af04fa0483bddb36d33080258ee117b76dda03699e8ec2395a209a",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15363",
+      "sha": "f9d2879e5b7cf742003c921f6df817a90258ffa3",
+      "status": "integrated-awaiting-final-qualification",
+      "purpose": "Adapted to exact 5.10.1 in the existing Langfuse 5.x family; same AI SDK 7 peer, patched otel chain, 66 to 65 audit entries.",
+      "diff_sha256": "ea7425da203523d3814d1fd79afc73703aa35d884418df1142cd40d3d75d36e7",
+      "verification": "Targeted local Core 103 passed/2 conditional skipped, LLM/telemetry 101 passed for selected changes; CI/installed/package gates pending"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15287",
+      "sha": "63363818df97e6c9c4f72622bbf2a53a711c025c",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "d99696f307fe5f6198ae32dbff6482f1732d992da7522946f042e98198c97067",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15256",
+      "sha": "13017841c0c4e670aa0f7b7cef0b9cda3030ef34",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "dba33898c9b0ba385c9bcbf618dbbea59afea5af7c465e304b327a2b1d039297",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15358",
+      "sha": "4b99eeddb566839b8c278bab16a331e7b2b7835e",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "38e31b3a4cd0a6aa23c6817a4cf4b45b391eb739c672688d6351c8e5cb2e42be",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15357",
+      "sha": "f9315afc9758db49b7dd43ebb981638e0b795456",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "a3321f47835e992c43df412ad3fc789e2f0ec5c729dde3490a2d4df37d020236",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15353",
+      "sha": "767456415bf5c2533646f6dc73cd4052e0957ca9",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "3ecc29393f93eef74c073c6a325a3c166ab84164780308507af6757c56e8138b",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15027",
+      "sha": "9af37ff7ca45636b4312423b12bbdbdf16324d41",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "d5bf094a99a176f7a39abfc90edfda12b19be58498e1cfe482fa6af32bca6845",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15352",
+      "sha": "cec50f2cfce75a54d8af7818fd3feeecb36be52e",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "2ddcada64611091f28a0d7c42d65a7b1a952873447387fd7cd326e476a4b3560",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15145",
+      "sha": "f2f5c02f896badb262e30bdcee6febe3e4189b85",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "64c72ebd9a92836c39bae95fd771c53afd7c2dd24d3fab73c810b37168252099",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15350",
+      "sha": "1b65388eb07c12ea0bb23730801b9f3d209c084d",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "daaa99b720ac86590340fc67722a841fc056adfff3c7c29ee2845779a33195a5",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/14609",
+      "sha": "938a7083ea08ca266ae683c20f0e83085789f6a0",
+      "status": "deferred-queue-contract",
+      "purpose": "Teardown introduces discarded-prompt events and nonpersisted queue semantics; requires explicit delivery preservation audit with the changed projector/host contracts before adaptation.",
+      "diff_sha256": "032c2100b94e05ea2f54c9ee79d8fbe1acd5943c7b6bd5c2324929d6f75f0ec8",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15273",
+      "sha": "04c079eab4bf088773da16aa3286a318a21e1b6b",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "33c94d9460d18700b7ddb09b3590409cf5d2fe7f32549024f9814a5d8a87d52d",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15341",
+      "sha": "4338546a4693af8dc1fc3b335d24f65f243a4da8",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "c0988fa8e3390e2875d761ded32fa1383cd7b1c903b314fe0e65ba2d6057327b",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15348",
+      "sha": "85b57e7ad95640609c9ad53ba00bc98d023bee29",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "628948dcaaaa77537879ade32d324ff1bcac6093612f91db71de6848a41fd485",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/14994",
+      "sha": "fbb7ff620512b90d89a1254353f6c57a56ae8944",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "1210c646bb95deedb24d4160d2246a11056c58791445d2bd683e4ff170e80e6c",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15347",
+      "sha": "5eda8284c6c8dd1b333b94f0e3732cf47b039a6c",
+      "status": "integrated-awaiting-final-qualification",
+      "purpose": "Both MCP transports paginate; own repeated-cursor/type/page-limit guards added with real transport regressions.",
+      "diff_sha256": "e85f172f8c2c5b2af17ff4ab321ac5c065aebb3fadff3d65d5eda07168798e66",
+      "verification": "Targeted local Core 103 passed/2 conditional skipped, LLM/telemetry 101 passed for selected changes; CI/installed/package gates pending"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15340",
+      "sha": "2492ddaf6fc277643f0ef5b445ee1843515a8571",
+      "status": "screened-not-applied",
+      "purpose": "Scope-screened; no independently qualified change for the selected Windows/local-provider path.",
+      "diff_sha256": "810cfe0fa0ad1bf658103e8391e5daab6f570ee0d45df974787bcf4c433a3aed",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/cline/cline/pull/15296",
+      "sha": "3aa08f0a76009c308127703130cac74ae4b1e1c7",
+      "status": "integrated-awaiting-final-qualification",
+      "purpose": "Already merged in the four newly sanitized main commits; macOS-only duplicate menu callback removed.",
+      "diff_sha256": "d020a06e4ee3b15a51d4ab842b4252fdeb8c3140ebebd46945a68bff7c1a07d8",
+      "verification": "Targeted local Core 103 passed/2 conditional skipped, LLM/telemetry 101 passed for selected changes; CI/installed/package gates pending"
+    },
+    {
+      "url": "https://github.com/amaybaum-dev/cline/pull/10",
+      "sha": "d441f336dd11f43a0e0e616084e0d6e1f65b11f9",
+      "status": "screened-not-applied",
+      "purpose": "Legacy root/webview-ui npm lock paths do not match this Bun/Next Desktop workspace; DOMPurify proposal is older than our pinned 3.4.17. No dependency downgrade.",
+      "diff_sha256": "de9e206088ba6e2c20ee7e60df555cbbc9aaac618307515db1fad32c0788ab42",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/amaybaum-dev/cline/pull/8",
+      "sha": "ae70ed0d0d544c9bf0adb79ef97d9fff777e3a3f",
+      "status": "screened-not-applied",
+      "purpose": "Legacy root/webview-ui npm lock paths do not match this Bun/Next Desktop workspace; DOMPurify proposal is older than our pinned 3.4.17. No dependency downgrade.",
+      "diff_sha256": "8922462df82381a31b6a6c9506e0b0674df52db5f448cbf90af9cc0256859ede",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/amaybaum-dev/cline/pull/5",
+      "sha": "eb6bdef499bc76bad440cc4398e3ad0f7c2d5bfe",
+      "status": "screened-not-applied",
+      "purpose": "Legacy root/webview-ui npm lock paths do not match this Bun/Next Desktop workspace; DOMPurify proposal is older than our pinned 3.4.17. No dependency downgrade.",
+      "diff_sha256": "4c8eb74401298184009164dd6dc4704f97f3a2821204d4843a1d1dcc2bb0f8ad",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/sonoxo/cline/pull/1",
+      "sha": "e3047b23dc3bd49868613e0eb8fd707fbe975126",
+      "status": "screened-not-applied",
+      "purpose": "Registry-only ecosystem YAML has no runtime performance or security fix; not applied.",
+      "diff_sha256": "c7966bc17536fc166c80f1d3dc6679b746a80a3e6ad8306d9a213e54bb26f585",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/NextGenAILLC/cline/pull/34",
+      "sha": "7b2c5c9184bc82f0f01e0444ceaf81c8b2755a31",
+      "status": "screened-not-applied",
+      "purpose": "Legacy root/webview-ui npm lock paths do not match this Bun/Next Desktop workspace; DOMPurify proposal is older than our pinned 3.4.17. No dependency downgrade.",
+      "diff_sha256": "3a08f8b50fe4fe01bf28621489129c7d48851a3cb6b75c03b4fffb0606ca78f8",
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    },
+    {
+      "url": "https://github.com/chanhong/cline/pull/2",
+      "sha": "c35b729049c7bb26c340df63ea9235c40b32dd29",
+      "status": "covered-by-main",
+      "purpose": "Head is the official main c35b729; incremental official history independently reviewed. The fork-wide 1033-file diff is unavailable and not independently qualified.",
+      "diff_sha256": null,
+      "verification": "Scope/implementation review as described; not a verified fix claim"
+    }
+  ],
+  "issues": [
+    {
+      "url": "https://github.com/cline/cline/issues/10951",
+      "comments": 3,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "Read description and changed comments; no new applicable qualified implementation"
+    },
+    {
+      "url": "https://github.com/cline/cline/issues/12945",
+      "comments": 2,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "Read description and changed comments; no new applicable qualified implementation"
+    },
+    {
+      "url": "https://github.com/cline/cline/issues/13492",
+      "comments": 7,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "Read description and changed comments; no new applicable qualified implementation"
+    },
+    {
+      "url": "https://github.com/cline/cline/issues/14875",
+      "comments": 4,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "Native macOS fix already in upstream main; no native macOS validation claimed"
+    },
+    {
+      "url": "https://github.com/cline/cline/issues/15344",
+      "comments": 1,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "CLI shell isolation implemented from PR15345"
+    },
+    {
+      "url": "https://github.com/cline/cline/issues/15346",
+      "comments": 1,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "MCP pagination implemented from PR15347 with guards"
+    },
+    {
+      "url": "https://github.com/cline/cline/issues/15354",
+      "comments": 3,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "VSCode/Codex read-approval report; Desktop approval controls retained, no reproduced new fix"
+    },
+    {
+      "url": "https://github.com/cline/cline/issues/15359",
+      "comments": 2,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "Cloud account/WAF failure; current local profiles unaffected, account branch remains outside chosen scope"
+    },
+    {
+      "url": "https://github.com/cline/cline/issues/15360",
+      "comments": 1,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "Legacy VSCode full-state gRPC serialization, not the Desktop transport; no OOM fix claimed"
+    },
+    {
+      "url": "https://github.com/cline/cline/issues/15372",
+      "comments": 1,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "macOS shortcut report, not reproduced on Windows"
+    },
+    {
+      "url": "https://github.com/IChouChiang/cline-termux/issues/59",
+      "comments": 0,
+      "pages": 1,
+      "status": "reviewed",
+      "scope": "Read description and changed comments; no new applicable qualified implementation"
+    }
+  ],
+  "global_search_applicable_patches": 0,
+  "global_search_scope": "Ivy Bridge game generator ISA rejection and SoX DSD DSP kernels are not dependencies of this project; neither applied."
+}
