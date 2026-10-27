@@ -1,5 +1,10 @@
 # Cline Desktop Changelog
 
+## 1.0.8
+
+- Windows installer now requests administrator rights while preserving the existing per-user installation. Automatically closes the exact installed Desktop/CLI/Hub files, including a hidden Hub after the window exits; other installations and user data remain untouched.
+- Установщик Windows сразу запрашивает права администратора и сохраняет прежнюю установку для текущего пользователя. Автоматически закрывает Desktop/CLI/Hub из обновляемого каталога, включая фоновый Hub после закрытия окна. Другие установки и пользовательские данные не затрагиваются.
+
 ## 1.0.7
 
 - Separate None/Low/Medium/High/XHigh/Ultra/Adaptive choices. Stock High/XHigh no longer inherit a provider-wide Ultra toggle; author extensions are model-opt-in and session-owned. Adaptive sends reason_mode=auto to the backend; no client picker or memory is included.

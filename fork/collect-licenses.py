@@ -43,6 +43,7 @@ for old in out.iterdir():
   if old.is_symlink() or not old.resolve().is_relative_to(out.resolve()):raise RuntimeError('Managed notice path escape')
   old.unlink()
 shutil.copyfile(root/'LICENSE',out/'Cline-Apache-2.0.txt')
+shutil.copyfile(root/'apps/examples/desktop-app/src-tauri/nsis/LICENSE.tauri-MIT',out/'Tauri-installer-MIT.txt')
 (out/'INDEX.json').write_text(json.dumps(rows,indent=2)+'\n',encoding='utf-8')
 (out/'README.txt').write_text('Cline Desktop AVX1 RU is an unofficial Apache-2.0 fork of https://github.com/cline/cline.\nCorresponding source: https://github.com/aktalascloud/cline-desktop-ivybridge-avx1\nThis conservative notice inventory includes build, test and optional dependencies; listing does not imply that all are redistributed.\nBun is a prebuilt upstream runtime; see Bun-NOTICE.txt for its bundled third-party notices. WebView2 is a Microsoft system runtime and is not rebuilt here.\n',encoding='utf-8')
 print('License inventory',len(rows),'packages',sum(r['notice_files']>0 for r in rows),'with notices')

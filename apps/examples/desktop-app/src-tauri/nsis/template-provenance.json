@@ -1,0 +1,8 @@
+{
+  "upstream_commit": "59b63ab500da9859f12d8888c3298bc29bba0b92",
+  "upstream_path": "crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi",
+  "tauri_cli": "2.12.3",
+  "original_sha256": "8ae02c66f8adb4a0d15d97f984fbacd2b44262d8a4d03fefaf6177f67f7008e5",
+  "change": "currentUser RequestExecutionLevel user -> admin; installation scope, registry and data directories unchanged",
+  "license": "Apache-2.0 OR MIT; upstream notices retained by dependency license inventory"
+}

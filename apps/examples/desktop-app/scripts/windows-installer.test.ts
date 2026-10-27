@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { type ChildProcess, spawn } from "node:child_process";
 import {
@@ -96,6 +97,33 @@ test("locked Tauri CLI is the version whose NSIS pin this suite mirrors", () => 
 		resolved,
 		`@tauri-apps/cli moved from ${TAURI_CLI_VERSION}; re-read its bundler's NSIS_URL/NSIS_SHA1 and update TAURI_CLI_VERSION, NSIS_VERSION and the download in desktop-test.yml`,
 	).toBe(TAURI_CLI_VERSION);
+});
+
+test("production template requests UAC without changing current-user installation", () => {
+	const directory = path.resolve(import.meta.dir, "../src-tauri/nsis");
+	const provenance = JSON.parse(
+		readFileSync(path.join(directory, "template-provenance.json"), "utf8"),
+	);
+	const template = readFileSync(
+		path.join(directory, "installer.nsi"),
+		"utf8",
+	).replaceAll("\r\n", "\n");
+	const elevated =
+		'!if "${INSTALLMODE}" == "currentUser"\n  RequestExecutionLevel admin';
+	expect(template.includes(elevated)).toBe(true);
+	const original = template.replace(
+		elevated,
+		'!if "${INSTALLMODE}" == "currentUser"\n  RequestExecutionLevel user',
+	);
+	expect(createHash("sha256").update(original).digest("hex")).toBe(
+		provenance.original_sha256,
+	);
+	expect(provenance.tauri_cli).toBe(TAURI_CLI_VERSION);
+	const config = JSON.parse(
+		readFileSync(path.join(directory, "../tauri.windows.conf.json"), "utf8"),
+	);
+	expect(config.bundle.windows.nsis.installMode).toBe("currentUser");
+	expect(config.bundle.windows.nsis.template).toBe("nsis/installer.nsi");
 });
 
 describe.skipIf(!windows)("Windows installer process cleanup", () => {
@@ -208,7 +236,7 @@ SectionEnd
 		);
 	}, 120_000);
 
-	test("refuses busy files, then installs after the owner closes; preserves another install", async () => {
+	test("automatically closes the exact install processes and preserves another install", async () => {
 		const dir = path.join(root, "Cline 'quoted' $ space (测试)");
 		const beta = await start(`${dir} Beta`, "cline-cli.exe");
 		const targets = [
@@ -220,12 +248,7 @@ SectionEnd
 		expect(() =>
 			writeFileSync(path.join(dir, "cline-cli.exe"), "locked"),
 		).toThrow();
-		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(2);
-		for (const child of targets) {
-			expect(child.exitCode).toBeNull();
-			expect(child.signalCode).toBeNull();
-			child.kill();
-		}
+		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		await waitFor(() =>
 			targets.every((p) => p.exitCode !== null || p.signalCode !== null),
 		);
@@ -237,7 +260,7 @@ SectionEnd
 		expect(beta.signalCode).toBeNull();
 	}, 120_000);
 
-	test("uninstaller refuses a busy runtime before deleting files", async () => {
+	test("uninstaller closes its busy runtime before deleting files", async () => {
 		const dir = path.join(root, "uninstall");
 		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		copyFileSync(fixture, path.join(dir, "cline-cli.exe"));
@@ -245,10 +268,7 @@ SectionEnd
 		// _?= disables NSIS's temp-copy trampoline so we wait for the real exit.
 		expect(
 			await run(path.join(dir, "uninstall.exe"), ["/S", `_?=${dir}`]),
-		).toBe(2);
-		expect(target.exitCode).toBeNull();
-		expect(existsSync(path.join(dir, "cline-cli.exe"))).toBe(true);
-		target.kill();
+		).toBe(0);
 		await waitFor(() => target.exitCode !== null || target.signalCode !== null);
 		expect(
 			await run(path.join(dir, "uninstall.exe"), ["/S", `_?=${dir}`]),
@@ -256,12 +276,21 @@ SectionEnd
 		expect(existsSync(path.join(dir, "cline-cli.exe"))).toBe(false);
 	}, 120_000);
 
-	test("upgrade waits for the earlier backend to close before removing it", async () => {
+	test("installs with only a hidden Hub running and preserves unrelated files", async () => {
+		const dir = path.join(root, "hidden Hub only");
+		const hub = await start(dir, "cline-cli.exe");
+		writeFileSync(path.join(dir, "user-state.json"), "preserved");
+		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
+		await waitFor(() => hub.exitCode !== null || hub.signalCode !== null);
+		expect(readFileSync(path.join(dir, "user-state.json"), "utf8")).toBe(
+			"preserved",
+		);
+	}, 120_000);
+
+	test("upgrade automatically closes the earlier backend before removing it", async () => {
 		const dir = path.join(root, "upgrade");
 		const legacy = await start(dir, "code-sidecar.exe");
-		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(2);
-		expect(legacy.exitCode).toBeNull();
-		legacy.kill();
+		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		await waitFor(() => legacy.exitCode !== null || legacy.signalCode !== null);
 		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		expect(existsSync(path.join(dir, "code-sidecar.exe"))).toBe(false);

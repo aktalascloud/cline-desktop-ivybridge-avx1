@@ -46,8 +46,21 @@
     StrCpy $3 0
     System::Call 'rstrtmgr::RmGetList(i r1, *i .r2, *i r3, p 0, *i .r4) i .r0'
     ${If} $0 == 234 ; ERROR_MORE_DATA: at least one process uses these files
-      ; Do not send shutdown to an active Hub or terminate agent work.
-      ; The app updater stops its isolated Hub only after its idle gate.
+      ; A hidden backend/Hub can outlive the window. 234 is a size-query
+      ; result, not a shutdown failure. Ask Windows to close owners of these
+      ; exact files; force only nonresponsive owners after its grace period.
+      ; Never kill by image name: another installation must keep running.
+      ${If} $LANGUAGE == ${LANG_RUSSIAN}
+        DetailPrint "Закрытие Cline Desktop AVX1 RU и фоновых компонентов..."
+      ${Else}
+        DetailPrint "Closing Cline Desktop AVX1 RU and its background components..."
+      ${EndIf}
+      System::Call 'rstrtmgr::RmShutdown(i r1, i 1, p 0) i .r0'
+      ${If} $0 == 0
+      ${OrIf} $0 == 351 ; some owners may still be releasing their images
+        StrCpy $3 0
+        System::Call 'rstrtmgr::RmGetList(i r1, *i .r2, *i r3, p 0, *i .r4) i .r0'
+      ${EndIf}
     ${EndIf}
     ; A 0 from RmGetList means nothing holds the files: $0 stays 0.
 
@@ -73,9 +86,9 @@
     ; the default and fails closed. Aborting rather than continuing keeps
     ; the install from ending half-replaced.
     ${If} $LANGUAGE == ${LANG_RUSSIAN}
-      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Файлы приложения заняты:$\r$\n$INSTDIR$\r$\n$\r$\nДождитесь завершения сеансов, закройте Cline Desktop AVX1 RU и повторите попытку. Ошибка Windows: $0." /SD IDCANCEL IDRETRY retry
+      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Не удалось автоматически закрыть компоненты приложения:$\r$\n$INSTDIR$\r$\n$\r$\nЗакройте оставшиеся процессы Cline Desktop AVX1 RU и нажмите «Повтор». Код Windows: $0." /SD IDCANCEL IDRETRY retry
     ${Else}
-      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Application files are in use:$\r$\n$INSTDIR$\r$\n$\r$\nWait for sessions to finish, close Cline Desktop AVX1 RU, then retry. Windows error: $0." /SD IDCANCEL IDRETRY retry
+      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Could not automatically close application components:$\r$\n$INSTDIR$\r$\n$\r$\nClose the remaining Cline Desktop AVX1 RU processes and click Retry. Windows code: $0." /SD IDCANCEL IDRETRY retry
     ${EndIf}
     Pop $5
     Pop $4
