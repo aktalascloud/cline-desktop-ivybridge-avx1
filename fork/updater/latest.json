@@ -1,11 +1,11 @@
 {
-  "version": "1.0.8",
-  "notes": "Windows installer: administrator UAC and automatic exact-install runtime shutdown / UAC и автоматическое закрытие компонентов обновляемой установки.",
-  "pub_date": "2026-10-27T06:35:47.474727Z",
+  "version": "1.0.7",
+  "notes": "Seven separate reasoning modes; local shell environment, guarded MCP pagination and compatible telemetry update.",
+  "pub_date": "2026-10-27T04:55:40.853576Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmh2K1RFUzBQYitGdWJsdEIydE12RUdqTlMzYjB4TEhEWE4xTnk4WnArek5PUE5PeEJIcU1ocTNaMTJiL1llQlR4aDdzSHJIQmhJSmhGaW1FNFNkbVF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMDgyMzgyCWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC44X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuOApycFIwM2l1L0kwNFRyejd3dDdtL1kyT3RqVEw1ZGZzblJXQnpuK0dVbG9MSGRIOWhHcmViSDNqMndZTTVZS2ROaVpiL2JuVUtFbDg2eXJoakovaVhEZz09Cg==",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.8/Cline-Desktop-AVX1-RU-Setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnJiRjRLRWY0bHArMXFOOGxqS1p1SkpzUWdrK1VmZk5kdHB5eFR6VVlMeGZxclBPUTlEQnh2cWFCbFdUR3pZL25sNmR2OUZjTE5vYXJuQ1BHRFJWN2c4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMDc2NzQwCWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC43X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuNworVjR2eWdOaG52c2lTQmJYZ2J5aHR3bVBoRkJkZGNsaVBvcDQ5MlcvYkdlOStwUGl1c0N4K2w1SktCc2hKUHdwOFV4Y3lFUmYwdzRmaWxDcU10Z0pBdz09Cg==",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.7/Cline-Desktop-AVX1-RU-Setup.exe"
     }
   }
 }
