@@ -21,5 +21,12 @@
 	"Finish signing in in the browser...": "Finish signing in in the browser...",
 	"Switch DeepSeek account": "Switch DeepSeek account",
 	"Sign in through browser": "Sign in through browser",
-	"Sign-in was not completed. Finish signing in in the browser and try again. Saved credentials were preserved.": "Sign-in was not completed. Finish signing in in the browser and try again. Saved credentials were preserved."
+	"Sign-in was not completed. Finish signing in in the browser and try again. Saved credentials were preserved.": "Sign-in was not completed. Finish signing in in the browser and try again. Saved credentials were preserved.",
+	"Connect the DeepSeek session already open in your regular browser. No separate browser profile or repeated sign-in.": "Connect the DeepSeek session already open in your regular browser. No separate browser profile or repeated sign-in.",
+	"A one-time browser bridge permission is required. It can access DeepSeek only; passwords and other websites are not read.": "A one-time browser bridge permission is required. It can access DeepSeek only; passwords and other websites are not read.",
+	"Connect current browser session": "Connect current browser session",
+	"Set up browser bridge": "Set up browser bridge",
+	"One-time Brave setup: open brave://extensions, enable developer mode, choose Load unpacked and select this folder:": "One-time Brave setup: open brave://extensions, enable developer mode, choose Load unpacked and select this folder:",
+	"Then open DeepSeek in your regular browser and click the Cline DeepSeek Session Bridge icon to connect.": "Then open DeepSeek in your regular browser and click the Cline DeepSeek Session Bridge icon to connect.",
+	"The browser bridge is not ready. Set it up once, then connect from your normal DeepSeek tab. Saved credentials were preserved.": "The browser bridge is not ready. Set it up once, then connect from your normal DeepSeek tab. Saved credentials were preserved."
 }

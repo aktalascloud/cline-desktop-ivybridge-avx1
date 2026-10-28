@@ -2,3 +2,9 @@ title = "Cline SDK secret scanning"
 
 [extend]
 useDefault = true
+
+[[allowlists]]
+condition = "AND"
+description = "Chrome extension public SPKI, exact value and file only; not a credential"
+paths = ['''(?:^|/)fork/browser-bridge/extension/manifest\.json$''']
+regexes = ['''^MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvaYx2Krb6Edzj2HYxheMu4MG4c0Z9vOmUqs85wVRvxOlswgVJXzhk0O2JwtcvEfQ/G1Yysfgd8hUVGWGLgfryH\+RIcF6oYBggsXbKg\+yc16gEPdKYISKU8Dw1ZLCdR3OHDY9xOVN7h4duvLxDTWfwIG9TkkWF58X4OpiG6RemhTUvV45QNbc0ETNw/qZz\+o\+z63Fjy8Qx\+/bdSgxmsR\+HjNxUlEUu10ArsMQZEXcM7YPrs0d6XuE3lm1hsbyXCn804SagVzvcb63wPhO2cqrAn\+l7Js4RX9wvvuje4kvyY45NuE/O33AgJsW1qG43j7oWXyKExNllzB5T9ppUfI7zQIDAQAB$''']

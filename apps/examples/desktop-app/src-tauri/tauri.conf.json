@@ -54,7 +54,7 @@
 			"bin/desktop-backend/**/*",
 			"licenses/**/*",
 			"bin/dsw2api/**/*",
-			"bin/browser-login/**/*"
+			"bin/browser-bridge/**/*"
 		],
 		"icon": [
 			"icons/32x32.png",

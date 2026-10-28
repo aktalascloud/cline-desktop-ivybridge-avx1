@@ -3140,6 +3140,17 @@ export async function handleCommand(
 			typeof args.cookies === "string" ? args.cookies : "",
 		);
 	}
+	if (
+		command === "dsw2api_prepare_extension" ||
+		command === "dsw2api_open_extension"
+	) {
+		if (!options?.connection?.data?.canApproveTools)
+			throw Error("Browser setup requires a trusted connection");
+		const bridge = await import("./browser-extension-bridge");
+		return command === "dsw2api_open_extension"
+			? await bridge.openBrowserExtension()
+			: await bridge.prepareBrowserExtension();
+	}
 	if (command === "list_provider_catalog") {
 		const manager = new ProviderSettingsManager();
 		await ensureCustomProvidersLoaded(manager);

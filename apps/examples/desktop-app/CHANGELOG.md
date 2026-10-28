@@ -2,19 +2,10 @@
 
 ## 1.0.11
 
-- Fixed Windows extended resource paths that stopped Node before launching the browser. Ultra/Adaptive now require DavidAU Qwen3.8 Next specifically; Swift is excluded.
-- Исправлены расширенные пути Windows, из-за которых Node завершался до запуска браузера. Ultra/Adaptive — только для DavidAU Qwen3.8 Next; Swift исключён.
-
-- DSW2API appears beside your providers and signs in through the installed Windows default Chromium browser with an isolated Cline profile. Verified session tokens and cookies transfer automatically; no DevTools copying. The unused DSH notice is removed.
-- DSW2API находится рядом с вашими провайдерами. Вход — через установленный браузер Windows по умолчанию с отдельным профилем Cline; проверенная сессия и cookies подключаются автоматически, без DevTools и копирования. Лишняя надпись DSH убрана.
-
-- Ultra/Adaptive require an explicitly opted-in Qwen3.8 Next / Flash Next model; other models retain standard reasoning and sampling, including temperature. Stale settings cannot inject author controls into another model.
-- Ultra/Adaptive доступны только явно разрешённой Qwen3.8 Next / Flash Next. У остальных сохранены обычный reasoning и sampling, включая температуру; старые настройки не отправляют им авторские команды.
-
-- DSW2API connects your own DeepSeek web session without ClinePass or a local request/output quota. The installer includes an isolated, pinned Python runtime and native PoW helper. Local encrypted session setup, genuine reasoning Off/On, streaming tools and multi-turn context; existing Strata modes and approvals remain available.
-- DSW2API подключает личную веб-сессию DeepSeek без ClinePass и местной квоты запросов/ответа. В установщик включены изолированный Python и нативный PoW. Локальная зашифрованная сессия, реальное включение/выключение reasoning, потоковые инструменты и контекст. Режимы Strata и approvals сохранены.
-- DeepSeek's own availability and limits remain. DSH has no qualified full unlimited route; quota-limited pools are not presented as unlimited. No real-account inference or model-quality improvement is claimed.
-- Доступность и ограничения DeepSeek сохраняются. У DSH не найден проверенный полный безлимитный канал; ограниченные пулы не выдаются за безлимит. Работа на реальном аккаунте и улучшение качества модели не заявлены.
+- DSW2API connects the DeepSeek session already signed in to your regular browser, through a DeepSeek-only companion extension and restricted local native host. No separate browser profile, automated Google login or token copying. One-time extension consent is required.
+- DSW2API подключает уже авторизованную сессию обычного браузера через расширение только для DeepSeek и закрытый локальный мост. Без отдельного профиля, автоматизации Google-входа и копирования токенов. Расширение добавляется с согласия пользователя один раз.
+- No ClinePass or local request/output quota; DeepSeek's own limits remain. Full tool results, encrypted account state and installer runtime shutdown are included. Strata settings/history/approvals remain separate. Ultra/Adaptive require DavidAU Qwen3.8 Next; Swift and other models keep standard reasoning and sampling.
+- Без ClinePass и местной квоты запросов/ответа; ограничения DeepSeek сохраняются. Полные tool results, шифрование сессии и закрытие своего runtime при обновлении. Настройки Strata, история и approvals сохранены. Ultra/Adaptive — только DavidAU Qwen3.8 Next; у Swift и остальных обычный reasoning и sampling.
 
 ## 1.0.10
 
