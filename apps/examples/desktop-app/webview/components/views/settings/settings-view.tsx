@@ -32,6 +32,7 @@ import {
 	setStoredAppIcon,
 } from "@/lib/app-icon";
 import { desktopClient } from "@/lib/desktop-client";
+import { Dsw2ApiSetup } from "./dsw2api-setup";
 import { readModelSelectionStorageFromWindow } from "@/lib/model-selection";
 import { resetOnboarding } from "@/lib/onboarding";
 import {
@@ -548,6 +549,12 @@ export function SettingsView({
 		onNavigateSection("Providers");
 		setAddingProvider(true);
 	};
+	const refreshDsw = async () => {
+		invalidateProviderCatalogCache();
+		await loadProviderCatalog();
+		setAddingProvider(false);
+		setSelectedProviderId("dsw2api");
+	};
 
 	const addProviderDialog = (
 		<Dialog
@@ -568,6 +575,7 @@ export function SettingsView({
 					</DialogDescription>
 				</DialogHeader>
 				<AddProviderContent
+					onDswConnected={refreshDsw}
 					existingProviderIds={providers.map((provider) => provider.id)}
 					onBack={() => setAddingProvider(false)}
 					onSave={saveNewProvider}
@@ -605,27 +613,35 @@ export function SettingsView({
 				/>
 			</div>
 			<aside className="min-h-0 min-w-0 overflow-hidden border-l bg-background max-[1100px]:border-l-0 max-[1100px]:border-t">
-				<ProviderDetailContent
-					key={`${selectedProvider.id}:${detailResetToken}`}
-					modelsError={modelsErrorByProvider[selectedProvider.id] ?? null}
-					modelsLoading={modelsLoadingByProvider[selectedProvider.id] ?? false}
-					oauthLoginPending={oauthSigningProviderId === selectedProvider.id}
-					onBack={backToProviderList}
-					onConnect={() => connectProvider(selectedProvider.id)}
-					onDisconnect={() => void disconnectProvider(selectedProvider.id)}
-					onLoadModels={() => void loadProviderModels(selectedProvider.id)}
-					onUpdateModels={(models) =>
-						void updateProviderModels(selectedProvider.id, models)
-					}
-					onOAuthLogin={
-						usesOAuth(selectedProvider)
-							? () => void runOAuthProviderLogin(selectedProvider.id)
-							: undefined
-					}
-					onUpdate={(updates) => updateProvider(selectedProvider.id, updates)}
-					provider={selectedProvider}
-					variant="panel"
-				/>
+				{selectedProvider.id === "dsw2api" ? (
+					<div className="h-full overflow-y-auto p-5">
+						<Dsw2ApiSetup onConnected={refreshDsw} />
+					</div>
+				) : (
+					<ProviderDetailContent
+						key={`${selectedProvider.id}:${detailResetToken}`}
+						modelsError={modelsErrorByProvider[selectedProvider.id] ?? null}
+						modelsLoading={
+							modelsLoadingByProvider[selectedProvider.id] ?? false
+						}
+						oauthLoginPending={oauthSigningProviderId === selectedProvider.id}
+						onBack={backToProviderList}
+						onConnect={() => connectProvider(selectedProvider.id)}
+						onDisconnect={() => void disconnectProvider(selectedProvider.id)}
+						onLoadModels={() => void loadProviderModels(selectedProvider.id)}
+						onUpdateModels={(models) =>
+							void updateProviderModels(selectedProvider.id, models)
+						}
+						onOAuthLogin={
+							usesOAuth(selectedProvider)
+								? () => void runOAuthProviderLogin(selectedProvider.id)
+								: undefined
+						}
+						onUpdate={(updates) => updateProvider(selectedProvider.id, updates)}
+						provider={selectedProvider}
+						variant="panel"
+					/>
+				)}
 			</aside>
 		</div>
 	) : (
@@ -983,7 +999,9 @@ function GeneralSettingsContent() {
 					</div>
 				</div>
 				<div className="border-b py-4">
-					<p className="text-base font-semibold text-foreground">{t("CLI / Hub")}</p>
+					<p className="text-base font-semibold text-foreground">
+						{t("CLI / Hub")}
+					</p>
 					<p className="mt-1 text-sm text-muted-foreground">
 						{t(
 							"The CLI and Hub are updated together with this fork through the signed Desktop installer.",

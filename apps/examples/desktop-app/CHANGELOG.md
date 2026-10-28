@@ -1,5 +1,12 @@
 # Cline Desktop Changelog
 
+## 1.0.11
+
+- DSW2API connects your own DeepSeek web session without ClinePass or a local request/output quota. The installer includes an isolated, pinned Python runtime and native PoW helper. Local encrypted session setup, genuine reasoning Off/On, streaming tools and multi-turn context; existing Strata modes and approvals remain available.
+- DSW2API подключает личную веб-сессию DeepSeek без ClinePass и местной квоты запросов/ответа. В установщик включены изолированный Python и нативный PoW. Локальная зашифрованная сессия, реальное включение/выключение reasoning, потоковые инструменты и контекст. Режимы Strata и approvals сохранены.
+- DeepSeek's own availability and limits remain. DSH has no qualified full unlimited route; quota-limited pools are not presented as unlimited. No real-account inference or model-quality improvement is claimed.
+- Доступность и ограничения DeepSeek сохраняются. У DSH не найден проверенный полный безлимитный канал; ограниченные пулы не выдаются за безлимит. Работа на реальном аккаунте и улучшение качества модели не заявлены.
+
 ## 1.0.10
 
 - Hub WebSocket connections now require the installation token, including localhost browser clients. A loopback Origin header alone no longer grants commands or event access; Desktop/CLI and authenticated remote access remain supported.

@@ -47,6 +47,7 @@ import {
 	getCoreBuiltinToolCatalog,
 	getLocalProviderModels,
 	getLocalTranscriptionModels,
+	getManagedDsw2Api,
 	getProviderAuthHandler,
 	identifyAccount,
 	isModelToolEnabledGlobally,
@@ -3108,16 +3109,67 @@ export async function handleCommand(
 	// ── Local models (Ollama, LM Studio) ───────────────────────────────
 	if (LOCAL_MODELS_COMMANDS.has(command)) {
 		if (!options?.connection?.data?.canApproveTools) {
-			throw new Error("local model management requires a trusted desktop connection");
+			throw new Error(
+				"local model management requires a trusted desktop connection",
+			);
 		}
 		return await handleLocalModelsCommand(ctx, command, args);
 	}
 
 	// ── Provider management ────────────────────────────────────────────
+	if (
+		["dsw2api_status", "dsw2api_configure", "dsw2api_connect"].includes(command)
+	) {
+		if (!options?.connection?.data?.canApproveTools)
+			throw new Error(
+				"DeepSeek session management requires a trusted desktop connection",
+			);
+		const gateway = getManagedDsw2Api();
+		if (command === "dsw2api_status") return await gateway.status();
+		const manager = new ProviderSettingsManager();
+		if (command === "dsw2api_connect")
+			return await gateway.connectSaved(manager);
+		if (
+			typeof args?.token !== "string" ||
+			(args.cookies !== undefined && typeof args.cookies !== "string")
+		)
+			throw new Error("A personal DeepSeek session token is required");
+		return await gateway.configure(
+			manager,
+			args.token,
+			typeof args.cookies === "string" ? args.cookies : "",
+		);
+	}
 	if (command === "list_provider_catalog") {
 		const manager = new ProviderSettingsManager();
 		await ensureCustomProvidersLoaded(manager);
-		return await listLocalProviders(manager, { isClinePassEnabled: true });
+		const storedDsw = manager.getProviderSettings("dsw2api");
+		let dswConfigured: boolean | undefined;
+		if (
+			Object.entries(storedDsw?.headers ?? {}).some(
+				([key, value]) =>
+					key.toLowerCase() === "x-cline-managed-gateway" &&
+					value === "dsw2api-v1",
+			)
+		) {
+			try {
+				await getManagedDsw2Api().synchronize(manager);
+				dswConfigured = (await getManagedDsw2Api().status()).configured;
+			} catch {
+				dswConfigured = false;
+			}
+		}
+		const catalog = await listLocalProviders(manager, {
+			isClinePassEnabled: true,
+		});
+		if (dswConfigured !== undefined) {
+			catalog.providers = catalog.providers.map((provider) =>
+				provider.id === "dsw2api"
+					? { ...provider, configured: dswConfigured }
+					: provider,
+			);
+		}
+		return catalog;
 	}
 	if (command === "list_transcription_models") {
 		const manager = new ProviderSettingsManager();

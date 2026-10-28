@@ -55,7 +55,11 @@ async function waitFor(check: () => boolean): Promise<void> {
 	throw new Error("Timed out waiting for fixture process");
 }
 
-async function run(exe: string, args: string[], timeoutMs = 90_000): Promise<number> {
+async function run(
+	exe: string,
+	args: string[],
+	timeoutMs = 90_000,
+): Promise<number> {
 	const child = spawn(exe, args, {
 		cwd: root,
 		stdio: ["ignore", "ignore", "inherit"],
@@ -79,7 +83,11 @@ async function run(exe: string, args: string[], timeoutMs = 90_000): Promise<num
 				} catch {
 					// The test still fails if Windows refuses termination; afterAll retries cleanup.
 				}
-				reject(new Error(`Fixture process ${path.basename(exe)} timed out after ${timeoutMs} ms`));
+				reject(
+					new Error(
+						`Fixture process ${path.basename(exe)} timed out after ${timeoutMs} ms`,
+					),
+				);
 			}, timeoutMs);
 		});
 	} finally {
@@ -322,7 +330,8 @@ SectionEnd
 
 	afterAll(async () => {
 		for (const child of children) {
-			if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+			if (child.exitCode === null && child.signalCode === null)
+				child.kill("SIGKILL");
 		}
 		await waitFor(() =>
 			children.every((p) => p.exitCode !== null || p.signalCode !== null),
@@ -337,7 +346,9 @@ SectionEnd
 	});
 
 	test("fails a stalled owned child instead of waiting forever for its exit event", async () => {
-		await expect(run(fixture, [path.join(root, "timeout-ready")], 1_000)).rejects.toThrow("timed out after 1000 ms");
+		await expect(
+			run(fixture, [path.join(root, "timeout-ready")], 1_000),
+		).rejects.toThrow("timed out after 1000 ms");
 	}, 10_000);
 
 	test("first install and repeated cleanup succeed with no running processes", async () => {
@@ -398,6 +409,19 @@ SectionEnd
 		expect(readFileSync(path.join(dir, "user-state.json"), "utf8")).toBe(
 			"preserved",
 		);
+	}, 120_000);
+
+	test("closes only this installation's hidden DSW2API runtime", async () => {
+		const dir = path.join(root, "DSW runtime");
+		const runtime = path.join(dir, "bin", "dsw2api", "runtime");
+		const worker = await start(runtime, "pythonw.exe");
+		const other = await start(
+			path.join(root, "other DSW runtime"),
+			"pythonw.exe",
+		);
+		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
+		await waitFor(() => worker.exitCode !== null || worker.signalCode !== null);
+		expect(other.exitCode).toBeNull();
 	}, 120_000);
 
 	test("upgrade automatically closes the earlier backend before removing it", async () => {

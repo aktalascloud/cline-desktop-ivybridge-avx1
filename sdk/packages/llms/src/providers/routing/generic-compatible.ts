@@ -59,6 +59,10 @@ export function buildCompatibleProviderOptions(options: {
 
 	return {
 		...(target === "openai-compatible" ? { strictJsonSchema: false } : {}),
+		...(request.providerId === "dsw2api" &&
+		typeof request.metadata?.sessionId === "string"
+			? { user: request.metadata.sessionId }
+			: {}),
 		...buildCompatibleThinkingOptions({ request, context, suppressions }),
 		...(reasoning ? { reasoning } : {}),
 		...promptCache,

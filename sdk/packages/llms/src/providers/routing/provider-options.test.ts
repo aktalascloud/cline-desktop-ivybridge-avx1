@@ -19,6 +19,33 @@ import {
 import { inferProviderOptionsTarget } from "./provider-options-types";
 import { toProviderOptionsKey } from "./utils";
 
+describe("managed DeepSeek conversation identity", () => {
+	it("keeps explicit sessions separate without adding identities to other providers", () => {
+		const request = {
+			providerId: "dsw2api",
+			modelId: "deepseek-web",
+			messages: [],
+			metadata: { sessionId: "anonymous-session" },
+		} as GatewayStreamRequest;
+		const result = composeAiSdkProviderOptions(
+			request,
+			makeContext({ providerId: "dsw2api" }),
+			"openai-compatible",
+		);
+		expect((result.openaiCompatible as Record<string, unknown>).user).toBe(
+			"anonymous-session",
+		);
+		const other = composeAiSdkProviderOptions(
+			{ ...request, providerId: "other" },
+			makeContext({ providerId: "other" }),
+			"openai-compatible",
+		);
+		expect(
+			(other.openaiCompatible as Record<string, unknown>).user,
+		).toBeUndefined();
+	});
+});
+
 type RequestOverrides = Partial<GatewayStreamRequest> & {
 	providerId: string;
 	modelId: string;

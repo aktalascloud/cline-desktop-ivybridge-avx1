@@ -6,6 +6,15 @@
 
 export * as Llms from "@cline/llms";
 export {
+	ManagedDsw2Api,
+	getManagedDsw2Api,
+	isManagedDswProvider,
+	DSW_PROVIDER_ID,
+	DSW_MODEL_ID,
+	type DswGatewayStatus,
+} from "./services/providers/managed-dsw2api";
+
+export {
 	buildClineClientHeaders,
 	ClineFreeModelLimitError,
 	ClineNotSubscribedError,

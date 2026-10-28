@@ -1,5 +1,8 @@
 # Cline Desktop AVX1 RU
 
+DSW2API uses your own DeepSeek web account without ClinePass or local request/output quotas. Add Provider offers local sign-in/session import; credentials are encrypted outside the installation and Git. Python and native PoW are bundled. Service availability/limits still apply and user sign-in is required. Web reasoning is Off/On. No verified full unlimited DSH route is offered. [Sources and components](fork/dsw2api/SOURCE.json).
+
+
 Unofficial Windows x64 fork of [Cline](https://github.com/cline/cline), based on
 upstream Desktop 0.0.49 and current main. Built for Ivy Bridge with AVX, F16C,
 SSE4.2 and POPCNT, without requiring AVX2/FMA. [Русский](README.ru.md).

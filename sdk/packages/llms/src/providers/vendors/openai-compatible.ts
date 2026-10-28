@@ -11,6 +11,7 @@ import { modelProducesImages } from "@cline/shared";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { wrapLanguageModel } from "ai";
 import { ensureFetch, resolveApiKey } from "../http";
+import { managedDswFetch } from "../managed-dsw-fetch";
 import { splitToolImagesMiddleware } from "../middleware/split-tool-images";
 import { isOpenAIReasoningEraModelId } from "../model-facts";
 import type { ProviderFactoryResult } from "./types";
@@ -234,7 +235,12 @@ export async function createOpenAICompatibleProviderModule(
 	// authoritative error and is surfaced to the user as-is. This keeps
 	// `llms` unopinionated about which providers do or don't need a key.
 	const apiKey = await resolveApiKey(config);
-	const fetch = createAzureApiVersionFetch(config);
+	const fetch = managedDswFetch(
+		createAzureApiVersionFetch(config),
+		config.headers,
+		apiKey,
+		config.baseUrl,
+	);
 	const onResponseError = readResponseErrorHandler(config);
 	const providerFetch = onResponseError
 		? createResponseErrorFetch({

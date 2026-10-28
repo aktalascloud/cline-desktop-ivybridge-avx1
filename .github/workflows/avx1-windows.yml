@@ -2,7 +2,7 @@ name: Windows AVX1 qualification
 on:
   push:
     branches: [avx1]
-    paths: ['apps/**', 'sdk/**', '!sdk/ARCHITECTURE.md', '!sdk/DOC.md', 'fork/build-windows.ps1', 'fork/validate-windows.ps1', 'fork/check-bundle-paths.py', 'fork/logging-bundle.ts', 'fork/logging-bundle.test.ts', 'fork/download.py', 'fork/seed-bun.py', 'fork/seed-nsis.py', 'fork/collect-licenses.py', 'fork/verify-updater/**', 'fork/updater/public-key.txt', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
+    paths: ['apps/**', 'sdk/**', '!sdk/ARCHITECTURE.md', '!sdk/DOC.md', 'fork/build-windows.ps1', 'fork/prepare-dsw2api.py', 'fork/dsw2api/**', 'fork/validate-windows.ps1', 'fork/check-bundle-paths.py', 'fork/logging-bundle.ts', 'fork/logging-bundle.test.ts', 'fork/download.py', 'fork/seed-bun.py', 'fork/seed-nsis.py', 'fork/collect-licenses.py', 'fork/verify-updater/**', 'fork/updater/public-key.txt', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
   workflow_dispatch:
     inputs:
       source_sha:
@@ -64,6 +64,8 @@ jobs:
             apps/examples/desktop-app/src-tauri/target/release/.fingerprint
             .build-cache/updater-verifier
           key: windows2022-rust197-msvc144435207-sdk10026100-ivyfat1-v1-${{ hashFiles('apps/examples/desktop-app/src-tauri/Cargo.lock', 'apps/examples/desktop-app/src-tauri/Cargo.toml', 'rust-toolchain.toml', 'fork/build-windows.ps1') }}
+          restore-keys: |
+            windows2022-rust197-msvc144435207-sdk10026100-ivyfat1-v1-
       - name: Verified Bun/package/NSIS cache
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3, MIT
         with:
@@ -74,6 +76,7 @@ jobs:
           restore-keys: |
             windows-bun142-nsis313-v1-
       - name: Pinned Bun and compiler environment
+        # Production runtime archives are separate from native Cargo products.
         shell: pwsh
         run: |
           $archive=Join-Path $env:RUNNER_TEMP 'bun.zip'

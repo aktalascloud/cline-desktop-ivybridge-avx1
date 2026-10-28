@@ -1330,3 +1330,9 @@ The one-shot CLI initializes a non-interactive session without a prompt, records
 ### Owning-session CLI shell context
 
 The local CLI explicitly captures its launch environment at session start/restore. Hub transport validates the bounded snapshot and passes it only through ephemeral local-runtime options. Built-in shell executors replace inherited Hub environment with that snapshot; nested shell tools retain the same owner context. SDK and remote clients keep existing defaults unless the supported local CLI opt-in applies. This does not change approvals, hooks, MCP launchers, global process.env, or persisted session records.
+
+### Managed local DeepSeek Web gateway
+
+The fork's shared Core service `ManagedDsw2Api` owns the optional Windows gateway lifecycle for Desktop and its bundled CLI. It starts only a bundled absolute-path Python runtime through WMI, reuses the profile's single authenticated worker, and verifies readiness with a nonce HMAC before sending credentials. There is no separate scheduled build or startup task. Account protection keys use Windows DPAPI; account sessions are encrypted in profile state, outside public sources and installed resources. Only trusted Desktop connections may change sessions. Upgrades register the exact Python/PoW executable paths with Restart Manager.
+
+The custom `dsw2api` provider is a narrowly scoped local-provider routing exception: its explicit request `metadata.sessionId` becomes OpenAI-compatible `user` solely to maintain separate upstream parent chains. It does not derive identity from message content or alter other providers; a negative routing test covers that boundary. The OpenAI-compatible transport activates its local HMAC readiness guard only with the managed-provider marker header. Real web reasoning is Off/On. Strata's author modes, approval policy and session history remain independent.

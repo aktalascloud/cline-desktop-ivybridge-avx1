@@ -908,9 +908,10 @@ function ChatInputBarImpl({
 		reasoningCapability?.provider === provider &&
 		reasoningCapability?.model === model &&
 		reasoningCapability.authorModesSupported === true;
-	const availableEfforts = EFFORT_LEVELS.filter(
-		(option) =>
-			!["ultra", "adaptive"].includes(option.value) || authorModesSupported,
+	const availableEfforts = EFFORT_LEVELS.filter((option) =>
+		normalizeProviderId(provider) === "dsw2api"
+			? ["none", "high"].includes(option.value)
+			: !["ultra", "adaptive"].includes(option.value) || authorModesSupported,
 	);
 	const effortIndex = useMemo(
 		() => resolveEffortIndex(thinking, reasoningEffort),

@@ -1,8 +1,19 @@
 {
-  "{count} files__one": "{count} file",
-  "{count} files__other": "{count} files",
-  "{count} more files__one": "{count} more file",
-  "{count} more files__other": "{count} more files",
-  "{count} models__one": "{count} model",
-  "{count} models__other": "{count} models"
+	"{count} files__one": "{count} file",
+	"{count} files__other": "{count} files",
+	"{count} more files__one": "{count} more file",
+	"{count} more files__other": "{count} more files",
+	"{count} models__one": "{count} model",
+	"{count} models__other": "{count} models",
+	"Use your own DeepSeek web account. No ClinePass, local request quota or output cap. DeepSeek availability and service limits still apply.": "Use your own DeepSeek web account. No ClinePass, local request quota or output cap. DeepSeek availability and service limits still apply.",
+	"Register / sign in to DeepSeek": "Register / sign in to DeepSeek",
+	"After signing in, copy your userToken from DeepSeek browser storage into this local form. Never send it in chat. Passwords are not stored.": "After signing in, copy your userToken from DeepSeek browser storage into this local form. Never send it in chat. Passwords are not stored.",
+	"Personal DeepSeek session token": "Personal DeepSeek session token",
+	"Cookies (optional)": "Cookies (optional)",
+	"The session is verified before replacing saved credentials and encrypted locally. Reasoning supports Off / On; these are not separate web model budgets.": "The session is verified before replacing saved credentials and encrypted locally. Reasoning supports Off / On; these are not separate web model budgets.",
+	"Verify and connect": "Verify and connect",
+	"Use saved session": "Use saved session",
+	"Could not connect. Check your session, network and bundled runtime. Existing credentials were preserved.": "Could not connect. Check your session, network and bundled runtime. Existing credentials were preserved.",
+	"DeepSeek session connected.": "DeepSeek session connected.",
+	"DSH: no verified full unlimited route is currently available. Limited free pools are not offered as unlimited.": "DSH: no verified full unlimited route is currently available. Limited free pools are not offered as unlimited."
 }

@@ -52,6 +52,19 @@
       Goto end_session
     ${EndIf}
 
+    !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\bin\dsw2api\runtime\python.exe"
+    ${If} $0 != 0
+      Goto end_session
+    ${EndIf}
+    !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\bin\dsw2api\runtime\pythonw.exe"
+    ${If} $0 != 0
+      Goto end_session
+    ${EndIf}
+    !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\bin\dsw2api\cline-dsw2api-pow.exe"
+    ${If} $0 != 0
+      Goto end_session
+    ${EndIf}
+
     StrCpy $3 0
     System::Call 'rstrtmgr::RmGetList(i r1, *i .r2, *i r3, p 0, *i .r4) i .r0'
     ${If} $0 == 234 ; ERROR_MORE_DATA: at least one process uses these files

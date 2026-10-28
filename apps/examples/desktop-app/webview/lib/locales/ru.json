@@ -1186,5 +1186,16 @@
 	"Adaptive requires backend support for reason_mode=auto; no client routing or memory.": "Adaptive требует поддержки reason_mode=auto на бэкенде; клиент не выбирает режимы и не добавляет память.",
 	"The model repeatedly returned reasoning without an answer or tool calls. The task was not completed.": "Модель несколько раз вернула только рассуждения без ответа или вызовов инструментов. Задача не выполнена.",
 	"The run failed: The model repeatedly returned reasoning without an answer or tool calls. The task was not completed.": "Задача не выполнена: модель несколько раз вернула только рассуждения без ответа или вызовов инструментов.",
-	"The model returned reasoning without an answer. Requesting continuation.": "Модель вернула рассуждения без ответа. Запрашиваю продолжение."
+	"The model returned reasoning without an answer. Requesting continuation.": "Модель вернула рассуждения без ответа. Запрашиваю продолжение.",
+	"Use your own DeepSeek web account. No ClinePass, local request quota or output cap. DeepSeek availability and service limits still apply.": "Ваш веб-аккаунт DeepSeek. Без ClinePass, местной квоты запросов и обрезания ответа. Доступность и ограничения самого DeepSeek сохраняются.",
+	"Register / sign in to DeepSeek": "Регистрация / вход в DeepSeek",
+	"After signing in, copy your userToken from DeepSeek browser storage into this local form. Never send it in chat. Passwords are not stored.": "После входа скопируйте свой userToken из хранилища браузера DeepSeek в эту локальную форму. Не отправляйте его в чат. Пароли не сохраняются.",
+	"Personal DeepSeek session token": "Личный токен сессии DeepSeek",
+	"Cookies (optional)": "Cookies (необязательно)",
+	"The session is verified before replacing saved credentials and encrypted locally. Reasoning supports Off / On; these are not separate web model budgets.": "Сессия проверяется перед заменой сохранённых данных и шифруется локально. Reasoning включается или выключается; отдельных бюджетов у веб-модели нет.",
+	"Verify and connect": "Проверить и подключить",
+	"Use saved session": "Использовать сохранённую сессию",
+	"Could not connect. Check your session, network and bundled runtime. Existing credentials were preserved.": "Не удалось подключиться. Проверьте сессию, сеть и встроенные компоненты. Сохранённые данные доступа не удалены.",
+	"DeepSeek session connected.": "Сессия DeepSeek подключена.",
+	"DSH: no verified full unlimited route is currently available. Limited free pools are not offered as unlimited.": "DSH: проверенный полный безлимитный канал пока не найден. Ограниченные бесплатные пулы не выдаются за безлимитные."
 }

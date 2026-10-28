@@ -99,3 +99,4 @@ apps/examples/desktop-app/.cursor/settings.json
 .build-cache/
 dist/avx1/
 apps/examples/desktop-app/src-tauri/licenses/
+apps/examples/desktop-app/src-tauri/bin/dsw2api/

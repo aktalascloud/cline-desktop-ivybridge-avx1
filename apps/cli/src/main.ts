@@ -75,8 +75,24 @@ export function stdinHasPipedInput(): boolean {
 }
 
 async function createProviderSettingsManager() {
-	const { ProviderSettingsManager } = await import("@cline/core");
-	return new ProviderSettingsManager();
+	const { ProviderSettingsManager, getManagedDsw2Api } = await import(
+		"@cline/core"
+	);
+	const manager = new ProviderSettingsManager();
+	if (
+		manager.getProviderSettings("dsw2api")?.headers?.[
+			"x-cline-managed-gateway"
+		] === "dsw2api-v1"
+	) {
+		try {
+			await getManagedDsw2Api().synchronize(manager);
+		} catch (error) {
+			if (manager.getLastUsedProviderSettings()?.provider === "dsw2api")
+				throw error;
+			// A dormant DeepSeek service must not prevent other providers starting.
+		}
+	}
+	return manager;
 }
 
 async function loadCliRuntimeModules() {
