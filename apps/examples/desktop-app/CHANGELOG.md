@@ -1,5 +1,10 @@
 # Cline Desktop Changelog
 
+## 1.0.10
+
+- Updated to reviewed upstream main: saved-session resume, cloud request URL and rejected-credential handling, guarded Git snapshot handoff. Existing local reasoning, Russian/English UI and installer fixes are retained.
+- Обновлён upstream: восстановление сохранённых сессий, обработка адресов и отклонённых credentials, защищённая передача Git-снимка. Локальные режимы reasoning, русский/английский интерфейс и исправления установщика сохранены.
+
 ## 1.0.9
 
 - Reasoning-only model replies no longer count as a completed answer. The agent preserves context and requests a bounded continuation; repeated empty visible results fail explicitly. Cancellation, provider-executed activity and completed tool results remain protected.
