@@ -1,11 +1,11 @@
 {
-  "version": "1.0.9",
-  "notes": "Agent reasoning-only recovery and explicit incomplete errors; administrator installer and automatic exact-install shutdown / Восстановление после ответов без результата; UAC и автоматическое закрытие компонентов установки.",
-  "pub_date": "2026-10-27T08:59:27.429633Z",
+  "version": "1.0.10",
+  "notes": "Hub token required; updated session resume and cloud credentials / Токен Hub обязателен; обновлены восстановление сессий и cloud credentials.",
+  "pub_date": "2026-10-28T03:43:30.652269Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnJscHBpRVdWanlzSDd3eFBmVXZic3A1RXVqOUdOR0ErbHR5emhvenF5eVJ5cC93czhaMjI3NU45akNVSlBjVXFXNkFsNEYyVERBTXRzc3BmK3pvTkFvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMDkwNTg1CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC45X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuOQpMSTRDRTI3Sk04NVFYcjFyWnh1eFRSdCtPOEFweWFDQWxBcml6UlpZcEk0MHVXbEJjdy9TeEIvbmovWGMxalkzd2JRQnhKaHNBUlRMNWp6MGwyTHZCdz09Cg==",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.9/Cline-Desktop-AVX1-RU-Setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmhFbnNsSEk0U2lXWndGa3Q1eU01L1crUEJ1eHQ4c0FKTGFicnNoSjIyUXRUcmdGVzMwdEZlZTVtVjFHQUgvbHY0R1lUb3hoZ3c0TVExU3JKb1kwcWd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMTU0NzM2CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xMF94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEwCkNSNll0U0xYMHRLckU2UlBNMkYxMVlpQ21MRktGS1BjTms0TXJWQ0hmMTNqTXV1SjR3Sm9LZjFZc28ybnZDVU1CTmtHOUc0V01HWU02aUoyWFVNTERnPT0K",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.10/Cline-Desktop-AVX1-RU-Setup.exe"
     }
   }
 }
