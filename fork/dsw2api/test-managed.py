@@ -67,6 +67,11 @@ with tempfile.TemporaryDirectory(prefix='cline-dsw-synthetic-') as temp:
     adapter.BASE_URL = f'http://127.0.0.1:{stub.server_port}'
     adapter._HifProvider.headers = lambda self: {}  # No external HIF request in tests.
     import server
+    original_tokens = server.ChatService.tokens
+    def delayed_close(*args, **kwargs):
+        try: yield from original_tokens(*args, **kwargs)
+        finally: time.sleep(.35)
+    server.ChatService.tokens = staticmethod(delayed_close)
     import uvicorn
     listener = socket.socket(); listener.bind(('127.0.0.1', 0)); listener.listen(128)
     port = listener.getsockname()[1]
@@ -81,7 +86,13 @@ with tempfile.TemporaryDirectory(prefix='cline-dsw-synthetic-') as temp:
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(f'http://127.0.0.1:{port}' + path, data=data, headers={'Authorization': 'Bearer ' + keys['control' if control else 'client'], 'Content-Type': 'application/json'})
         try:
-            with urllib.request.urlopen(req, timeout=10) as response: return response.status, response.read().decode()
+            with urllib.request.urlopen(req, timeout=10) as response:
+                if path != '/v1/chat/completions': return response.status, response.read().decode()
+                lines = []
+                for line in response:
+                    lines.append(line)
+                    if line.strip() == b'data: [DONE]': break
+                return response.status, b''.join(lines).decode()
         except urllib.error.HTTPError as error: return error.code, error.read().decode()
     try:
         assert request('/control/session', {'token': token}, True)[0] == 200

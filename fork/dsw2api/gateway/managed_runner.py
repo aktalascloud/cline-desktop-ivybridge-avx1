@@ -100,6 +100,10 @@ def configure_environment(directory, keys):
         'MODEL_NAME': 'deepseek-web', 'MODEL_ROUTES': '', 'THINKING': 'auto', 'SEARCH': 'auto',
         'MODE': 'auto', 'HOST': '127.0.0.1', 'PORT': '0',
         'DEEPSEEK_RATE_LIMIT_RETRY_DELAYS': '', 'DEEPSEEK_JITTER_SECS': '0',
+        # This managed service stores one personal account. Queue the next
+        # turn until SSE teardown releases it; never expose a local busy-503
+        # after delivering a tool call. This is serialization, not a quota.
+        'DEEPSEEK_MAX_CONCURRENCY': '1',
         'DISABLE_AUTO_RECOVER': '1', 'LOG_LEVEL': 'WARNING',
         'CLINE_DSW_POW_HELPER': str(ROOT / 'cline-dsw2api-pow.exe'),
     }
