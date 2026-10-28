@@ -2,6 +2,9 @@
 
 ## 1.0.11
 
+- Ultra/Adaptive require an explicitly opted-in Qwen3.8 Next / Flash Next model; other models retain standard reasoning and sampling, including temperature. Stale settings cannot inject author controls into another model.
+- Ultra/Adaptive доступны только явно разрешённой Qwen3.8 Next / Flash Next. У остальных сохранены обычный reasoning и sampling, включая температуру; старые настройки не отправляют им авторские команды.
+
 - DSW2API connects your own DeepSeek web session without ClinePass or a local request/output quota. The installer includes an isolated, pinned Python runtime and native PoW helper. Local encrypted session setup, genuine reasoning Off/On, streaming tools and multi-turn context; existing Strata modes and approvals remain available.
 - DSW2API подключает личную веб-сессию DeepSeek без ClinePass и местной квоты запросов/ответа. В установщик включены изолированный Python и нативный PoW. Локальная зашифрованная сессия, реальное включение/выключение reasoning, потоковые инструменты и контекст. Режимы Strata и approvals сохранены.
 - DeepSeek's own availability and limits remain. DSH has no qualified full unlimited route; quota-limited pools are not presented as unlimited. No real-account inference or model-quality improvement is claimed.

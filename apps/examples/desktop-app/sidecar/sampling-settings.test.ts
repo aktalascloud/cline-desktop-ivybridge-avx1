@@ -4,7 +4,10 @@ vi.mock("@cline/core", () => ({
 	readModelsFileSync: () => ({
 		providers: {
 			"local-test": {
-				models: { "historical-model": { supportsAuthorModes: true } },
+				models: {
+					"fixture/Qwen3.8-Flash-Next": { supportsAuthorModes: true },
+					"other-model": { supportsAuthorModes: true },
+				},
 			},
 		},
 	}),
@@ -27,7 +30,7 @@ describe("local sampling connection refresh", () => {
 		});
 		const config = {
 			provider: "local-test",
-			model: "historical-model",
+			model: "fixture/Qwen3.8-Flash-Next",
 			thinking: true,
 			reasoningEffort: "xhigh",
 			providerConfig: {
@@ -71,7 +74,7 @@ it("makes Ultra an explicit session choice while High/XHigh ignore the old globa
 	});
 	const base = {
 		provider: "local-test",
-		model: "historical-model",
+		model: "fixture/Qwen3.8-Flash-Next",
 		reasoningEffort: "xhigh",
 		providerConfig: { providerId: "local-test", apiKey: "private-test-key" },
 	};
@@ -106,4 +109,29 @@ it("makes Ultra an explicit session choice while High/XHigh ignore the old globa
 			reasoningEffort: "ultra",
 		}),
 	).toThrow("not enabled");
+});
+
+it("blocks author modes on another model even with stale opt-in while preserving sampling", () => {
+	read.mockReturnValue({
+		client: "openai-compatible",
+		protocol: "openai-chat",
+		sampling: { temperature: 0.7, top_k: 20 },
+	});
+	const config = {
+		provider: "local-test",
+		model: "other-model",
+		reasoningEffort: "xhigh",
+	};
+	expect(
+		(
+			refreshLocalSamplingConfig(config).providerConfig as Record<
+				string,
+				unknown
+			>
+		).sampling,
+	).toEqual({ temperature: 0.7, top_k: 20 });
+	for (const reasoningEffort of ["ultra", "adaptive"])
+		expect(() =>
+			refreshLocalSamplingConfig({ ...config, reasoningEffort }),
+		).toThrow("not enabled");
 });

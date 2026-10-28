@@ -191,11 +191,13 @@ function providerCatalog(
 
 function StaleProviderComposer({
 	variant,
+	initialModel = "private-model",
 }: {
 	variant: "welcome" | "conversation";
+	initialModel?: string;
 }) {
 	const [provider, setProvider] = useState("openai-compatible");
-	const [model, setModel] = useState("private-model");
+	const [model, setModel] = useState(initialModel);
 	const [reasoning, setReasoning] = useState({
 		thinking: false,
 		reasoningEffort: undefined,
@@ -3832,7 +3834,7 @@ describe("ChatInputBar compact layout", () => {
 
 it("offers separate author modes only for an opted-in model and returns to stock levels", async () => {
 	const detail = {
-		id: "private-model",
+		id: "fixture/Qwen3.8-Flash-Next",
 		name: "Private model",
 		supportsReasoning: true,
 		supportsAuthorModes: true,
@@ -3840,14 +3842,19 @@ it("offers separate author modes only for an opted-in model and returns to stock
 	loadProviderModelCatalogMock.mockResolvedValue({
 		providers: [],
 		enabledProviderIds: ["local-lab"],
-		providerModels: { "local-lab": ["private-model"] },
+		providerModels: { "local-lab": ["fixture/Qwen3.8-Flash-Next"] },
 		providerNames: { "local-lab": "Local lab" },
-		providerReasoningModels: { "local-lab": ["private-model"] },
+		providerReasoningModels: { "local-lab": ["fixture/Qwen3.8-Flash-Next"] },
 		providerModelDetails: { "local-lab": [detail] },
 	});
 	loadProviderModelsMock.mockResolvedValue([detail]);
 	await act(async () =>
-		root.render(<StaleProviderComposer variant="welcome" />),
+		root.render(
+			<StaleProviderComposer
+				variant="welcome"
+				initialModel="fixture/Qwen3.8-Flash-Next"
+			/>,
+		),
 	);
 	await vi.waitFor(() =>
 		expect(
@@ -3881,4 +3888,49 @@ it("offers separate author modes only for an opted-in model and returns to stock
 			)["local-lab"],
 		).toBe(value);
 	}
+});
+
+it.each([
+	"private-model",
+	"Qwen3.8-Coder",
+	"deepseek-web",
+])("hides Ultra/Adaptive on %s even with stale metadata", async (modelId) => {
+	const detail = {
+		id: modelId,
+		name: modelId,
+		supportsReasoning: true,
+		supportsAuthorModes: true,
+	};
+	loadProviderModelCatalogMock.mockResolvedValue({
+		providers: [],
+		enabledProviderIds: ["local-lab"],
+		providerModels: { "local-lab": [modelId] },
+		providerNames: { "local-lab": "Local lab" },
+		providerReasoningModels: { "local-lab": [modelId] },
+		providerModelDetails: { "local-lab": [detail] },
+	});
+	loadProviderModelsMock.mockResolvedValue([detail]);
+	await act(async () =>
+		root.render(
+			<StaleProviderComposer variant="welcome" initialModel={modelId} />,
+		),
+	);
+	await vi.waitFor(() =>
+		expect(
+			container.querySelector<HTMLButtonElement>(
+				'[aria-label="Thinking level"]',
+			)?.disabled,
+		).toBe(false),
+	);
+	await act(async () =>
+		container
+			.querySelector<HTMLButtonElement>('[aria-label="Thinking level"]')
+			?.click(),
+	);
+	const options = [...document.querySelectorAll('[role="option"]')].map(
+		(element) => element.textContent,
+	);
+	expect(options).not.toContain("Ultra · DavidAU");
+	expect(options).not.toContain("Adaptive");
+	expect(options).toContain("High");
 });

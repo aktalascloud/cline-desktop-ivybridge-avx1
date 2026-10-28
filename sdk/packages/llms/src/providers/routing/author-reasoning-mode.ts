@@ -1,3 +1,5 @@
+import { isQwen38NextAuthorModel } from "@cline/shared";
+
 /**
  * Explicit opt-in for compatible author templates. The mode is prompt syntax,
  * not a new API reasoning_effort value. Keep original messages and attachments.
@@ -9,6 +11,7 @@ export function withAuthorReasoningMode(
 	if (mode === undefined) return body;
 	if (mode !== "ultra" && mode !== "adaptive")
 		throw new Error("Unsupported author reasoning mode");
+	if (!isQwen38NextAuthorModel(body.model)) return body;
 	if (body.reasoning_effort !== "xhigh") return body;
 	if (!Array.isArray(body.messages)) return body;
 	if (mode === "adaptive") return { ...body, reason_mode: "auto" };

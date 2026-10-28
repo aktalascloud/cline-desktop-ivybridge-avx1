@@ -1,4 +1,5 @@
 "use client";
+import { isQwen38NextAuthorModel } from "@cline/shared";
 import { t, useTranslation } from "@/lib/i18n";
 
 import type { PluginCommandCatalog } from "@cline/core";
@@ -903,6 +904,7 @@ function ChatInputBarImpl({
 	}, []);
 
 	const authorModesSupported =
+		isQwen38NextAuthorModel(model) &&
 		executionTarget === "local" &&
 		environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID &&
 		reasoningCapability?.provider === provider &&
@@ -1014,7 +1016,8 @@ function ChatInputBarImpl({
 		if (
 			reasoningCapability?.provider === provider &&
 			reasoningCapability?.model === model &&
-			reasoningCapability.authorModesSupported === false &&
+			(reasoningCapability.authorModesSupported === false ||
+				!isQwen38NextAuthorModel(model)) &&
 			["ultra", "adaptive"].includes(reasoningEffort ?? "")
 		)
 			onReasoningChange({ thinking: true, reasoningEffort: "xhigh" });

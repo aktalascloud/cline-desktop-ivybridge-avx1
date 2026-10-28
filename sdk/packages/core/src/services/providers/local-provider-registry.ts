@@ -1,3 +1,4 @@
+import { isQwen38NextAuthorModel } from "@cline/shared";
 import {
 	existsSync,
 	mkdirSync,
@@ -277,7 +278,8 @@ export function toProviderModel(
 			info.thinkingConfig != null
 				? true
 				: declaredCapability(info.capabilities, "reasoning"),
-		...(info.metadata?.supportsAuthorModes === true
+		...(info.metadata?.supportsAuthorModes === true &&
+		isQwen38NextAuthorModel(modelId)
 			? { supportsAuthorModes: true }
 			: {}),
 		operationModes: info.operationModes,
@@ -405,7 +407,7 @@ function toStoredModelInfo(
 	return {
 		id: modelId,
 		name: model?.name ?? modelId,
-		...(model?.supportsAuthorModes === true
+		...(model?.supportsAuthorModes === true && isQwen38NextAuthorModel(modelId)
 			? { metadata: { supportsAuthorModes: true } }
 			: {}),
 		...(model?.maxTokens !== undefined ? { maxTokens: model.maxTokens } : {}),

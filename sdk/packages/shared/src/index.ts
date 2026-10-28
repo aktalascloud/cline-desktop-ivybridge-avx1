@@ -1,4 +1,5 @@
 export * from "./agent";
+export { isQwen38NextAuthorModel } from "./author-model";
 export * from "./agents";
 export type {
 	ConnectorAuthorizationDecision,

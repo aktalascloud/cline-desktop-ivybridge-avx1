@@ -634,4 +634,6 @@ Voice input accepts dedicated audio-to-text models in streaming or recorded-file
 
 ## Optional fork-managed DeepSeek Web service (Windows)
 
+Author Ultra/Adaptive are restricted to explicitly opted-in Qwen3.8 Next / Flash Next model IDs. Other families cannot acquire the extensions through stale catalog metadata or stored preferences; ordinary reasoning and provider sampling remain unchanged. The chat picker, local runtime validation, catalog projection and request encoder enforce this boundary.
+
 `getManagedDsw2Api()` returns the shared lifecycle service. `status()` exposes readiness, account count and model identity without credentials. `configure(manager, token, cookies)` verifies a personal web session before replacing encrypted saved credentials; `connectSaved(manager)` reuses them. `synchronize(manager)` refreshes only a marked managed provider after worker restarts; provider registration does not change the last-used provider. The runtime and native helper must come from this fork's verified installer. Session changes require idle inference; vendor throttling is surfaced, not bypassed. No local business request quota or response/tool-result truncation is imposed. Token usage values are character-based estimates, not vendor counts. Never log session material or put it in repository examples.

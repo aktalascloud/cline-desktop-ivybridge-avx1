@@ -5,6 +5,7 @@ import {
 	resolveModelsRegistryPath,
 } from "@cline/core";
 import type { JsonRecord } from "./types";
+import { isQwen38NextAuthorModel } from "@cline/shared";
 
 /** Refresh only local sampling defaults; never replace credentials or historical routes. */
 export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
@@ -30,7 +31,10 @@ export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
 		const model = Object.entries(models).find(
 			([key, value]) => (value.id?.trim() || key.trim()) === modelId,
 		)?.[1];
-		if (model?.supportsAuthorModes !== true)
+		if (
+			model?.supportsAuthorModes !== true ||
+			!isQwen38NextAuthorModel(modelId)
+		)
 			throw new Error("Author reasoning modes are not enabled for this model.");
 	}
 	const existing =

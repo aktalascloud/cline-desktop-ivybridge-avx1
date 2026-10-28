@@ -253,7 +253,7 @@ it.each([
 	"xhigh",
 ] as const)("author Ultra preserves the API effort %s and activates only for High/XHigh", async (effort) => {
 	const body = await wireBody({
-		modelId: "fixture-unlisted",
+		modelId: "fixture/Qwen3.8-Flash-Next",
 		reasoning: effort === "none" ? { enabled: false } : { effort },
 		reasoningOptions: undefined,
 		authorReasoningMode: "ultra",
@@ -267,7 +267,7 @@ it.each([
 
 it("sends Adaptive as backend reason_mode=auto without an Ultra tag or client picker", async () => {
 	const body = await wireBody({
-		modelId: "fixture-unlisted",
+		modelId: "fixture/Qwen3.8-Flash-Next",
 		reasoning: { effort: "xhigh" },
 		reasoningOptions: undefined,
 		authorReasoningMode: "adaptive",
@@ -277,6 +277,29 @@ it("sends Adaptive as backend reason_mode=auto without an Ultra tag or client pi
 	expect(
 		(body.messages as Array<{ content: unknown }>).some(
 			(m) => m.content === "{REASON:ultra}",
+		),
+	).toBe(false);
+});
+
+it.each([
+	"ultra",
+	"adaptive",
+] as const)("does not send stale %s to another model and retains sampling", async (mode) => {
+	const body = await wireBody({
+		modelId: "fixture-other-model",
+		reasoning: { effort: "xhigh" },
+		reasoningOptions: undefined,
+		authorReasoningMode: mode,
+		sampling: { temperature: 0.7, top_p: 0.95, top_k: 20 },
+	});
+	expect(body.temperature).toBe(0.7);
+	expect(body.top_p).toBe(0.95);
+	expect(body.top_k).toBe(20);
+	expect(body.reasoning_effort).toBe("xhigh");
+	expect(body).not.toHaveProperty("reason_mode");
+	expect(
+		(body.messages as Array<{ content: unknown }>).some(
+			(message) => message.content === "{REASON:ultra}",
 		),
 	).toBe(false);
 });

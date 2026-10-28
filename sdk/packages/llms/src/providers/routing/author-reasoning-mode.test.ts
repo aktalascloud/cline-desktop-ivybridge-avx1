@@ -3,6 +3,7 @@ import { withAuthorReasoningMode } from "./author-reasoning-mode";
 describe("author reasoning mode", () => {
 	it("sends Adaptive only as backend-owned auto steering, without persona injection", () => {
 		const body = {
+			model: "fixture/Qwen3.8-Flash-Next",
 			reasoning_effort: "xhigh",
 			messages: [{ role: "user", content: "original task" }],
 			stream: true,
@@ -31,6 +32,7 @@ describe("author reasoning mode", () => {
 		];
 		const body = {
 			messages,
+			model: "fixture/Qwen3.8-Flash-Next",
 			reasoning_effort: "xhigh",
 			stream: true,
 			tools: [{ type: "function" }],
@@ -69,4 +71,26 @@ describe("author reasoning mode", () => {
 		expect(withAuthorReasoningMode(body, undefined)).toBe(body);
 		expect(() => withAuthorReasoningMode(body, "invented-mode")).toThrow();
 	});
+});
+
+it.each([
+	"ultra",
+	"adaptive",
+])("leaves other models and their sampling unchanged for stale %s", (mode) => {
+	for (const model of [
+		"deepseek-web",
+		"Qwen3.8-Coder",
+		"Qwen3-Next",
+		"other-model",
+	]) {
+		const body = {
+			model,
+			reasoning_effort: "xhigh",
+			temperature: 0.7,
+			top_p: 0.95,
+			top_k: 20,
+			messages: [{ role: "user", content: "original request" }],
+		};
+		expect(withAuthorReasoningMode(body, mode)).toBe(body);
+	}
 });
