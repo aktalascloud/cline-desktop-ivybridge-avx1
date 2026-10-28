@@ -253,7 +253,7 @@ it.each([
 	"xhigh",
 ] as const)("author Ultra preserves the API effort %s and activates only for High/XHigh", async (effort) => {
 	const body = await wireBody({
-		modelId: "fixture/Qwen3.8-Flash-Next",
+		modelId: "DavidAU/Qwen3.8-Flash-Next-fixture",
 		reasoning: effort === "none" ? { enabled: false } : { effort },
 		reasoningOptions: undefined,
 		authorReasoningMode: "ultra",
@@ -267,7 +267,7 @@ it.each([
 
 it("sends Adaptive as backend reason_mode=auto without an Ultra tag or client picker", async () => {
 	const body = await wireBody({
-		modelId: "fixture/Qwen3.8-Flash-Next",
+		modelId: "DavidAU/Qwen3.8-Flash-Next-fixture",
 		reasoning: { effort: "xhigh" },
 		reasoningOptions: undefined,
 		authorReasoningMode: "adaptive",

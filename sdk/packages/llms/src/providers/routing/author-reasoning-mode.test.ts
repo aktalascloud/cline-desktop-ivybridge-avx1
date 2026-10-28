@@ -3,7 +3,7 @@ import { withAuthorReasoningMode } from "./author-reasoning-mode";
 describe("author reasoning mode", () => {
 	it("sends Adaptive only as backend-owned auto steering, without persona injection", () => {
 		const body = {
-			model: "fixture/Qwen3.8-Flash-Next",
+			model: "DavidAU/Qwen3.8-Flash-Next-fixture",
 			reasoning_effort: "xhigh",
 			messages: [{ role: "user", content: "original task" }],
 			stream: true,
@@ -32,7 +32,7 @@ describe("author reasoning mode", () => {
 		];
 		const body = {
 			messages,
-			model: "fixture/Qwen3.8-Flash-Next",
+			model: "DavidAU/Qwen3.8-Flash-Next-fixture",
 			reasoning_effort: "xhigh",
 			stream: true,
 			tools: [{ type: "function" }],

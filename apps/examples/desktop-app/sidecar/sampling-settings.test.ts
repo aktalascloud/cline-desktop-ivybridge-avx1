@@ -5,7 +5,7 @@ vi.mock("@cline/core", () => ({
 		providers: {
 			"local-test": {
 				models: {
-					"fixture/Qwen3.8-Flash-Next": { supportsAuthorModes: true },
+					"DavidAU/Qwen3.8-Flash-Next-fixture": { supportsAuthorModes: true },
 					"other-model": { supportsAuthorModes: true },
 				},
 			},
@@ -30,7 +30,7 @@ describe("local sampling connection refresh", () => {
 		});
 		const config = {
 			provider: "local-test",
-			model: "fixture/Qwen3.8-Flash-Next",
+			model: "DavidAU/Qwen3.8-Flash-Next-fixture",
 			thinking: true,
 			reasoningEffort: "xhigh",
 			providerConfig: {
@@ -74,7 +74,7 @@ it("makes Ultra an explicit session choice while High/XHigh ignore the old globa
 	});
 	const base = {
 		provider: "local-test",
-		model: "fixture/Qwen3.8-Flash-Next",
+		model: "DavidAU/Qwen3.8-Flash-Next-fixture",
 		reasoningEffort: "xhigh",
 		providerConfig: { providerId: "local-test", apiKey: "private-test-key" },
 	};

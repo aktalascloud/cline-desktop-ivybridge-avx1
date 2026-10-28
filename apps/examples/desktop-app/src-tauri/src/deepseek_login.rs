@@ -8,6 +8,23 @@ use std::time::Duration;
 use tauri::{Manager, WebviewWindow};
 
 const ORIGIN: &str = "https://chat.deepseek.com";
+
+// Tauri canonicalizes Windows resource paths to \\?\ form. Node's entrypoint
+// resolver rejects that form (EISDIR on C:), although CreateProcess accepts it.
+fn child_process_path(path: PathBuf) -> PathBuf {
+    #[cfg(windows)]
+    if let Some(text) = path.to_str() {
+        if let Some(tail) = text.strip_prefix(r"\\?\UNC\") {
+            return PathBuf::from(format!(r"\\{tail}"));
+        }
+        if let Some(tail) = text.strip_prefix(r"\\?\") {
+            if tail.as_bytes().get(1) == Some(&b':') {
+                return PathBuf::from(tail);
+            }
+        }
+    }
+    path
+}
 static ACTIVE: AtomicBool = AtomicBool::new(false);
 static CANCELLED: AtomicBool = AtomicBool::new(false);
 static INPUT: Mutex<Option<ChildStdin>> = Mutex::new(None);
@@ -152,7 +169,7 @@ pub async fn dsw2api_browser_login(
     if CANCELLED.load(Ordering::Acquire) {
         return Err("DeepSeek sign-in was cancelled".into());
     }
-    let mut command = Command::new(node);
+    let mut command = Command::new(child_process_path(node));
     command.env_clear();
     for name in [
         "SystemRoot",
@@ -173,11 +190,11 @@ pub async fn dsw2api_browser_login(
         }
     }
     command
-        .arg(script)
+        .arg(child_process_path(script))
         .arg("--browser")
-        .arg(browser)
+        .arg(child_process_path(browser))
         .arg("--profile")
-        .arg(profile)
+        .arg(child_process_path(profile))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
@@ -222,6 +239,18 @@ pub fn dsw2api_close_login(window: WebviewWindow) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(windows)]
+    #[test]
+    fn node_arguments_do_not_keep_windows_verbatim_prefixes() {
+        assert_eq!(
+            child_process_path(PathBuf::from(r"\\?\C:\Program Files\Browser\login.mjs")),
+            PathBuf::from(r"C:\Program Files\Browser\login.mjs")
+        );
+        assert_eq!(
+            child_process_path(PathBuf::from(r"\\?\UNC\server\share\login.mjs")),
+            PathBuf::from(r"\\server\share\login.mjs")
+        );
+    }
     #[test]
     fn session_origin_and_size_are_checked() {
         assert!(parse_session(

@@ -3834,7 +3834,7 @@ describe("ChatInputBar compact layout", () => {
 
 it("offers separate author modes only for an opted-in model and returns to stock levels", async () => {
 	const detail = {
-		id: "fixture/Qwen3.8-Flash-Next",
+		id: "DavidAU/Qwen3.8-Flash-Next-fixture",
 		name: "Private model",
 		supportsReasoning: true,
 		supportsAuthorModes: true,
@@ -3842,9 +3842,11 @@ it("offers separate author modes only for an opted-in model and returns to stock
 	loadProviderModelCatalogMock.mockResolvedValue({
 		providers: [],
 		enabledProviderIds: ["local-lab"],
-		providerModels: { "local-lab": ["fixture/Qwen3.8-Flash-Next"] },
+		providerModels: { "local-lab": ["DavidAU/Qwen3.8-Flash-Next-fixture"] },
 		providerNames: { "local-lab": "Local lab" },
-		providerReasoningModels: { "local-lab": ["fixture/Qwen3.8-Flash-Next"] },
+		providerReasoningModels: {
+			"local-lab": ["DavidAU/Qwen3.8-Flash-Next-fixture"],
+		},
 		providerModelDetails: { "local-lab": [detail] },
 	});
 	loadProviderModelsMock.mockResolvedValue([detail]);
@@ -3852,7 +3854,7 @@ it("offers separate author modes only for an opted-in model and returns to stock
 		root.render(
 			<StaleProviderComposer
 				variant="welcome"
-				initialModel="fixture/Qwen3.8-Flash-Next"
+				initialModel="DavidAU/Qwen3.8-Flash-Next-fixture"
 			/>,
 		),
 	);

@@ -2,6 +2,9 @@
 
 ## 1.0.11
 
+- Fixed Windows extended resource paths that stopped Node before launching the browser. Ultra/Adaptive now require DavidAU Qwen3.8 Next specifically; Swift is excluded.
+- Исправлены расширенные пути Windows, из-за которых Node завершался до запуска браузера. Ultra/Adaptive — только для DavidAU Qwen3.8 Next; Swift исключён.
+
 - DSW2API appears beside your providers and signs in through the installed Windows default Chromium browser with an isolated Cline profile. Verified session tokens and cookies transfer automatically; no DevTools copying. The unused DSH notice is removed.
 - DSW2API находится рядом с вашими провайдерами. Вход — через установленный браузер Windows по умолчанию с отдельным профилем Cline; проверенная сессия и cookies подключаются автоматически, без DevTools и копирования. Лишняя надпись DSH убрана.
 
