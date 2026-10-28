@@ -3,11 +3,11 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Dsw2ApiSetup } from "./dsw2api-setup";
-const mocks = vi.hoisted(() => ({ invoke: vi.fn(), openExternalUrl: vi.fn() }));
+const mocks = vi.hoisted(() => ({ invoke: vi.fn(), native: vi.fn() }));
 vi.mock("@/lib/desktop-client", () => ({
 	desktopClient: { invoke: mocks.invoke },
-	openExternalUrl: mocks.openExternalUrl,
 }));
+vi.mock("@tauri-apps/api/core", () => ({ invoke: mocks.native }));
 vi.mock("@/lib/i18n", () => ({ useTranslation: () => (text: string) => text }));
 let element: HTMLDivElement;
 let root: ReturnType<typeof createRoot>;
@@ -16,48 +16,56 @@ beforeEach(() => {
 	element = document.createElement("div");
 	document.body.append(element);
 	root = createRoot(element);
-	vi.clearAllMocks();
+	vi.resetAllMocks();
+	mocks.invoke.mockImplementation(async (command: string) =>
+		command === "dsw2api_status"
+			? { configured: false, available: true }
+			: { configured: true },
+	);
 });
 afterEach(async () => {
 	await act(() => root.unmount());
 	element.remove();
 });
 async function mount() {
-	const onConnected = vi.fn(async () => {});
-	await act(() => root.render(<Dsw2ApiSetup onConnected={onConnected} />));
-	return onConnected;
+	const connected = vi.fn(async () => {});
+	await act(async () => root.render(<Dsw2ApiSetup onConnected={connected} />));
+	return connected;
 }
 function button(text: string) {
 	return [...element.querySelectorAll("button")].find(
-		(item) => item.textContent === text,
+		(value) => value.textContent === text,
 	)!;
 }
-it("opens only the official personal sign-in page", async () => {
-	await mount();
-	await act(() => button("Register / sign in to DeepSeek").click());
-	expect(mocks.openExternalUrl).toHaveBeenCalledWith(
-		"https://chat.deepseek.com/sign_in",
-	);
-	expect(mocks.invoke).not.toHaveBeenCalled();
-});
-it("reuses saved credentials without exposing or requesting their value", async () => {
-	mocks.invoke.mockResolvedValue({ configured: true });
+it("connects a browser session without manual token/cookie inputs", async () => {
+	const session = { token: "fixture", cookies: "fixture=1" };
+	mocks.native.mockResolvedValue(session);
 	const connected = await mount();
-	await act(() => button("Use saved session").click());
-	expect(mocks.invoke).toHaveBeenCalledWith("dsw2api_connect", {});
+	await act(async () => button("Sign in through browser").click());
+	expect(mocks.native).toHaveBeenCalledWith("dsw2api_browser_login");
+	expect(mocks.invoke).toHaveBeenCalledWith("dsw2api_configure", session);
+	expect(mocks.native).toHaveBeenCalledWith("dsw2api_close_login");
 	expect(connected).toHaveBeenCalledOnce();
+	expect(element.querySelectorAll("input")).toHaveLength(0);
 	expect(element.textContent).toContain("DeepSeek session connected.");
-	expect(
-		[...element.querySelectorAll("input")].every(
-			(input) => input.type === "password" && input.value === "",
-		),
-	).toBe(true);
 });
-it("does not reflect backend errors or claim a failed connection succeeded", async () => {
-	mocks.invoke.mockRejectedValue(new Error("synthetic-private-material"));
+it("does not offer an empty saved-session action or reflect browser errors", async () => {
+	mocks.native.mockRejectedValue(new Error("synthetic-private-material"));
 	const connected = await mount();
-	await act(() => button("Use saved session").click());
+	await act(async () => button("Sign in through browser").click());
 	expect(connected).not.toHaveBeenCalled();
 	expect(element.textContent).not.toContain("synthetic-private-material");
+	expect(element.textContent).not.toContain("Use saved session");
+	expect(element.querySelector('[role="alert"]')).not.toBeNull();
+});
+it("keeps the browser open when gateway verification fails", async () => {
+	mocks.native.mockResolvedValue({ token: "fixture", cookies: "fixture=1" });
+	mocks.invoke.mockImplementation(async (command: string) => {
+		if (command === "dsw2api_configure") throw Error("verification failed");
+		return { configured: false, available: true };
+	});
+	await mount();
+	await act(async () => button("Sign in through browser").click());
+	expect(mocks.native).not.toHaveBeenCalledWith("dsw2api_close_login");
 	expect(element.querySelector('[role="alert"]')).not.toBeNull();
 });

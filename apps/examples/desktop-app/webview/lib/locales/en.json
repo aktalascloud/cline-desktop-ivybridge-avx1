@@ -15,5 +15,11 @@
 	"Use saved session": "Use saved session",
 	"Could not connect. Check your session, network and bundled runtime. Existing credentials were preserved.": "Could not connect. Check your session, network and bundled runtime. Existing credentials were preserved.",
 	"DeepSeek session connected.": "DeepSeek session connected.",
-	"DSH: no verified full unlimited route is currently available. Limited free pools are not offered as unlimited.": "DSH: no verified full unlimited route is currently available. Limited free pools are not offered as unlimited."
+	"Your providers": "Your providers",
+	"Sign in to your DeepSeek account in the browser. Cline connects the session automatically; no token or cookie copying is needed.": "Sign in to your DeepSeek account in the browser. Cline connects the session automatically; no token or cookie copying is needed.",
+	"No ClinePass or local request/output quota. DeepSeek's own availability and limits still apply. Passwords and verification codes stay on DeepSeek's page.": "No ClinePass or local request/output quota. DeepSeek's own availability and limits still apply. Passwords and verification codes stay on DeepSeek's page.",
+	"Finish signing in in the browser...": "Finish signing in in the browser...",
+	"Switch DeepSeek account": "Switch DeepSeek account",
+	"Sign in through browser": "Sign in through browser",
+	"Sign-in was not completed. Finish signing in in the browser and try again. Saved credentials were preserved.": "Sign-in was not completed. Finish signing in in the browser and try again. Saved credentials were preserved."
 }

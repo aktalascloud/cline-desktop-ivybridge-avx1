@@ -219,6 +219,8 @@ function ProviderRow({
 				<span className="shrink-0 text-xs font-medium text-muted-foreground">
 					{t("Configured")}
 				</span>
+			) : provider.id === "dsw2api" ? (
+				<span className="text-xs text-muted-foreground">{t("Sign in")}</span>
 			) : (
 				<AuthKindHint kind={authKind} />
 			)}
@@ -309,9 +311,11 @@ export function ProviderListContent({
 			)
 		: providers;
 
-	const connectedProviders = filteredProviders.filter(isProviderConnected);
+	const connectedProviders = filteredProviders.filter(
+		(provider) => isProviderConnected(provider) || provider.id === "dsw2api",
+	);
 	const availableProviders = filteredProviders.filter(
-		(provider) => !isProviderConnected(provider),
+		(provider) => !isProviderConnected(provider) && provider.id !== "dsw2api",
 	);
 	// The catalog arrives sorted by popular rank, then name; "popular" entries
 	// surface first so the common providers don't drown in the long tail.
@@ -423,7 +427,11 @@ export function ProviderListContent({
 
 				{connectedProviders.length > 0 ? (
 					<ProviderSection
-						title={t("Configured")}
+						title={t(
+							providers.some((provider) => provider.id === "dsw2api")
+								? "Your providers"
+								: "Configured",
+						)}
 						expanded={!collapsedSections.has("Configured")}
 						onToggle={() => toggleSection("Configured")}
 					>

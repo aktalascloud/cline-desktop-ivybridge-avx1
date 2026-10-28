@@ -1,35 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { desktopClient, openExternalUrl } from "@/lib/desktop-client";
+import { desktopClient } from "@/lib/desktop-client";
 import { useTranslation } from "@/lib/i18n";
 
-/** Session material stays in this form until sent to the trusted local backend. */
+type Status = { configured: boolean; available: boolean };
 export function Dsw2ApiSetup({
 	onConnected,
 }: {
 	onConnected: () => Promise<void>;
 }) {
 	const t = useTranslation();
-	const [token, setToken] = useState("");
-	const [cookies, setCookies] = useState("");
+	const [status, setStatus] = useState<Status | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState(false);
-	const [connected, setConnected] = useState(false);
-	const connect = async (saved = false) => {
+	useEffect(() => {
+		let live = true;
+		void desktopClient
+			.invoke<Status>("dsw2api_status")
+			.then((value) => {
+				if (live) setStatus(value);
+			})
+			.catch(() => {});
+		return () => {
+			live = false;
+		};
+	}, []);
+	const connect = async () => {
 		if (busy) return;
 		setBusy(true);
 		setError(false);
-		setConnected(false);
 		try {
-			await desktopClient.invoke(
-				saved ? "dsw2api_connect" : "dsw2api_configure",
-				saved ? {} : { token: token.trim(), cookies: cookies.trim() },
+			const { invoke } = await import("@tauri-apps/api/core");
+			const session = await invoke<{ token: string; cookies: string }>(
+				"dsw2api_browser_login",
 			);
-			setToken("");
-			setCookies("");
-			setConnected(true);
+			await desktopClient.invoke("dsw2api_configure", session);
+			await invoke("dsw2api_close_login");
+			setStatus({ configured: true, available: true });
 			await onConnected();
 		} catch {
 			setError(true);
@@ -37,74 +46,51 @@ export function Dsw2ApiSetup({
 			setBusy(false);
 		}
 	};
+	const cancel = async () => {
+		try {
+			const { invoke } = await import("@tauri-apps/api/core");
+			await invoke("dsw2api_close_login");
+		} catch {}
+	};
 	return (
-		<section className="flex flex-col gap-3 rounded-lg border p-5">
-			<h3 className="font-semibold">DSW2API · DeepSeek Web</h3>
+		<section className="flex flex-col gap-4 rounded-lg border p-5">
+			<h3 className="font-semibold">DSW2API · DeepSeek</h3>
 			<p className="text-sm text-muted-foreground">
 				{t(
-					"Use your own DeepSeek web account. No ClinePass, local request quota or output cap. DeepSeek availability and service limits still apply.",
+					"Sign in to your DeepSeek account in the browser. Cline connects the session automatically; no token or cookie copying is needed.",
 				)}
 			</p>
-			<Button
-				variant="outline"
-				onClick={() =>
-					void openExternalUrl("https://chat.deepseek.com/sign_in")
-				}
-			>
-				{t("Register / sign in to DeepSeek")}
-			</Button>
-			<p className="text-sm text-muted-foreground">
-				{t(
-					"After signing in, copy your userToken from DeepSeek browser storage into this local form. Never send it in chat. Passwords are not stored.",
-				)}
-			</p>
-			<label className="text-sm">
-				{t("Personal DeepSeek session token")}
-				<input
-					className="mt-1 w-full rounded border bg-background p-2"
-					type="password"
-					autoComplete="off"
-					value={token}
-					onChange={(event) => setToken(event.target.value)}
-				/>
-			</label>
-			<label className="text-sm">
-				{t("Cookies (optional)")}
-				<input
-					className="mt-1 w-full rounded border bg-background p-2"
-					type="password"
-					autoComplete="off"
-					value={cookies}
-					onChange={(event) => setCookies(event.target.value)}
-				/>
-			</label>
 			<p className="text-xs text-muted-foreground">
 				{t(
-					"The session is verified before replacing saved credentials and encrypted locally. Reasoning supports Off / On; these are not separate web model budgets.",
+					"No ClinePass or local request/output quota. DeepSeek's own availability and limits still apply. Passwords and verification codes stay on DeepSeek's page.",
 				)}
 			</p>
 			<div className="flex flex-wrap gap-2">
-				<Button disabled={busy || !token.trim()} onClick={() => void connect()}>
-					{t(busy ? "Connecting..." : "Verify and connect")}
+				<Button disabled={busy} onClick={() => void connect()}>
+					{t(
+						busy
+							? "Finish signing in in the browser..."
+							: status?.configured
+								? "Switch DeepSeek account"
+								: "Sign in through browser",
+					)}
 				</Button>
-				<Button
-					variant="outline"
-					disabled={busy}
-					onClick={() => void connect(true)}
-				>
-					{t("Use saved session")}
-				</Button>
+				{busy && (
+					<Button variant="outline" onClick={() => void cancel()}>
+						{t("Cancel")}
+					</Button>
+				)}
 			</div>
+			{status?.configured && (
+				<p role="status" className="text-sm">
+					{t("DeepSeek session connected.")}
+				</p>
+			)}
 			{error && (
 				<p role="alert" className="text-sm text-destructive">
 					{t(
-						"Could not connect. Check your session, network and bundled runtime. Existing credentials were preserved.",
+						"Sign-in was not completed. Finish signing in in the browser and try again. Saved credentials were preserved.",
 					)}
-				</p>
-			)}
-			{connected && (
-				<p role="status" className="text-sm">
-					{t("DeepSeek session connected.")}
 				</p>
 			)}
 		</section>

@@ -511,11 +511,20 @@ export function SettingsView({
 		if (!effectiveSelectedProviderId) {
 			return;
 		}
+		if (
+			effectiveSelectedProviderId === "dsw2api" &&
+			!selectedProvider?.configured
+		)
+			return;
 		const timeoutId = window.setTimeout(() => {
 			void loadProviderModels(effectiveSelectedProviderId);
 		}, 0);
 		return () => window.clearTimeout(timeoutId);
-	}, [loadProviderModels, effectiveSelectedProviderId]);
+	}, [
+		loadProviderModels,
+		effectiveSelectedProviderId,
+		selectedProvider?.configured,
+	]);
 
 	const backToProviderList = () => {
 		onNavigateSection("Providers");
@@ -575,7 +584,6 @@ export function SettingsView({
 					</DialogDescription>
 				</DialogHeader>
 				<AddProviderContent
-					onDswConnected={refreshDsw}
 					existingProviderIds={providers.map((provider) => provider.id)}
 					onBack={() => setAddingProvider(false)}
 					onSave={saveNewProvider}

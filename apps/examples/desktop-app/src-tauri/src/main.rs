@@ -7,6 +7,7 @@ mod linux_webview;
 #[cfg(target_os = "macos")]
 mod macos_notification;
 mod native_locale;
+mod deepseek_login;
 mod terminal;
 
 use serde::{Deserialize, Serialize};
@@ -1882,6 +1883,8 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            deepseek_login::dsw2api_browser_login,
+            deepseek_login::dsw2api_close_login,
             record_desktop_ready,
             set_interface_language,
             get_desktop_backend_endpoint,

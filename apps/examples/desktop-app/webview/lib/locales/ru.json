@@ -1197,5 +1197,11 @@
 	"Use saved session": "Использовать сохранённую сессию",
 	"Could not connect. Check your session, network and bundled runtime. Existing credentials were preserved.": "Не удалось подключиться. Проверьте сессию, сеть и встроенные компоненты. Сохранённые данные доступа не удалены.",
 	"DeepSeek session connected.": "Сессия DeepSeek подключена.",
-	"DSH: no verified full unlimited route is currently available. Limited free pools are not offered as unlimited.": "DSH: проверенный полный безлимитный канал пока не найден. Ограниченные бесплатные пулы не выдаются за безлимитные."
+	"Your providers": "Мои провайдеры",
+	"Sign in to your DeepSeek account in the browser. Cline connects the session automatically; no token or cookie copying is needed.": "Войдите в свой аккаунт DeepSeek в браузере. Cline подключит сессию автоматически — копировать токены и cookies не нужно.",
+	"No ClinePass or local request/output quota. DeepSeek's own availability and limits still apply. Passwords and verification codes stay on DeepSeek's page.": "Без ClinePass и местной квоты запросов/ответа. Доступность и ограничения самого DeepSeek сохраняются. Пароль и коды подтверждения остаются на странице DeepSeek.",
+	"Finish signing in in the browser...": "Завершите вход в браузере…",
+	"Switch DeepSeek account": "Сменить аккаунт DeepSeek",
+	"Sign in through browser": "Войти через браузер",
+	"Sign-in was not completed. Finish signing in in the browser and try again. Saved credentials were preserved.": "Вход не завершён. Войдите в браузере и повторите подключение. Сохранённые данные доступа не удалены."
 }

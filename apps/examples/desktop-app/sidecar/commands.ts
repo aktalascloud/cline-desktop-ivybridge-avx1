@@ -3169,6 +3169,22 @@ export async function handleCommand(
 					: provider,
 			);
 		}
+		if (!catalog.providers.some((provider) => provider.id === "dsw2api")) {
+			catalog.providers.push({
+				id: "dsw2api",
+				name: "DSW2API · DeepSeek",
+				models: 0,
+				color: "#4d6bfe",
+				letter: "D",
+				enabled: false,
+				configured: false,
+				modelList: [],
+				modelTools: [],
+				auth: { providerId: "dsw2api" },
+				authDescription: "Personal DeepSeek browser session",
+				baseUrlDescription: "Bundled local gateway",
+			});
+		}
 		return catalog;
 	}
 	if (command === "list_transcription_models") {

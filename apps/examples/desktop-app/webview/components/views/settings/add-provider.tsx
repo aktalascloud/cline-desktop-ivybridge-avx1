@@ -16,7 +16,6 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { PageFrame, PageHeader } from "../page-layout";
 import { ModelIdInput } from "./model-id-input";
-import { Dsw2ApiSetup } from "./dsw2api-setup";
 
 const CAPABILITY_OPTIONS = [
 	"streaming",
@@ -58,14 +57,12 @@ export function AddProviderContent({
 	variant = "page",
 	onBack,
 	onSave,
-	onDswConnected,
 	existingProviderIds,
 }: {
 	/** "dialog" renders only the form body for use inside a Dialog. */
 	variant?: "page" | "dialog";
 	onBack: () => void;
 	onSave: (payload: AddProviderPayload) => Promise<void>;
-	onDswConnected?: () => Promise<void>;
 	existingProviderIds: string[];
 }) {
 	const t = useTranslation();
@@ -190,12 +187,6 @@ export function AddProviderContent({
 
 	const content = (
 		<div className="flex flex-col gap-6">
-			{onDswConnected && <Dsw2ApiSetup onConnected={onDswConnected} />}
-			<p className="text-sm text-muted-foreground">
-				{t(
-					"DSH: no verified full unlimited route is currently available. Limited free pools are not offered as unlimited.",
-				)}
-			</p>
 			<div className="rounded-lg border border-border p-5">
 				<h3 className="mb-4 text-sm font-semibold text-foreground">
 					{t("OpenAI-Compatible Provider")}

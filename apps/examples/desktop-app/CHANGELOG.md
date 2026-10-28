@@ -2,6 +2,9 @@
 
 ## 1.0.11
 
+- DSW2API appears beside your providers and signs in through an isolated DeepSeek browser window. Verified session tokens and cookies transfer automatically; no DevTools copying. The unused DSH notice is removed.
+- DSW2API находится рядом с вашими провайдерами. Вход — через отдельное окно DeepSeek; проверенная сессия и cookies подключаются автоматически, без DevTools и копирования. Лишняя надпись DSH убрана.
+
 - Ultra/Adaptive require an explicitly opted-in Qwen3.8 Next / Flash Next model; other models retain standard reasoning and sampling, including temperature. Stale settings cannot inject author controls into another model.
 - Ultra/Adaptive доступны только явно разрешённой Qwen3.8 Next / Flash Next. У остальных сохранены обычный reasoning и sampling, включая температуру; старые настройки не отправляют им авторские команды.
 
