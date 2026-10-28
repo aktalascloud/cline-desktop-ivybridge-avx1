@@ -40,7 +40,7 @@ async function wireBody(input: {
 	reasoning: GatewayStreamRequest["reasoning"];
 	reasoningOptions: readonly ModelReasoningOption[] | undefined;
 	capabilities?: ModelInfo["capabilities"];
-	sampling?: Record<string, number>;
+	sampling?: Record<string, number | boolean>;
 	authorReasoningMode?: "ultra" | "adaptive";
 }): Promise<Record<string, unknown>> {
 	const providerId = input.providerId ?? PROVIDER_ID;
@@ -191,6 +191,20 @@ describe("OpenAI-compatible reasoning disable wire contract", () => {
 });
 
 describe("OpenAI-compatible local sampling wire", () => {
+	it.each([
+		true,
+		false,
+	])("forwards DeepSeek smart-search=%s independently of thinking", async (search) => {
+		const body = await wireBody({
+			modelId: "deepseek-web",
+			reasoning: { effort: "high" },
+			reasoningOptions: undefined,
+			sampling: { search_enabled: search, max_tokens: 0 },
+		});
+		expect(body.search_enabled).toBe(search);
+		expect(body.reasoning_effort).toBe("high");
+		expect(body.max_tokens).toBe(-1);
+	});
 	it("forwards all sampling defaults through the real adapter, retaining explicit request max_tokens", async () => {
 		const body = await wireBody({
 			modelId: "fixture-unlisted",

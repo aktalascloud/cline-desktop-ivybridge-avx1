@@ -1210,5 +1210,7 @@
 	"Set up browser bridge": "Настроить браузерный мост",
 	"One-time Brave setup: open brave://extensions, enable developer mode, choose Load unpacked and select this folder:": "Одноразовая настройка Brave: откройте brave://extensions, включите режим разработчика, нажмите «Загрузить распакованное» и выберите папку:",
 	"Then open DeepSeek in your regular browser and click the Cline DeepSeek Session Bridge icon to connect.": "Затем откройте DeepSeek в обычном браузере и нажмите значок Cline DeepSeek Session Bridge для подключения.",
-	"The browser bridge is not ready. Set it up once, then connect from your normal DeepSeek tab. Saved credentials were preserved.": "Браузерный мост пока не готов. Настройте его один раз и подключитесь из обычной вкладки DeepSeek. Сохранённые данные доступа не удалены."
+	"The browser bridge is not ready. Set it up once, then connect from your normal DeepSeek tab. Saved credentials were preserved.": "Браузерный мост пока не готов. Настройте его один раз и подключитесь из обычной вкладки DeepSeek. Сохранённые данные доступа не удалены.",
+	"Deep thinking": "Глубокое мышление",
+	"Smart search": "Умный поиск"
 }

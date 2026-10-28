@@ -12,6 +12,7 @@ export const OpenAIChatSamplingSchema = z
 		max_tokens: z.number().int().nonnegative().max(2147483647).optional(),
 		seed: z.number().int().min(0).max(2147483647).optional(),
 		reasoning_budget_tokens: z.number().int().min(0).max(2147483647).optional(),
+		search_enabled: z.boolean().optional(),
 	})
 	.strict();
 

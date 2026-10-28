@@ -2,6 +2,9 @@
 
 ## 1.0.11
 
+- DSW2API: independent Deep thinking and Smart search switches replace reasoning budgets. The browser extension icon shows confirmed connection status and clears it when the local bridge disconnects.
+- DSW2API: отдельные переключатели «Глубокое мышление» и «Умный поиск» вместо уровней reasoning. Значок расширения показывает подтверждённое подключение и сбрасывает его при потере связи с локальным мостом.
+
 - DSW2API connects the DeepSeek session already signed in to your regular browser, through a DeepSeek-only companion extension and restricted local native host. No separate browser profile, automated Google login or token copying. One-time extension consent is required.
 - DSW2API подключает уже авторизованную сессию обычного браузера через расширение только для DeepSeek и закрытый локальный мост. Без отдельного профиля, автоматизации Google-входа и копирования токенов. Расширение добавляется с согласия пользователя один раз.
 - No ClinePass or local request/output quota; DeepSeek's own limits remain. Full tool results, encrypted account state and installer runtime shutdown are included. Strata settings/history/approvals remain separate. Ultra/Adaptive require DavidAU Qwen3.8 Next; Swift and other models keep standard reasoning and sampling.

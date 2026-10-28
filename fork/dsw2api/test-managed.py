@@ -109,8 +109,10 @@ with tempfile.TemporaryDirectory(prefix='cline-dsw-synthetic-') as temp:
         assert all('max_tokens' not in call for call in calls)
         assert calls[1]['parent_message_id'] == 101, calls[1]
         assert 'FULL_RESULT_END' in calls[1]['prompt']
-        code, text = request('/v1/chat/completions', {**payload, 'messages': messages, 'reasoning_effort': 'none'})
-        assert code == 200 and calls[2]['thinking_enabled'] is False
+        code, text = request('/v1/chat/completions', {**payload, 'messages': messages, 'reasoning_effort': 'none', 'search_enabled': True})
+        assert code == 200 and calls[2]['thinking_enabled'] is False and calls[2]['search_enabled'] is True
+        code, text = request('/v1/chat/completions', {**payload, 'messages': messages, 'search_enabled': False})
+        assert code == 200 and calls[3]['thinking_enabled'] is True and calls[3]['search_enabled'] is False
         before_calls = len(calls)
         code, text = request('/v1/chat/completions', {**payload, 'user': 'synthetic-throttle-conversation', 'messages': [{'role':'user','content':'VENDOR_THROTTLE_FIXTURE'}]})
         assert len(calls) == before_calls + 1 and ('error' in text or code == 429), text

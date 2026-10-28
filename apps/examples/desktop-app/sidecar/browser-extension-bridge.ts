@@ -102,26 +102,31 @@ export async function startBrowserExtensionBridge() {
 					const raw = await unprotect(encrypted);
 					const value = JSON.parse(raw.toString("utf8"));
 					raw.fill(0);
-					if (
-						value.action !== "connect" ||
-						value.origin !== "https://chat.deepseek.com" ||
-						typeof value.token !== "string" ||
-						!value.token.trim() ||
-						/[\r\n]/.test(value.token) ||
-						value.token.length > 16384 ||
-						typeof value.cookies !== "string" ||
-						value.cookies.length > 65536 ||
-						/[\r\n]/.test(value.cookies)
-					)
-						throw Error("Invalid session");
-					const status = await getManagedDsw2Api().configure(
-						new ProviderSettingsManager(),
-						value.token,
-						value.cookies,
-					);
-					value.token = "";
-					value.cookies = "";
-					result = { ok: status.configured };
+					if (value.action === "status") {
+						const status = await getManagedDsw2Api().status();
+						result = { ok: status.configured && status.running };
+					} else {
+						if (
+							value.action !== "connect" ||
+							value.origin !== "https://chat.deepseek.com" ||
+							typeof value.token !== "string" ||
+							!value.token.trim() ||
+							/[\r\n]/.test(value.token) ||
+							value.token.length > 16384 ||
+							typeof value.cookies !== "string" ||
+							value.cookies.length > 65536 ||
+							/[\r\n]/.test(value.cookies)
+						)
+							throw Error("Invalid session");
+						const status = await getManagedDsw2Api().configure(
+							new ProviderSettingsManager(),
+							value.token,
+							value.cookies,
+						);
+						value.token = "";
+						value.cookies = "";
+						result = { ok: status.configured && status.running };
+					}
 				} catch {
 				} finally {
 					await unlink(claim).catch(() => {});

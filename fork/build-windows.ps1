@@ -45,6 +45,8 @@ try {
     if($LASTEXITCODE){throw 'DSW2API bundled runtime verification failed'}
     python (Join-Path $PSScriptRoot 'prepare-browser-bridge.py')
     if($LASTEXITCODE){throw 'Browser session bridge build failed'}
+    node --test (Join-Path $PSScriptRoot 'browser-bridge/extension-status.test.mjs')
+    if($LASTEXITCODE){throw 'Browser connection indicator tests failed'}
     & "$app/src-tauri/bin/dsw2api/runtime/python.exe" -I -B -X utf8 "$PSScriptRoot/dsw2api/test-managed.py" "$app/src-tauri/bin/dsw2api"
     if($LASTEXITCODE){throw 'DSW2API offline protocol and credential-preservation checks failed'}
     python ./fork/check-bundle-paths.py

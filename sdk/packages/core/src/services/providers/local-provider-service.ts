@@ -1020,7 +1020,18 @@ export async function listLocalProviders(
 					...((persistedSettings?.client ?? info?.client) ===
 						"openai-compatible" &&
 					(persistedSettings?.protocol ?? info?.protocol) === "openai-chat"
-						? LOCAL_SAMPLING_FIELDS
+						? [
+								...LOCAL_SAMPLING_FIELDS,
+								...(id === "dsw2api"
+									? [
+											{
+												path: "sampling.search_enabled",
+												label: "Smart search",
+												type: "boolean" as const,
+											},
+										]
+									: []),
+							]
 						: []),
 				];
 				return {

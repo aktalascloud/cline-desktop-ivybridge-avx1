@@ -89,6 +89,7 @@ import { startStreamingTranscription } from "@/lib/streaming-transcription";
 import { cn } from "@/lib/utils";
 import { LOCAL_WORKSPACE_ENVIRONMENT_ID } from "@/lib/workspace-paths";
 import { SamplingSettings } from "./sampling-settings";
+import { DeepSeekControls } from "./deepseek-controls";
 import { LocalModelIndicator } from "./local-model-indicator";
 import { TokenUsageRing } from "./token-usage-ring";
 import { WorkspaceSelector as WorkspaceSelectorImpl } from "./workspace-selector";
@@ -1786,50 +1787,66 @@ function ChatInputBarImpl({
 							provider={provider}
 						/>
 					</div>
-					<Select
-						disabled={cloudSettingsLocked || modelSupportsReasoning !== true}
-						onValueChange={handleEffortChange}
-						value={EFFORT_LEVELS[effortIndex]?.value ?? "low"}
-					>
-						<SelectTrigger
-							aria-label={t("Thinking level")}
-							className="gap-1.5 border-0 px-2 text-sm shadow-none data-[size=sm]:h-7 [&>svg:last-child]:hidden group-data-[compact]/composer:size-7 group-data-[compact]/composer:shrink-0 group-data-[compact]/composer:justify-center group-data-[compact]/composer:p-0 bg-transparent! hover:bg-surface-hover!"
-							size="sm"
-							title={
-								cloudSettingsLocked
-									? t("Thinking level is fixed when a cloud session starts")
-									: modelSupportsReasoning === false
-										? t("The selected model does not report reasoning support")
-										: undefined
+					{provider === "dsw2api" ? (
+						<DeepSeekControls
+							thinking={thinking === true}
+							disabled={cloudSettingsLocked || isBusy}
+							onThinkingChange={(enabled) =>
+								onReasoningChange(
+									enabled
+										? { thinking: true, reasoningEffort: "high" }
+										: { thinking: false, reasoningEffort: undefined },
+								)
 							}
+						/>
+					) : (
+						<Select
+							disabled={cloudSettingsLocked || modelSupportsReasoning !== true}
+							onValueChange={handleEffortChange}
+							value={EFFORT_LEVELS[effortIndex]?.value ?? "low"}
 						>
-							<Brain className="size-3" />
-							<span className="group-data-[compact]/composer:sr-only">
-								<SelectValue>{t(effortLabel)}</SelectValue>
-							</span>
-						</SelectTrigger>
-						<SelectContent align="start">
-							{availableEfforts.map((option) => (
-								<SelectItem
-									key={option.value}
-									value={option.value}
-									title={
-										option.value === "adaptive"
+							<SelectTrigger
+								aria-label={t("Thinking level")}
+								className="gap-1.5 border-0 px-2 text-sm shadow-none data-[size=sm]:h-7 [&>svg:last-child]:hidden group-data-[compact]/composer:size-7 group-data-[compact]/composer:shrink-0 group-data-[compact]/composer:justify-center group-data-[compact]/composer:p-0 bg-transparent! hover:bg-surface-hover!"
+								size="sm"
+								title={
+									cloudSettingsLocked
+										? t("Thinking level is fixed when a cloud session starts")
+										: modelSupportsReasoning === false
 											? t(
-													"Adaptive requires backend support for reason_mode=auto; no client routing or memory.",
+													"The selected model does not report reasoning support",
 												)
-											: option.value === "ultra"
+											: undefined
+								}
+							>
+								<Brain className="size-3" />
+								<span className="group-data-[compact]/composer:sr-only">
+									<SelectValue>{t(effortLabel)}</SelectValue>
+								</span>
+							</SelectTrigger>
+							<SelectContent align="start">
+								{availableEfforts.map((option) => (
+									<SelectItem
+										key={option.value}
+										value={option.value}
+										title={
+											option.value === "adaptive"
 												? t(
-														"Author mode for compatible DavidAU models; stock High and XHigh stay unchanged.",
+														"Adaptive requires backend support for reason_mode=auto; no client routing or memory.",
 													)
-												: undefined
-									}
-								>
-									{t(option.label)}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
+												: option.value === "ultra"
+													? t(
+															"Author mode for compatible DavidAU models; stock High and XHigh stay unchanged.",
+														)
+													: undefined
+										}
+									>
+										{t(option.label)}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					)}
 					{executionTarget !== "cloud" &&
 					environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID ? (
 						<SamplingSettings provider={provider} disabled={isBusy} />
