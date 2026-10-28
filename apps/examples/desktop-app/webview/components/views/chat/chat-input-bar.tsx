@@ -1,5 +1,4 @@
 "use client";
-import { isQwen38NextAuthorModel } from "@cline/shared";
 import { t, useTranslation } from "@/lib/i18n";
 
 import type { PluginCommandCatalog } from "@cline/core";
@@ -7,6 +6,7 @@ import type { PluginCommandCatalog } from "@cline/core";
 import {
 	CLINE_DEFAULT_MODEL_ID,
 	formatDisplayUserInput,
+	isQwen38NextAuthorModel,
 } from "@cline/shared/browser";
 import {
 	AgentComposer,
