@@ -1222,5 +1222,47 @@
     "status": "addressed-by-independent-hardening",
     "verification": "Confirmed origin-only authentication branch in Hub source; removed it. Seven socket tests deny missing/wrong tokens and preserve authenticated clients; installed verification required before release.",
     "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/snake-aabb-wtf/deepseek-web2api-free/pull/17",
+    "sha": "5be07469ca32df3b06d6230df90f6cea7ac67e42",
+    "source_snapshot_sha": "82d7b9673ed7135ed50a96a193fc4b5d37a5c067",
+    "purpose": "Preserve streamed tool-call candidates until a complete tool tag is available",
+    "origin": "inherited-third-party-upstream",
+    "status": "included-reviewed-and-verified",
+    "verification": "Full implementation reviewed; managed HTTP/SSE fixture verifies structured streamed tools, full result tail and parent_message_id; pinned gateway tests passed."
+  },
+  {
+    "url": "https://github.com/snake-aabb-wtf/deepseek-web2api-free/pull/10",
+    "sha": "6597d96953e42c9b77c43e4e5467b6bea14611d5",
+    "source_snapshot_sha": "82d7b9673ed7135ed50a96a193fc4b5d37a5c067",
+    "purpose": "Preserve the DeepSeek parent-message chain across tool-result turns",
+    "origin": "inherited-third-party-upstream",
+    "status": "included-reviewed-and-verified",
+    "verification": "Full implementation reviewed; managed HTTP/SSE fixture verifies structured streamed tools, full result tail and parent_message_id; pinned gateway tests passed."
+  },
+  {
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/commit/33dfa3ed2051237be93676bcf1ef7b823b66d125",
+    "sha": "33dfa3ed2051237be93676bcf1ef7b823b66d125",
+    "purpose": "DeepSeek-only existing-browser bridge, encrypted inbox, live icon, independent thinking/search controls and DavidAU-only author modes",
+    "origin": "our-patch",
+    "status": "installed-and-verified",
+    "verification": "Permission/origin guards, native messaging, 94 UI and 41 adapter/sampling tests; installed update preserving data."
+  },
+  {
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/commit/9079fb8deee9282c0ca05834e3618f104686f10a",
+    "sha": "9079fb8deee9282c0ca05834e3618f104686f10a",
+    "purpose": "Close this installation native browser host before updating its executable",
+    "origin": "our-patch",
+    "status": "installed-and-verified",
+    "verification": "13 real Windows NSIS regressions; installed bridge manifest matches all 13 files."
+  },
+  {
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/commit/dc336645b4e07577b9bc349e5b9aee6bc6ba6bd4",
+    "sha": "dc336645b4e07577b9bc349e5b9aee6bc6ba6bd4",
+    "purpose": "Serialize one personal DeepSeek account until streamed-tool teardown releases it; avoid false busy-503 on the next turn",
+    "origin": "our-patch",
+    "status": "installed-and-verified",
+    "verification": "Delayed-SSE fixture reproduces failure before the fix and passes after; genuine vendor tool call, tool result and completed answer verified."
   }
 ]

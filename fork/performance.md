@@ -24,3 +24,9 @@ Ring 0.17.14 SHA-256 probe: 4000 x 262144 bytes, five repeats, known vector chec
 Protocol fixtures exercise OpenAI-compatible SSE, MCP echo, file reads, search, terminal output and timeout cancellation without inference. They are correctness checks, not LLM tokens/s measurements. Interactive GUI checks were waived by the owner. Long-history/event/render performance coverage is incomplete; no corresponding speedup is claimed.
 
 Version 1.0.3 adds recorded voice input and local WAV conversion. It has not been benchmarked for CPU or LLM throughput; the measurements above retain their original source/workload scope. / Версия 1.0.3 добавляет голосовой ввод и локальный WAV. Новые замеры CPU/LLM не проводились; прежние результаты относятся к указанным исходникам и нагрузкам.
+
+## DeepSeek PoW helper (historical 2026-10-28 experiment)
+
+Scalar DeepSeekHashV1, 50,000 hashes/sample, one warmup and 5 repeats. Cached original WASM median 77.359 ms; independent native generic O3/ThinLTO helper including process startup 44.843 ms. Ivy-target/helper ratio 1.0121; no Ivy-specific benefit established, so this helper retains the compatible generic x86-64 profile (AVX2/FMA disabled). These are historical PoW-only results, not LLM tokens/s or current UI/startup benchmarks.
+
+The final helper was recompiled and independently checked against the original WASM on five scalar/UTF-8/multiblock cases. No source from the separately reviewed AGPL-traced helper was copied. Python, wheels and Bun remain prebuilt; local Rust flags apply only to source-built components.
