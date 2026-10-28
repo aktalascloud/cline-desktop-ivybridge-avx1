@@ -1,68 +1,119 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::io::Write;
+use std::path::PathBuf;
+use std::process::{ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use std::time::Duration;
-use tauri::{Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{Manager, WebviewWindow};
 
-const LABEL: &str = "dsw2api-login";
 const ORIGIN: &str = "https://chat.deepseek.com";
 static ACTIVE: AtomicBool = AtomicBool::new(false);
+static CANCELLED: AtomicBool = AtomicBool::new(false);
+static INPUT: Mutex<Option<ChildStdin>> = Mutex::new(None);
+
+pub fn cancel_owned_browser() {
+    CANCELLED.store(true, Ordering::Release);
+    if let Ok(mut input) = INPUT.lock() {
+        if let Some(mut pipe) = input.take() {
+            let _ = pipe.write_all(b"cancel\n");
+            let _ = pipe.flush();
+        }
+    }
+}
 
 struct LoginGuard;
 impl Drop for LoginGuard {
     fn drop(&mut self) {
+        cancel_owned_browser();
         ACTIVE.store(false, Ordering::Release);
     }
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct BrowserSession {
+    origin: String,
     token: String,
     cookies: String,
 }
 
-fn valid_origin(url: &tauri::Url) -> bool {
-    url.origin().ascii_serialization() == ORIGIN
-        && url.username().is_empty()
-        && url.password().is_none()
+fn parse_session(bytes: &[u8]) -> Result<BrowserSession, String> {
+    if bytes.len() > 262_144 {
+        return Err("Invalid browser session".into());
+    }
+    let value: BrowserSession =
+        serde_json::from_slice(bytes).map_err(|_| "Invalid browser session")?;
+    if value.origin != ORIGIN
+        || value.token.is_empty()
+        || value.token.len() > 16_384
+        || value.cookies.len() > 65_536
+        || value.token.contains('\r')
+        || value.token.contains('\n')
+    {
+        return Err("Invalid browser session".into());
+    }
+    Ok(value)
 }
 
-fn captured_token(value: &str) -> Option<String> {
-    let value: serde_json::Value = serde_json::from_str(value).ok()?;
-    if value.get("origin")?.as_str()? != ORIGIN {
+fn browser_executable(command: &str) -> Option<PathBuf> {
+    let text = command.trim().strip_prefix('"')?;
+    let path = PathBuf::from(text.split('"').next()?);
+    let name = path.file_name()?.to_str()?.to_ascii_lowercase();
+    if !path.is_absolute()
+        || ![
+            "brave.exe",
+            "chrome.exe",
+            "msedge.exe",
+            "vivaldi.exe",
+            "opera.exe",
+        ]
+        .contains(&name.as_str())
+    {
         return None;
     }
-    let token = value.get("token")?.as_str()?.trim();
-    if token.is_empty() || token.len() > 16_384 || token.contains('\r') || token.contains('\n') {
-        return None;
-    }
-    Some(token.to_string())
+    Some(path)
 }
 
-// Executed only in our isolated sign-in WebView, on the exact HTTPS origin.
-// No IPC bridge or app capabilities are granted to the remote page. Passwords
-// remain on DeepSeek's page; only a verified session reaches the main window.
-const CAPTURE: &str = r#"(() => {
-  if (location.origin !== 'https://chat.deepseek.com') return null;
-  try {
-    let raw = localStorage.getItem('userToken');
-    if (!raw) return null;
-    let token = raw;
-    try { const parsed = JSON.parse(raw); token = typeof parsed === 'string' ? parsed : parsed.value; } catch {}
-    if (typeof token !== 'string' || !token.trim() || token.length > 16384) return null;
-    token = token.replace(/^Bearer\s+/, '').trim();
-    let state = window.__clineDswAuthCheck;
-    if (state && state.token === token && state.verified) return {origin: location.origin, token};
-    if (!state || state.token !== token || (!state.pending && Date.now() - state.time > 10000)) {
-      state = {token, verified: false, pending: true, time: Date.now()};
-      window.__clineDswAuthCheck = state;
-      fetch('/api/v0/users/current', {credentials: 'include', headers: {Authorization: 'Bearer ' + token, 'X-App-Version': '2.0.0', 'X-Client-Version': '2.0.0', 'X-Client-Platform': 'web'}, signal: AbortSignal.timeout(8000)})
-        .then(response => response.ok ? response.json() : null)
-        .then(value => { state.verified = !!(value && value.code === 0 && value.data && (value.data.biz_code || 0) === 0 && value.data.biz_data); })
-        .catch(() => {}).finally(() => { state.pending = false; });
+#[cfg(windows)]
+fn default_browser() -> Result<PathBuf, String> {
+    use winreg::{
+        enums::{HKEY_CLASSES_ROOT, HKEY_CURRENT_USER},
+        RegKey,
+    };
+    let choice = RegKey::predef(HKEY_CURRENT_USER)
+        .open_subkey(
+            "Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice",
+        )
+        .map_err(|_| "Default browser is unavailable")?;
+    let prog: String = choice
+        .get_value("ProgId")
+        .map_err(|_| "Default browser is unavailable")?;
+    if prog.len() > 128
+        || !prog
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || "._-".contains(c))
+    {
+        return Err("Invalid default browser registration".into());
     }
-  } catch {}
-  return null;
-})()"#;
+    let key = RegKey::predef(HKEY_CLASSES_ROOT)
+        .open_subkey(format!("{prog}\\shell\\open\\command"))
+        .map_err(|_| "Default browser is unavailable")?;
+    let command: String = key
+        .get_value("")
+        .map_err(|_| "Default browser is unavailable")?;
+    let path = browser_executable(&command).ok_or(
+        "Automatic sign-in requires a Chromium default browser such as Brave, Chrome or Edge",
+    )?;
+    if !path.is_file() {
+        return Err("Default browser is not installed".into());
+    }
+    Ok(path)
+}
+
+#[cfg(not(windows))]
+fn default_browser() -> Result<PathBuf, String> {
+    Err("This browser sign-in integration requires Windows".into())
+}
 
 #[tauri::command]
 pub async fn dsw2api_browser_login(
@@ -76,92 +127,95 @@ pub async fn dsw2api_browser_login(
         .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
         .is_err()
     {
-        if let Some(login) = app.get_webview_window(LABEL) {
-            let _ = login.set_focus();
-        }
         return Err("DeepSeek sign-in is already open".into());
     }
     let _guard = LoginGuard;
-    let login = if let Some(existing) = app.get_webview_window(LABEL) {
-        let _ = existing.show();
-        let _ = existing.set_focus();
-        existing
-    } else {
-        let data = app
-            .path()
-            .app_local_data_dir()
-            .map_err(|_| "Private browser storage is unavailable")?
-            .join("deepseek-browser");
-        std::fs::create_dir_all(&data).map_err(|_| "Private browser storage is unavailable")?;
-        WebviewWindowBuilder::new(
-            &app,
-            LABEL,
-            WebviewUrl::External(format!("{ORIGIN}/sign_in").parse().unwrap()),
-        )
-        .title("DeepSeek — вход / sign in")
-        .inner_size(1040.0, 800.0)
-        .data_directory(data)
-        .on_navigation(|url| url.scheme() == "https" || url.as_str() == "about:blank")
-        .build()
-        .map_err(|_| "Could not open the DeepSeek sign-in browser")?
-    };
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(600);
-    while tokio::time::Instant::now() < deadline {
-        if app.get_webview_window(LABEL).is_none() {
-            return Err("DeepSeek sign-in was cancelled".into());
-        }
-        if login.url().map(|url| valid_origin(&url)).unwrap_or(false) {
-            let (sender, mut receiver) = tokio::sync::mpsc::unbounded_channel();
-            if login
-                .eval_with_callback(CAPTURE, move |value| {
-                    let _ = sender.send(value);
-                })
-                .is_ok()
-            {
-                if let Ok(Some(value)) =
-                    tokio::time::timeout(Duration::from_secs(3), receiver.recv()).await
-                {
-                    if let Some(token) = captured_token(&value) {
-                        if !login.url().map(|url| valid_origin(&url)).unwrap_or(false) {
-                            continue;
-                        }
-                        let reader = login.clone();
-                        let cookies = tokio::time::timeout(
-                            Duration::from_secs(10),
-                            tauri::async_runtime::spawn_blocking(move || {
-                                reader.cookies_for_url(ORIGIN.parse().unwrap())
-                            }),
-                        )
-                        .await
-                        .map_err(|_| "Browser cookie read timed out")?
-                        .map_err(|_| "Could not read the browser session")?
-                        .map_err(|_| "Could not read the browser session")?;
-                        let cookies = cookies
-                            .iter()
-                            .map(|cookie| format!("{}={}", cookie.name(), cookie.value()))
-                            .collect::<Vec<_>>()
-                            .join("; ");
-                        if cookies.len() > 65_536 {
-                            return Err("DeepSeek session cookies are too large".into());
-                        }
-                        return Ok(BrowserSession { token, cookies });
-                    }
-                }
-            }
-        }
-        tokio::time::sleep(Duration::from_secs(1)).await;
+    CANCELLED.store(false, Ordering::Release);
+    let browser = default_browser()?;
+    let profile = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|_| "Private browser storage is unavailable")?
+        .join("deepseek-system-browser");
+    std::fs::create_dir_all(&profile).map_err(|_| "Private browser storage is unavailable")?;
+    let resources = app
+        .path()
+        .resource_dir()
+        .map_err(|_| "Browser runtime is unavailable")?
+        .join("bin")
+        .join("browser-login");
+    let node = resources.join("node.exe");
+    let script = resources.join("login.mjs");
+    if !node.is_file() || !script.is_file() {
+        return Err("Repair the Desktop installation to restore its browser runtime".into());
     }
-    Err("DeepSeek sign-in timed out; sign in and try again".into())
+    if CANCELLED.load(Ordering::Acquire) {
+        return Err("DeepSeek sign-in was cancelled".into());
+    }
+    let mut command = Command::new(node);
+    command.env_clear();
+    for name in [
+        "SystemRoot",
+        "WINDIR",
+        "USERPROFILE",
+        "APPDATA",
+        "LOCALAPPDATA",
+        "TEMP",
+        "TMP",
+        "COMSPEC",
+        "PATH",
+        "SystemDrive",
+        "USERDOMAIN",
+        "USERNAME",
+    ] {
+        if let Some(value) = std::env::var_os(name) {
+            command.env(name, value);
+        }
+    }
+    command
+        .arg(script)
+        .arg("--browser")
+        .arg(browser)
+        .arg("--profile")
+        .arg(profile)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x08000000);
+    }
+    let mut child = command
+        .spawn()
+        .map_err(|_| "Could not start the default browser sign-in")?;
+    *INPUT
+        .lock()
+        .map_err(|_| "Browser sign-in state is unavailable")? = child.stdin.take();
+    if CANCELLED.load(Ordering::Acquire) {
+        cancel_owned_browser();
+    }
+    let task = tauri::async_runtime::spawn_blocking(move || child.wait_with_output());
+    let output = tokio::time::timeout(Duration::from_secs(660), task)
+        .await
+        .map_err(|_| "Browser sign-in timed out")?
+        .map_err(|_| "Browser sign-in was interrupted")?
+        .map_err(|_| "Browser sign-in was interrupted")?;
+    if let Ok(mut input) = INPUT.lock() {
+        input.take();
+    }
+    if !output.status.success() {
+        return Err("Browser sign-in was cancelled or could not finish".into());
+    }
+    parse_session(&output.stdout)
 }
 
 #[tauri::command]
-pub fn dsw2api_close_login(window: WebviewWindow, app: tauri::AppHandle) -> Result<(), String> {
+pub fn dsw2api_close_login(window: WebviewWindow) -> Result<(), String> {
     if window.label() != "main" {
         return Err("Sign-in requires the main Desktop window".into());
     }
-    if let Some(login) = app.get_webview_window(LABEL) {
-        login.close().map_err(|_| "Could not close sign-in")?;
-    }
+    cancel_owned_browser();
     Ok(())
 }
 
@@ -169,33 +223,28 @@ pub fn dsw2api_close_login(window: WebviewWindow, app: tauri::AppHandle) -> Resu
 mod tests {
     use super::*;
     #[test]
-    fn rejects_foreign_and_insecure_origins() {
-        for url in [
-            "http://chat.deepseek.com/",
-            "https://chat.deepseek.com.evil.invalid/",
-            "https://chat.deepseek.com:444/",
-            "https://user@chat.deepseek.com/",
-        ] {
-            assert!(!valid_origin(&url.parse().unwrap()));
-        }
-        assert!(valid_origin(
-            &"https://chat.deepseek.com/sign_in".parse().unwrap()
-        ));
+    fn session_origin_and_size_are_checked() {
+        assert!(parse_session(
+            br#"{"origin":"https://chat.deepseek.com","token":"fixture","cookies":"fixture=1"}"#
+        )
+        .is_ok());
+        assert!(parse_session(
+            br#"{"origin":"https://evil.invalid","token":"fixture","cookies":""}"#
+        )
+        .is_err());
+        assert!(parse_session(
+            br#"{"origin":"https://chat.deepseek.com","token":"","cookies":""}"#
+        )
+        .is_err());
     }
     #[test]
-    fn accepts_only_bounded_verified_origin_results() {
+    fn never_executes_the_registry_command_or_its_arguments() {
+        assert!(browser_executable("powershell.exe -Command unexpected").is_none());
+        assert!(browser_executable("\"relative\\brave.exe\" %1").is_none());
+        #[cfg(windows)]
         assert_eq!(
-            captured_token(r#"{"origin":"https://chat.deepseek.com","token":"fixture"}"#)
-                .as_deref(),
-            Some("fixture")
+            browser_executable("\"C:\\Program Files\\Browser\\brave.exe\" --single-argument %1"),
+            Some(PathBuf::from("C:\\Program Files\\Browser\\brave.exe"))
         );
-        for value in [
-            "null",
-            "{}",
-            r#"{"origin":"https://evil.invalid","token":"fixture"}"#,
-            r#"{"origin":"https://chat.deepseek.com","token":""}"#,
-        ] {
-            assert!(captured_token(value).is_none());
-        }
     }
 }

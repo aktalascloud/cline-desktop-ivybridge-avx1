@@ -100,3 +100,4 @@ apps/examples/desktop-app/.cursor/settings.json
 dist/avx1/
 apps/examples/desktop-app/src-tauri/licenses/
 apps/examples/desktop-app/src-tauri/bin/dsw2api/
+apps/examples/desktop-app/src-tauri/bin/browser-login/

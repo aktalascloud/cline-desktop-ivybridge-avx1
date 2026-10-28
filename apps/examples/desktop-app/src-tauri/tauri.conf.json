@@ -53,7 +53,8 @@
 			"bin/remote-helpers/*",
 			"bin/desktop-backend/**/*",
 			"licenses/**/*",
-			"bin/dsw2api/**/*"
+			"bin/dsw2api/**/*",
+			"bin/browser-login/**/*"
 		],
 		"icon": [
 			"icons/32x32.png",

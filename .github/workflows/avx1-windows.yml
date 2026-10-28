@@ -2,7 +2,7 @@ name: Windows AVX1 qualification
 on:
   push:
     branches: [avx1]
-    paths: ['apps/**', 'sdk/**', '!sdk/ARCHITECTURE.md', '!sdk/DOC.md', 'fork/build-windows.ps1', 'fork/prepare-dsw2api.py', 'fork/dsw2api/**', 'fork/validate-windows.ps1', 'fork/check-bundle-paths.py', 'fork/logging-bundle.ts', 'fork/logging-bundle.test.ts', 'fork/download.py', 'fork/seed-bun.py', 'fork/seed-nsis.py', 'fork/collect-licenses.py', 'fork/verify-updater/**', 'fork/updater/public-key.txt', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
+    paths: ['apps/**', 'sdk/**', '!sdk/ARCHITECTURE.md', '!sdk/DOC.md', 'fork/build-windows.ps1', 'fork/prepare-dsw2api.py', 'fork/prepare-browser-login.py', 'fork/browser-login/**', 'fork/dsw2api/**', 'fork/validate-windows.ps1', 'fork/check-bundle-paths.py', 'fork/logging-bundle.ts', 'fork/logging-bundle.test.ts', 'fork/download.py', 'fork/seed-bun.py', 'fork/seed-nsis.py', 'fork/collect-licenses.py', 'fork/verify-updater/**', 'fork/updater/public-key.txt', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
   workflow_dispatch:
     inputs:
       source_sha:
@@ -75,7 +75,13 @@ jobs:
           key: windows-bun142-nsis313-v1-${{ hashFiles('bun.lock', 'fork/seed-bun.py', 'fork/seed-nsis.py') }}
           restore-keys: |
             windows-bun142-nsis313-v1-
+      - name: Frozen browser runtime cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684
+        with:
+          path: .build-cache/browser-login
+          key: windows-node2420-browser-v1-${{ hashFiles('fork/browser-login/runtime-lock.json') }}
       - name: Pinned Bun and compiler environment
+        # Browser helper archives are verified independently of Cargo and Bun.
         # Production runtime archives are separate from native Cargo products.
         shell: pwsh
         run: |

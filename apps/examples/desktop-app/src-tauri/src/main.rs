@@ -1916,6 +1916,7 @@ fn main() {
                 ..
             } => show_main_window(app_handle),
             RunEvent::ExitRequested { .. } | RunEvent::Exit => {
+                deepseek_login::cancel_owned_browser();
                 app_handle.state::<terminal::TerminalState>().kill_all();
                 app_handle
                     .state::<Arc<DesktopBackendState>>()

@@ -43,6 +43,10 @@ try {
     if($LASTEXITCODE){throw 'CLI/Hub/backend build failed'}
     python (Join-Path $PSScriptRoot 'prepare-dsw2api.py')
     if($LASTEXITCODE){throw 'DSW2API bundled runtime verification failed'}
+    python (Join-Path $PSScriptRoot 'prepare-browser-login.py')
+    if($LASTEXITCODE){throw 'System-browser sign-in runtime verification failed'}
+    & "$app/src-tauri/bin/browser-login/node.exe" --test "$PSScriptRoot/browser-login/login.test.mjs"
+    if($LASTEXITCODE){throw 'Private browser pipe/session regressions failed'}
     & "$app/src-tauri/bin/dsw2api/runtime/python.exe" -I -B -X utf8 "$PSScriptRoot/dsw2api/test-managed.py" "$app/src-tauri/bin/dsw2api"
     if($LASTEXITCODE){throw 'DSW2API offline protocol and credential-preservation checks failed'}
     python ./fork/check-bundle-paths.py
