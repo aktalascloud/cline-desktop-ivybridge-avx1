@@ -1,7 +1,7 @@
 {
   "status": "qualified",
   "release_approved": true,
-  "upstream_sha": "c35b729049c7bb26c340df63ea9235c40b32dd29",
+  "upstream_sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
   "upstream_desktop": "0.0.49",
   "bun": "1.4.2+744846f84",
   "rust": "1.97.0",
@@ -76,9 +76,9 @@
     "anonymous_download_verified": true
   },
   "ci": {
-    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40473372364",
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40619602514",
     "status": "success",
-    "source_sha": "27ea890e0206ab5873e1792529c7a592514b3ee4",
+    "source_sha": "0d73f23649fae45b3ced8bc17a7f6d5127b0daa4",
     "signature_verified": true,
     "tamper_rejected": true
   },
@@ -121,13 +121,11 @@
     "post_history_cleanup": true
   },
   "publication": {
-    "version": "1.0.9",
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.9",
-    "asset_sha256": "beb64736910317664b4a8d65fd424a59eade2eee0e40ada7da1b2f0f8e5126a6",
+    "version": "1.0.10",
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.10",
+    "asset_sha256": "d1aa39dfe2051f53f034756d8fc8b36c6b62252b165c385b042e9b7395043392",
     "asset_count": 1,
-    "anonymous_download_verified": true,
-    "feed_signature_verified": true,
-    "source_tag_verified": true
+    "anonymous_download_verified": false
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -300,5 +298,100 @@
     "second_machine_execution": "not directly tested; isolated regression reproduces the hidden-Hub lock",
     "authenticode": "NotSigned",
     "new_performance_claim": false
+  },
+  "latest_validation": {
+    "source_sha": "0d73f23649fae45b3ced8bc17a7f6d5127b0daa4",
+    "core_upstream_tests": 271,
+    "hub_token_socket_tests": 7,
+    "installed_hub_authentication": true,
+    "production_frontend": true,
+    "installer_regressions": 10,
+    "profile_preserved": true,
+    "seven_modes_verified": true,
+    "completion_recovery_verified": true,
+    "offline_tools_mcp_stream_cancel": true,
+    "real_llm_inference": false,
+    "new_performance_measurements": false,
+    "gui": "waived",
+    "ci": {
+      "run_id": 40619602514,
+      "run_attempt": 2,
+      "source_sha": "0d73f23649fae45b3ced8bc17a7f6d5127b0daa4",
+      "status": "success",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40619602514",
+      "raw_suite_summaries": [
+        "Tests  30 passed (30)",
+        "Tests  776 passed | 5 skipped (781)",
+        "Tests  56 passed (56)",
+        "Tests  101 passed (101)",
+        "Tests  75 passed (75)",
+        "Tests  31 passed (31)"
+      ]
+    }
+  },
+  "research_20261028": {
+    "date": "2026-10-28",
+    "discovery_finished": "2026-10-28T02:05:53.850724+00:00",
+    "counts": {
+      "releases": {
+        "records": 468,
+        "pages": 5
+      },
+      "pulls-recent-closed": {
+        "records": 400,
+        "pages": 4
+      },
+      "pulls-open": {
+        "records": 782,
+        "pages": 8
+      },
+      "branches": {
+        "records": 2476,
+        "pages": 25
+      },
+      "issues-open": {
+        "records": 1727,
+        "pages": 18
+      },
+      "forks-all": {
+        "records": 7784,
+        "pages": 78
+      }
+    },
+    "active_forks_queried_live": 519,
+    "forks_returned": 479,
+    "forks_http404": 40,
+    "issue_catalog": 520,
+    "issues_enabled": 8,
+    "issues_disabled": 512,
+    "upstream_commit_count": 7,
+    "integrated_prs": [
+      15373,
+      15287,
+      15389,
+      15304,
+      15394,
+      15371,
+      15369
+    ],
+    "semantic_review_is_scoped": true,
+    "external_reference": [
+      {
+        "repo": "TheHubUser4860938/Strata-Mnemosyne",
+        "checked_utc": "2026-10-28T02:05:46.251748+00:00",
+        "purpose": "Read-only Adaptive API reference; backend owned by user, no memory port",
+        "agent_semantic_review_required": true,
+        "default_branch": "memory-core",
+        "has_issues": false,
+        "head_sha": "efe04cb8d98d69a45e6587a5dc7fcd2a3371dbb7",
+        "open_prs_pages": 1,
+        "recent_closed_prs_pages": 1,
+        "issue_status": "issues-disabled",
+        "status": "indexed-awaiting-agent-review"
+      }
+    ],
+    "global_search_applicable_patches": 0,
+    "global_scope": "Seven results: rugby fixtures, signal processing, lighting/ISPC and separate inference engines. None is a locked Cline dependency; no Strata/model/compiler changes made.",
+    "no_new_speed_or_model_quality_measurement": true
   }
 }

@@ -39,6 +39,7 @@ jobs:
   build:
     needs: validate
     runs-on: windows-2022
+    timeout-minutes: 45
     environment: AVX1Release
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -70,6 +71,8 @@ jobs:
             .build-cache/bun
             .build-cache/nsis
           key: windows-bun142-nsis313-v1-${{ hashFiles('bun.lock', 'fork/seed-bun.py', 'fork/seed-nsis.py') }}
+          restore-keys: |
+            windows-bun142-nsis313-v1-
       - name: Pinned Bun and compiler environment
         shell: pwsh
         run: |

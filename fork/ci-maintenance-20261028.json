@@ -1,0 +1,14 @@
+{
+  "runtime_source_sha": "0d73f23649fae45b3ced8bc17a7f6d5127b0daa4",
+  "runtime_artifact_rebuilt_for_harness_change": false,
+  "source_hash_newlines": "LF",
+  "installer_harness_sha256": "bf3048bc9a1d0d95b3a320437dbe0818b06999118d699132e05a9f0bb4fe8cfe",
+  "workflow_sha256": "339c5143b9cc674fa8821a08d00efd60a5e5ab9bcf7127305b4d65d3294ac2f4",
+  "local_installer_harness_cases": 11,
+  "timeout_rejection_and_owned_child_force_cleanup_verified": true,
+  "change": "Timeout now rejects explicitly and force-stops only the owned fixture child; teardown tracks spawned helpers. One real never-ending fixture verifies failure instead of indefinite waiting.",
+  "future_ci_job_timeout_minutes": 45,
+  "future_bun_nsis_cache_restore": "same pinned runtime cache family; archives and frozen dependency lock remain verified",
+  "current_release_ci_uses_original_pinned_source": true,
+  "new_speed_measurement": false
+}

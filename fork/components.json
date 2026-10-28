@@ -1,9 +1,9 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.9",
-  "upstream_sha": "c35b729049c7bb26c340df63ea9235c40b32dd29",
-  "build_source_sha": "27ea890e0206ab5873e1792529c7a592514b3ee4",
+  "version": "1.0.10",
+  "upstream_sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+  "build_source_sha": "0d73f23649fae45b3ced8bc17a7f6d5127b0daa4",
   "release_approved": true,
   "native": {
     "kind": "source-built",
@@ -23,7 +23,7 @@
     "c_flags": "ring cc defaults observed: /MD /O2 /Brepro and vendor warning/function flags; no global CFLAGS override",
     "pgo": false,
     "affinity_or_numa_pinning": false,
-    "executable_sha256": "42767b844dde97832ae52d9f85e0e4eccb6e5cd83bf691bb8a84a3c80b8ad36d"
+    "executable_sha256": "4938731cec0586468e0db2a220f451d2e52b544f0551c26553578d38a5c90a67"
   },
   "cli_and_hub": {
     "version": "3.0.74",
@@ -36,7 +36,7 @@
       "fork storage bootstrap before imports",
       "official auto-update disabled for fork distribution"
     ],
-    "sha256": "79f63741f1dfd9704fd93a8ba27398089ac387402e0d229da8eefe09d29f3f7d"
+    "sha256": "ef81654d45413c6cc5edd55c31cb4c492177e5a417b317e042528fc8caf619ab"
   },
   "backend": {
     "kind": "source-built JS bundle",
@@ -45,7 +45,7 @@
       "minify",
       "no telemetry credentials inlined"
     ],
-    "sha256": "97e5fe4a9ad621c5152aa3a8bdff67d6982c9ca5bf601ca2b60a228bcb960aa3"
+    "sha256": "2364123f4ca52cef225425b26e8945d734d3a8d71df686aa8e3200945007577c"
   },
   "frontend": {
     "kind": "source-built static export",
@@ -149,18 +149,18 @@
   ],
   "selected_npm": [],
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "d64b82027e2bdec1eb85f90d2a196baa3cd1faa290cb88e6f6e116938a7f2d2c",
+  "bun_lock_sha256": "a5acb7fb6f5558a98612702d3bf3bcdeb6798525ec048aeb7690ea2e465d8bb4",
   "cuda_used": false,
   "llm_models_included": false,
   "authenticode": "NotSigned; Tauri updater signature is a separate verification mechanism",
   "updater_zip_support": false,
   "installer": {
     "filename": "Cline-Desktop-AVX1-RU-Setup.exe",
-    "sha256": "fae39cd519056bd420b45fdb5192194384e3ac4848f6b5c1f87abc078a75bca7",
-    "size": 133865635,
-    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYm5JWVg2bjFzY3FXNDNjamozK1lSQzB3cTRvVG5yVjlPOHk2eEs2MTJXUXpicnR3WURFd1RLNCtRZkZPdS9DcEd4elhnbTBMdFdua1FFMWFuNFErWUFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTg5MDA5CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC41X3g2NC1zZXR1cC5leGUJdmVyc2lvbjoxLjAuNQozbXdzTFpPMm45SFBLR2M2K3F1SEZWa2xtdVp4eVJyejB1cGlvemJXL0o2WDR2RVhYMklYdUtLck9UZWVZcGQzU0k4Yko3M0h2MDVKVmJyYzNINWxEZz09Cg==",
+    "sha256": "d1aa39dfe2051f53f034756d8fc8b36c6b62252b165c385b042e9b7395043392",
+    "size": 133270782,
+    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmhFbnNsSEk0U2lXWndGa3Q1eU01L1crUEJ1eHQ4c0FKTGFicnNoSjIyUXRUcmdGVzMwdEZlZTVtVjFHQUgvbHY0R1lUb3hoZ3c0TVExU3JKb1kwcWd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMTU0NzM2CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xMF94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEwCkNSNll0U0xYMHRLckU2UlBNMkYxMVlpQ21MRktGS1BjTms0TXJWQ0hmMTNqTXV1SjR3Sm9LZjFZc28ybnZDVU1CTmtHOUc0V01HWU02aUoyWFVNTERnPT0K",
     "authenticode": "NotSigned",
-    "status": "installed upgrade, offline protocol and privacy checks passed; interactive GUI waived"
+    "status": "installed update and offline protocol/authentication checks passed; interactive GUI waived"
   },
   "original_build_source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
   "sanitized_upstream_sha": "5e411e5e0111f1adf366475c6bb3fc72c52dfb4c",
@@ -270,5 +270,12 @@
     "thinking_only_final": "up to two context-preserving continuations; explicit failure if exhausted",
     "completed_tool_replay": false,
     "cancellation_preserved": true
+  },
+  "hub_authentication": {
+    "source": "independent local hardening prompted by transmogrify-cell/cline issue 1",
+    "websocket": "installation token required before command/subscription attachment; loopback Origin alone denied",
+    "desktop_cli_remote": "authenticated existing clients preserved",
+    "source_regressions": 7,
+    "installed_socket_probe": true
   }
 }

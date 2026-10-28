@@ -55,7 +55,7 @@ async function waitFor(check: () => boolean): Promise<void> {
 	throw new Error("Timed out waiting for fixture process");
 }
 
-async function run(exe: string, args: string[]): Promise<number> {
+async function run(exe: string, args: string[], timeoutMs = 90_000): Promise<number> {
 	const child = spawn(exe, args, {
 		cwd: root,
 		stdio: ["ignore", "ignore", "inherit"],
@@ -65,11 +65,22 @@ async function run(exe: string, args: string[]): Promise<number> {
 			(arg) => arg.startsWith("/D=") || arg.startsWith("_?="),
 		),
 	});
-	const timer = setTimeout(() => child.kill(), 90_000);
+	children.push(child);
+	let timer: ReturnType<typeof setTimeout> | undefined;
 	try {
 		return await new Promise<number>((resolve, reject) => {
 			child.once("error", reject);
 			child.once("exit", (code) => resolve(code ?? -1));
+			// A missing exit event must not leave this promise pending forever.
+			// Force only our child and fail explicitly; never report a timeout as success.
+			timer = setTimeout(() => {
+				try {
+					child.kill("SIGKILL");
+				} catch {
+					// The test still fails if Windows refuses termination; afterAll retries cleanup.
+				}
+				reject(new Error(`Fixture process ${path.basename(exe)} timed out after ${timeoutMs} ms`));
+			}, timeoutMs);
 		});
 	} finally {
 		clearTimeout(timer);
@@ -311,7 +322,7 @@ SectionEnd
 
 	afterAll(async () => {
 		for (const child of children) {
-			if (child.exitCode === null && child.signalCode === null) child.kill();
+			if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
 		}
 		await waitFor(() =>
 			children.every((p) => p.exitCode !== null || p.signalCode !== null),
@@ -324,6 +335,10 @@ SectionEnd
 				retryDelay: 100,
 			});
 	});
+
+	test("fails a stalled owned child instead of waiting forever for its exit event", async () => {
+		await expect(run(fixture, [path.join(root, "timeout-ready")], 1_000)).rejects.toThrow("timed out after 1000 ms");
+	}, 10_000);
 
 	test("first install and repeated cleanup succeed with no running processes", async () => {
 		const dir = path.join(root, "fresh install");

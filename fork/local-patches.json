@@ -1,5 +1,5 @@
 {
-  "source_sha": "27ea890e0206ab5873e1792529c7a592514b3ee4",
+  "source_sha": "0d73f23649fae45b3ced8bc17a7f6d5127b0daa4",
   "patches": [
     {
       "id": "reasoning-only-completion",
@@ -23,6 +23,16 @@
         "original 1.0.7 guard reproduced and bypassed with in-place update",
         "actual PE manifest requireAdministrator",
         "preserved-profile installation over previous version"
+      ]
+    },
+    {
+      "id": "hub-token-required",
+      "origin": "independent local fork fix; issue https://github.com/transmogrify-cell/cline/issues/1 and PR https://github.com/transmogrify-cell/cline/pull/2 reviewed, no external code copied",
+      "purpose": "Reject forgeable Origin-only WebSocket authentication before commands and event subscriptions; preserve token-authenticated Desktop/CLI/remote gateway",
+      "verification": [
+        "seven real-socket tests",
+        "installed missing/wrong-token probes deny upgrade",
+        "installed authenticated session list and remote catalog succeed"
       ]
     }
   ]

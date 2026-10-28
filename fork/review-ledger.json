@@ -1,13 +1,5 @@
 [
   {
-    "url": "https://github.com/cline/cline/pull/15287",
-    "sha": "1d3cd89e848c2647808c49d7f2d1875b41ef19e6",
-    "purpose": "security: undici 7.30.1 floor (two reachable process-crash DoS)",
-    "origin": "official-upstream-pr",
-    "status": "included-upstream-pr",
-    "verification": "undici 7.30.1 floor; frozen dependency installation and production frontend build"
-  },
-  {
     "url": "https://github.com/cline/cline/pull/15146",
     "sha": "f417a565ce25aa7ffd70b6e9c112fe9e86f591e2",
     "purpose": "security(desktop): bump next 16.2.11 → 16.3.8 (8 Dependabot advisories, re-cut of #14753)",
@@ -179,16 +171,6 @@
     "main_changed": false
   },
   {
-    "url": "https://github.com/cline/cline/pull/15328",
-    "sha": "5e3d3240aee969153c69cb64e03a6e96ebe36a80",
-    "purpose": "cli: publish musl builds for Linux",
-    "origin": "official-upstream-pr",
-    "status": "not-applicable-to-windows-profile",
-    "verification": "Full 6-file implementation reviewed: musl detection, npm libc selection, OpenTUI define and publish matrices. No Windows/AVX1 benefit; Linux musl helpers are not qualified or added.",
-    "refresh_date": "2026-10-25",
-    "main_changed": false
-  },
-  {
     "url": "https://github.com/cline/cline/pull/14994",
     "sha": "c45916c47c8082b10d4a6bb1a86e09350339ed5c",
     "purpose": "feat(ollama): support custom num_ctx and num_predict via config fields to prevent cutoffs",
@@ -225,40 +207,6 @@
     "origin": "third-party-fork-pr",
     "status": "not-applicable-to-current-desktop-lock",
     "verification": "Full small legacy webview-ui npm lock diff reviewed: launch-editor 2.14.2, picocolors 1.1.1, shell-quote 1.12.0. Repo Apache-2.0; changed libraries MIT/ISC. This lock is not our Windows Desktop build input; current shell-quote floor already 1.12.0. No implementation or runtime fix imported."
-  },
-  {
-    "url": "https://github.com/presidio-oss/hai-build-codegen/pull/42",
-    "sha": "eb5ab3dbc30e30158c8f6c282371d7da1e906926",
-    "purpose": "Merge from Cline",
-    "origin": "third-party-fork-pr",
-    "status": "unqualified-large-upstream-sync",
-    "verification": "Metadata screening only: 877-file upstream synchronization, not an isolated fix. Full implementation, license compatibility and regressions were not qualified; not downloaded as an applied patch and not integrated."
-  },
-  {
-    "url": "https://github.com/amaybaum-dev/cline/pull/10",
-    "sha": "d441f336dd11f43a0e0e616084e0d6e1f65b11f9",
-    "purpose": "Update dependency dompurify to v3.4.0",
-    "origin": "third-party-fork-pr",
-    "status": "already-newer-dependency-floor",
-    "verification": "Full small legacy webview-ui lock diff reviewed, including unrelated optional WASI metadata. Repo Apache-2.0, DOMPurify dual MPL-2.0/Apache-2.0. Proposed 3.4.0 is older than our pinned 3.4.17. No patch imported or fix attributed to this fork.",
-    "last_checked_utc": "2026-10-26T04:53:29.614664+00:00"
-  },
-  {
-    "url": "https://github.com/amaybaum-dev/cline/pull/8",
-    "sha": "ae70ed0d0d544c9bf0adb79ef97d9fff777e3a3f",
-    "purpose": "Update dependency posthog-js to v1.268.1",
-    "origin": "third-party-fork-pr",
-    "status": "deferred-legacy-telemetry-lock-change",
-    "verification": "Full small legacy webview-ui lock diff reviewed, including optional WASI additions. PostHog changes 1.268.0 to 1.268.1; its package says SEE LICENSE. External implementation/license effects and Desktop regressions are unqualified. Not integrated.",
-    "last_checked_utc": "2026-10-26T04:53:29.614664+00:00"
-  },
-  {
-    "url": "https://github.com/amaybaum-dev/cline/pull/2",
-    "sha": "2f8fab8e0e3e6c5e57877aeb5cf8bbbdb27eac2c",
-    "purpose": "Update dependency mintlify to v4.2.563",
-    "origin": "third-party-fork-pr",
-    "status": "unqualified-docs-only-lock-churn",
-    "verification": "Applicability screening: a 326194-byte docs/package-lock.json rewrite with broad transitive churn. This is not a Desktop runtime patch. Full dependency implementation/license compatibility was not reviewed; not integrated."
   },
   {
     "url": "https://github.com/Plinqx/axiom-cline/pull/14",
@@ -533,22 +481,6 @@
     "verification": "Description and full paginated comment thread inspected; implementation claims limited to reproduced scope"
   },
   {
-    "url": "https://github.com/presidio-oss/hai-build-codegen/pull/42",
-    "sha": "6c6c7ab10b58562edb30484861dff8e48469c84b",
-    "purpose": "Broad upstream sync exceeds GitHub full-diff API 300-file limit",
-    "origin": "third-party-fork-pr",
-    "status": "screened-deferred",
-    "verification": "Not fully semantically qualified; deferred, not applied"
-  },
-  {
-    "url": "https://github.com/amaybaum-dev/cline/pull/2",
-    "sha": "4747fbbfb75e201cfb54dfcbb7b6f2ec607d1774",
-    "purpose": "Legacy VS Code/docs lockfile update outside Desktop inputs",
-    "origin": "third-party-fork-pr",
-    "status": "screened-not-included",
-    "verification": "Full lockfile diff inspected for scope; no compatible Desktop patch selected"
-  },
-  {
     "url": "https://github.com/oskarkocol/cline-contrib/pull/120",
     "sha": "4abdc74b3b7b409f1a393a20c470c43340778e89",
     "purpose": "Generated catalog pricing only; no local transport behavior change",
@@ -701,11 +633,594 @@
     "verification": "Full diff: only numeric input/output/cache pricing and catalog version changed; not applied"
   },
   {
-    "url": "https://github.com/chanhong/cline/pull/2",
-    "sha": "dab482348ffd83d1065dfcf8b538076608925a79",
-    "purpose": "Broad upstream sync; head equals selected official upstream main",
+    "url": "https://github.com/cline/cline/pull/15368",
+    "sha": "00171e52dbb95c1cde01ed9f34efb6bb0712caab",
+    "purpose": "feat(cli): continue local conversations with /cloud",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15376",
+    "sha": "c10c4ca6ad667d121858e4c533bd5144a11b15b4",
+    "purpose": "feat(vscode): add /cloud conversation handoff",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15338",
+    "sha": "9afe807b5275c36374db847a7386897f56aea915",
+    "purpose": "feat(cli): send a task to Cline Cloud with --cloud",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15317",
+    "sha": "7e1f8316821262a41892e45172a20b15a4afcf1c",
+    "purpose": "feat(cli): start Cline Cloud sessions from the interactive TUI",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15397",
+    "sha": "8d646fbf81579632522fd2099a78852de1a358d3",
+    "purpose": "chore: combine TUI cloud-session and Hub launch dependencies",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15217",
+    "sha": "03cd7381f39eae6cc66e7bf7f7c046c58e33bb09",
+    "purpose": "feat(desktop): continue local conversations with /cloud",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15393",
+    "sha": "61737be62d064d0b8fc4e17ae93d5a13052255e4",
+    "purpose": "feat: display and read conversation artifacts",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15399",
+    "sha": "9eb63b280e570e714b8e9cc7c87c68da541f7070",
+    "purpose": "fix(desktop): allow cloud tasks in empty repositories",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15395",
+    "sha": "084630cbf511301dc7f9b77df7316261a0a7accb",
+    "purpose": "Update the chat completions docs with X-Response-Format",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15398",
+    "sha": "7d2d7594a30d9c1d58309ad83191b00be0c720ae",
+    "purpose": "Add a \"Learn more\" link for cloud tasks in VS Code, plus a Cloud Agents in VS Code docs page",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15305",
+    "sha": "4c84cfe089fb5fd760fa3c047d673a79bb1bce4b",
+    "purpose": "fix(cloud): restore saved tasks without transferring history",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/13777",
+    "sha": "f66e15fec074df34e31ced61863d58df1f81f9d0",
+    "purpose": "fix(llms): route Chutes reasoning controls by model family",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15374",
+    "sha": "bfb3c10844916daf29e63119adc5404f7fd48b92",
+    "purpose": "fix(llms): preserve usage across internal model steps",
+    "origin": "official-upstream-pr",
+    "status": "reviewed-deferred",
+    "verification": "Full two-file diff read: preserve normalized usage/cost across internal Cline web-search steps. This changes billing metadata; no measured benefit for the selected local path and no regression qualification performed.",
+    "downloaded_diff_sha256": "829bf4c6beaa5f6574e76505f0009842a3a7772f9e5dcdb414a5cefaec36306c"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15375",
+    "sha": "9d8fbaac1bf53ebe82f9c849c2f42c7cf4768274",
+    "purpose": "fix(llms): preserve retry billing and actual request size",
+    "origin": "official-upstream-pr",
+    "status": "deferred-provider-contract",
+    "verification": "Nine-file retry/billing/request-size contract change; downloaded diff is not qualification. Not integrated.",
+    "downloaded_diff_sha256": "77dafa5cfab37bd84d3c3ea64adb831117604d95877a411efe08fcbe408a348f"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15388",
+    "sha": "ce5795dd13ca5e7afde68c34a1ea6734b05e0332",
+    "purpose": "test(desktop): cover next-prompt suggestions",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15387",
+    "sha": "371c30f9c92644996de8e7bcb5643bf1aea2db71",
+    "purpose": "feat(desktop): suggest the next prompt in the composer (impl)",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15390",
+    "sha": "4a5ab1be60de44e928b862ad17e7f550add93bee",
+    "purpose": "fix(llms): give adaptive-thinking Claude requests the full output budget",
+    "origin": "official-upstream-pr",
+    "status": "reviewed-not-selected-model",
+    "verification": "Full implementation read: adaptive Claude output default changes; not Strata Adaptive. No patch applied, explicit until-done local setting remains preserved.",
+    "downloaded_diff_sha256": "dcd8c9a6732d8f7e505fc060763dca15d3f85dd5a70e1619a6d34a9629e25935"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14710",
+    "sha": "f222ac293d8ede25411d9b74f4f45c2d56895073",
+    "purpose": "fix(agents): keep aborted partial turns in the transcript so follow-ups start fresh",
+    "origin": "official-upstream-pr",
+    "status": "deferred-agent-transcript-contract",
+    "verification": "Read abort handling and integration test plus updated discussion. Broad stream-loop refactor needs independent abort/transcript qualification against our completion guard; not integrated or reported fixed.",
+    "downloaded_diff_sha256": "229a394bac9119f59cd27454b0237975ecac93c5c9f43620e374a51f7acc57e4"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15095",
+    "sha": "8aa28b7877cb378f0aecc66bd78057a9ddaf6d47",
+    "purpose": "feat(plugins): add standalone next-turn plugin in sdk/examples/plugins/next-turn",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15043",
+    "sha": "af65d1828471de17e64076381591721d47868be7",
+    "purpose": "feat: link every client to the web app's privacy settings [DAT-111]",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14609",
+    "sha": "69fc995aea337a0970b2eed16321d65537a868d2",
+    "purpose": "fix(core): never run queued prompts in a session that is being torn down",
+    "origin": "official-upstream-pr",
+    "status": "deferred-queue-lifecycle",
+    "verification": "Read lifecycle/discard contracts and discussion; 94 KB multi-file change not fully qualified. Preserve queue semantics until complete teardown/abort regression review.",
+    "downloaded_diff_sha256": "0f399932fd957989f0db1d77bfff3be21ddcdd6b385de3dd628966aa311a81eb"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15345",
+    "sha": "7a4835e4ac823b3d45984ca737efd6632bf67bad",
+    "purpose": "fix(cli): isolate shell environments for sessions sharing a Hub",
+    "origin": "official-upstream-pr",
+    "status": "already-integrated-same-head",
+    "verification": "The previously qualified session-local shell implementation has the same head 7a4835e4. Retained from release 1.0.7; current Windows core/CLI checks pass, no duplicate patch applied."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15328",
+    "sha": "0617dc9c7b096765ddb7445d2291575a318df81c",
+    "purpose": "cli: publish musl builds for Linux",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported.",
+    "downloaded_diff_sha256": "b128b194576cc1901f4bb4ab14774a26054cb0da26fff4f77e87919881bd7f87"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15381",
+    "sha": "bbdbdbcae6f5171eb24eddc3355b741f13662fc1",
+    "purpose": "feat(mcp): carry tool annotations and session mode through the MCP paths",
+    "origin": "official-upstream-pr",
+    "status": "deferred-approval-contract",
+    "verification": "26-file MCP annotations/session-mode change affects approvals and VS Code/core. No blanket auto-approval imported; not qualified.",
+    "downloaded_diff_sha256": "a2fc58ddfca5882d0ec35568905972f5f7b68c89183059933d64555914dacc4a"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15347",
+    "sha": "7d2aeef1987a32206a6b47111e15e1a907fa4fb3",
+    "purpose": "fix(core): discover all pages of MCP tools",
+    "origin": "official-upstream-pr",
+    "status": "retained-qualified-adaptation",
+    "verification": "Full updated two-file diff read at head 7d2aeef. Our existing adaptation from 5eda8284 already paginates both transports, detects all cursor cycles and bounds pages. The new stdio null-cursor leniency conflicts with our strict non-string cursor contract and was not imported; existing transport/pagination tests pass. No loss of the previously applied fix.",
+    "downloaded_diff_sha256": "630dc19ac6225b39cb7909f4b9470b80c65aa8e0850eeb7dc69b107a94b3cc85"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15378",
+    "sha": "030e2da1294a8bf99154303d9f5e9e9706b00b7f",
+    "purpose": "fix: pass commit search terms to git as arguments, not shell text",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-desktop-build-input",
+    "verification": "Full diff reviewed: shell arguments replace interpolation in VS Code Git commit search. Desktop uses a different implementation; no VS Code package ships in our EXE.",
+    "downloaded_diff_sha256": "eb0f66be9b117b1d2dc896c5b1dc87a7f5c298bb4a18b6f42aabcaa2817e0011"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15369",
+    "sha": "050b878b334ac1c272d0bf8d525f62032c29b19b",
+    "purpose": "fix(hub): stop re-sending a rejected Cline refresh token on every cloud poll",
+    "origin": "official-upstream-pr",
+    "status": "integrated-via-sanitized-upstream",
+    "verification": "Remember definitively rejected credentials in memory until credentials change; transient failures remain retryable.",
+    "downloaded_diff_sha256": "e7f37953eb5c7bcda6e9f8169825f62847fa06483fd986f140aed2fc2c3871f2"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15371",
+    "sha": "58ddfb284c2ee3a48476451d501489865d4b15fa",
+    "purpose": "feat(core): launch cloud tasks from captured Git snapshots through the Hub",
+    "origin": "official-upstream-pr",
+    "status": "integrated-via-sanitized-upstream",
+    "verification": "Guarded captured Git snapshot publication: explicit authenticated request, account/model/org validation, no replay after lost replies; no automatic local upload enabled.",
+    "downloaded_diff_sha256": "abc189d46d701d3b08b5391eb27fb54902fd944e0bbb41da2de0bb74cb14ab2e"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15394",
+    "sha": "8e576c1ec4354bf058fc861b927d1d384d78c699",
+    "purpose": "Hide local-only composer controls for cloud sessions",
+    "origin": "official-upstream-pr",
+    "status": "integrated-via-sanitized-upstream",
+    "verification": "VS Code cloud composer hides local-only controls; no Desktop local control removal.",
+    "downloaded_diff_sha256": "ccfb3a362ec04223b4f8d8c1aa6d071c2be71ed5f11fdb68ba00c710c17c4b75"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15304",
+    "sha": "cc6a4a564e24a18a6c285100829e34f46b2d634b",
+    "purpose": "feat(hub): resume saved sessions by ID",
+    "origin": "official-upstream-pr",
+    "status": "integrated-via-sanitized-upstream",
+    "verification": "Explicit saved-session resume reads live/persisted Hub history and preserves create semantics.",
+    "downloaded_diff_sha256": "49f657fc4c4ed9160f23ab170546700559c001b56170aa36951eeb50aa690f71"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15389",
+    "sha": "7266ccc9f1476e67265a8f0f8c08d6ed5f3b1e7a",
+    "purpose": "fix(core): avoid duplicating the API prefix in Hub cloud requests",
+    "origin": "official-upstream-pr",
+    "status": "integrated-via-sanitized-upstream",
+    "verification": "Normalize only the cloud API suffix while preserving the selected backend.",
+    "downloaded_diff_sha256": "d3c91d00b742bbe8f8e484d633ef2b3c5cc702ad126ac5ed94131f1da7b30f0d"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15367",
+    "sha": "5ea42d6275e77f30fa8e3594a7adbad1be8d4f14",
+    "purpose": "feat(core): plugin UI store, session event and ClineCore.pluginUi",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15366",
+    "sha": "f34a04774ba7b4e0a2de5ad72895222948d0bb03",
+    "purpose": "feat(core): carry plugin UI slots across the plugin worker boundary",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15362",
+    "sha": "cca3d2ada9829de41948bccd3ae00deacb2e0eca",
+    "purpose": "feat(shared): Cline-owned UI slot contract and reducer",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15352",
+    "sha": "cec50f2cfce75a54d8af7818fd3feeecb36be52e",
+    "purpose": "feat(desktop): add inline next-turn suggestions",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15361",
+    "sha": "0fc727efd3f3aba03e25f4fa5e96c0d3ba1fe4b3",
+    "purpose": "feat(next-turn): emit backend suggestions after each run",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15287",
+    "sha": "1108258a1b9b53a265a9f12236d019db18593c78",
+    "purpose": "security: undici 7.30.1 floor (two reachable process-crash DoS)",
+    "origin": "official-upstream-pr",
+    "status": "integrated-via-sanitized-upstream",
+    "verification": "Already pinned undici 7.30.1 in 1.0.9; upstream history now includes the same floor, no new security speed claim.",
+    "downloaded_diff_sha256": "39fc088cf0e5285d34b3bc182df03eb39901cb3396603841e1cd0d8e0a5ec8cb"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14385",
+    "sha": "7b0da03cf923cf8a86cddca2bdb6bac4d954ce23",
+    "purpose": "fix(desktop): keep and restore the desktop composer reasoning effort",
+    "origin": "official-upstream-pr",
+    "status": "screened-not-applied",
+    "verification": "Changed metadata/discussion screened; no independently qualified Windows/local-provider fix imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15373",
+    "sha": "51ede38a493c49271837804bc232ec776e26e642",
+    "purpose": "test(core): wait for detached command log output to flush",
+    "origin": "official-upstream-pr",
+    "status": "integrated-via-sanitized-upstream",
+    "verification": "Detached-command log test waits for actual flushed output.",
+    "downloaded_diff_sha256": "7b354a75d97d29aeee8751eebbe90cb2074968d940dab7797ca94506300b86ea"
+  },
+  {
+    "url": "https://github.com/amaybaum-dev/cline/pull/10",
+    "sha": "d441f336dd11f43a0e0e616084e0d6e1f65b11f9",
+    "purpose": "Update dependency dompurify to v3.4.0",
     "origin": "third-party-fork-pr",
-    "status": "covered-via-upstream-not-a-separate-patch",
-    "verification": "Same raw head covered through sanitized main; no independently qualified third-party patch"
+    "status": "already-newer-floor",
+    "verification": "Full lock diff read: DOMPurify 3.4.0 older than our 3.4.17; optional WASI metadata is unrelated."
+  },
+  {
+    "url": "https://github.com/amaybaum-dev/cline/pull/8",
+    "sha": "ae70ed0d0d544c9bf0adb79ef97d9fff777e3a3f",
+    "purpose": "Update dependency posthog-js to v1.268.1",
+    "origin": "third-party-fork-pr",
+    "status": "not-desktop-lock",
+    "verification": "Full legacy lock diff read: PostHog patch and WASI metadata, not a Desktop runtime change; implementation license not qualified."
+  },
+  {
+    "url": "https://github.com/amaybaum-dev/cline/pull/2",
+    "sha": "db56023750f6650e6defb6d2c55f169c2331d5b1",
+    "purpose": "Update dependency mintlify to v4.2.563",
+    "origin": "third-party-fork-pr",
+    "status": "not-runtime-input",
+    "verification": "317800-byte documentation dependency lock churn; no applicable runtime patch qualified."
+  },
+  {
+    "url": "https://github.com/transmogrify-cell/cline/pull/2",
+    "sha": "f0709f73d268e1115d2b7ffefc808341d6542d72",
+    "purpose": "fix(core): confine session-operating hub commands to the connection workspace",
+    "origin": "third-party-fork-pr",
+    "status": "independent-fork-hardening",
+    "verification": "Full Apache-2.0 diff reviewed. Proposed workspace gate still allows origin-only registration/enumeration and omits new resume command. Independent smaller fork fix requires the installation token at WebSocket upgrade, closing command and subscription access together; seven real-socket regressions pass. No third-party code copied."
+  },
+  {
+    "url": "https://github.com/mohitdebian/cline/pull/17",
+    "sha": "137075a56aaa40cfcf4d7a47d02de642991796b2",
+    "purpose": "⚡ Bolt: Optimize ChatRowContent re-renders with deepEqual",
+    "origin": "third-party-fork-pr",
+    "status": "not-desktop-ui",
+    "verification": "Full small diff reviewed: deepEqual on legacy VS Code ChatRowContent props. Different UI, callback identity/cost not qualified. No optimization or speed claim."
+  },
+  {
+    "url": "https://github.com/presidio-oss/hai-build-codegen/pull/42",
+    "sha": "515ec628acbd1a85f35c7363d05d0553514d6034",
+    "purpose": "Merge from Cline",
+    "origin": "third-party-fork-pr",
+    "status": "unqualified-large-sync",
+    "verification": "926-file upstream sync, diff API HTTP 406. Metadata screened, full implementation unavailable via diff endpoint and not qualified; no code imported."
+  },
+  {
+    "url": "https://github.com/chanhong/cline/pull/2",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "[pull] main from cline:main",
+    "origin": "third-party-fork-pr",
+    "status": "same-upstream-head",
+    "verification": "1036-file broad sync; exact head equals official main f817e59. Only official seven-commit range is reviewed/imported through our sanitizer; this broad PR is not separately qualified."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/11085",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Integration idea: WinkTerm as self-hosted terminal backend with shared PTY AI",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/11093",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Fix this issue: https://github.com/cline/cline/issues/9906",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/11098",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Cline: Task automatically restarts after clicking abort button during hook execution in cline",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/11467",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "PowerShell window to flash on every command execution",
+    "origin": "issue",
+    "status": "already-present",
+    "verification": "Read discussion and confirmed windowsHide:true in current spawnDetachedHubServer; no new patch.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14260",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Feature discussion: persistent verified memory across sessions and across IDEs (via MCP memory server)",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14448",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Bug: \"Extra\" thinking strength for Xiaomi MiMo-V2.6-Pro fails every run with \"Invalid request parameters\"",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14497",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Access blocked, please contact support. 访问被阻止，请联系支持。",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14526",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Cline Desktop: [Windows Specific]: Error occurred while exporting sessions.",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14571",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Use ScreenContext for zero-input debugging across desktop windows",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15008",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "[VS Code 4.1.23] OpenAI Compatible selects gpt-4o despite a saved custom model after setup/upgrade",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15055",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "GPT 6+ models bugged with Azure OpenAI",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15102",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Windows Desktop App Cannot Load",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15179",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "CLine Does Not Honor System Variables on Windows",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15214",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "ClinePass: the gateway ends a DeepSeek V4.1 Flash stream with an in-band AI_InvalidResponseDataError chunk, and the CLI ends the whole task with no retry",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Streaming silence/timeout report read. Not equivalent to reasoning-only completion; no inferred Strata fix and no real inference performed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15377",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Commit search drops the quotes from the query, so quoted searches return the wrong commits",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15379",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "CLI 3.0.74: Switching OpenAI-compatible models drops reasoning metadata and resets reasoning to none",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "CLI /model reasoning reset report. Desktop seven-mode request and selection preservation checks remain mandatory; no claim that those prove CLI /model fixed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15380",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Account billing support request; no runtime patch",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15382",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Desktop App (v0.0.49): Missing Plan/Act mode toggle and Auto Approve controls in the UI",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15386",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Cline Desktop + Qwen3.8-flash-next",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Tool markup returned as ordinary text, distinct from reasoning-only empty completion. Do not execute text/XML as trusted tool calls; no qualified Strata parser fix imported, backend unchanged.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15392",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Failed to process successful response: TypeError: terminated: BodyTimeoutError: Body Timeout Error (UND_ERR_BODY_TIMEOUT)",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Streaming silence/timeout report read. Not equivalent to reasoning-only completion; no inferred Strata fix and no real inference performed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/8771",
+    "sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
+    "purpose": "Per-request price no longer shown",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/IChouChiang/cline-termux/issues/59",
+    "sha": null,
+    "purpose": "Upstream Cline CLI release available: cli-v3.0.74",
+    "origin": "issue",
+    "status": "tracked-unqualified",
+    "verification": "Description and paginated comments screened; no qualified implementation patch, no fix claimed.",
+    "comment_pages_read": 1
+  },
+  {
+    "url": "https://github.com/transmogrify-cell/cline/issues/1",
+    "sha": null,
+    "purpose": "Incomplete authorization in the Cline Hub: session-operating commands bypass the workspace-authority gate",
+    "origin": "issue",
+    "status": "addressed-by-independent-hardening",
+    "verification": "Confirmed origin-only authentication branch in Hub source; removed it. Seven socket tests deny missing/wrong tokens and preserve authenticated clients; installed verification required before release.",
+    "comment_pages_read": 1
   }
 ]
