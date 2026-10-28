@@ -728,7 +728,7 @@ describe("cloud RPC over a shared hub socket", () => {
 		try {
 			await viewer.connect();
 			await observer.connect();
-			await browserViewer.connect();
+			await expect(browserViewer.connect()).rejects.toThrow();
 			const controller = f.controllers[0]?.controller;
 			if (!controller) throw new Error("Missing cloud controller");
 			controller.listModels.mockResolvedValue([
@@ -746,9 +746,6 @@ describe("cloud RPC over a shared hub socket", () => {
 				status: "ready",
 				initialSend: { sessionId: "ses-one", ok: true },
 			});
-			await expect(browserViewer.create(input)).rejects.toThrow(
-				"token-authenticated",
-			);
 			expect(apply).not.toHaveBeenCalled();
 			const creation = viewer.create(input).catch((error: unknown) => error);
 			await vi.waitFor(() => expect(apply).toHaveBeenCalledOnce());

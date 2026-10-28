@@ -2,6 +2,8 @@
 
 ## 1.0.10
 
+- Hub WebSocket connections now require the installation token, including localhost browser clients. A loopback Origin header alone no longer grants commands or event access; Desktop/CLI and authenticated remote access remain supported.
+- Подключение к Hub требует токен установки, включая браузеры localhost. Один заголовок Origin больше не разрешает команды или чтение событий; Desktop/CLI и авторизованный удалённый доступ сохранены.
 - Updated to reviewed upstream main: saved-session resume, cloud request URL and rejected-credential handling, guarded Git snapshot handoff. Existing local reasoning, Russian/English UI and installer fixes are retained.
 - Обновлён upstream: восстановление сохранённых сессий, обработка адресов и отклонённых credentials, защищённая передача Git-снимка. Локальные режимы reasoning, русский/английский интерфейс и исправления установщика сохранены.
 
