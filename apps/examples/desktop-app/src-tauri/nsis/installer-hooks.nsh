@@ -68,6 +68,10 @@
     ${If} $0 != 0
       Goto end_session
     ${EndIf}
+    !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\bin\browser-bridge\native-host.exe"
+    ${If} $0 != 0
+      Goto end_session
+    ${EndIf}
 
     StrCpy $3 0
     System::Call 'rstrtmgr::RmGetList(i r1, *i .r2, *i r3, p 0, *i .r4) i .r0'

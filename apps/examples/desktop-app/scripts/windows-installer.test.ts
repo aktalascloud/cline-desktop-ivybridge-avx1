@@ -424,6 +424,21 @@ SectionEnd
 		expect(other.exitCode).toBeNull();
 	}, 120_000);
 
+	test("closes the exact native browser bridge while preserving another installation", async () => {
+		const dir = path.join(root, "browser bridge");
+		const worker = await start(
+			path.join(dir, "bin", "browser-bridge"),
+			"native-host.exe",
+		);
+		const other = await start(
+			path.join(root, "other browser bridge"),
+			"native-host.exe",
+		);
+		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
+		await waitFor(() => worker.exitCode !== null || worker.signalCode !== null);
+		expect(other.exitCode).toBeNull();
+	}, 120_000);
+
 	test("upgrade automatically closes the earlier backend before removing it", async () => {
 		const dir = path.join(root, "upgrade");
 		const legacy = await start(dir, "code-sidecar.exe");
