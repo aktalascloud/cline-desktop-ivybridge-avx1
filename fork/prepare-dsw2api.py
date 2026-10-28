@@ -17,6 +17,7 @@ TARGET = ROOT / 'apps/examples/desktop-app/src-tauri/bin/dsw2api'
 CACHE = Path(os.environ.get('CLINE_DSW_DOWNLOAD_CACHE', ROOT / '.build-cache/dsw2api'))
 FLAGS = ['--edition=2021', '-C', 'opt-level=3', '-C', 'lto=thin', '-C', 'codegen-units=1',
          '-C', 'target-cpu=x86-64', '-C', 'target-feature=-avx2,-fma,+crt-static',
+         '-C', 'debuginfo=0', '-C', 'strip=debuginfo', '-C', 'link-arg=/PDBALTPATH:cline-dsw2api-pow.pdb',
          f'--remap-path-prefix={ROOT.as_posix()}=/src/cline']
 PUBLIC_FLAGS = [flag.replace(ROOT.as_posix(), '<checkout>') for flag in FLAGS]
 
@@ -100,6 +101,9 @@ def main():
         subprocess.run(['rustc', *FLAGS, '--test', str(SOURCE / 'pow/main.rs'), '-o', str(test_executable)], check=True)
         subprocess.run([str(test_executable)], check=True)
         subprocess.run(['rustc', *FLAGS, str(SOURCE / 'pow/main.rs'), '-o', str(stage / 'cline-dsw2api-pow.exe')], check=True)
+        # Debug companion files are build-only, never installer resources.
+        debug_symbols = stage / 'cline-dsw2api-pow.pdb'
+        if debug_symbols.is_file(): debug_symbols.unlink()
         subprocess.run([str(runtime / 'python.exe'), '-I', '-B', '-X', 'utf8', '-c',
             'import ssl,sqlite3,ctypes,fastapi,uvicorn,curl_cffi,PIL,jsonschema,referencing,cryptography; from cryptography.fernet import Fernet; f=Fernet(Fernet.generate_key()); assert f.decrypt(f.encrypt(b"fixture"))==b"fixture"'], check=True)
         (stage / '.managed-build').write_text('generated-build-resources-v1\n', encoding='utf8')
