@@ -37,6 +37,9 @@ if(@($changed|Where-Object {$_ -like 'sdk/packages/core/src/hub/*' -or $_ -like 
 if(@($changed|Where-Object {$_ -like 'sdk/packages/core/src/hooks/*'}).Count){$coreTests+='src/hooks/hook-file-hooks.test.ts'}
 if($Mode -eq 'full'){$coreTests=@('src')}
 Invoke-Check 'Core affected/security regressions' "$root/sdk/packages/core" (@('x','vitest','run','--maxWorkers=2','--config','vitest.config.ts')+@($coreTests|Sort-Object -Unique))
+if(@($changed|Where-Object {$_ -in @('sdk/packages/core/src/hub/daemon/resume-from-store.e2e.test.ts','sdk/packages/core/src/hub/runtime-host/hub-runtime-host.ts','apps/examples/desktop-app/sidecar/chat-session.ts')}).Count){
+ Invoke-Check 'Stored history over real Bun wire' "$root/sdk/packages/core" @('x','vitest','run','--maxWorkers=1','--config','vitest.e2e.config.ts','src/hub/daemon/resume-from-store.e2e.test.ts')
+}
 if(@($changed|Where-Object {$_ -like 'sdk/packages/shared/*'}).Count){
  $sharedTests=@('src/parse/shell.test.ts','src/parse/shell.invocation.test.ts')+@(Changed-Tests 'sdk/packages/shared')
  Invoke-Check 'Shared affected regressions' "$root/sdk/packages/shared" (@('x','vitest','run','--maxWorkers=2','--config','vitest.config.ts')+@($sharedTests|Sort-Object -Unique))
