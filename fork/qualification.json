@@ -76,12 +76,17 @@
     "anonymous_download_verified": true
   },
   "ci": {
-    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40810707256",
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40835552323",
     "status": "success",
-    "source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
+    "source_sha": "92526d83ef73948b56b04919d137d1fd5e2bc3de",
     "signature_verified": true,
     "tamper_rejected": true,
-    "kind": "full-windows-build"
+    "kind": "managed-resources-delta",
+    "full_build_baseline": {
+      "source_sha": "4f541be3afb1609f765e413ff90bc6458b05173a",
+      "run_id": 40830543121,
+      "compiled_inputs_unchanged": true
+    }
   },
   "interactive_gui": {
     "status": "waived by owner",
@@ -122,13 +127,11 @@
     "post_history_cleanup": true
   },
   "publication": {
-    "version": "1.0.12",
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.12",
-    "asset_sha256": "57ac7edbb93c445e03dee7bda9b1383a211c77412037a74c87ad32dcf1ff57f3",
+    "version": "1.0.13",
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.13",
+    "asset_sha256": "318b125d6ba5fd46696d09d7b8a4a1b2d558651f1acdfe6c8b8569d9afe1b733",
     "asset_count": 1,
-    "anonymous_download_verified": true,
-    "feed_signature_verified": true,
-    "source_tag_verified": true
+    "anonymous_download_verified": false
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -303,7 +306,7 @@
     "new_performance_claim": false
   },
   "latest_validation": {
-    "source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
+    "source_sha": "92526d83ef73948b56b04919d137d1fd5e2bc3de",
     "production_frontend": true,
     "installer_regressions": 13,
     "upstream_gateway_tests": 132,
@@ -314,25 +317,19 @@
     "offline_tools_mcp_stream_cancel": true,
     "gateway_encryption_native_pow_streamed_tools_parent_chain": true,
     "gateway_independent_worker": true,
-    "real_vendor_inference": true,
-    "real_vendor_tool_roundtrip": true,
+    "real_vendor_inference": false,
+    "real_vendor_tool_roundtrip": false,
+    "live_validation": "not repeated for this resource delta; historical baseline passed",
+    "shared_browser_lease_verified": true,
+    "compiled_inputs_reused": true,
     "gui": "waived",
     "ci": {
-      "run_id": 40810707256,
+      "run_id": 40835552323,
       "run_attempt": 1,
-      "source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
+      "source_sha": "92526d83ef73948b56b04919d137d1fd5e2bc3de",
       "status": "success",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40810707256",
-      "raw_suite_summaries": [
-        "Tests  87 passed (87)",
-        "Tests  594 passed | 3 skipped (597)",
-        "Tests  4 passed (4)",
-        "Tests  98 passed (98)",
-        "Tests  320 passed (320)",
-        "Tests  104 passed (104)",
-        "Tests  78 passed (78)",
-        "Tests  38 passed (38)"
-      ]
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40835552323",
+      "raw_suite_summaries": []
     }
   },
   "research_20261028": {
@@ -399,5 +396,30 @@
     "global_search_applicable_patches": 0,
     "global_scope": "Seven results: rugby fixtures, signal processing, lighting/ISPC and separate inference engines. None is a locked Cline dependency; no Strata/model/compiler changes made.",
     "no_new_speed_or_model_quality_measurement": true
+  },
+  "compiled_reuse": {
+    "source_sha": "92526d83ef73948b56b04919d137d1fd5e2bc3de",
+    "profile": "ivy-fat1",
+    "sha256": "318b125d6ba5fd46696d09d7b8a4a1b2d558651f1acdfe6c8b8569d9afe1b733",
+    "size": 157738493,
+    "lto": "fat",
+    "codegen_units": "1",
+    "compiled_source_sha": "4f541be3afb1609f765e413ff90bc6458b05173a",
+    "compiled_ci_run": 40830543121,
+    "compiled_files_verified": 608,
+    "native_sha256": "eacbd7e0bb39298e51774082df210754cd538c865e49b1aa92760aa6e6f03840",
+    "compiled_inputs_reused": true
+  },
+  "managed_session_recovery": {
+    "rejected_token_status": 401,
+    "error_code": "deepseek_session_expired",
+    "transient_failure_reusable": true,
+    "verified_reconnect_clears_stale_state": true,
+    "open_chat_endpoint_refresh": true,
+    "automatic_request_replay": false,
+    "shared_process_lease": true,
+    "two_independent_processes_verified": true,
+    "unsafe_existing_acl_rejected": true,
+    "shared_extension_tests": 14
   }
 }

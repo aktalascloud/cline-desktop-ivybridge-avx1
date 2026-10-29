@@ -1,9 +1,9 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.12",
+  "version": "1.0.13",
   "upstream_sha": "51f63e4fd63aeeb74d708b9c3d1f8b800aff9b3e",
-  "build_source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
+  "build_source_sha": "92526d83ef73948b56b04919d137d1fd5e2bc3de",
   "release_approved": true,
   "native": {
     "kind": "source-built",
@@ -23,7 +23,7 @@
     "c_flags": "ring cc defaults observed: /MD /O2 /Brepro and vendor warning/function flags; no global CFLAGS override",
     "pgo": false,
     "affinity_or_numa_pinning": false,
-    "executable_sha256": "101529150e20d9ee43b1f1c472a2da634a3c956e4bfc0a337886056a34e6f78c"
+    "executable_sha256": "eacbd7e0bb39298e51774082df210754cd538c865e49b1aa92760aa6e6f03840"
   },
   "cli_and_hub": {
     "version": "3.0.74",
@@ -36,7 +36,7 @@
       "fork storage bootstrap before imports",
       "official auto-update disabled for fork distribution"
     ],
-    "sha256": "0b9bd29470f2a5cf8ab49a1081fac6f34f4d9c15c9232e83a43de0c06d75b674"
+    "sha256": "5987e20787f38cb20e7a5a455f027fac97d4be09fe1ec9f9f549244e38cbf6d3"
   },
   "backend": {
     "kind": "source-built JS bundle",
@@ -45,7 +45,7 @@
       "minify",
       "no telemetry credentials inlined"
     ],
-    "sha256": "d8e322ddd521fc229e6f2265dbdfa4ab496cf159a7ba3383e2193dfd836ea0d2"
+    "sha256": "45de27e42d6aaeb0d29d6237027134a46c501e5935520b8b4b289593c3545ea1"
   },
   "frontend": {
     "kind": "source-built static export",
@@ -149,18 +149,18 @@
   ],
   "selected_npm": [],
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "afdd27ed180b4238e5b2f081076a723e645bfb7b881951dd70e2d2860ffb34e3",
+  "bun_lock_sha256": "fbb9dc040cf8a100546d5d515a04e8086bd7660a8ac9f182be8a90b875d4eb54",
   "cuda_used": false,
   "llm_models_included": false,
   "authenticode": "NotSigned; Tauri updater signature is a separate verification mechanism",
   "updater_zip_support": false,
   "installer": {
     "filename": "Cline-Desktop-AVX1-RU-Setup.exe",
-    "sha256": "57ac7edbb93c445e03dee7bda9b1383a211c77412037a74c87ad32dcf1ff57f3",
-    "size": 157740160,
-    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYm5YUTIyWFlhKzAyY2F5dmlkcW5WdDZDczhOaldYc2ZlQUJNNTc2Nlk1UWlNMHU4S0tRbDJ0WmpxMWt1ZzhmOHNGbksvbDRjekVxTkQxSDNTSSt3b2djPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMjQ0NzY2CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xMl94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEyCmhmS1pGeS9KWUs5UndDdUI2NTNmRGxjZWtTYzN3MFJIMUVTMnlLcDJ2TW1zb21PSjFYRTBRRmFCeEowK3FRQXhOZ3NxdmF2R25DTGkyMWc3ZXQvOENRPT0K",
+    "sha256": "318b125d6ba5fd46696d09d7b8a4a1b2d558651f1acdfe6c8b8569d9afe1b733",
+    "size": 157738493,
+    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnVSOFV1UmlTUGNWNStwNzRTQTJPdDh1VVRwb1hickRBL0t6TDdFV2NiczJGTmpCY3g0TGd2dk5zRU15MEtRc21wSi9HaTZzNFYzMHlQeEx4WEk2SndNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMjU5MjY0CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xM194NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEzClExbGRyL01td3FzdXhUZU5VNTExdjZjdGp5Q0gra3pTcFpRd08zczZjV3luRDlVNzF2MisvcmkzMEttREp1TDg2RnM4UlZuL2V1Nm1CU1lvVU5QUUR3PT0K",
     "authenticode": "NotSigned",
-    "status": "installed preserving data; offline protocol/runtime checks passed; DeepSeek account verified and live synthetic SSE response passed"
+    "status": "installed preserving data; offline protocol/runtime checks passed; shared account lease and authentication fixtures passed; current vendor recheck unavailable"
   },
   "original_build_source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
   "sanitized_upstream_sha": "47374eb672987bd2e70b4d2025cedc158fbe5c17",
@@ -282,7 +282,7 @@
     "repository": "https://github.com/snake-aabb-wtf/deepseek-web2api-free",
     "sha": "82d7b9673ed7135ed50a96a193fc4b5d37a5c067",
     "license": "Unlicense; Apache-2.0 independent native helper",
-    "runtime_build_id": "b72bd058a72d4863e1bfdc17d10b64a24bdc3104764293a512cbbab21c154e75",
+    "runtime_build_id": "ed34cb136dcd047e880c73bda22b720aec23d1156a2ddcc80c4a750662d72b35",
     "python": "3.14.10 official prebuilt",
     "wheel_manifest": "fork/dsw2api/runtime-lock.json",
     "native_flags": [
@@ -305,16 +305,18 @@
       "link-arg=/PDBALTPATH:cline-dsw2api-pow.pdb",
       "--remap-path-prefix=<checkout>=/src/cline"
     ],
-    "helper_sha256": "c74594f0e14d843c0b39eea694d628920b1f4ca69421664256226aa9025429b0",
+    "helper_sha256": "b74e8898d6d7a8f6008849226b4a1f254f2bcb831e03e66769125f80da56297d",
     "local_request_quota": null,
     "local_output_cap": null,
     "vendor_limits_bypassed": false,
-    "live_account_verified": true,
+    "live_account_verified": false,
+    "live_validation": "not repeated for this resource delta; historical baseline passed",
+    "shared_browser_account_lease": true,
     "usage_counts": "character heuristic, not vendor token counts"
   },
   "browser_bridge": {
     "extension_id": "jaljomgoclehkemckjhifflhmlllfopc",
-    "host_sha256": "1c42ea16458f17458bb6c311fed05ff4ddd96be90b4ac5ca667a83ce70a9135f",
+    "host_sha256": "30dda845bbfa335b982d929bf6d9c4dbd81e2b223cddc9ec2f506b2b084e6f6a",
     "source_built": true,
     "native_flags": [
       "--edition=2021",
@@ -339,9 +341,14 @@
     "deepseek_controls": [
       "thinking_enabled",
       "search_enabled"
-    ]
+    ],
+    "shared_native_channels": [
+      "cloud.aktalas.cline_dsw",
+      "cloud.aktalas.owui_dsw"
+    ],
+    "session_handoff": "explicit selected applications; OWUI nonce preflight; no startup credential capture"
   },
-  "compiled_component_source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
+  "compiled_component_source_sha": "4f541be3afb1609f765e413ff90bc6458b05173a",
   "security_pins": {
     "ip-address": {
       "version": "10.7.5",
