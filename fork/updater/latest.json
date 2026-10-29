@@ -1,11 +1,11 @@
 {
-  "version": "1.0.12",
-  "notes": "Security: ip-address 10.7.5; saved-history resume, parallel edits, UTF-16 and CLI model metadata. Безопасность, длинная история, параллельные правки и Unicode.",
-  "pub_date": "2026-10-29T03:49:57.486285Z",
+  "version": "1.0.13",
+  "notes": "DeepSeek session and chat reconnect fixes / Исправления сессии DeepSeek и переподключения чатов.",
+  "pub_date": "2026-10-29T07:44:08.559368Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYm5YUTIyWFlhKzAyY2F5dmlkcW5WdDZDczhOaldYc2ZlQUJNNTc2Nlk1UWlNMHU4S0tRbDJ0WmpxMWt1ZzhmOHNGbksvbDRjekVxTkQxSDNTSSt3b2djPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMjQ0NzY2CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xMl94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEyCmhmS1pGeS9KWUs5UndDdUI2NTNmRGxjZWtTYzN3MFJIMUVTMnlLcDJ2TW1zb21PSjFYRTBRRmFCeEowK3FRQXhOZ3NxdmF2R25DTGkyMWc3ZXQvOENRPT0K",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.12/Cline-Desktop-AVX1-RU-Setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnVSOFV1UmlTUGNWNStwNzRTQTJPdDh1VVRwb1hickRBL0t6TDdFV2NiczJGTmpCY3g0TGd2dk5zRU15MEtRc21wSi9HaTZzNFYzMHlQeEx4WEk2SndNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMjU5MjY0CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xM194NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEzClExbGRyL01td3FzdXhUZU5VNTExdjZjdGp5Q0gra3pTcFpRd08zczZjV3luRDlVNzF2MisvcmkzMEttREp1TDg2RnM4UlZuL2V1Nm1CU1lvVU5QUUR3PT0K",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.13/Cline-Desktop-AVX1-RU-Setup.exe"
     }
   }
 }
