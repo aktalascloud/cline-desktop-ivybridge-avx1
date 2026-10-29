@@ -46,3 +46,5 @@ Rewriting this fork's advertised refs does not erase the official upstream,
 other clones, GitHub caches or objects retained by the shared fork network.
 Server-side eradication of historical objects is controlled by GitHub and
 the upstream owner, beyond this fork's branch/tag cleanup.
+
+The 2026-10-29 import maps raw 51f63e4fd63aeeb74d708b9c3d1f8b800aff9b3e to sanitized 47374eb672987bd2e70b4d2025cedc158fbe5c17, anchored on verified raw 817e59f698f01487920c00ede2dbecad5c0fa50 / sanitized df8cbef585dd5ed1d00fb5e1497f36f8d7052653. All 98 newly reachable objects (883,540 bytes) were scanned against the private UTF-8/UTF-16 removed-value set, with zero matches. The protected original incremental bundle is retained; no raw ancestry was imported.

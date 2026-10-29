@@ -76,17 +76,12 @@
     "anonymous_download_verified": true
   },
   "ci": {
-    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40685771986",
+    "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40810707256",
     "status": "success",
-    "source_sha": "dc336645b4e07577b9bc349e5b9aee6bc6ba6bd4",
+    "source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
     "signature_verified": true,
     "tamper_rejected": true,
-    "kind": "installer-and-managed-gateway-delta",
-    "full_build_baseline": {
-      "source_sha": "33dfa3ed2051237be93676bcf1ef7b823b66d125",
-      "run_id": 40680142185,
-      "compiled_inputs_unchanged": true
-    }
+    "kind": "full-windows-build"
   },
   "interactive_gui": {
     "status": "waived by owner",
@@ -127,13 +122,11 @@
     "post_history_cleanup": true
   },
   "publication": {
-    "version": "1.0.11",
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.11",
-    "asset_sha256": "8b6b6acb9b6f1d2d8d8e78066edb5461b20b613a3bbe619e716b9393694f24fa",
+    "version": "1.0.12",
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.12",
+    "asset_sha256": "57ac7edbb93c445e03dee7bda9b1383a211c77412037a74c87ad32dcf1ff57f3",
     "asset_count": 1,
-    "anonymous_download_verified": true,
-    "feed_signature_verified": true,
-    "source_tag_verified": true
+    "anonymous_download_verified": false
   },
   "voice_input": {
     "provider_tests_passed": 143,
@@ -308,7 +301,7 @@
     "new_performance_claim": false
   },
   "latest_validation": {
-    "source_sha": "dc336645b4e07577b9bc349e5b9aee6bc6ba6bd4",
+    "source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
     "production_frontend": true,
     "installer_regressions": 13,
     "upstream_gateway_tests": 132,
@@ -323,18 +316,21 @@
     "real_vendor_tool_roundtrip": true,
     "gui": "waived",
     "ci": {
-      "run_id": 40685771986,
-      "run_attempt": 2,
-      "source_sha": "dc336645b4e07577b9bc349e5b9aee6bc6ba6bd4",
+      "run_id": 40810707256,
+      "run_attempt": 1,
+      "source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
       "status": "success",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40685771986",
-      "raw_suite_summaries": [],
-      "kind": "installer-and-managed-gateway-delta",
-      "installer_tests": 13,
-      "extension_tests": 4,
-      "managed_gateway_delayed_sse_fixture": true,
-      "compiled_baseline_run": 40680142185,
-      "compiled_baseline_sha": "33dfa3ed2051237be93676bcf1ef7b823b66d125"
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40810707256",
+      "raw_suite_summaries": [
+        "Tests  87 passed (87)",
+        "Tests  594 passed | 3 skipped (597)",
+        "Tests  4 passed (4)",
+        "Tests  98 passed (98)",
+        "Tests  320 passed (320)",
+        "Tests  104 passed (104)",
+        "Tests  78 passed (78)",
+        "Tests  38 passed (38)"
+      ]
     }
   },
   "research_20261028": {

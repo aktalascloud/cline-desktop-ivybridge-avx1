@@ -30,3 +30,7 @@ Version 1.0.3 adds recorded voice input and local WAV conversion. It has not bee
 Scalar DeepSeekHashV1, 50,000 hashes/sample, one warmup and 5 repeats. Cached original WASM median 77.359 ms; independent native generic O3/ThinLTO helper including process startup 44.843 ms. Ivy-target/helper ratio 1.0121; no Ivy-specific benefit established, so this helper retains the compatible generic x86-64 profile (AVX2/FMA disabled). These are historical PoW-only results, not LLM tokens/s or current UI/startup benchmarks.
 
 The final helper was recompiled and independently checked against the original WASM on five scalar/UTF-8/multiblock cases. No source from the separately reviewed AGPL-traced helper was copied. Python, wheels and Bun remain prebuilt; local Rust flags apply only to source-built components.
+
+## CLI generated-media cache (2026-10-29)
+
+Bun 1.4.2, target Ivy Bridge host, five repeats plus one warmup, 100 identical opaque 64-KiB payloads per sample. Previous implementation materialized 100 files (6,553,600 bytes); the content cache materialized one (65,536 bytes). This measures file materialization only: no image rendering, timing, startup, GPU or LLM throughput claim. Baseline and current function content hashes and the synthetic workload are recorded in the local compact evidence.

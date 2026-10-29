@@ -15,8 +15,8 @@ jobs:
     timeout-minutes: 25
     env:
       SOURCE_SHA: ${{ inputs.source_sha }}
-      BASELINE_SHA: 33dfa3ed2051237be93676bcf1ef7b823b66d125
-      BASELINE_RUN: '40680142185'
+      BASELINE_SHA: cd11cc0592713233b156615a52bed714f8085ad0
+      BASELINE_RUN: '40810707256'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - name: Validate pinned input
@@ -37,7 +37,7 @@ jobs:
           if($LASTEXITCODE -or $baseline.head_sha -ne $env:BASELINE_SHA -or $baseline.conclusion -ne 'success'){throw 'Qualified baseline unavailable'}
           git fetch --depth=1 origin $env:BASELINE_SHA a26a46d2ffa302980ff4cca12eb5af19113d6669
           if($LASTEXITCODE){throw 'Baseline source fetch failed'}
-          $allowed=@('.github/workflows/qualify-installer-gateway.yml','apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh','apps/examples/desktop-app/scripts/windows-installer.test.ts','fork/dsw2api/gateway/managed_runner.py','fork/dsw2api/test-managed.py')
+          $allowed=@('.github/workflows/qualify-installer-gateway.yml','apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh','apps/examples/desktop-app/scripts/windows-installer.test.ts','fork/dsw2api/gateway/managed_runner.py','fork/dsw2api/test-managed.py','README.md','README.ru.md','fork/components.json','fork/qualification.json','fork/review-ledger.json','fork/discovery.json','fork/performance.md','fork/history-policy.md')
           $changed=@(git diff --name-only $env:BASELINE_SHA HEAD)
           if($LASTEXITCODE -or @($changed|Where-Object {$_ -notin $allowed}).Count){throw 'Compiled inputs changed: use the full Windows build workflow'}
           @{source_sha=$env:SOURCE_SHA;baseline_sha=$env:BASELINE_SHA;baseline_run=$env:BASELINE_RUN;compiled_inputs_unchanged=$true;changed=$changed}|ConvertTo-Json -Depth 4|Set-Content qualification.json

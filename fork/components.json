@@ -1,9 +1,9 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.11",
-  "upstream_sha": "f817e59f698f01487920c00ede2dbecad5c0fa50",
-  "build_source_sha": "dc336645b4e07577b9bc349e5b9aee6bc6ba6bd4",
+  "version": "1.0.12",
+  "upstream_sha": "51f63e4fd63aeeb74d708b9c3d1f8b800aff9b3e",
+  "build_source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
   "release_approved": true,
   "native": {
     "kind": "source-built",
@@ -23,7 +23,7 @@
     "c_flags": "ring cc defaults observed: /MD /O2 /Brepro and vendor warning/function flags; no global CFLAGS override",
     "pgo": false,
     "affinity_or_numa_pinning": false,
-    "executable_sha256": "ea987a347b72128a6d828c4fe756ea053ff1d80c27a3f89aa3e9bc1d79ffa8f7"
+    "executable_sha256": "101529150e20d9ee43b1f1c472a2da634a3c956e4bfc0a337886056a34e6f78c"
   },
   "cli_and_hub": {
     "version": "3.0.74",
@@ -36,7 +36,7 @@
       "fork storage bootstrap before imports",
       "official auto-update disabled for fork distribution"
     ],
-    "sha256": "e75a29ceee4db4a5644556c449218b0970ca92d3b45a8e1317623a4bb4508c6e"
+    "sha256": "0b9bd29470f2a5cf8ab49a1081fac6f34f4d9c15c9232e83a43de0c06d75b674"
   },
   "backend": {
     "kind": "source-built JS bundle",
@@ -45,7 +45,7 @@
       "minify",
       "no telemetry credentials inlined"
     ],
-    "sha256": "8693103326aa7cf5134b4c5031574b9567e2aed5bf2ca4c87d6d23f950a1564b"
+    "sha256": "d8e322ddd521fc229e6f2265dbdfa4ab496cf159a7ba3383e2193dfd836ea0d2"
   },
   "frontend": {
     "kind": "source-built static export",
@@ -149,21 +149,21 @@
   ],
   "selected_npm": [],
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "336a7fcb387d9a8554259aa9b9a89e085b36dcb03a40ed2400b6ba9dbbbd2ada",
+  "bun_lock_sha256": "afdd27ed180b4238e5b2f081076a723e645bfb7b881951dd70e2d2860ffb34e3",
   "cuda_used": false,
   "llm_models_included": false,
   "authenticode": "NotSigned; Tauri updater signature is a separate verification mechanism",
   "updater_zip_support": false,
   "installer": {
     "filename": "Cline-Desktop-AVX1-RU-Setup.exe",
-    "sha256": "8b6b6acb9b6f1d2d8d8e78066edb5461b20b613a3bbe619e716b9393694f24fa",
-    "size": 157666601,
-    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnY4SGRFakoyYVRIREhaT2crbVc0UDZXMURPbENhM1psYnQ2V21YSUE5d2pzZVNGdDJvMVZtWlV1K09WbndLWjJlZjZWNVFqeWRDNzF0OFc2TEd6MmdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMTg5ODk2CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xMV94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjExCkk1amoxT0c5TTBCclJFZ2o0cVBWZ2NjM2Y0c1NuWU5abFB3MSswbUo1d0poSEszNnNEaHprcktrRUgrL215N2lDU0p2SVBneC9WUnR4czJlOXltOUR3PT0K",
+    "sha256": "57ac7edbb93c445e03dee7bda9b1383a211c77412037a74c87ad32dcf1ff57f3",
+    "size": 157740160,
+    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYm5YUTIyWFlhKzAyY2F5dmlkcW5WdDZDczhOaldYc2ZlQUJNNTc2Nlk1UWlNMHU4S0tRbDJ0WmpxMWt1ZzhmOHNGbksvbDRjekVxTkQxSDNTSSt3b2djPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMjQ0NzY2CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xMl94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEyCmhmS1pGeS9KWUs5UndDdUI2NTNmRGxjZWtTYzN3MFJIMUVTMnlLcDJ2TW1zb21PSjFYRTBRRmFCeEowK3FRQXhOZ3NxdmF2R25DTGkyMWc3ZXQvOENRPT0K",
     "authenticode": "NotSigned",
     "status": "installed preserving data; offline protocol/runtime checks passed; DeepSeek account verified and live synthetic SSE response passed"
   },
   "original_build_source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
-  "sanitized_upstream_sha": "5e411e5e0111f1adf366475c6bb3fc72c52dfb4c",
+  "sanitized_upstream_sha": "47374eb672987bd2e70b4d2025cedc158fbe5c17",
   "voice_input": {
     "source": "local fork patch",
     "modes": [
@@ -314,7 +314,7 @@
   },
   "browser_bridge": {
     "extension_id": "jaljomgoclehkemckjhifflhmlllfopc",
-    "host_sha256": "22931da7a0d3cd73f98255154b53f9f7cdab220efbb038ffc98e9a7303f21a0d",
+    "host_sha256": "1c42ea16458f17458bb6c311fed05ff4ddd96be90b4ac5ca667a83ce70a9135f",
     "source_built": true,
     "native_flags": [
       "--edition=2021",
@@ -341,5 +341,14 @@
       "search_enabled"
     ]
   },
-  "compiled_component_source_sha": "33dfa3ed2051237be93676bcf1ef7b823b66d125"
+  "compiled_component_source_sha": "cd11cc0592713233b156615a52bed714f8085ad0",
+  "security_pins": {
+    "ip-address": {
+      "version": "10.7.5",
+      "license": "MIT",
+      "previous": "10.5.0",
+      "source": "https://registry.npmjs.org/ip-address/10.7.5",
+      "scope": "exact Bun override and frozen lock; no unrelated package upgrade"
+    }
+  }
 }

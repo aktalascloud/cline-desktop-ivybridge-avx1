@@ -1,45 +1,77 @@
 {
-  "date": "2026-10-26",
-  "upstream_main_sha": "dab482348ffd83d1065dfcf8b538076608925a79",
-  "counts": {
-    "releases": {
-      "records": 464,
-      "pages": 5
+  "date": "2026-10-29",
+  "checked_utc": "2026-10-29T02:15:05.394432+00:00",
+  "index": {
+    "counts": {
+      "releases": {
+        "records": 468,
+        "pages": 5
+      },
+      "pulls-recent-closed": {
+        "records": 400,
+        "pages": 4
+      },
+      "branches": {
+        "records": 2490,
+        "pages": 25
+      },
+      "pulls-open": {
+        "records": 783,
+        "pages": 8
+      },
+      "issues-open": {
+        "records": 1731,
+        "pages": 18
+      },
+      "forks-all": {
+        "records": 7796,
+        "pages": 78
+      }
     },
-    "pulls-recent-closed": {
-      "records": 400,
-      "pages": 4
-    },
-    "pulls-open": {
-      "records": 762,
-      "pages": 8
-    },
-    "branches": {
-      "records": 2444,
-      "pages": 25
-    },
-    "issues-open": {
-      "records": 1706,
-      "pages": 18
-    },
-    "forks-all": {
-      "records": 7758,
-      "pages": 78
-    }
+    "active_forks_queried_live": 512,
+    "forks_returned": 471,
+    "forks_http404": 41,
+    "open_fork_prs": 283,
+    "global_search_counts": [
+      {
+        "query": "ivybridge committer-date:>=2026-10-28",
+        "total": 7,
+        "listed": 7,
+        "capped": false
+      },
+      {
+        "query": "AVX1 (performance OR optimize) committer-date:>=2026-10-28",
+        "total": 6,
+        "listed": 6,
+        "capped": false
+      }
+    ]
   },
-  "active_forks_30_day_push_window": 508,
-  "fork_pr_endpoints_returned": 463,
-  "fork_pr_http404": 45,
-  "open_fork_prs": 294,
-  "issue_catalog_repositories": 509,
-  "issues_enabled_indexed": 8,
-  "issues_disabled_by_fresh_inventory": 501,
-  "changed_active_fork_prs": 24,
-  "numeric_pricing_diffs_reviewed_not_applied": 19,
-  "large_sync_diffs_not_qualified": [
-    "presidio-oss/hai-build-codegen#42",
-    "chanhong/cline#2"
+  "upstream_main_sha": "51f63e4fd63aeeb74d708b9c3d1f8b800aff9b3e",
+  "upstream_commits_reviewed": 3,
+  "adapted_prs": [
+    15414,
+    15419,
+    15404,
+    15400
   ],
-  "discovery_is_not_full_semantic_qualification": true,
-  "full_history_rescan_replaced_by_verified_anchor_delta": true
+  "local_guards": [
+    "strict GitHub host parsing",
+    "abort queued file edits"
+  ],
+  "security_pin": {
+    "ip-address": "10.7.5",
+    "old": "10.5.0",
+    "source_checksum_verified": true,
+    "patched_version_advisories": 0
+  },
+  "references": {
+    "DSH": "Fresh reports show usage/client restrictions; no qualified full-unlimited route. No identity/fingerprint bypass imported.",
+    "DSW2API": "Head and PR/issue states unchanged; retained qualified own-account gateway.",
+    "Whalegate": "Three new commits reviewed: separate search-account waiting, repair note and global DSML normalization. No source copied: broad replacement risks modifying argument text; no Linux shell repair instructions imported.",
+    "Strata-Mnemosyne": "PR/issues refreshed; backend/Mac/Metal changes remain read-only and outside the Cline build."
+  },
+  "global_cpu_search": "13 hits; Agave erasure code, Android locking, ISPC/xLights and unrelated repos are not locked Cline dependencies. No patch applied.",
+  "review_rows": 71,
+  "discovery_is_not_full_implementation_qualification": true
 }
