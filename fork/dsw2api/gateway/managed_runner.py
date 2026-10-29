@@ -104,6 +104,7 @@ def configure_environment(directory, keys):
         # turn until SSE teardown releases it; never expose a local busy-503
         # after delivering a tool call. This is serialization, not a quota.
         'DEEPSEEK_MAX_CONCURRENCY': '1',
+        'CLINE_DSW_RECOVER_REQUEST_FAILURES': '1',
         'DISABLE_AUTO_RECOVER': '1', 'LOG_LEVEL': 'WARNING',
         'CLINE_DSW_POW_HELPER': str(ROOT / 'cline-dsw2api-pow.exe'),
     }
@@ -188,7 +189,9 @@ class ManagedApp:
         from admin import get_pool
         pool = get_pool()
         if path == '/control/status' and request.method == 'GET':
-            return await self.respond(send, 200, {'configured': pool.count() > 0, 'account_count': pool.count(),
+            authorization_required=any(row.get('authorization_required') for row in pool.get_all())
+            return await self.respond(send, 200, {'configured': pool.count() > 0 and not authorization_required, 'account_count': pool.count(),
+                'authorization_required':authorization_required,
                 'active_requests': self.active, 'model_id': 'deepseek-web', 'thinking_control': 'on/off',
                 'local_request_quota': None, 'local_output_cap': None})
         if path == '/control/registration' and request.method == 'POST':
@@ -230,7 +233,8 @@ class ManagedApp:
                 return await self.respond(send, 401, {'error': 'DeepSeek session could not be verified; sign in and copy the current session'})
             accounts = pool.get_all()
             if accounts:
-                pool.update(accounts[0]['id'], token=token, cookies=cookies, email='DeepSeek')
+                account=pool.update(accounts[0]['id'], token=token, cookies=cookies, email='DeepSeek')
+                pool.mark_recovered(account)
             else:
                 pool.add(token=token, cookies=cookies, email='DeepSeek')
             return await self.respond(send, 200, {'configured': True, 'model_id': 'deepseek-web'})

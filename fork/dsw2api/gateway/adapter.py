@@ -76,6 +76,12 @@ class UpstreamEmptyError(RuntimeError):
     """
 
 
+class SessionAuthorizationError(RuntimeError):
+    """Definitive rejected session; keep credentials for explicit reconnect."""
+    def __init__(self):
+        super().__init__('DeepSeek session expired. Open DeepSeek in your browser and reconnect the current session through the Cline extension.')
+
+
 class UpstreamHintError(RuntimeError):
     """Raised when the upstream signals an error via an SSE ``hint`` event
     (``type=error``) instead of an HTTP error — e.g. rate limiting. The
@@ -339,6 +345,8 @@ class DeepSeekAdapter:
         resp.raise_for_status()
         data = resp.json()
         try:
+            if data.get('code') == 40003 or resp.status_code == 401:
+                raise SessionAuthorizationError()
             return data["data"]["biz_data"]["challenge"]
         except (KeyError, TypeError) as e:
             raise RuntimeError(

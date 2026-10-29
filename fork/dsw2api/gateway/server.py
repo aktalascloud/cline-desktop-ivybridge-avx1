@@ -39,6 +39,7 @@ from adapter import (
     UpstreamHintError,
     RateLimitError,
     UserMutedError,
+    SessionAuthorizationError,
 )
 from admin import (
     router as admin_router,
@@ -216,6 +217,10 @@ def _check_rate_limit(request: Request) -> dict:
 
 app = FastAPI(title="DeepSeek Chat API", version="4.1.5")
 app.add_middleware(ImageBodyLimit)
+
+@app.exception_handler(SessionAuthorizationError)
+async def handle_session_authorization_error(request: Request, error: SessionAuthorizationError):
+    return JSONResponse(status_code=401, content={'error':{'type':'authentication_error','code':'deepseek_session_expired','message':str(error)}})
 
 
 @app.exception_handler(ImageError)
@@ -613,6 +618,8 @@ def _acquire(cache_key: str | None = None) -> AcquiredAccount:
         raise
     if acct is None:
         _UPSTREAM_LIMITER.release()
+        if any(row.get('authorization_required') for row in pool.get_all()):
+            raise SessionAuthorizationError()
         raise HTTPException(status_code=503, detail="All accounts busy, try again later")
     return AcquiredAccount(acct, cache_key=cache_key)
 
@@ -880,7 +887,7 @@ async def _prepare_stream_account(prompt, attachments, cache_key, thinking, mode
     return await prepare_account(lambda: _acquire(cache_key=cache_key),
         lambda acquired: prepare_turn(acquired, prompt, attachments, thinking=thinking,
                                       model_type=model_type or DEFAULT_MODEL_TYPE),
-        lambda acquired, error: pool.mark_error(acquired.acct, str(error)), runner=run_in_threadpool)
+        lambda acquired, error: pool.mark_error(acquired.acct, error), runner=run_in_threadpool)
 
 
 def _anthropic_nonstream(msg_id: str, prompt: str, tool_names: list[str],
@@ -918,7 +925,7 @@ def _anthropic_nonstream(msg_id: str, prompt: str, tool_names: list[str],
         )
     except UpstreamHintError as e:
         get_stats().record(MODEL_NAME, 0, success=False)
-        pool.mark_error(acq.acct, str(e))
+        pool.mark_error(acq.acct, e)
         raise HTTPException(status_code=502, detail=str(e))
     except UpstreamEmptyError:
         # Empty upstream bodies are transient and should not poison the
@@ -929,7 +936,7 @@ def _anthropic_nonstream(msg_id: str, prompt: str, tool_names: list[str],
         raise HTTPException(status_code=502, detail="上游返回空响应（可能触发限流），请稍后重试")
     except Exception as e:
         get_stats().record(MODEL_NAME, 0, success=False)
-        pool.mark_error(acq.acct, str(e))
+        pool.mark_error(acq.acct, e)
         raise
     finally:
         acq.release()
@@ -978,7 +985,7 @@ async def _anthropic_stream(msg_id: str, prompt: str, tool_names: list[str],
                 if cache_key:
                     SESSION_CACHE.invalidate(cache_key)
             else:
-                pool.mark_error(acq.acct, str(e))
+                pool.mark_error(acq.acct, e)
             raise
         finally:
             acq.release()
@@ -1034,7 +1041,7 @@ def _handle_nonstream(proxy_id: str, prompt: str, tools: list[ToolDef] | None = 
         raise HTTPException(status_code=429, detail=f"上游限流：{e.args[0] if e.args else '请求过于频繁'}，请稍后重试")
     except UpstreamHintError as e:
         get_stats().record(MODEL_NAME, 0, success=False)
-        pool.mark_error(acq.acct, str(e))
+        pool.mark_error(acq.acct, e)
         raise HTTPException(status_code=502, detail=str(e))
     except UpstreamEmptyError as e:
         # Transient empty responses (stale pooled connection / upstream
@@ -1045,7 +1052,7 @@ def _handle_nonstream(proxy_id: str, prompt: str, tools: list[ToolDef] | None = 
         raise HTTPException(status_code=502, detail="上游返回空响应（可能触发限流），请稍后重试")
     except Exception as e:
         get_stats().record(MODEL_NAME, 0, success=False)
-        pool.mark_error(acq.acct, str(e))
+        pool.mark_error(acq.acct, e)
         raise
     finally:
         acq.release()
@@ -1235,7 +1242,7 @@ async def _handle_stream(proxy_id: str, prompt: str, tools: list[ToolDef] | None
                 if cache_key:
                     SESSION_CACHE.invalidate(cache_key)
             else:
-                pool.mark_error(acq.acct, str(e))
+                pool.mark_error(acq.acct, e)
             log.exception("openai_stream_failed")
             # Emit a uniform error frame to the client, then [DONE] so the
             # client SDK doesn't see a truncated stream.
@@ -1331,7 +1338,7 @@ def _responses_controls(model):
 app.include_router(create_responses_router(
     store=lambda: RESPONSE_STORE, acquire=lambda parent: _acquire_response(parent),
     authenticate=_responses_auth, scope=_cache_scope, controls=_responses_controls, model=lambda: MODEL_NAME,
-    mark_error=lambda acquired, error: pool.mark_error(acquired.acct, str(error)),
+    mark_error=lambda acquired, error: pool.mark_error(acquired.acct, error),
     record=lambda elapsed, success: get_stats().record(MODEL_NAME, elapsed, success=success)))
 
 

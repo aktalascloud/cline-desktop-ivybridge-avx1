@@ -1,5 +1,10 @@
 # Cline Desktop Changelog
 
+## 1.0.13
+
+- DSW2API distinguishes rejected DeepSeek sessions from busy accounts. Definitive authorization failures request browser reconnection; transient request failures no longer quarantine the only account. Verified explicit reconnect clears the stale state without deleting credentials or bypassing vendor limits.
+- DSW2API отличает отклонённую сессию DeepSeek от занятого аккаунта. При ошибке авторизации нужен повторный вход через браузер; временный сбой запроса больше не блокирует единственный аккаунт. Проверенное переподключение снимает устаревшее состояние, без удаления credentials и обхода ограничений сервиса.
+
 ## 1.0.12
 
 - Security: pin ip-address 10.7.5 for the published zone-parser/IPv6 classification advisories; no unrelated dependency upgrade.

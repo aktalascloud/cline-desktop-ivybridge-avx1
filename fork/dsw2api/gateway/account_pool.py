@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
-from adapter import DeepSeekAdapter
+from adapter import DeepSeekAdapter, SessionAuthorizationError
 from crypto import (
     is_enabled as crypto_is_enabled,
     encrypt_account_dict,
@@ -93,6 +93,7 @@ class Account:
     state: str = "idle"        # idle | busy | error
     error_count: int = 0
     last_error: str = ""
+    authorization_required: bool = False
     last_used: float = 0.0
     _adapter: Optional[DeepSeekAdapter] = field(default=None, repr=False)
 
@@ -116,6 +117,7 @@ class Account:
             "email": self.email,
             "source": self.source,
             "state": self.state,
+            "authorization_required": self.authorization_required,
             "error_count": self.error_count,
             "last_error": self.last_error,
             "last_used": int(self.last_used),
@@ -298,6 +300,7 @@ class AccountPool:
                 acct.state = "idle"
                 acct.error_count = 0
                 acct.last_error = ""
+                acct.authorization_required = False
             self._save_persisted_accounts_locked()
             return acct
 
@@ -381,10 +384,16 @@ class AccountPool:
         is intentionally low so that transient blips heal automatically.
         """
         with self._lock:
-            acct.state = "error"
+            # A failed request does not prove that saved credentials are invalid.
+            # In the single-account managed service, permanently quarantining it
+            # turns every later user request into a misleading busy-503.
+            # No background retry, credential change or quota reset is performed.
+            recover_request = os.environ.get("CLINE_DSW_RECOVER_REQUEST_FAILURES") == "1"
+            acct.authorization_required = isinstance(error_msg, SessionAuthorizationError)
+            acct.state = "idle" if recover_request and not acct.authorization_required else "error"
             acct.error_count += 1
-            acct.last_error = error_msg
-            should_recover = acct.error_count >= _RECOVER_ERROR_THRESHOLD
+            acct.last_error = str(error_msg)
+            should_recover = not recover_request and acct.error_count >= _RECOVER_ERROR_THRESHOLD
 
         if should_recover and not _RECOVER_FLAG_DISABLED:
             # Run the health check on a background thread so the request
@@ -416,6 +425,7 @@ class AccountPool:
             acct.state = "idle"
             acct.error_count = 0
             acct.last_error = ""
+            acct.authorization_required = False
             acct._adapter = None
 
     # ── Health check / relogin ─────────────────────────────────

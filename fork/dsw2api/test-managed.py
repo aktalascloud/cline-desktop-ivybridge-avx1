@@ -23,6 +23,7 @@ sys.path.insert(0, str(resources / 'gateway'))
 import managed_runner
 
 calls = []
+reject_challenge = False
 token = 'synthetic-own-session-not-a-real-credential'
 answer = '<tool_calls><invoke name="read_fixture"><parameter name="path"><![CDATA[fixture.txt]]></parameter></invoke></tool_calls>'
 helper = resources / 'cline-dsw2api-pow.exe'
@@ -42,6 +43,7 @@ class FakeDeepSeek(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0'))))
         if self.path.endswith('/create_pow_challenge'):
+            if reject_challenge:return self.response({'code':40003,'msg':'Authorization Failed (invalid token)','data':None})
             return self.response({'code': 0, 'data': {'biz_data': {'challenge': {'challenge': challenge, 'salt': 'fixture', 'expire_at': 1700000000, 'difficulty': 1, 'signature': 'synthetic', 'target_path': '/api/v0/chat/completion'}}}})
         if self.path.endswith('/chat_session/create'): return self.response({'code': 0, 'data': {'biz_data': {'id': 'synthetic-session'}}})
         if self.path.endswith('/chat/completion'):
@@ -50,6 +52,9 @@ class FakeDeepSeek(http.server.BaseHTTPRequestHandler):
             calls.append(body)
             if 'VENDOR_THROTTLE_FIXTURE' in body['prompt']:
                 payload = b'event: hint\ndata: {"type":"error","content":"synthetic vendor throttle","finish_reason":"rate_limit_reached"}\n\n'
+                self.send_response(200); self.send_header('Content-Type','text/event-stream'); self.send_header('Content-Length',str(len(payload))); self.end_headers(); self.wfile.write(payload); return
+            if 'RECOVERABLE_STREAM_FIXTURE' in body['prompt']:
+                payload=b'event: hint\ndata: {"type":"error","content":"synthetic request failure","finish_reason":"server_error"}\n\n'
                 self.send_response(200); self.send_header('Content-Type','text/event-stream'); self.send_header('Content-Length',str(len(payload))); self.end_headers(); self.wfile.write(payload); return
             output = answer if len(calls) == 1 else 'Fixture task completed.'
             events = [('ready', {'response_message_id': 100 + len(calls)}), ('', {'p': 'response/content', 'o': 'APPEND', 'v': output}), ('', {'p': 'response/status', 'o': 'SET', 'v': 'FINISHED'})]
@@ -129,6 +134,27 @@ with tempfile.TemporaryDirectory(prefix='cline-dsw-synthetic-') as temp:
         assert len(calls) == before_calls + 1 and ('error' in text or code == 429), text
         code, text = request('/v1/chat/completions', {**payload, 'model': 'not-a-real-model'})
         assert code == 422
+        saved_account=(directory/'accounts.json').read_bytes()
+        before_calls=len(calls)
+        code,text=request('/v1/chat/completions',{**payload,'user':'synthetic-recoverable-error','messages':[{'role':'user','content':'RECOVERABLE_STREAM_FIXTURE'}]})
+        assert code==200 and 'error' in text and len(calls)==before_calls+1
+        code,text=request('/v1/chat/completions',{**payload,'user':'synthetic-after-error','messages':[{'role':'user','content':'Healthy request after a transient failure'}],'search_enabled':True})
+        assert code==200 and 'Fixture task completed.' in text, text
+        assert (directory/'accounts.json').read_bytes()==saved_account
+        reject_challenge = True
+        code,text=request('/v1/chat/completions',{**payload,'user':'synthetic-expired-auth','messages':[{'role':'user','content':'Do not call upstream with an invalid session'}]})
+        assert code==401 and 'deepseek_session_expired' in text and 'All accounts busy' not in text
+        before_calls=len(calls)
+        code,text=request('/v1/chat/completions',{**payload,'user':'synthetic-expired-auth-repeat','messages':[{'role':'user','content':'Still invalid'}]})
+        assert code==401 and len(calls)==before_calls
+        code,text=request('/control/status',control=True)
+        assert code==200 and json.loads(text)['authorization_required'] and not json.loads(text)['configured']
+        assert (directory/'accounts.json').read_bytes()==saved_account
+        reject_challenge = False
+        code,text=request('/control/session',{'token':token,'cookies':''},control=True)
+        assert code==200
+        code,text=request('/v1/chat/completions',{**payload,'user':'synthetic-after-explicit-reconnect','messages':[{'role':'user','content':'Healthy request after verified reconnect'}]})
+        assert code==200 and 'Fixture task completed.' in text
         print(json.dumps({'passed': True, 'real_upstream_requests': 0, 'actual_native_pow': True, 'streaming_tool_result_parent_chain': True, 'reasoning_high_then_none': True, 'session_encrypted_reload_and_invalid_preservation': True, 'no_gateway_output_cap': True}))
     finally:
         service.should_exit = True; worker.join(5); stub.shutdown(); os.chdir(resources)
