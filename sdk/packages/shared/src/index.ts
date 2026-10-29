@@ -310,6 +310,7 @@ export {
 export {
 	maskSecret,
 	sanitizeFileName,
+	sliceUtf16,
 	stripUtf8Bom,
 	trimNonEmpty,
 	truncateSplit,
@@ -513,6 +514,7 @@ export {
 	CLINE_ENVIRONMENTS,
 	DEFAULT_CLINE_ENVIRONMENT,
 	getClineEnvironmentConfig,
+	resolveClineAppUrl,
 	resolveClineEnvironment,
 } from "./runtime/cline-environment";
 export type {

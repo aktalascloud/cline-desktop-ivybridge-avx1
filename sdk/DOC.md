@@ -634,8 +634,17 @@ Voice input accepts dedicated audio-to-text models in streaming or recorded-file
 
 ## Optional fork-managed DeepSeek Web service (Windows)
 
-The Windows Desktop's trusted main window launches the installed default Chromium browser (Brave/Chrome/Edge and compatible variants) with a separate Cline-owned profile. Its bridge uses inherited process-owned pipes, with no TCP debugging listener, shared/default profile, weakened certificate checks or security-disabling flags. Only a verified session on the exact DeepSeek HTTPS origin and cookies scoped to its API URLs are returned to the main window for encrypted gateway setup. Passwords/OTP entry remain in the real browser; Cline never reads them. The bundled pinned Node runtime isolates this pipe transport from Bun's extra-stdio lifecycle issues. The provider preset is visible before sign-in without becoming a configured model or changing the selected Strata provider.
+The trusted Windows Desktop uses the existing regular browser session through a DeepSeek-only MV3 companion and a fixed Native Messaging host. One-time extension consent is required. Session material crosses a DPAPI CurrentUser encrypted inbox into the elevated Desktop backend. No separate profile, WebView login, TCP debugging, security-disabling flags or standalone Node runtime is used. Only the exact DeepSeek HTTPS origin is read; passwords and OTP remain on its sign-in page. The extension checks local readiness once per minute without scraping credentials and shows disconnected/connecting/connected icon states. DSW2API has independent Deep thinking and Smart search switches. A single personal account serializes pending turns until SSE teardown releases it, without local request/output quotas.
 
-Author Ultra/Adaptive are restricted to explicitly opted-in Qwen3.8 Next / Flash Next model IDs. Other families cannot acquire the extensions through stale catalog metadata or stored preferences; ordinary reasoning and provider sampling remain unchanged. The chat picker, local runtime validation, catalog projection and request encoder enforce this boundary.
+Author Ultra/Adaptive are restricted to explicitly opted-in DavidAU Qwen3.8 Next / Flash Next model IDs; Swift and other authors are excluded. Other families cannot acquire the extensions through stale catalog metadata or stored preferences; ordinary reasoning and provider sampling remain unchanged. The chat picker, local runtime validation, catalog projection and request encoder enforce this boundary.
 
 `getManagedDsw2Api()` returns the shared lifecycle service. `status()` exposes readiness, account count and model identity without credentials. `configure(manager, token, cookies)` verifies a personal web session before replacing encrypted saved credentials; `connectSaved(manager)` reuses them. `synchronize(manager)` refreshes only a marked managed provider after worker restarts; provider registration does not change the last-used provider. The runtime and native helper must come from this fork's verified installer. Session changes require idle inference; vendor throttling is surfaced, not bypassed. No local business request quota or response/tool-result truncation is imposed. Token usage values are character-based estimates, not vendor counts. Never log session material or put it in repository examples.
+
+## UTF-16 string truncation
+
+`@cline/shared` exports `sliceUtf16(text, start, end?)`, with `String.slice`
+offset semantics. Cuts move inward by one code unit if they would split a
+surrogate pair. Existing unpaired surrogates are not repaired, and grapheme
+clusters are not preserved. `truncateStr`, `truncateSplit`, and command-output
+truncation use this helper while retaining UTF-16 budgets and existing notices.
+

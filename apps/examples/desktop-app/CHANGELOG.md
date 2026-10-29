@@ -1,5 +1,13 @@
 # Cline Desktop Changelog
 
+## 1.0.12
+
+- Saved local chats resume by ID beyond the Hub frame limit; same-file edits are serialized and cancelled queued edits are skipped. UTF-16 truncation preserves surrogate pairs; discovered CLI models retain known reasoning metadata.
+- Локальные чаты возобновляются по ID без пересылки большой истории; параллельные правки одного файла сохраняются, отменённые ожидающие правки не выполняются. Обрезание UTF-16 не рвёт emoji, CLI сохраняет известные возможности reasoning.
+
+- Reviewed upstream update: same-origin privacy settings links, destination-gated provider attribution and reuse of generated-media files in CLI transcripts. Local Strata/DSW2API settings, approvals and AVX1 profile are preserved. Experimental CLI Cloud remains opt-in.
+- Проверенный upstream: настройки конфиденциальности с проверкой адреса, заголовки провайдера только для его узла и повторное использование файлов медиа в CLI. Настройки Strata/DSW2API, approvals и AVX1 сохранены. Экспериментальный CLI Cloud требует явного включения.
+
 ## 1.0.11
 
 - DSW2API: independent Deep thinking and Smart search switches replace reasoning budgets. The browser extension icon shows confirmed connection status and clears it when the local bridge disconnects.

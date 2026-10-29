@@ -65,3 +65,48 @@ export async function readRepoStatus(cwd: string): Promise<RepoStatus> {
 
 	return { branch, diffStats };
 }
+
+export async function readGitOriginUrl(
+	cwd: string,
+): Promise<string | undefined> {
+	try {
+		const { stdout } = await execFileAsync(
+			"git",
+			["-C", cwd, "remote", "get-url", "origin"],
+			{ encoding: "utf8", windowsHide: true },
+		);
+		return stdout.trim() || undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/** "owner/name" for GitHub remotes in https, ssh, or scp-like form. */
+export function parseGitHubRepoFullName(
+	remoteUrl: string | undefined,
+): string | undefined {
+	if (!remoteUrl) return undefined;
+	const input = remoteUrl.trim();
+	const scp = /^(?:git@)?github\.com:([^\s?#]+)$/i.exec(input);
+	let pathname: string;
+	if (scp) pathname = scp[1]!;
+	else {
+		try {
+			const url = new URL(input);
+			if (
+				url.hostname.toLowerCase() !== "github.com" ||
+				url.search ||
+				url.hash ||
+				!["https:", "http:", "ssh:", "git:"].includes(url.protocol)
+			)
+				return undefined;
+			pathname = url.pathname.replace(/^\//, "");
+		} catch {
+			return undefined;
+		}
+	}
+	const match = /^([A-Za-z0-9-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/.exec(
+		pathname,
+	);
+	return match ? `${match[1]}/${match[2]}`.toLowerCase() : undefined;
+}
