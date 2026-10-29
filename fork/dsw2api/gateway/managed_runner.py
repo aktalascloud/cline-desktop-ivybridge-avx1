@@ -105,6 +105,7 @@ def configure_environment(directory, keys):
         # after delivering a tool call. This is serialization, not a quota.
         'DEEPSEEK_MAX_CONCURRENCY': '1',
         'CLINE_DSW_RECOVER_REQUEST_FAILURES': '1',
+        'DEEPSEEK_SHARED_BROWSER_LEASE': '1',
         'DISABLE_AUTO_RECOVER': '1', 'LOG_LEVEL': 'WARNING',
         'CLINE_DSW_POW_HELPER': str(ROOT / 'cline-dsw2api-pow.exe'),
     }

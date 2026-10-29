@@ -66,6 +66,8 @@ class FakeDeepSeek(http.server.BaseHTTPRequestHandler):
 stub = http.server.ThreadingHTTPServer(('127.0.0.1', 0), FakeDeepSeek)
 threading.Thread(target=stub.serve_forever, daemon=True).start()
 with tempfile.TemporaryDirectory(prefix='cline-dsw-synthetic-') as temp:
+    # Synthetic requests must never contend with a real personal account.
+    os.environ['LOCALAPPDATA'] = temp
     directory = Path(temp); keys = managed_runner.load_keys(directory, create=True)
     managed_runner.configure_environment(directory, keys)
     import adapter
@@ -129,6 +131,34 @@ with tempfile.TemporaryDirectory(prefix='cline-dsw-synthetic-') as temp:
         assert code == 200 and calls[2]['thinking_enabled'] is False and calls[2]['search_enabled'] is True
         code, text = request('/v1/chat/completions', {**payload, 'messages': messages, 'search_enabled': False})
         assert code == 200 and calls[3]['thinking_enabled'] is True and calls[3]['search_enabled'] is False
+        # A second application owns the browser-account lease. A cancelled
+        # waiter must send nothing; the next live waiter continues after release.
+        holder = subprocess.Popen([sys.executable, '-B', str(Path(__file__).with_name('test-browser-lease.py')), '--child', '--hold'],
+                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        try:
+            assert holder.stdout.readline().strip() == 'acquired'
+            before_shared = len(calls)
+            queued_payload = {**payload, 'user': 'shared-client-cancel', 'messages': [{'role':'user','content':'Cancelled before vendor submission'}]}
+            body = json.dumps(queued_payload).encode()
+            client = socket.create_connection(('127.0.0.1', port), timeout=5)
+            client.sendall((f'POST /v1/chat/completions HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer {keys["client"]}\r\nContent-Type: application/json\r\nContent-Length: {len(body)}\r\n\r\n').encode() + body)
+            time.sleep(.2)
+            assert len(calls) == before_shared
+            client.close()
+            time.sleep(.3)
+            result = []
+            waiter = threading.Thread(target=lambda: result.append(request('/v1/chat/completions', {**queued_payload, 'user':'shared-client-continue'})))
+            waiter.start()
+            time.sleep(.2)
+            assert waiter.is_alive() and len(calls) == before_shared
+            holder.stdin.write('\n'); holder.stdin.flush()
+            holder.communicate(timeout=5)
+            waiter.join(10)
+            assert not waiter.is_alive() and result[0][0] == 200
+            assert len(calls) == before_shared + 1, 'Cancelled shared waiter reached the vendor'
+        finally:
+            if holder.poll() is None:
+                holder.kill(); holder.wait()
         before_calls = len(calls)
         code, text = request('/v1/chat/completions', {**payload, 'user': 'synthetic-throttle-conversation', 'messages': [{'role':'user','content':'VENDOR_THROTTLE_FIXTURE'}]})
         assert len(calls) == before_calls + 1 and ('error' in text or code == 429), text

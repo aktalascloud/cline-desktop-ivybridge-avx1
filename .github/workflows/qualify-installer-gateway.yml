@@ -15,8 +15,8 @@ jobs:
     timeout-minutes: 25
     env:
       SOURCE_SHA: ${{ inputs.source_sha }}
-      BASELINE_SHA: cd11cc0592713233b156615a52bed714f8085ad0
-      BASELINE_RUN: '40810707256'
+      BASELINE_SHA: 4f541be3afb1609f765e413ff90bc6458b05173a
+      BASELINE_RUN: '40830543121'
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - name: Validate pinned input
@@ -37,9 +37,9 @@ jobs:
           if($LASTEXITCODE -or $baseline.head_sha -ne $env:BASELINE_SHA -or $baseline.conclusion -ne 'success'){throw 'Qualified baseline unavailable'}
           git fetch --depth=1 origin $env:BASELINE_SHA a26a46d2ffa302980ff4cca12eb5af19113d6669
           if($LASTEXITCODE){throw 'Baseline source fetch failed'}
-          $allowed=@('.github/workflows/qualify-installer-gateway.yml','apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh','apps/examples/desktop-app/scripts/windows-installer.test.ts','fork/dsw2api/gateway/managed_runner.py','fork/dsw2api/test-managed.py','README.md','README.ru.md','fork/components.json','fork/qualification.json','fork/review-ledger.json','fork/discovery.json','fork/performance.md','fork/history-policy.md')
+          $allowed=@('.github/workflows/qualify-installer-gateway.yml','apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh','apps/examples/desktop-app/scripts/windows-installer.test.ts','fork/dsw2api/gateway/managed_runner.py','fork/dsw2api/gateway/server.py','fork/dsw2api/gateway/browser_session_lease.py','fork/dsw2api/test-browser-lease.py','fork/dsw2api/test-managed.py','fork/rebundle-managed-resources.ps1','fork/browser-bridge/extension-status.test.mjs','fork/browser-bridge/shared-extension.test.mjs','README.md','README.ru.md','fork/components.json','fork/qualification.json','fork/review-ledger.json','fork/discovery.json','fork/performance.md','fork/history-policy.md')
           $changed=@(git diff --name-only $env:BASELINE_SHA HEAD)
-          if($LASTEXITCODE -or @($changed|Where-Object {$_ -notin $allowed}).Count){throw 'Compiled inputs changed: use the full Windows build workflow'}
+          if($LASTEXITCODE -or @($changed|Where-Object {$_ -notin $allowed -and $_ -notmatch '^fork/browser-bridge/extension/[a-zA-Z0-9_./-]+\.(js|json|html|png|txt)$'}).Count){throw 'Compiled inputs changed: use the full Windows build workflow'}
           @{source_sha=$env:SOURCE_SHA;baseline_sha=$env:BASELINE_SHA;baseline_run=$env:BASELINE_RUN;compiled_inputs_unchanged=$true;changed=$changed}|ConvertTo-Json -Depth 4|Set-Content qualification.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
@@ -75,7 +75,9 @@ jobs:
           if($LASTEXITCODE){throw 'Gateway runtime build failed'}
           & apps/examples/desktop-app/src-tauri/bin/dsw2api/runtime/python.exe -I -B -X utf8 fork/dsw2api/test-managed.py apps/examples/desktop-app/src-tauri/bin/dsw2api
           if($LASTEXITCODE){throw 'Gateway queue, tool, encryption and SSE fixture failed'}
-          node --test fork/browser-bridge/extension-status.test.mjs
+          python fork/dsw2api/test-browser-lease.py
+          if($LASTEXITCODE){throw 'Cross-process lease regressions failed'}
+          node --test fork/browser-bridge/extension-status.test.mjs fork/browser-bridge/shared-extension.test.mjs
           if($LASTEXITCODE){throw 'Extension indicator tests failed'}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

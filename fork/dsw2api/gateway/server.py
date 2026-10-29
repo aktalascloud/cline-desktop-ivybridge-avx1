@@ -426,7 +426,7 @@ class ModelList(BaseModel):
 
 class AcquiredAccount:
     """Context manager wrapping an acquired pool account."""
-    def __init__(self, acct, cache_key: str | None = None):
+    def __init__(self, acct, cache_key: str | None = None, browser_lease=None):
         self.acct = acct
         self.adapter = acct.adapter
         self._session_id: str | None = None
@@ -434,6 +434,7 @@ class AcquiredAccount:
         self._cache_key = cache_key
         self._cached_session: ChatSession | None = None
         self._released = False
+        self._browser_lease = browser_lease
         self._pending_image_files: dict[str, str] | None = None
         self._seed_image_files: dict[str, str] = {}
         credential_material = str(getattr(acct, 'token', '')) + '\0' + str(getattr(acct, 'cookies', ''))
@@ -589,8 +590,14 @@ class AcquiredAccount:
         if self._released:
             return
         self._released = True
-        pool.release(self.acct)
-        _UPSTREAM_LIMITER.release()
+        try:
+            pool.release(self.acct)
+        finally:
+            try:
+                if self._browser_lease is not None:
+                    self._browser_lease.release()
+            finally:
+                _UPSTREAM_LIMITER.release()
 
 
 def _acquire(cache_key: str | None = None) -> AcquiredAccount:
@@ -603,9 +610,13 @@ def _acquire(cache_key: str | None = None) -> AcquiredAccount:
         if cancellation is not None and cancellation.is_set():
             raise asyncio.CancelledError()
         if _UPSTREAM_LIMITER.acquire(timeout=.1): break
+    browser_lease = None
+    acct = None
     try:
         if cancellation is not None and cancellation.is_set():
             raise asyncio.CancelledError()
+        from browser_session_lease import acquire_browser_session_lease
+        browser_lease = acquire_browser_session_lease(cancellation)
         cached = SESSION_CACHE.get(cache_key) if cache_key else None
         # Keep a cached conversation on its creating account whenever it is
         # available.  If it is busy/error, safely start a fresh conversation
@@ -613,15 +624,22 @@ def _acquire(cache_key: str | None = None) -> AcquiredAccount:
         acct = pool.acquire_by_id(cached.account_id) if cached and cached.account_id else None
         if acct is None:
             acct = pool.acquire()
+        if acct is None:
+            if any(row.get('authorization_required') for row in pool.get_all()):
+                raise SessionAuthorizationError()
+            raise HTTPException(status_code=503, detail="All accounts busy, try again later")
+        return AcquiredAccount(acct, cache_key=cache_key, browser_lease=browser_lease)
     except BaseException:
-        _UPSTREAM_LIMITER.release()
+        try:
+            if acct is not None:
+                pool.release(acct)
+        finally:
+            try:
+                if browser_lease is not None:
+                    browser_lease.release()
+            finally:
+                _UPSTREAM_LIMITER.release()
         raise
-    if acct is None:
-        _UPSTREAM_LIMITER.release()
-        if any(row.get('authorization_required') for row in pool.get_all()):
-            raise SessionAuthorizationError()
-        raise HTTPException(status_code=503, detail="All accounts busy, try again later")
-    return AcquiredAccount(acct, cache_key=cache_key)
 
 
 def _upstream_limit_from_env() -> int:
