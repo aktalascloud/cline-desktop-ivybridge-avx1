@@ -131,7 +131,9 @@
     "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.13",
     "asset_sha256": "318b125d6ba5fd46696d09d7b8a4a1b2d558651f1acdfe6c8b8569d9afe1b733",
     "asset_count": 1,
-    "anonymous_download_verified": false
+    "anonymous_download_verified": true,
+    "feed_signature_verified": true,
+    "source_tag_verified": true
   },
   "voice_input": {
     "provider_tests_passed": 143,
