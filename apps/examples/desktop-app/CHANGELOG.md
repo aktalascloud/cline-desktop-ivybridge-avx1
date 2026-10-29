@@ -2,6 +2,9 @@
 
 ## 1.0.12
 
+- Security: pin ip-address 10.7.5 for the published zone-parser/IPv6 classification advisories; no unrelated dependency upgrade.
+- Безопасность: ip-address 10.7.5 закрывает опубликованные проблемы разбора zone-id и классификации IPv6; остальные зависимости сохранены.
+
 - Saved local chats resume by ID beyond the Hub frame limit; same-file edits are serialized and cancelled queued edits are skipped. UTF-16 truncation preserves surrogate pairs; discovered CLI models retain known reasoning metadata.
 - Локальные чаты возобновляются по ID без пересылки большой истории; параллельные правки одного файла сохраняются, отменённые ожидающие правки не выполняются. Обрезание UTF-16 не рвёт emoji, CLI сохраняет известные возможности reasoning.
 
