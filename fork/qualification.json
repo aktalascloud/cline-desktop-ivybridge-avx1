@@ -311,7 +311,6 @@
     "source_sha": "92526d83ef73948b56b04919d137d1fd5e2bc3de",
     "production_frontend": true,
     "installer_regressions": 13,
-    "upstream_gateway_tests": 132,
     "inapp_gateway_identity_tests": 6,
     "profile_preserved": true,
     "seven_strata_modes_verified": true,
@@ -332,7 +331,10 @@
       "status": "success",
       "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/actions/runs/40835552323",
       "raw_suite_summaries": []
-    }
+    },
+    "current_gateway_validation": "bundled Python HTTP/SSE/auth/reconnect/queue/cancellation/encrypted-state fixtures; full upstream unit suite not repeated",
+    "shared_extension_tests": 14,
+    "compiled_baseline_source_sha": "4f541be3afb1609f765e413ff90bc6458b05173a"
   },
   "research_20261028": {
     "date": "2026-10-28",
