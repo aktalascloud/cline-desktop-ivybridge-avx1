@@ -2569,7 +2569,7 @@ describe("updateLocalProvider", () => {
 	it("replaces a stale window with endpoint metadata without losing model customizations", async () => {
 		const modelsPath = resolveModelsRegistryPath(manager),
 			state = await readModelsFile(modelsPath);
-		state.providers["editable-provider"]!.models["model-a"] = {
+		state.providers["editable-provider"]!.models!["model-a"] = {
 			id: "model-a",
 			name: "Personal label",
 			contextWindow: 131072,
@@ -2589,7 +2589,7 @@ describe("updateLocalProvider", () => {
 		});
 		const result = (await readModelsFile(modelsPath)).providers[
 			"editable-provider"
-		].models["model-a"];
+		]?.models?.["model-a"];
 		expect(result).toMatchObject({
 			name: "Personal label",
 			contextWindow: 256000,
