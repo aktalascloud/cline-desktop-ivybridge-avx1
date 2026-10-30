@@ -1743,5 +1743,13 @@
     "origin": "official-upstream-merge",
     "status": "integrated-awaiting-CI",
     "verification": "Reviewed trusted-connection and feature gates, captured plan/account binding, explicit Git confirmation and no unconfirmed prompt replay. Preserved Ultra/Adaptive normalization after helper relocation; translated new UI. Local typecheck and 144 focused tests after plural repair; full affected CI remains required."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14550",
+    "sha": "local-daily14-pending",
+    "origin": "our-fix",
+    "purpose": "Preserve discovered context limits for automatic compaction",
+    "status": "implemented-local-tested-awaiting-CI",
+    "verification": "Real local backend read-only metadata confirmed missing Swift limit 131072; no inference. Common metadata parser retains validated context_length/max_model_len/meta.n_ctx through catalogs and custom-provider updates; explicit overrides preserved. Synthetic compaction keeps original transcript/current request; 248 provider/context tests and 29 catalog tests passed. No model files, IDs or backend changes."
   }
 ]

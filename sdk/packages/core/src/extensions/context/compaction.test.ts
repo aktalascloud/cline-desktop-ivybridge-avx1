@@ -4894,3 +4894,19 @@ describe("createContextCompactionPrepareTurn", () => {
 		).toBeDefined();
 	});
 });
+
+it("auto-compacts a discovered 128K local model before sending an oversized history", async () => {
+ const {extractModelsFromPayload}=await import("../../services/providers/model-source");
+ const model=extractModelsFromPayload({data:[{id:"local",context_length:131072}]},"local-provider")[0]!;
+ const messages: MessageWithMetadata[]=[{role:"user",content:"Initial task"},{role:"assistant",content:"Earlier context ".repeat(40000)},{role:"user",content:"Newest request"}];
+ const original=JSON.stringify(messages);
+ const compact=vi.fn(async (ctx: CoreCompactionContext)=>({messages:[{role:"user" as const,content:"Summary of completed work"},ctx.messages.at(-1)!]}));
+ const prepare=createContextCompactionPrepareTurn({providerId:"local-provider",modelId:"local",compaction:{enabled:true,compact}});
+ const result=await prepare?.({agentId:"fixture",conversationId:"fixture",parentAgentId:null,iteration:2,messages,apiMessages:messages,systemPrompt:"Preserve task and approvals",tools:[],abortSignal:new AbortController().signal,model:{id:"local",provider:"local-provider",info:model}});
+ expect(compact).toHaveBeenCalledOnce();
+ const budget=compact.mock.calls[0]![0].budget!;
+ expect(budget.request.maxInputTokens).toBeLessThan(131072);
+ expect(budget.request.targetTokens).toBeLessThan(budget.request.triggerTokens);
+ expect(result?.messages.at(-1)?.content).toBe("Newest request");
+ expect(JSON.stringify(messages)).toBe(original);
+});

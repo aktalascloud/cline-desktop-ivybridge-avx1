@@ -552,3 +552,9 @@ describe("isRetryableBeyondSdkRetries", () => {
 		);
 	});
 });
+
+it("recognizes the Strata context rejection without retrying it as a transient error", () => {
+ const error={statusCode:400,message:"request exceeds the context window: prompt (131263 tokens) leaves no room to answer in the context (131072); requests are never truncated"};
+ expect(classifyProviderError(error)).toBe("context_window_exceeded");
+ expect(isRetryableProviderError(error)).toBe(false);
+});

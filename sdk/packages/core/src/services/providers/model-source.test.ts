@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { fetchModelIdsFromSource } from "./model-source";
+import { fetchModelIdsFromSource, fetchModelsFromSource, extractModelsFromPayload } from "./model-source";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -55,4 +55,15 @@ it("does not send provider credentials to a different origin", async () => {
 	});
 	const init = fetchMock.mock.calls[0][1];
 	expect([...new Headers(init.headers)]).toEqual([]);
+});
+
+it("preserves declared model budgets without guessing limits for ID-only entries", () => {
+ expect(extractModelsFromPayload({data:[{id:"local", context_length:131072, max_model_len:262144}, {id:"vllm", max_model_len:65536}, {id:"meta",meta:{n_ctx:32768}}, "unknown", {id:"invalid",context_length:-1,max_input_tokens:Infinity}]}, "custom")).toEqual([
+  {id:"local",contextWindow:131072}, {id:"vllm",contextWindow:65536}, {id:"meta",contextWindow:32768}, {id:"unknown"}, {id:"invalid"}
+ ]);
+});
+it("retains budgets through authenticated model discovery", async () => {
+ const fetchMock=vi.fn(async(_url: string, _init: RequestInit)=>Response.json({data:[{id:"local",context_length:131072}]}));vi.stubGlobal("fetch",fetchMock);
+ expect(await fetchModelsFromSource("https://host.example/v1/models", "custom", {baseUrl:"https://host.example/v1",apiKey:"synthetic"})).toEqual([{id:"local",contextWindow:131072}]);
+ expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get("Authorization")).toBe("Bearer synthetic");
 });

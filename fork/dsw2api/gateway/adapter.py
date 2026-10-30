@@ -575,7 +575,7 @@ class DeepSeekAdapter:
                     prompt = retry_prompt
                     ref_file_ids = retry_ref_file_ids
             except UpstreamEmptyError:
-                if attempt > 1:
+                if attempt > 1 or os.environ.get("CLINE_DSW_RECOVER_REQUEST_FAILURES") == "1":
                     raise
                 log.warning("upstream_empty_retry_nonstream")
                 session_id = self.create_session()
@@ -780,11 +780,13 @@ class DeepSeekAdapter:
                             extra={"attempt": attempt, "delay": delay})
                 time.sleep(delay)
             except UpstreamEmptyError:
-                if attempt > 1:
+                if attempt > 1 or os.environ.get("CLINE_DSW_RECOVER_REQUEST_FAILURES") == "1":
                     raise
             else:
                 if yielded:
                     return
+                if os.environ.get("CLINE_DSW_RECOVER_REQUEST_FAILURES") == "1":
+                    raise UpstreamEmptyError("upstream returned empty response; not replayed")
                 log.warning("upstream_empty_retry_stream")
             if attempt > max(len(RATE_LIMIT_RETRY_DELAYS), 1):
                 break

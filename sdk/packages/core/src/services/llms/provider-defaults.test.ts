@@ -621,7 +621,7 @@ describe("resolveProviderConfig", () => {
 	it("uses built-in modelsSourceUrl for keyless local provider models", async () => {
 		const fetchMock = vi.fn(async () => {
 			return new Response(
-				JSON.stringify({ models: [{ name: "local-llama" }] }),
+				JSON.stringify({ models: [{ name: "local-llama", context_length: 131072 }] }),
 				{
 					status: 200,
 					headers: { "content-type": "application/json" },
@@ -645,6 +645,7 @@ describe("resolveProviderConfig", () => {
 			{ method: "GET", signal: expect.any(AbortSignal) },
 		);
 		expect(Object.keys(resolved?.knownModels ?? {})).toEqual(["local-llama"]);
+        expect(resolved?.knownModels?.["local-llama"]?.contextWindow).toBe(131072);
 	});
 
 	it("loads Poolside models from the authenticated models endpoint", async () => {

@@ -74,6 +74,21 @@ with tempfile.TemporaryDirectory(prefix='cline-dsw-synthetic-') as temp:
     adapter.BASE_URL = f'http://127.0.0.1:{stub.server_port}'
     adapter._HifProvider.headers = lambda self: {}  # No external HIF request in tests.
     import server
+    # A browser completion that returned no stream has an uncertain outcome.
+    # Managed clients surface it; they never create a new thread and replay it.
+    import adapter as adapter_module
+    for stream_empty in (False, True):
+        instance = object.__new__(adapter_module.DeepSeekAdapter)
+        def no_replay(*args, **kwargs): raise AssertionError('uncertain request was replayed')
+        instance.create_session = no_replay
+        def rejected(*args, **kwargs): raise adapter_module.UpstreamEmptyError('synthetic empty stream')
+        instance._chat_once = rejected
+        instance._chat_stream_once = (lambda *args, **kwargs: iter(())) if stream_empty else rejected
+        try:
+            if stream_empty: list(instance.chat_stream('synthetic', 'fixture'))
+            else: instance.chat('synthetic', 'fixture')
+        except adapter_module.UpstreamEmptyError: pass
+        else: raise AssertionError('empty completion was not surfaced')
     original_tokens = server.ChatService.tokens
     def delayed_close(*args, **kwargs):
         try: yield from original_tokens(*args, **kwargs)

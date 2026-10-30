@@ -55,7 +55,8 @@ import {
 	writeModelsFile,
 } from "./local-provider-registry";
 import {
-	fetchModelIdsFromSource,
+	fetchModelsFromSource,
+	type DiscoveredModel,
 	resolveModelsSourceUrl,
 } from "./model-source";
 import { isProviderSettingsUsable } from "./provider-readiness";
@@ -390,6 +391,7 @@ function normalizeHeaders(
 function buildProviderModels(
 	modelIds: string[],
 	existingModels: StoredProviderEntry["models"] = {},
+ discovered: DiscoveredModel[] = [],
 ) {
 	// Provider capabilities are inherited at registration. Persist only model
 	// overrides so refreshing defaults cannot overwrite user customizations.
@@ -399,6 +401,7 @@ function buildProviderModels(
 			{
 				id,
 				name: id,
+                ...discovered.find(model => model.id === id),
 				...existingModels[id],
 			},
 		]),
@@ -435,14 +438,14 @@ async function resolveModelIds(params: {
 	modelsSourceUrl?: string;
 	fallbackModelIds?: string[];
 	shouldRecompute: boolean;
-}): Promise<string[]> {
+}): Promise<{ modelIds: string[]; discovered: DiscoveredModel[] }> {
 	if (!params.shouldRecompute) {
-		return params.fallbackModelIds ?? [];
+		return {modelIds: params.fallbackModelIds ?? [], discovered: []};
 	}
-	let fetchedModels: string[] = [];
+	let fetchedModels: DiscoveredModel[] = [];
 	if (params.modelsSourceUrl) {
 		try {
-			fetchedModels = await fetchModelIdsFromSource(
+			fetchedModels = await fetchModelsFromSource(
 				params.modelsSourceUrl,
 				params.providerId,
 				params,
@@ -451,7 +454,7 @@ async function resolveModelIds(params: {
 			throw new ModelDiscoveryError(cause);
 		}
 	}
-	return [...new Set([...(params.explicitModels ?? []), ...fetchedModels])];
+	return {modelIds: [...new Set([...(params.explicitModels ?? []), ...fetchedModels.map(model => model.id)])], discovered: fetchedModels};
 }
 
 function removeProviderFromSettingsState(
@@ -604,7 +607,7 @@ async function addLocalProviderUnlocked(
 	const typedModels = uniqueTrimmed(request.models);
 	const sourceUrl = request.modelsSourceUrl?.trim();
 	const normalizedHeaders = normalizeHeaders(request.headers);
-	const modelIds = await resolveModelIds({
+	const {modelIds, discovered} = await resolveModelIds({
 		providerId,
 		explicitModels: typedModels,
 		modelsSourceUrl: sourceUrl,
@@ -656,7 +659,7 @@ async function addLocalProviderUnlocked(
 			capabilities,
 			modelsSourceUrl: sourceUrl,
 		},
-		models: buildProviderModels(modelIds),
+		models: buildProviderModels(modelIds, {}, discovered),
 		discoveredModelIds: modelIds.filter((id) => !typedModels.includes(id)),
 	};
 	await writeModelsFile(modelsPath, modelsState);
@@ -827,7 +830,7 @@ async function prepareProviderUpdate(
 	const existingModelIds = Object.keys(existingEntry.models ?? {})
 		.map((id) => id.trim())
 		.filter(Boolean);
-	const modelIds = await resolveModelIds({
+	const {modelIds, discovered} = await resolveModelIds({
 		providerId,
 		explicitModels,
 		modelsSourceUrl: nextModelsSourceUrl,
@@ -893,7 +896,7 @@ async function prepareProviderUpdate(
 			capabilities,
 			modelsSourceUrl: nextModelsSourceUrl,
 		},
-		models: buildProviderModels(modelIds, existingEntry.models),
+		models: buildProviderModels(modelIds, existingEntry.models, discovered),
 		discoveredModelIds: nextModelsSourceUrl
 			? shouldRecomputeModels
 				? modelIds.filter((id) => !explicitModels.includes(id))

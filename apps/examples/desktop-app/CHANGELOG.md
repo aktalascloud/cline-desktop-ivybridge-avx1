@@ -2,6 +2,8 @@
 
 ## 1.0.14
 
+- Auto-compaction now retains model context limits returned by the provider. Browser DeepSeek requests are not automatically replayed after errors or empty streams; no claim of protection from service account restrictions.
+- Автокомпактирование получает размер контекста из каталога провайдера. Ошибочные и пустые веб-запросы DeepSeek автоматически не переотправляются; отсутствие блокировок сервисом не гарантируется.
 - Updated upstream: Hub account validation, resumable cloud tasks and safer draft/attachment handoff. Partial local model overrides preserve explicit reasoning off. Strata, DSW2API, approvals and AVX1 profile retained.
 - Обновлён upstream: проверка аккаунта Hub, восстановление облачных задач и сохранение черновиков с вложениями. Частичные настройки локальной модели сохраняют отключение thinking. Strata, DSW2API, approvals и AVX1 сохранены.
 
