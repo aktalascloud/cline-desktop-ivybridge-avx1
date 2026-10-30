@@ -7,7 +7,7 @@ import {
 import type { JsonRecord } from "./types";
 import { isQwen38NextAuthorModel } from "@cline/shared";
 
-/** Refresh only local sampling defaults; never replace credentials or historical routes. */
+/** Refresh local defaults and limits; preserve credentials and historical routes. */
 export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
 	const id = String(config.provider ?? config.providerId ?? "").trim();
 	if (!id) return config;
@@ -17,20 +17,19 @@ export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
 		settings.protocol !== "openai-chat"
 	)
 		return config;
+	const modelId = String(
+		config.model ?? config.modelId ?? settings.model ?? "",
+	);
+	const models =
+		readModelsFileSync(resolveModelsRegistryPath(new ProviderSettingsManager()))
+			.providers[id]?.models ?? {};
+	const model = Object.entries(models).find(
+		([key, value]) => (value.id?.trim() || key.trim()) === modelId,
+	)?.[1];
 	if (
 		config.thinking !== false &&
 		["ultra", "adaptive"].includes(String(config.reasoningEffort))
 	) {
-		const models =
-			readModelsFileSync(
-				resolveModelsRegistryPath(new ProviderSettingsManager()),
-			).providers[id]?.models ?? {};
-		const modelId = String(
-			config.model ?? config.modelId ?? settings.model ?? "",
-		);
-		const model = Object.entries(models).find(
-			([key, value]) => (value.id?.trim() || key.trim()) === modelId,
-		)?.[1];
 		if (
 			model?.supportsAuthorModes !== true ||
 			!isQwen38NextAuthorModel(modelId)
@@ -41,6 +40,19 @@ export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
 		config.providerConfig && typeof config.providerConfig === "object"
 			? (config.providerConfig as JsonRecord)
 			: {};
+	const historicalUrl = String(
+		config.baseUrl ?? existing.baseUrl ?? "",
+	).replace(/\/$/, "");
+	const sameEndpoint =
+		!historicalUrl ||
+		!settings.baseUrl ||
+		historicalUrl === settings.baseUrl.replace(/\/$/, "");
+	const modelInfo =
+		sameEndpoint &&
+		model &&
+		((model.contextWindow ?? 0) > 0 || (model.maxInputTokens ?? 0) > 0)
+			? { ...model, id: modelId }
+			: undefined;
 	return {
 		...config,
 		providerConfig: {
@@ -53,6 +65,7 @@ export function refreshLocalSamplingConfig(config: JsonRecord): JsonRecord {
 			),
 			...existing,
 			providerId: id,
+			...(modelInfo ? { modelInfo } : {}),
 			sampling: settings.sampling ?? {},
 			authorReasoningMode:
 				config.thinking !== false &&

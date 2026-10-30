@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const read = vi.hoisted(() => vi.fn());
+const registry = vi.hoisted(() => ({
+	window: undefined as number | undefined,
+}));
 vi.mock("@cline/core", () => ({
 	readModelsFileSync: () => ({
 		providers: {
 			"local-test": {
 				models: {
 					"DavidAU/Qwen3.8-Flash-Next-fixture": { supportsAuthorModes: true },
-					"other-model": { supportsAuthorModes: true },
+					"other-model": {
+						supportsAuthorModes: true,
+						contextWindow: registry.window,
+					},
 				},
 			},
 		},
@@ -20,7 +26,10 @@ vi.mock("@cline/core", () => ({
 	},
 }));
 import { refreshLocalSamplingConfig } from "./sampling-settings";
-beforeEach(() => read.mockReset());
+beforeEach(() => {
+	read.mockReset();
+	registry.window = undefined;
+});
 describe("local sampling connection refresh", () => {
 	it("updates defaults without replacing historical routes, credentials or thinking", () => {
 		read.mockReturnValue({
@@ -134,4 +143,35 @@ it("blocks author modes on another model even with stale opt-in while preserving
 		expect(() =>
 			refreshLocalSamplingConfig({ ...config, reasoningEffort }),
 		).toThrow("not enabled");
+});
+
+it("refreshes an open chat's model window without changing its route or credentials", () => {
+	read.mockReturnValue({
+		client: "openai-compatible",
+		protocol: "openai-chat",
+		baseUrl: "http://localhost:7777/v1",
+	});
+	registry.window = 131072;
+	const original = {
+		provider: "local-test",
+		model: "other-model",
+		providerConfig: {
+			apiKey: "synthetic-private",
+			baseUrl: "http://localhost:7777/v1",
+		},
+	};
+	const before = refreshLocalSamplingConfig(original);
+	registry.window = 256000;
+	const after = refreshLocalSamplingConfig(before);
+	expect((before.providerConfig as any).modelInfo.contextWindow).toBe(131072);
+	expect((after.providerConfig as any).modelInfo.contextWindow).toBe(256000);
+	expect(after.providerConfig).toMatchObject({
+		apiKey: "synthetic-private",
+		baseUrl: "http://localhost:7777/v1",
+	});
+	const historical = refreshLocalSamplingConfig({
+		...original,
+		baseUrl: "http://localhost:8888/v1",
+	});
+	expect((historical.providerConfig as any).modelInfo).toBeUndefined();
 });
