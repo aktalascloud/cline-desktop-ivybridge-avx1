@@ -84,6 +84,7 @@ import {
 	VOICE_INPUT_SETTINGS_CHANGED_EVENT,
 } from "@/lib/provider-model-catalog";
 import type { ProviderModel } from "@/lib/provider-schema";
+import { modelReasoningChoices } from "@/lib/reasoning-choices";
 import { transcribeRecordedAudio } from "@/lib/recorded-transcription";
 import { startStreamingTranscription } from "@/lib/streaming-transcription";
 import { cn } from "@/lib/utils";
@@ -501,6 +502,7 @@ function ChatInputBarImpl({
 		model: string;
 		supported: boolean | null;
 		authorModesSupported?: boolean | null;
+		reasoningOptions?: ProviderModel["reasoningOptions"];
 	} | null>(null);
 	const modelSupportsReasoning =
 		reasoningCapability?.provider === provider &&
@@ -511,17 +513,26 @@ function ChatInputBarImpl({
 		(
 			supported: boolean | null,
 			authorModesSupported: boolean | null = null,
+			reasoningOptions?: ProviderModel["reasoningOptions"],
 		) => {
 			setReasoningCapability((current) => {
 				if (
 					current?.provider === provider &&
 					current.model === model &&
 					current.supported === supported &&
-					current.authorModesSupported === authorModesSupported
+					current.authorModesSupported === authorModesSupported &&
+					JSON.stringify(current.reasoningOptions) ===
+						JSON.stringify(reasoningOptions)
 				) {
 					return current;
 				}
-				return { provider, model, supported, authorModesSupported };
+				return {
+					provider,
+					model,
+					supported,
+					authorModesSupported,
+					reasoningOptions,
+				};
 			});
 		},
 		[model, provider],
@@ -932,11 +943,24 @@ function ChatInputBarImpl({
 		reasoningCapability?.provider === provider &&
 		reasoningCapability?.model === model &&
 		reasoningCapability.authorModesSupported === true;
-	const availableEfforts = EFFORT_LEVELS.filter((option) =>
-		normalizeProviderId(provider) === "dsw2api"
-			? ["none", "high"].includes(option.value)
-			: !["ultra", "adaptive"].includes(option.value) || authorModesSupported,
+	const declaredEfforts =
+		reasoningCapability?.provider === provider &&
+		reasoningCapability.model === model
+			? modelReasoningChoices(reasoningCapability.reasoningOptions)
+			: undefined;
+	const availableEfforts = EFFORT_LEVELS.filter(
+		(option) =>
+			(!["ultra", "adaptive"].includes(option.value) || authorModesSupported) &&
+			(!declaredEfforts || declaredEfforts.includes(option.value)),
 	);
+
+	const declaredEffortKey = declaredEfforts?.join(",");
+	useEffect(() => {
+		if (!declaredEfforts || !availableEfforts.length) return;
+		const selected = thinking === false ? "none" : (reasoningEffort ?? "low");
+		if (!availableEfforts.some((option) => option.value === selected))
+			onReasoningChange(buildReasoningConfig(availableEfforts[0]));
+	}, [declaredEffortKey, thinking, reasoningEffort, onReasoningChange]);
 	const effortIndex = useMemo(
 		() => resolveEffortIndex(thinking, reasoningEffort),
 		[reasoningEffort, thinking],
@@ -968,7 +992,9 @@ function ChatInputBarImpl({
 			}
 			if (["ultra", "adaptive"].includes(value) && !authorModesSupported)
 				return;
-			const nextOption = EFFORT_LEVELS.find((option) => option.value === value);
+			const nextOption = availableEfforts.find(
+				(option) => option.value === value,
+			);
 			if (nextOption) {
 				onReasoningChange(buildReasoningConfig(nextOption));
 				try {
@@ -981,7 +1007,13 @@ function ChatInputBarImpl({
 				}
 			}
 		},
-		[modelSupportsReasoning, onReasoningChange, provider, authorModesSupported],
+		[
+			modelSupportsReasoning,
+			onReasoningChange,
+			provider,
+			authorModesSupported,
+			availableEfforts,
+		],
 	);
 
 	const seededReasoningProviderRef = useRef<string | null>(null);
@@ -1022,7 +1054,14 @@ function ChatInputBarImpl({
 				? EFFORT_LEVELS.find((v) => v.value === "xhigh")
 				: remembered;
 		onReasoningChange(
-			buildReasoningConfig(selected ?? DEFAULT_REASONING_EFFORT),
+			buildReasoningConfig(
+				availableEfforts.find(
+					(option) =>
+						option.value === (selected ?? DEFAULT_REASONING_EFFORT).value,
+				) ??
+					availableEfforts[0] ??
+					DEFAULT_REASONING_EFFORT,
+			),
 		);
 	}, [
 		authorModesSupported,
@@ -1370,7 +1409,9 @@ function ChatInputBarImpl({
 											<span className="font-medium">/{cmd.name}</span>
 											{cmd.description && (
 												<span className="text-[10px] opacity-70">
-													{cmd === CLOUD_HANDOFF_SLASH_COMMAND ? t(cmd.description) : cmd.description}
+													{cmd === CLOUD_HANDOFF_SLASH_COMMAND
+														? t(cmd.description)
+														: cmd.description}
 												</span>
 											)}
 										</button>
@@ -1969,6 +2010,7 @@ const ModelSelector = memo(function ModelSelector({
 	onModelSupportsReasoningChange: (
 		supportsReasoning: boolean | null,
 		supportsAuthorModes?: boolean | null,
+		reasoningOptions?: ProviderModel["reasoningOptions"],
 	) => void;
 	onModelSupportsImagesChange: (supported: boolean | null) => void;
 	/** Opens Settings в†’ Providers; adds a "set up another provider" row when set. */
@@ -2498,6 +2540,8 @@ const ModelSelector = memo(function ModelSelector({
 				: reasoningCapabilitySource === "fallback"
 					? false
 					: null,
+			modelDetails[normalizedProvider]?.find((v) => v.id === model)
+				?.reasoningOptions,
 		);
 	}, [
 		modelDetails,

@@ -4,9 +4,14 @@
     "free": true,
     "anonymous": true,
     "user_api_key_required": false,
-    "service_quota": false
+    "service_quota": false,
+    "hourly_service_limit_accepted": true
   },
-  "qualified_remote_models": [],
+  "qualified_remote_models": [
+    "nvidia/nemotron-3.5-super-vl:free",
+    "reflection/beam-free",
+    "dots-studio/dots-3-note-preview:free"
+  ],
   "references": [
     {
       "repository": "dataelement/dsh-desktop",
@@ -26,5 +31,19 @@
     }
   ],
   "official_limit_source": "https://kilo.ai/docs/gateway/usage-and-billing",
-  "notes": "No client identity spoofing, account pools or unlimited-service claim. Local/self-hosted providers are separate and existing profiles remain private."
+  "notes": "Hourly limits explicitly accepted by user 2026-10-30. Kilo is the currently selected direct cloud gateway from the monitored sources. No false unlimited claim, account pools, client spoofing or model weight redistribution.",
+  "selected_access": {
+    "provider": "FreeLLM",
+    "gateway": "Kilo",
+    "base_url": "https://ai-gateway.kilo.ai/api/v1",
+    "hourly_limit_per_ip_shared": 200,
+    "vendor_count": 3,
+    "user_api_key_required": false,
+    "account_required": false,
+    "payment_required": false,
+    "direct_integration": true,
+    "installed_dsh_required": false,
+    "provider_may_retain_prompts": true,
+    "actual_model_tool_result_roundtrip_passed": true
+  }
 }

@@ -2,7 +2,7 @@ from pathlib import Path
 import hashlib,json,stat,subprocess,sys,zipfile
 root=Path(__file__).resolve().parents[1];source=root/'fork/defaults';dest=root/'apps/examples/desktop-app/src-tauri/bin/defaults';dest.mkdir(exist_ok=True)
 files={}
-for name in ('ponytail.md','PONYTAIL-LICENSE.txt','ponytail-source.json','free-web-search.py','defaults.json','python-runtime.json'):
+for name in ('ponytail.md','PONYTAIL-LICENSE.txt','ponytail-source.json','free-web-search.py','defaults.json','python-runtime.json','freellm.json'):
  path=source/name
  if path.is_symlink() or path.is_junction() or not path.is_file():raise RuntimeError('Invalid bundled default resource')
  data=path.read_bytes().replace(b'\r\n',b'\n');(dest/name).write_bytes(data);files[name]=hashlib.sha256(data).hexdigest()

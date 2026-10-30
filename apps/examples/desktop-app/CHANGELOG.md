@@ -4,8 +4,8 @@
 
 - Context settings: automatic trigger, maximum input and recent-message preservation. Manual compaction reuses the current summary; provider context limits and budgets survive Desktop/Hub handoff. Full saved history stays intact.
 - Настройки контекста: порог автокомпакта, предел входа и сохраняемые сообщения. Ручной компакт использует текущую сводку; лимиты модели и пороги передаются в Hub. Полная история сохраняется.
-- Bundled Ponytail rules and free keyless MCP web search. DSW2API and its Cline browser bridge have been removed. DSH channels with unverified or capped access are excluded.
-- Ponytail и бесплатный веб-поиск MCP без регистрации включены в пакет. DSW2API и его мост Cline удалены. Лимитные и неподтверждённые каналы DSH не добавлены.
+- Bundled Ponytail rules and free keyless MCP web search. DSW2API and its Cline browser bridge have been removed. FreeLLM includes Nemotron 3.5 Super VL, Reflection Beam and Dots3-Note Preview, three different vendors through anonymous keyless access, sharing a 200 requests/hour/IP service limit.
+- Ponytail и бесплатный веб-поиск MCP без регистрации включены в пакет. DSW2API и его мост Cline удалены. FreeLLM: Nemotron 3.5 Super VL, Reflection Beam и Dots3-Note Preview от трёх разных вендоров, без аккаунта/ключа; общий сервисный лимит 200 запросов/ч на IP.
 - Translated thinking and tool labels; compact per-request token rate and known cache-hit share.
 - Переведены подписи рассуждений и инструментов; добавлены краткие ток/с за запрос и подтверждённая доля кэша.
 - Updated upstream Hub/cloud handoff and model capability overlays. Silent installer rejects locked payloads instead of reporting an incomplete upgrade as success. Strata, RU/EN, approvals and AVX1 preserved.

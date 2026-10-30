@@ -2823,16 +2823,59 @@ describe("sdk-gateway", () => {
 		}
 	});
 
-
- it.each([401,403,429,503])("never automatically replays a DSW2API HTTP %i rejection", async statusCode => {
-  const error={message:"synthetic provider rejection",statusCode,isRetryable:true};
-  streamTextSpy.mockImplementation((input: {onError?: (e: {error: unknown})=>void}) => {input.onError?.({error});return {fullStream:makeStreamParts([{type:"error",error}])};});
-  const gateway=createGateway({builtins:false,providers:[{manifest:{id:"dsw2api",name:"Browser session",defaultModelId:"local",models:[{id:"local",name:"Local",providerId:"dsw2api"}]},createProvider:createOpenAICompatibleProvider}],providerConfigs:[{providerId:"dsw2api",apiKey:"synthetic",baseUrl:"http://127.0.0.1:1/v1"}]});
-  const events=await collect(await gateway.stream({providerId:"dsw2api",modelId:"local",messages:baseMessages}));
-  expect(streamTextSpy).toHaveBeenCalledOnce();
-  expect(streamTextSpy.mock.calls[0]?.[0]).toMatchObject({maxRetries:0,streamRetries:0});
-  expect(events.at(-1)).toMatchObject({reason:"error",errorRetryable:false});
- });
+	it.each(
+		["dsw2api", "freellm"].flatMap((providerId) =>
+			[401, 403, 429, 503].map((statusCode) => ({ providerId, statusCode })),
+		),
+	)("never automatically replays $providerId HTTP $statusCode rejection", async ({
+		providerId,
+		statusCode,
+	}) => {
+		const error = {
+			message: "synthetic provider rejection",
+			statusCode,
+			isRetryable: true,
+		};
+		streamTextSpy.mockImplementation(
+			(input: { onError?: (e: { error: unknown }) => void }) => {
+				input.onError?.({ error });
+				return { fullStream: makeStreamParts([{ type: "error", error }]) };
+			},
+		);
+		const gateway = createGateway({
+			builtins: false,
+			providers: [
+				{
+					manifest: {
+						id: providerId,
+						name: "Browser session",
+						defaultModelId: "local",
+						models: [{ id: "local", name: "Local", providerId }],
+					},
+					createProvider: createOpenAICompatibleProvider,
+				},
+			],
+			providerConfigs: [
+				{ providerId, apiKey: "synthetic", baseUrl: "http://127.0.0.1:1/v1" },
+			],
+		});
+		const events = await collect(
+			await gateway.stream({
+				providerId,
+				modelId: "local",
+				messages: baseMessages,
+			}),
+		);
+		expect(streamTextSpy).toHaveBeenCalledOnce();
+		expect(streamTextSpy.mock.calls[0]?.[0]).toMatchObject({
+			maxRetries: 0,
+			streamRetries: 0,
+		});
+		expect(events.at(-1)).toMatchObject({
+			reason: "error",
+			errorRetryable: false,
+		});
+	});
 	it("uses three SDK stream retries without allowing another whole-turn retry", async () => {
 		const error = {
 			message: "upstream timeout",

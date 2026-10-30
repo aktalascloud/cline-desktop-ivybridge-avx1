@@ -3908,6 +3908,74 @@ describe("ChatInputBar compact layout", () => {
 	});
 });
 
+it.each([
+	{
+		modelId: "reflection/beam-free",
+		reasoningOptions: [
+			{
+				type: "effort" as const,
+				values: [
+					"low" as const,
+					"medium" as const,
+					"high" as const,
+					"xhigh" as const,
+				],
+			},
+		],
+		present: ["Low", "Medium", "High", "XHigh"],
+		absent: ["None", "Ultra · DavidAU", "Adaptive"],
+	},
+	{
+		modelId: "nvidia/nemotron-3.5-super-vl:free",
+		reasoningOptions: [{ type: "toggle" as const }],
+		present: ["None", "High"],
+		absent: ["Low", "Medium", "XHigh", "Ultra · DavidAU", "Adaptive"],
+	},
+])("uses server reasoning choices on $modelId without exposing unsupported modes", async ({
+	modelId,
+	reasoningOptions,
+	present,
+	absent,
+}) => {
+	const detail = {
+		id: modelId,
+		name: modelId,
+		supportsReasoning: true,
+		reasoningOptions,
+	};
+	loadProviderModelCatalogMock.mockResolvedValue({
+		providers: [],
+		enabledProviderIds: ["local-lab"],
+		providerModels: { "local-lab": [modelId] },
+		providerNames: { "local-lab": "FreeLLM fixture" },
+		providerReasoningModels: { "local-lab": [modelId] },
+		providerModelDetails: { "local-lab": [detail] },
+	});
+	loadProviderModelsMock.mockResolvedValue([detail]);
+	await act(async () =>
+		root.render(
+			<StaleProviderComposer variant="welcome" initialModel={modelId} />,
+		),
+	);
+	await vi.waitFor(() =>
+		expect(
+			container.querySelector<HTMLButtonElement>(
+				'[aria-label="Thinking level"]',
+			)?.disabled,
+		).toBe(false),
+	);
+	await act(async () =>
+		container
+			.querySelector<HTMLButtonElement>('[aria-label="Thinking level"]')
+			?.click(),
+	);
+	const choices = [...document.querySelectorAll('[role="option"]')].map(
+		(x) => x.textContent,
+	);
+	for (const label of present) expect(choices).toContain(label);
+	for (const label of absent) expect(choices).not.toContain(label);
+});
+
 it("offers separate author modes only for an opted-in model and returns to stock levels", async () => {
 	const detail = {
 		id: "DavidAU/Qwen3.8-Flash-Next-fixture",

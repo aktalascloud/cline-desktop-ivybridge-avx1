@@ -2174,8 +2174,9 @@ function createAiSdkProvider(
 			// Multi-protocol HTTP gateways declare model adapters in models.dev.
 			// Keep native and local CLI transports authoritative for their models.
 			const kind = resolveModelProviderKind(defaultKind, context);
-            // Browser sessions are not replay-safe. Do not multiply gateway requests after a rejection or uncertain stream.
-            const browserSession = context.provider.id === "dsw2api";
+			// Browser sessions are not replay-safe. Do not multiply gateway requests after a rejection or uncertain stream.
+			const noAutomaticReplay =
+				context.provider.id === "dsw2api" || context.provider.id === "freellm";
 			const log = context.logger;
 			let stream: AiSdkStreamResult | undefined;
 			const capturedError: { current: CapturedStreamError | undefined } = {
@@ -2442,14 +2443,14 @@ function createAiSdkProvider(
 						streamText({
 							model: withEmptyResponseRetry(
 								provider.operations.language(context.model.id),
-								browserSession ? false : provider.retryEmptyResponses,
+								noAutomaticReplay ? false : provider.retryEmptyResponses,
 								context.logger,
 							) as never,
 							messages: messages as never,
 							...(useSystemOption ? { system: systemPrompt } : {}),
 							...(tools ? { tools } : {}),
 							abortSignal: request.signal,
-							maxRetries: browserSession ? 0 : MODEL_REQUEST_MAX_RETRIES,
+							maxRetries: noAutomaticReplay ? 0 : MODEL_REQUEST_MAX_RETRIES,
 							experimental_repairToolCall: repairMalformedToolCall as never,
 							telemetry: {
 								...aiSdkTelemetry,
@@ -2478,7 +2479,7 @@ function createAiSdkProvider(
 								? { stopWhen: stepCountIs(8) }
 								: {}),
 							...requestConfig,
-							streamRetries: browserSession ? 0 : MODEL_STREAM_MAX_RETRIES,
+							streamRetries: noAutomaticReplay ? 0 : MODEL_STREAM_MAX_RETRIES,
 							...(portableReasoning ? { reasoning: portableReasoning } : {}),
 							onLanguageModelCallStart: () => {
 								capturedError.current = undefined;
@@ -2511,7 +2512,13 @@ function createAiSdkProvider(
 					capturedError,
 					modelToolAdapters,
 					reportError,
-				)) { yield browserSession && event.type === "finish" && event.reason === "error" ? {...event, errorRetryable: false} : event; }
+				)) {
+					yield noAutomaticReplay &&
+					event.type === "finish" &&
+					event.reason === "error"
+						? { ...event, errorRetryable: false }
+						: event;
+				}
 			} catch (error) {
 				suppressDanglingStreamPromises(stream);
 				// Prefer the real provider error captured in onError over the generic
@@ -2524,7 +2531,7 @@ function createAiSdkProvider(
 					reason: "error",
 					error: captured.message,
 					errorClass: captured.errorClass,
-					errorRetryable: browserSession ? false : captured.retryable,
+					errorRetryable: noAutomaticReplay ? false : captured.retryable,
 					errorReported: captured.reported,
 				};
 			}

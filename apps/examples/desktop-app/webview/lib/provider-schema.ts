@@ -1,5 +1,6 @@
 import type {
 	ModelModality,
+	ModelReasoningOption,
 	ModelOperation,
 	ModelOperationMode,
 	ModelToolName,
@@ -30,6 +31,7 @@ export interface ProviderModel {
 	supportsVision?: boolean;
 	supportsReasoning?: boolean;
 	supportsAuthorModes?: boolean;
+	reasoningOptions?: ModelReasoningOption[];
 	inputModalities?: ModelModality[];
 	outputModalities?: ModelModality[];
 }

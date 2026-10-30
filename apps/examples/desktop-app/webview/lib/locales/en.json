@@ -115,5 +115,6 @@
 	"Ran command": "Ran command",
 	"Running command": "Running command",
 	"Searched files": "Searched files",
-	"Searching files": "Searching files"
+	"Searching files": "Searching files",
+	"No account or key. Shared limit: 200 requests/hour/IP. Cloud providers may retain prompts.": "No account or key. Shared limit: 200 requests/hour/IP. Cloud providers may retain prompts."
 }

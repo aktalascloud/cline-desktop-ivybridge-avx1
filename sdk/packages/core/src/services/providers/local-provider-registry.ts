@@ -14,6 +14,7 @@ import {
 	ApiFormatSchema,
 	type ModelCapability,
 	ModelCapabilitySchema,
+	ModelReasoningOptionSchema,
 	type ModelInfo,
 	ModelModalitiesSchema,
 	ModelOperationModeSchema,
@@ -55,6 +56,7 @@ export const StoredModelEntrySchema = z
 		contextWindow: OptionalPositiveFiniteNumberSchema,
 		maxInputTokens: OptionalPositiveFiniteNumberSchema,
 		capabilities: z.array(ModelCapabilitySchema).optional(),
+		reasoningOptions: z.array(ModelReasoningOptionSchema).optional(),
 		supportsVision: z.boolean().optional(),
 		supportsAttachments: z.boolean().optional(),
 		supportsReasoning: z.boolean().optional(),
@@ -255,6 +257,7 @@ export function toProviderModel(
 		| "contextWindow"
 		| "capabilities"
 		| "thinkingConfig"
+		| "reasoningOptions"
 		| "metadata"
 		| "operation"
 		| "operationModes"
@@ -266,6 +269,9 @@ export function toProviderModel(
 		name: info.name ?? modelId,
 		...(info.description ? { description: info.description } : {}),
 		operation: info.operation,
+		...(info.reasoningOptions
+			? { reasoningOptions: info.reasoningOptions }
+			: {}),
 		...(info.contextWindow !== undefined
 			? { contextWindow: info.contextWindow }
 			: {}),
@@ -408,6 +414,9 @@ function toStoredModelInfo(
 	return {
 		id: modelId,
 		name: model?.name ?? modelId,
+		...(model?.reasoningOptions
+			? { reasoningOptions: model.reasoningOptions }
+			: {}),
 		...(model?.supportsAuthorModes === true && isQwen38NextAuthorModel(modelId)
 			? { metadata: { supportsAuthorModes: true } }
 			: {}),
@@ -640,6 +649,9 @@ export function registerCustomProvider(
 		provider: {
 			id: providerId,
 			name: entry.provider.name.trim() || titleCaseFromId(providerId),
+			...(typeof entry.provider.description === "string"
+				? { description: entry.provider.description }
+				: {}),
 			protocol,
 			client,
 			baseUrl: entry.provider.baseUrl,
@@ -715,6 +727,7 @@ export function ensureCustomProvidersLoadedSync(
 		return;
 	}
 	const state = readModelsFileSync(modelsPath);
+	registerBundledProviders(state);
 	for (const [providerId, entry] of Object.entries(state.providers)) {
 		registerCustomProvider(providerId, entry);
 	}
@@ -729,8 +742,21 @@ export async function ensureCustomProvidersLoaded(
 		return;
 	}
 	const state = await readModelsFile(modelsPath);
+	registerBundledProviders(state);
 	for (const [providerId, entry] of Object.entries(state.providers)) {
 		registerCustomProvider(providerId, entry);
 	}
 	LOADED_MODELS_REGISTRY_PATHS.add(modelsPath);
+}
+
+function registerBundledProviders(userState: StoredModelsFile): void {
+	const file = join(
+		dirname(process.env.CLINE_DESKTOP_CLI_PATH?.trim() || process.execPath),
+		"bin",
+		"defaults",
+		"freellm.json",
+	);
+	const bundled = readModelsFileSync(file);
+	if (!userState.providers.freellm && bundled.providers.freellm)
+		registerCustomProvider("freellm", bundled.providers.freellm);
 }

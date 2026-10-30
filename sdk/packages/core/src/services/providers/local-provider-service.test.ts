@@ -1,4 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	writeFileSync,
+	readFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import * as LlmsModels from "@cline/llms";
@@ -32,6 +38,7 @@ import {
 	isDedicatedTranscriptionModel,
 	listLocalProviders,
 	markLocalProviderEnabled,
+	ensureCustomProvidersLoaded,
 	normalizeOAuthProvider,
 	refreshProviderModelsFromSource,
 	resolveLocalClineAuthToken,
@@ -2786,6 +2793,66 @@ describe("listLocalProviders", () => {
 	});
 
 	afterEach(() => cleanup());
+
+	it("loads the three-vendor bundled FreeLLM catalog and enables it without a key or default switch", async () => {
+		const install = mkdtempSync(path.join(os.tmpdir(), "freellm-bundle-"));
+		const previous = process.env.CLINE_DESKTOP_CLI_PATH;
+		try {
+			const folder = path.join(install, "bin/defaults");
+			mkdirSync(folder, { recursive: true });
+			writeFileSync(
+				path.join(folder, "freellm.json"),
+				readFileSync(
+					new URL(
+						"../../../../../../fork/defaults/freellm.json",
+						import.meta.url,
+					),
+				),
+			);
+			process.env.CLINE_DESKTOP_CLI_PATH = path.join(install, "cline-cli.exe");
+			const bundledManager = new ProviderSettingsManager({
+				filePath: path.join(install, "fixture.json"),
+			});
+			const before = bundledManager.read().lastUsedProvider;
+			await ensureCustomProvidersLoaded(bundledManager);
+			const collection = LlmsModels.getProviderCollectionSync("freellm")!;
+			expect(Object.keys(collection.models)).toHaveLength(3);
+			expect(
+				new Set(Object.keys(collection.models).map((id) => id.split("/")[0]))
+					.size,
+			).toBe(3);
+			expect(collection.provider.metadata?.apiKeyOptional).toBe(true);
+			markLocalProviderEnabled(bundledManager, "freellm");
+			const saved = bundledManager.getProviderSettings("freellm")!;
+			expect(saved.apiKey).toBeUndefined();
+			expect(saved.baseUrl).toBe("https://ai-gateway.kilo.ai/api/v1");
+			expect(bundledManager.read().lastUsedProvider).toBe(before);
+			const { providers } = await listLocalProviders(bundledManager);
+			expect(providers.find((p) => p.id === "freellm")).toMatchObject({
+				enabled: true,
+				configured: true,
+				models: 3,
+			});
+			expect(
+				providers
+					.find((p) => p.id === "freellm")!
+					.modelList.every((m) => m.supportsAuthorModes !== true),
+			).toBe(true);
+			expect(
+				providers
+					.find((p) => p.id === "freellm")!
+					.modelList.find((m) => m.id === "reflection/beam-free")
+					?.reasoningOptions,
+			).toEqual([
+				{ type: "effort", values: ["low", "medium", "high", "xhigh", "max"] },
+			]);
+		} finally {
+			if (previous === undefined) delete process.env.CLINE_DESKTOP_CLI_PATH;
+			else process.env.CLINE_DESKTOP_CLI_PATH = previous;
+			LlmsModels.unregisterProvider("freellm");
+			rmSync(install, { recursive: true, force: true });
+		}
+	});
 
 	it("sends authentication facts for builtins and registered providers", async () => {
 		LlmsModels.registerProvider({

@@ -11,6 +11,7 @@ import type {
 } from "../llms/model-info";
 import type { ModelToolName } from "../llms/model-tools";
 import type { ReasoningLevel } from "../llms/reasoning-options";
+import type { ModelReasoningOption } from "../llms/reasoning-options";
 import type { ProviderAuthInfo } from "../provider-auth";
 import type {
 	RuntimeConfigExtensionKind,
@@ -186,6 +187,7 @@ export interface ProviderModel {
 	supportsVision?: boolean;
 	supportsReasoning?: boolean;
 	supportsAuthorModes?: boolean;
+	reasoningOptions?: ModelReasoningOption[];
 	operationModes?: ModelOperationMode[];
 	inputModalities?: ModelModality[];
 	outputModalities?: ModelModality[];

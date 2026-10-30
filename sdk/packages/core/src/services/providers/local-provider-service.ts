@@ -968,8 +968,20 @@ export function markLocalProviderEnabled(
 	if (!id) throw new Error("providerId is required");
 
 	const directSettings = manager.read().providers[id]?.settings;
+	const bundled =
+		id === "freellm"
+			? LlmsModels.getProviderCollectionSync(id)?.provider
+			: undefined;
 	manager.saveProviderSettings(
 		{
+			...(bundled
+				? {
+						baseUrl: bundled.baseUrl,
+						model: bundled.defaultModelId,
+						client: bundled.client,
+						protocol: bundled.protocol,
+					}
+				: {}),
 			...(directSettings ?? {}),
 			provider: id,
 		},
@@ -1088,7 +1100,10 @@ export async function listLocalProviders(
 								? { apiKeyOptional: true }
 								: {}),
 						},
-						authDescription: "This provider uses API keys for authentication.",
+						authDescription:
+							id === "freellm"
+								? "No account or key. Shared limit: 200 requests/hour/IP. Cloud providers may retain prompts."
+								: "This provider uses API keys for authentication.",
 						baseUrlDescription:
 							"The base endpoint to use for provider requests.",
 						configFields,
