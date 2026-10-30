@@ -35,7 +35,10 @@
     "anonymous_download_verified": false,
     "release_id": 428995551,
     "asset_id": 692133061,
-    "asset_readback_verified": true
+    "asset_readback_verified": true,
+    "release_metadata_verified": true,
+    "feed_signature_verified": true,
+    "source_tag_verified": true
   },
   "verified_utc": "2026-10-30T12:42:57.052449+00:00"
 }
