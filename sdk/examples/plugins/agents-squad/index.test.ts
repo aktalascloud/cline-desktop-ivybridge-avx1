@@ -58,19 +58,18 @@ describe("portable subagent contract", () => {
 				]),
 			});
 		expect(manager.start).not.toHaveBeenCalled();
+		expect(manager.get).not.toHaveBeenCalled();
 	});
 	it("inherits the parent's local model and retains normal tool approvals", async () => {
-		const result = await tools
-			.get("start_subagent")
-			.execute(
-				{
-					preset: "phantom",
-					label: "inspect",
-					task: "Inspect",
-					notifyParent: false,
-				},
-				ctx,
-			);
+		const result = await tools.get("start_subagent").execute(
+			{
+				preset: "phantom",
+				label: "inspect",
+				task: "Inspect",
+				notifyParent: false,
+			},
+			ctx,
+		);
 		expect(result.status).toBe("started");
 		expect(manager.start.mock.calls[0][0].config).toMatchObject({
 			providerId: "local-fixture",
@@ -89,20 +88,18 @@ describe("portable subagent contract", () => {
 	});
 	it("allows explicit instructions for a custom preset and explicit provider override", async () => {
 		expect(
-			await tools
-				.get("start_subagent")
-				.execute(
-					{
-						preset: "custom",
-						instructions: "Custom task instructions",
-						providerId: "explicit-provider",
-						modelId: "explicit-model",
-						label: "custom",
-						task: "Inspect",
-						notifyParent: false,
-					},
-					ctx,
-				),
+			await tools.get("start_subagent").execute(
+				{
+					preset: "custom",
+					instructions: "Custom task instructions",
+					providerId: "explicit-provider",
+					modelId: "explicit-model",
+					label: "custom",
+					task: "Inspect",
+					notifyParent: false,
+				},
+				ctx,
+			),
 		).toMatchObject({ status: "started" });
 		expect(manager.start.mock.calls[0][0].config).toMatchObject({
 			providerId: "explicit-provider",

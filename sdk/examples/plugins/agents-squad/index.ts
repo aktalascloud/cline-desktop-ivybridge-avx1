@@ -600,12 +600,9 @@ const plugin: AgentPlugin = {
 					timeoutMs: 60_000,
 					retryable: false,
 					async execute(input, ctx) {
-						const mgr = await getSessionManager();
-						const parentId = parentSessionId(ctx);
-						const parent = parentId ? await mgr.get(parentId) : undefined;
 						const baseCwd = envOr(
 							"CLINE_SUBAGENT_CWD",
-							ctx.cwd ?? parent?.cwd ?? process.cwd(),
+							ctx.cwd ?? process.cwd(),
 						);
 						const defs = readAgentDefinitions(baseCwd);
 						const presetName = input.preset ?? DEFAULT_AGENT_PRESET;
@@ -619,6 +616,10 @@ const plugin: AgentPlugin = {
 									"Choose a listed preset or supply explicit instructions. No subagent was started.",
 							};
 						}
+
+						const mgr = await getSessionManager();
+						const parentId = parentSessionId(ctx);
+						const parent = parentId ? await mgr.get(parentId) : undefined;
 
 						const cwd = resolve(
 							baseCwd,
