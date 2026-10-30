@@ -31,7 +31,7 @@ export function createBundledDefaults(resourceRoot?: string) {
 				transport: {
 					type: "stdio",
 					command: process.platform === "win32" ? `"${python}"` : python,
-					args: ["-I", "-B", "-X", "utf8", join(root, "free-web-search.py")],
+					args: ["-I", "-B", "-X", "utf8", "free-web-search.py"],
 					cwd: root,
 				},
 				metadata: {
