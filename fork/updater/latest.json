@@ -1,11 +1,11 @@
 {
-  "version": "1.0.13",
-  "notes": "DeepSeek session and chat reconnect fixes / Исправления сессии DeepSeek и переподключения чатов.",
-  "pub_date": "2026-10-29T07:44:08.559368Z",
+  "version": "1.0.14",
+  "notes": "Local context, compaction and subagent fixes / Исправлены контекст, компакт и субагенты.",
+  "pub_date": "2026-10-30T13:06:08.211175+00:00",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnVSOFV1UmlTUGNWNStwNzRTQTJPdDh1VVRwb1hickRBL0t6TDdFV2NiczJGTmpCY3g0TGd2dk5zRU15MEtRc21wSi9HaTZzNFYzMHlQeEx4WEk2SndNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMjU5MjY0CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xM194NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEzClExbGRyL01td3FzdXhUZU5VNTExdjZjdGp5Q0gra3pTcFpRd08zczZjV3luRDlVNzF2MisvcmkzMEttREp1TDg2RnM4UlZuL2V1Nm1CU1lvVU5QUUR3PT0K",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.13/Cline-Desktop-AVX1-RU-Setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmwvWFgvNjlhbFdjR1hDS3BCdWw5SWN4NmhOMEE2dE5MZFZyem90UTd1Wmg5UCtjS2hiNlN0aWxMV1oyU0NBMEVzNmxISnR2OHVDc2Q3UVdKMlgvNEFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMzYyNjQyCWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xNF94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjE0CnJRZDdrQnlQeCtUUFBQOERKMUFmOVJLOEFzOWxtYmJtOVo2R3RPNXc4WTVKZFA5UmpkTTVrRWoyTndGdVFWa1l0T2gvdnpBMVhEaVd0djdGRitRTkFRPT0K",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.14/Cline-Desktop-AVX1-RU-Setup.exe"
     }
   }
 }
