@@ -151,6 +151,7 @@ export const MessageBubble = memo(function MessageBubble({
 	reasoningContent,
 	reasoningRedacted,
 	thoughtDurationMilliseconds,
+	requestMetrics,
 }: {
 	agentRole: AgentMessageRole;
 	message: ChatMessage;
@@ -188,6 +189,7 @@ export const MessageBubble = memo(function MessageBubble({
 	reasoningContent: string;
 	reasoningRedacted: boolean;
 	thoughtDurationMilliseconds?: number;
+	requestMetrics?: ChatMessage["meta"];
 }) {
 	const t = useTranslation();
 	const isUser = message.role === "user";
@@ -276,6 +278,7 @@ export const MessageBubble = memo(function MessageBubble({
 					<ReasoningBlock
 						content={reasoningContent}
 						durationMilliseconds={thoughtDurationMilliseconds}
+						metrics={requestMetrics}
 						redacted={reasoningRedacted}
 						streaming={isStreaming}
 					/>

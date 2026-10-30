@@ -11,6 +11,7 @@ import type {
 import { buildBudgetProjection } from "./budget-projection";
 import {
 	type EstimateMessageTokens,
+	findCutIndex,
 	formatToolActivitySummary,
 	hasToolActivity,
 	isTurnStartMessage,
@@ -450,10 +451,49 @@ function sanitizeOlderAssistantFinal(
  * summaries attached to the surviving prompts.
  */
 export function runBasicCompaction(options: {
+	preserveRecentMessages?: number;
 	context: CoreCompactionContext;
 	estimateMessageTokens: EstimateMessageTokens;
 	logger?: BasicLogger;
 }): CoreCompactionResult | undefined {
+	if (options.preserveRecentMessages && options.preserveRecentMessages > 0) {
+		const messages = options.context.messages;
+		const cut = findCutIndex(
+			messages,
+			0,
+			options.estimateMessageTokens,
+			options.preserveRecentMessages,
+		);
+		const tail = messages.slice(cut);
+		const target =
+			options.context.budget.messages.targetTokens -
+			tail.reduce((n, m) => n + options.estimateMessageTokens(m), 0);
+		if (cut > 0 && target > 1024) {
+			const prefix = runBasicCompaction({
+				...options,
+				preserveRecentMessages: undefined,
+				context: {
+					...options.context,
+					messages: messages.slice(0, cut),
+					budget: {
+						...options.context.budget,
+						messages: {
+							...options.context.budget.messages,
+							targetTokens: target,
+						},
+					},
+				},
+			});
+			if (
+				prefix &&
+				prefix.messages.reduce(
+					(n, m) => n + options.estimateMessageTokens(m),
+					0,
+				) <= target
+			)
+				return { ...prefix, messages: [...prefix.messages, ...tail] };
+		}
+	}
 	const originalMessages = options.context.messages;
 	const estimate = options.estimateMessageTokens;
 	// A lone message has nothing to compact around it; truncating the only

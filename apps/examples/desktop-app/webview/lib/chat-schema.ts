@@ -95,6 +95,7 @@ export const ChatMessageSchema = z.object({
 			inputTokens: z.number().int().nonnegative().optional(),
 			outputTokens: z.number().int().nonnegative().optional(),
 			cacheReadTokens: z.number().int().nonnegative().optional(),
+			requestDurationMs: z.number().positive().optional(),
 			totalCost: z.number().nonnegative().optional(),
 			providerId: z.string().optional(),
 			providerAuth: ProviderAuthInfoSchema.optional(),

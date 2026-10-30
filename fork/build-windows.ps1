@@ -41,14 +41,10 @@ try {
     if($LASTEXITCODE){throw 'Runtime verification failed'}
     bun -F @cline/code build:runtime
     if($LASTEXITCODE){throw 'CLI/Hub/backend build failed'}
-    python (Join-Path $PSScriptRoot 'prepare-dsw2api.py')
-    if($LASTEXITCODE){throw 'DSW2API bundled runtime verification failed'}
-    python (Join-Path $PSScriptRoot 'prepare-browser-bridge.py')
-    if($LASTEXITCODE){throw 'Browser session bridge build failed'}
-    node --test (Join-Path $PSScriptRoot 'browser-bridge/extension-status.test.mjs')
-    if($LASTEXITCODE){throw 'Browser connection indicator tests failed'}
-    & "$app/src-tauri/bin/dsw2api/runtime/python.exe" -I -B -X utf8 "$PSScriptRoot/dsw2api/test-managed.py" "$app/src-tauri/bin/dsw2api"
-    if($LASTEXITCODE){throw 'DSW2API offline protocol and credential-preservation checks failed'}
+    python (Join-Path $PSScriptRoot 'prepare-defaults.py')
+    if($LASTEXITCODE){throw 'Bundled defaults preparation failed'}
+    & "$app/src-tauri/bin/defaults/python/python.exe" -I -B -X utf8 "$PSScriptRoot/test-defaults.py"
+    if($LASTEXITCODE){throw 'Bundled defaults protocol check failed'}
     python ./fork/check-bundle-paths.py
     if($LASTEXITCODE){throw 'Generated runtime privacy check failed'}
     bun test fork/logging-bundle.test.ts

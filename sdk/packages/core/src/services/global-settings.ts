@@ -64,6 +64,27 @@ export const GlobalSettingsSchema = z
 		autoUpdateEnabled: z.boolean().default(true).catch(true),
 		compactionStrategy: GlobalCompactionStrategySchema.optional(),
 		compactionEnabled: z.boolean().optional().catch(undefined),
+		compactionTriggerTokens: z
+			.number()
+			.int()
+			.min(1024)
+			.max(10000000)
+			.optional()
+			.catch(undefined),
+		compactionMaxInputTokens: z
+			.number()
+			.int()
+			.min(2048)
+			.max(10000000)
+			.optional()
+			.catch(undefined),
+		compactionPreserveRecentMessages: z
+			.number()
+			.int()
+			.min(0)
+			.max(1000)
+			.optional()
+			.catch(undefined),
 		planActMode: GlobalPlanActModeSchema.optional().catch(undefined),
 		toolAutoApprove: z.boolean().optional().catch(undefined),
 		tuiTheme: z.string().optional().catch(undefined),
@@ -80,6 +101,9 @@ export const GlobalSettingsSchema = z
 			autoUpdateEnabled: boolean;
 			compactionStrategy?: GlobalCompactionStrategy;
 			compactionEnabled?: boolean;
+			compactionTriggerTokens?: number;
+			compactionMaxInputTokens?: number;
+			compactionPreserveRecentMessages?: number;
 			planActMode?: GlobalPlanActMode;
 			toolAutoApprove?: boolean;
 			tuiTheme?: string;
@@ -97,6 +121,13 @@ export const GlobalSettingsSchema = z
 		}
 		if (settings.compactionEnabled !== undefined) {
 			normalized.compactionEnabled = settings.compactionEnabled;
+		}
+		for (const key of [
+			"compactionTriggerTokens",
+			"compactionMaxInputTokens",
+			"compactionPreserveRecentMessages",
+		] as const) {
+			if (settings[key] !== undefined) normalized[key] = settings[key];
 		}
 		if (settings.planActMode) {
 			normalized.planActMode = settings.planActMode;
@@ -566,4 +597,35 @@ export function filterExtensionToolRegistrations(
 				),
 		};
 	});
+}
+
+export function readCompactionPreferencesGlobally() {
+	const settings = readGlobalSettings();
+	return {
+		enabled: settings.compactionEnabled !== false,
+		triggerTokens: settings.compactionTriggerTokens ?? 90000,
+		maxInputTokens: settings.compactionMaxInputTokens ?? 120000,
+		preserveRecentMessages: settings.compactionPreserveRecentMessages ?? 40,
+	};
+}
+export function setCompactionPreferencesGlobally(input: unknown) {
+	const value = z
+		.object({
+			enabled: z.boolean(),
+			triggerTokens: z.number().int().min(1024).max(10000000),
+			maxInputTokens: z.number().int().min(2048).max(10000000),
+			preserveRecentMessages: z.number().int().min(0).max(1000),
+		})
+		.strict()
+		.parse(input);
+	if (value.triggerTokens >= value.maxInputTokens)
+		throw new Error("Compaction trigger must be below the token limit");
+	writeGlobalSettings({
+		...readGlobalSettings(),
+		compactionEnabled: value.enabled,
+		compactionTriggerTokens: value.triggerTokens,
+		compactionMaxInputTokens: value.maxInputTokens,
+		compactionPreserveRecentMessages: value.preserveRecentMessages,
+	});
+	return readCompactionPreferencesGlobally();
 }

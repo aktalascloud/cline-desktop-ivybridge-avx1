@@ -150,6 +150,10 @@
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
+  ; Retire this fork's browser integration; other applications use different host names.
+  DeleteRegKey HKCU "Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\cloud.aktalas.cline_dsw"
+  DeleteRegKey HKCU "Software\Google\Chrome\NativeMessagingHosts\cloud.aktalas.cline_dsw"
+  DeleteRegKey HKCU "Software\Microsoft\Edge\NativeMessagingHosts\cloud.aktalas.cline_dsw"
   SetOutPath "$INSTDIR"
   CreateShortCut "$SMSTARTUP\${AVX1_AUTOSTART_LINK}" "$INSTDIR\${MAINBINARYNAME}.exe"
 !macroend

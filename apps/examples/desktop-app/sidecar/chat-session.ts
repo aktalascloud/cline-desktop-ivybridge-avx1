@@ -18,6 +18,7 @@ import {
 	projectSessionCompactionState,
 	RuntimeOAuthTokenManager,
 	readGlobalSettings,
+	readCompactionPreferencesGlobally,
 	readSessionCheckpointHistory,
 	resolveProviderApiKeyFromSettings,
 	type SessionCompactionState,
@@ -38,6 +39,7 @@ import {
 	type ConsecutiveMistakeLimitContext,
 	type ConsecutiveMistakeLimitDecision,
 	formatUserCommandBlock,
+	estimateRequestInputTokens,
 	type SessionPluginIssue,
 } from "@cline/shared";
 import {
@@ -140,7 +142,13 @@ async function compactSession(
 		return COMPACT_WHILE_RUNNING_MESSAGE;
 	}
 	const messages = await manager.readMessages(sessionId);
-	const conversationMessages = messages.filter(
+	const state = await manager
+		.readSessionCompactionState(sessionId)
+		.catch(() => undefined);
+	const workingMessages = state
+		? (projectSessionCompactionState(state, messages) ?? messages)
+		: messages;
+	const conversationMessages = workingMessages.filter(
 		(message) => message.metadata?.displayOnly !== true,
 	);
 	if (conversationMessages.length === 0) {
@@ -162,7 +170,13 @@ async function compactSession(
 			baseUrl,
 			headers,
 			providerConfig,
-			compaction: { enabled: true },
+			compaction: {
+				...readCompactionPreferencesGlobally(),
+				enabled: true,
+				strategy:
+					readGlobalSettings().compactionStrategy ??
+					(providerId === "dsw2api" ? "basic" : "agentic"),
+			},
 			logger: ctx.logger,
 			telemetry: ctx.telemetry,
 			sessionId,
@@ -182,15 +196,25 @@ async function compactSession(
 		model: {
 			id: modelId,
 			provider: providerId,
-			info: getGeneratedModelsForRuntimeProvider(providerId)[modelId] ?? {
-				id: modelId,
-				maxInputTokens: FALLBACK_MANUAL_COMPACTION_MAX_INPUT_TOKENS,
-			},
+			info: providerConfig?.modelInfo ??
+				providerConfig?.knownModels?.[modelId] ??
+				getGeneratedModelsForRuntimeProvider(providerId)[modelId] ?? {
+					id: modelId,
+					maxInputTokens: FALLBACK_MANUAL_COMPACTION_MAX_INPUT_TOKENS,
+				},
 		},
 	});
 	if (!result?.messages) {
 		return "No compaction needed.";
 	}
+	const size = (items: MessageWithMetadata[]) =>
+		estimateRequestInputTokens({
+			messages: items,
+			systemPrompt: "",
+			tools: [],
+		});
+	if (size(result.messages) >= size(conversationMessages))
+		return "The working context is already compact. Lower recent-message preservation if you need further compression.";
 	const { updated } = await manager.updateSessionCompactionState(
 		sessionId,
 		createSessionCompactionState({
@@ -682,7 +706,15 @@ function buildCoreSessionConfig(
 		checkpoint: { enabled: true },
 		// Core auto-compaction is opt-in; without this the 90% trigger never
 		// runs and long desktop sessions overflow the context window.
-		compaction: { enabled: true },
+		compaction: {
+			...readCompactionPreferencesGlobally(),
+			enabled: true,
+			strategy:
+				readGlobalSettings().compactionStrategy ??
+				((config.provider ?? config.providerId) === "dsw2api"
+					? "basic"
+					: "agentic"),
+		},
 		sessions: config.sessions,
 		extensionContext: createDesktopExtensionContext(telemetryUser),
 		...mistakeRecovery,

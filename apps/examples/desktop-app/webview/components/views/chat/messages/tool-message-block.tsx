@@ -54,7 +54,7 @@ function ToolLabel({
 						{part.text}
 					</span>
 				) : (
-					<span key={`${index}_${part.text}`}>{part.text}</span>
+					<span key={`${index}_${part.text}`}>{t(part.text)}</span>
 				),
 			)}
 		</span>

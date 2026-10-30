@@ -654,6 +654,9 @@ Section WebView2
   ${EndIf}
 SectionEnd
 
+; Never silently skip a locked owned binary and report a successful update.
+AllowSkipFiles off
+
 Section Install
   SetOutPath $INSTDIR
 
@@ -666,17 +669,17 @@ Section Install
   ; Copy main executable
   File "${MAINBINARYSRCPATH}"
 
+  ; Copy external binaries
+  {{#each binaries}}
+    File /a "/oname={{this}}" "{{no-escape @key}}"
+  {{/each}}
+
   ; Copy resources
   {{#each resources_dirs}}
     CreateDirectory "$INSTDIR\\{{this}}"
   {{/each}}
   {{#each resources}}
     File /a "/oname={{this.[1]}}" "{{no-escape @key}}"
-  {{/each}}
-
-  ; Copy external binaries
-  {{#each binaries}}
-    File /a "/oname={{this}}" "{{no-escape @key}}"
   {{/each}}
 
   ; Create file associations

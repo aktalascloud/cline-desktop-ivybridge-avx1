@@ -15,10 +15,6 @@ import {
 } from "@cline/shared";
 import { setHomeDirIfUnset } from "@cline/shared/storage";
 import { isOAuthProvider } from "../../auth/provider-auth-registry";
-import {
-	getManagedDsw2Api,
-	isManagedDswProvider,
-} from "../../services/providers/managed-dsw2api";
 import type { ConnectorsRequest } from "../../extensions/composio/composio-meta-tools";
 import {
 	createCompactionStateAwarePrepareTurn,
@@ -2813,29 +2809,10 @@ export class LocalRuntimeHost implements RuntimeHost {
 		session: ActiveSession,
 		options?: { forceRefresh?: boolean },
 	): Promise<void> {
-		// An open chat keeps its agent connection across turns. A managed
-		// gateway restart can change the local endpoint while that chat is idle.
-		// Refresh before sending, never replay a possibly submitted request.
 		if (session.config.providerId === "dsw2api") {
-			const stored =
-				this.providerSettingsManager.getProviderSettings("dsw2api");
-			if (isManagedDswProvider(stored)) {
-				await getManagedDsw2Api().synchronize(this.providerSettingsManager);
-				const current =
-					this.providerSettingsManager.getProviderSettings("dsw2api");
-				if (
-					isManagedDswProvider(current) &&
-					current?.apiKey &&
-					current.baseUrl &&
-					(session.config.apiKey !== current.apiKey ||
-						session.config.baseUrl !== current.baseUrl)
-				) {
-					await this.updateSessionConnection(session.sessionId, {
-						apiKey: current.apiKey,
-						baseUrl: current.baseUrl,
-					});
-				}
-			}
+			throw new Error(
+				"DSW2API has been removed. Select another provider to continue this chat.",
+			);
 		}
 		let resolved: RuntimeOAuthResolution | null = null;
 		try {

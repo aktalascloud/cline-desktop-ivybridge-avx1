@@ -1,3 +1,4 @@
+import { CompactionSettings } from "./compaction-settings";
 import { t, useTranslation } from "@/lib/i18n";
 import { Switch } from "@cline/ui";
 import { LanguageSettings } from "@/components/language-settings";
@@ -32,7 +33,6 @@ import {
 	setStoredAppIcon,
 } from "@/lib/app-icon";
 import { desktopClient } from "@/lib/desktop-client";
-import { Dsw2ApiSetup } from "./dsw2api-setup";
 import { readModelSelectionStorageFromWindow } from "@/lib/model-selection";
 import { resetOnboarding } from "@/lib/onboarding";
 import {
@@ -511,11 +511,6 @@ export function SettingsView({
 		if (!effectiveSelectedProviderId) {
 			return;
 		}
-		if (
-			effectiveSelectedProviderId === "dsw2api" &&
-			!selectedProvider?.configured
-		)
-			return;
 		const timeoutId = window.setTimeout(() => {
 			void loadProviderModels(effectiveSelectedProviderId);
 		}, 0);
@@ -557,12 +552,6 @@ export function SettingsView({
 	const openAddProvider = () => {
 		onNavigateSection("Providers");
 		setAddingProvider(true);
-	};
-	const refreshDsw = async () => {
-		invalidateProviderCatalogCache();
-		await loadProviderCatalog();
-		setAddingProvider(false);
-		setSelectedProviderId("dsw2api");
 	};
 
 	const addProviderDialog = (
@@ -621,35 +610,27 @@ export function SettingsView({
 				/>
 			</div>
 			<aside className="min-h-0 min-w-0 overflow-hidden border-l bg-background max-[1100px]:border-l-0 max-[1100px]:border-t">
-				{selectedProvider.id === "dsw2api" ? (
-					<div className="h-full overflow-y-auto p-5">
-						<Dsw2ApiSetup onConnected={refreshDsw} />
-					</div>
-				) : (
-					<ProviderDetailContent
-						key={`${selectedProvider.id}:${detailResetToken}`}
-						modelsError={modelsErrorByProvider[selectedProvider.id] ?? null}
-						modelsLoading={
-							modelsLoadingByProvider[selectedProvider.id] ?? false
-						}
-						oauthLoginPending={oauthSigningProviderId === selectedProvider.id}
-						onBack={backToProviderList}
-						onConnect={() => connectProvider(selectedProvider.id)}
-						onDisconnect={() => void disconnectProvider(selectedProvider.id)}
-						onLoadModels={() => void loadProviderModels(selectedProvider.id)}
-						onUpdateModels={(models) =>
-							void updateProviderModels(selectedProvider.id, models)
-						}
-						onOAuthLogin={
-							usesOAuth(selectedProvider)
-								? () => void runOAuthProviderLogin(selectedProvider.id)
-								: undefined
-						}
-						onUpdate={(updates) => updateProvider(selectedProvider.id, updates)}
-						provider={selectedProvider}
-						variant="panel"
-					/>
-				)}
+				<ProviderDetailContent
+					key={`${selectedProvider.id}:${detailResetToken}`}
+					modelsError={modelsErrorByProvider[selectedProvider.id] ?? null}
+					modelsLoading={modelsLoadingByProvider[selectedProvider.id] ?? false}
+					oauthLoginPending={oauthSigningProviderId === selectedProvider.id}
+					onBack={backToProviderList}
+					onConnect={() => connectProvider(selectedProvider.id)}
+					onDisconnect={() => void disconnectProvider(selectedProvider.id)}
+					onLoadModels={() => void loadProviderModels(selectedProvider.id)}
+					onUpdateModels={(models) =>
+						void updateProviderModels(selectedProvider.id, models)
+					}
+					onOAuthLogin={
+						usesOAuth(selectedProvider)
+							? () => void runOAuthProviderLogin(selectedProvider.id)
+							: undefined
+					}
+					onUpdate={(updates) => updateProvider(selectedProvider.id, updates)}
+					provider={selectedProvider}
+					variant="panel"
+				/>
 			</aside>
 		</div>
 	) : (
@@ -858,6 +839,7 @@ function GeneralSettingsContent() {
 			/>
 			<section className="max-w-344">
 				<LanguageSettings />
+				<CompactionSettings />
 				<NotificationSettings />
 				<div className="flex py-4 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
 					<div className="flex flex-col gap-1">

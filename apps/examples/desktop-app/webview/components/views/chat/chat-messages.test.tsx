@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChatMessage } from "@/lib/chat-schema";
 import { MAX_LIVE_COMMAND_OUTPUT_CHARS } from "@/lib/command-output";
 import { ChatMessages } from "./chat-messages";
+import { setLanguage } from "@/lib/i18n";
 
 // @pierre/diffs' custom element adopts constructable stylesheets, which jsdom
 // does not implement; without this the suite exits nonzero on an unhandled
@@ -53,6 +54,44 @@ async function renderMessages(
 }
 
 describe("ChatMessages error action", () => {
+	it("localizes thinking and file labels and shows compact per-request metrics", async () => {
+		setLanguage("ru");
+		try {
+			await renderMessages([
+				{
+					id: "u",
+					sessionId: "session-1",
+					role: "user",
+					content: "Start",
+					createdAt: 1000,
+				},
+				{
+					id: "a",
+					sessionId: "session-1",
+					role: "assistant",
+					content: "Done",
+					reasoning: "Private fixture thought",
+					createdAt: 7000,
+					meta: {
+						inputTokens: 1000,
+						outputTokens: 120,
+						cacheReadTokens: 750,
+						requestDurationMs: 6000,
+					},
+				},
+			]);
+			expect(container.textContent).toContain(
+				"Рассуждала 6с · 20.0 ток/с · кэш 75%",
+			);
+			setLanguage("en");
+			await act(async () => {});
+			expect(container.textContent).toContain(
+				"Thought for 6s · 20.0 tok/s · cache 75%",
+			);
+		} finally {
+			setLanguage("en");
+		}
+	});
 	it("keeps the recovery action when the error is already in the transcript", async () => {
 		const onClick = vi.fn();
 		await renderMessages(

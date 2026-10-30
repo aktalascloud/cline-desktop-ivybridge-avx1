@@ -3409,6 +3409,38 @@ describe("AgentRuntime", () => {
 		expect(runtime.snapshot().status).toBe("completed");
 	});
 
+	it("persists per-request model time alongside the provider's token usage", async () => {
+		const clock = vi
+			.spyOn(performance, "now")
+			.mockReturnValueOnce(100)
+			.mockReturnValue(6100);
+		try {
+			const runtime = new AgentRuntime({
+				model: new ScriptedModel([
+					() => [
+						{ type: "text-delta", text: "done" },
+						{
+							type: "usage",
+							usage: {
+								inputTokens: 1000,
+								outputTokens: 120,
+								cacheReadTokens: 750,
+							},
+						},
+						{ type: "finish", reason: "stop" },
+					],
+				]),
+			});
+			const result = await runtime.run("synthetic request");
+			expect(result.messages.at(-1)?.metadata?.providerRequestDurationMs).toBe(
+				6000,
+			);
+			expect(result.messages.at(-1)?.metrics?.outputTokens).toBe(120);
+		} finally {
+			clock.mockRestore();
+		}
+	});
+
 	it("annotates assistant messages with per-turn metrics and model info", async () => {
 		const model = new ScriptedModel([
 			() => [

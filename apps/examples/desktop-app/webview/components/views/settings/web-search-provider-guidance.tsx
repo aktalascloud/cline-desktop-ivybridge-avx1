@@ -54,7 +54,7 @@ export function WebSearchProviderGuidance({
 	return (
 		<p className="text-xs text-amber-700 dark:text-amber-300">
 			{t(
-				"None of your connected providers support built-in web search, so this setting has no effect yet.",
+				"The provider-native search switch is unavailable for these models. Bundled free web search works separately as an MCP tool, without a key or registration.",
 			)}{" "}
 			{onOpenModelProviders ? (
 				<button

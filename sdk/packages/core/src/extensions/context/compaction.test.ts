@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type * as LlmsProviders from "@cline/llms";
 import {
 	estimateRequestInputTokens,
@@ -4896,17 +4899,185 @@ describe("createContextCompactionPrepareTurn", () => {
 });
 
 it("auto-compacts a discovered 128K local model before sending an oversized history", async () => {
- const {extractModelsFromPayload}=await import("../../services/providers/model-source");
- const model=extractModelsFromPayload({data:[{id:"local",context_length:131072}]},"local-provider")[0]!;
- const messages: MessageWithMetadata[]=[{role:"user",content:"Initial task"},{role:"assistant",content:"Earlier context ".repeat(40000)},{role:"user",content:"Newest request"}];
- const original=JSON.stringify(messages);
- const compact=vi.fn(async (ctx: CoreCompactionContext)=>({messages:[{role:"user" as const,content:"Summary of completed work"},ctx.messages.at(-1)!]}));
- const prepare=createContextCompactionPrepareTurn({providerId:"local-provider",modelId:"local",compaction:{enabled:true,compact}});
- const result=await prepare?.({agentId:"fixture",conversationId:"fixture",parentAgentId:null,iteration:2,messages,apiMessages:messages,systemPrompt:"Preserve task and approvals",tools:[],abortSignal:new AbortController().signal,model:{id:"local",provider:"local-provider",info:model}});
- expect(compact).toHaveBeenCalledOnce();
- const budget=compact.mock.calls[0]![0].budget!;
- expect(budget.request.maxInputTokens).toBeLessThan(131072);
- expect(budget.request.targetTokens).toBeLessThan(budget.request.triggerTokens);
- expect(result?.messages.at(-1)?.content).toBe("Newest request");
- expect(JSON.stringify(messages)).toBe(original);
+	const { extractModelsFromPayload } = await import(
+		"../../services/providers/model-source"
+	);
+	const model = extractModelsFromPayload(
+		{ data: [{ id: "local", context_length: 131072 }] },
+		"local-provider",
+	)[0]!;
+	const messages: MessageWithMetadata[] = [
+		{ role: "user", content: "Initial task" },
+		{ role: "assistant", content: "Earlier context ".repeat(40000) },
+		{ role: "user", content: "Newest request" },
+	];
+	const original = JSON.stringify(messages);
+	const compact = vi.fn(async (ctx: CoreCompactionContext) => ({
+		messages: [
+			{ role: "user" as const, content: "Summary of completed work" },
+			ctx.messages.at(-1)!,
+		],
+	}));
+	const prepare = createContextCompactionPrepareTurn({
+		providerId: "local-provider",
+		modelId: "local",
+		compaction: { enabled: true, compact },
+	});
+	const result = await prepare?.({
+		agentId: "fixture",
+		conversationId: "fixture",
+		parentAgentId: null,
+		iteration: 2,
+		messages,
+		apiMessages: messages,
+		systemPrompt: "Preserve task and approvals",
+		tools: [],
+		abortSignal: new AbortController().signal,
+		model: { id: "local", provider: "local-provider", info: model },
+	});
+	expect(compact).toHaveBeenCalledOnce();
+	const budget = compact.mock.calls[0]![0].budget!;
+	expect(budget.request.maxInputTokens).toBeLessThan(131072);
+	expect(budget.request.targetTokens).toBeLessThan(
+		budget.request.triggerTokens,
+	);
+	expect(result?.messages.at(-1)?.content).toBe("Newest request");
+	expect(JSON.stringify(messages)).toBe(original);
+});
+
+it("applies edited thresholds to an already-created compaction callback without changing the transcript", async () => {
+	const { setCompactionPreferencesGlobally } = await import(
+		"../../services/global-settings"
+	);
+	const previous = process.env.CLINE_GLOBAL_SETTINGS_PATH;
+	const temp = mkdtempSync(join(tmpdir(), "live-compaction-"));
+	process.env.CLINE_GLOBAL_SETTINGS_PATH = join(temp, "settings.json");
+	try {
+		const compact = vi.fn(async (_context: CoreCompactionContext) => ({
+			messages: [
+				{ role: "user" as const, content: "Older context summary" },
+				{ role: "user" as const, content: "Newest request" },
+			],
+		}));
+		const prepare = createContextCompactionPrepareTurn({
+			providerId: "synthetic",
+			modelId: "local",
+			compaction: { enabled: true, compact },
+		})!;
+		const messages: MessageWithMetadata[] = [
+			{ role: "user", content: "Original task" },
+			{ role: "assistant", content: "synthetic history ".repeat(50000) },
+			{ role: "user", content: "Newest request" },
+		];
+		const original = JSON.stringify(messages);
+		const context = {
+			agentId: "fixture",
+			conversationId: "fixture",
+			parentAgentId: null,
+			iteration: 2,
+			messages,
+			apiMessages: messages,
+			tools: [],
+			systemPrompt: "Keep approvals",
+			abortSignal: new AbortController().signal,
+			model: {
+				id: "local",
+				provider: "synthetic",
+				info: { id: "local", contextWindow: 131072 },
+			},
+		};
+		setCompactionPreferencesGlobally({
+			enabled: false,
+			triggerTokens: 90000,
+			maxInputTokens: 120000,
+			preserveRecentMessages: 40,
+		});
+		expect(await prepare(context)).toBeUndefined();
+		expect(compact).not.toHaveBeenCalled();
+		setCompactionPreferencesGlobally({
+			enabled: true,
+			triggerTokens: 90000,
+			maxInputTokens: 120000,
+			preserveRecentMessages: 40,
+		});
+		expect((await prepare(context))?.messages.at(-1)?.content).toBe(
+			"Newest request",
+		);
+		expect(compact.mock.calls[0]?.[0].budget.request.triggerTokens).toBe(90000);
+		setCompactionPreferencesGlobally({
+			enabled: true,
+			triggerTokens: 80000,
+			maxInputTokens: 110000,
+			preserveRecentMessages: 10,
+		});
+		await prepare(context);
+		expect(compact.mock.calls[1]?.[0].budget.request.triggerTokens).toBe(80000);
+		expect(compact.mock.calls[1]?.[0].budget.request.maxInputTokens).toBe(
+			110000,
+		);
+		expect(JSON.stringify(messages)).toBe(original);
+	} finally {
+		if (previous === undefined) delete process.env.CLINE_GLOBAL_SETTINGS_PATH;
+		else process.env.CLINE_GLOBAL_SETTINGS_PATH = previous;
+		rmSync(temp, { recursive: true, force: true });
+	}
+});
+
+it("keeps forty recent messages verbatim while summarizing only the older prefix", async () => {
+	createHandlerMock.mockReturnValue({
+		createMessage: vi.fn(() =>
+			streamChunks([
+				{
+					type: "text",
+					id: "summary",
+					text: "Earlier work summary. Continue the requested task.",
+				},
+				{ type: "done", id: "summary", success: true },
+			]),
+		),
+	});
+	const messages: MessageWithMetadata[] = Array.from(
+		{ length: 100 },
+		(_, i) => ({
+			role: i % 2 === 0 ? "user" : "assistant",
+			content: `Synthetic message ${i}: ` + "x".repeat(500),
+		}),
+	);
+	const original = JSON.stringify(messages);
+	const prepare = createContextCompactionPrepareTurn({
+		providerId: "anthropic",
+		modelId: "mock-model",
+		providerConfig: {
+			providerId: "anthropic",
+			modelId: "mock-model",
+		} as LlmsProviders.ProviderConfig,
+		compaction: {
+			enabled: true,
+			strategy: "agentic",
+			preserveRecentTokens: 1,
+			preserveRecentMessages: 40,
+			triggerTokens: 15000,
+			maxInputTokens: 60000,
+		},
+	})!;
+	const result = await prepare({
+		agentId: "fixture",
+		conversationId: "fixture",
+		parentAgentId: null,
+		iteration: 1,
+		messages,
+		apiMessages: messages,
+		systemPrompt: "Keep approvals",
+		tools: [],
+		abortSignal: new AbortController().signal,
+		model: {
+			id: "mock-model",
+			provider: "anthropic",
+			info: { id: "mock-model", contextWindow: 131072 },
+		},
+	});
+	expect(createHandlerMock).toHaveBeenCalledOnce();
+	expect(result?.messages.slice(-40)).toEqual(messages.slice(-40));
+	expect(JSON.stringify(messages)).toBe(original);
+	expect(result?.messages.length).toBeLessThan(messages.length);
 });

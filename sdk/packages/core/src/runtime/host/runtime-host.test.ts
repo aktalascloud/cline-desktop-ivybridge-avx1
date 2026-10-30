@@ -3,8 +3,32 @@ import { SessionRunInProgressError } from "../orchestration/session-runtime-orch
 import {
 	isSessionNotFoundError,
 	isUnusableSessionError,
+	splitCoreSessionConfig,
 	SessionNotFoundError,
 } from "./runtime-host";
+
+it("preserves compaction budgets across the Desktop-to-Hub boundary", () => {
+	const compaction = {
+		enabled: true,
+		strategy: "basic" as const,
+		triggerTokens: 90000,
+		maxInputTokens: 120000,
+		preserveRecentMessages: 40,
+	};
+	const result = splitCoreSessionConfig({
+		cwd: ".",
+		providerId: "fixture",
+		modelId: "fixture",
+		systemPrompt: "",
+		enableTools: false,
+		enableSpawnAgent: false,
+		enableAgentTeams: false,
+		compaction,
+	});
+	expect(JSON.parse(JSON.stringify(result.config)).compaction).toMatchObject(
+		compaction,
+	);
+});
 
 describe("isUnusableSessionError", () => {
 	it("matches a missing session", () => {

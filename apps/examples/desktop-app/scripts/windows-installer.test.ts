@@ -222,7 +222,15 @@ test("production template requests UAC without changing current-user installatio
 	expect(template).toContain(
 		"  ${If} $PassiveMode = 1\n  ${OrIf} $UpdateMode = 1\n    Call PageLeaveReinstall",
 	);
+	expect(template).toContain("AllowSkipFiles off");
+	expect(template.indexOf("  ; Copy external binaries")).toBeLessThan(
+		template.indexOf("  ; Copy resources"),
+	);
 	const original = template
+		.replace(
+			"; Never silently skip a locked owned binary and report a successful update.\nAllowSkipFiles off\n\n",
+			"",
+		)
 		.replace(
 			"  ${If} $PassiveMode = 1\n  ${OrIf} $UpdateMode = 1\n    Call PageLeaveReinstall",
 			"  ${If} $PassiveMode = 1\n    Call PageLeaveReinstall",
@@ -232,7 +240,13 @@ test("production template requests UAC without changing current-user installatio
 			elevated,
 			'!if "${INSTALLMODE}" == "currentUser"\n  RequestExecutionLevel user',
 		);
-	expect(createHash("sha256").update(original).digest("hex")).toBe(
+	const externalStart = original.indexOf("  ; Copy external binaries\n");
+	const externalEnd = original.indexOf("  ; Copy resources\n", externalStart);
+	const external = original.slice(externalStart, externalEnd);
+	let stock = original.slice(0, externalStart) + original.slice(externalEnd);
+	const association = stock.indexOf("  ; Create file associations");
+	stock = stock.slice(0, association) + external + stock.slice(association);
+	expect(createHash("sha256").update(stock).digest("hex")).toBe(
 		provenance.original_sha256,
 	);
 	expect(provenance.tauri_cli).toBe(TAURI_CLI_VERSION);
@@ -520,4 +534,37 @@ SectionEnd
 		);
 		expect(existsSync(path.join(dir, "uninstall.exe"))).toBe(false);
 	}, 120_000);
+	test("silent payload replacement fails instead of skipping a late file lock", async () => {
+		const dir = path.join(root, "late payload lock");
+		const owner = await start(dir, "payload.exe");
+		const source = path.join(root, "replacement.bin");
+		writeFileSync(source, "new payload");
+		const output = path.join(root, "payload-update.exe");
+		const script = path.join(root, "payload-update.nsi");
+		writeFileSync(
+			script,
+			`Unicode true
+Name "Owned payload update fixture"
+RequestExecutionLevel user
+OutFile "${nsisString(output)}"
+AllowSkipFiles off
+Section
+SetOutPath "${nsisString(dir)}"
+File /a /oname=payload.exe "${nsisString(source)}"
+SectionEnd
+`,
+		);
+		expect(await run(nsis, ["/V2", script])).toBe(0);
+		try {
+			expect(await run(output, ["/S"])).toBe(2);
+			expect(machine(path.join(dir, "payload.exe"))).toBe(0x8664);
+		} finally {
+			owner.kill();
+			await waitFor(() => owner.exitCode !== null || owner.signalCode !== null);
+		}
+		expect(await run(output, ["/S"])).toBe(0);
+		expect(readFileSync(path.join(dir, "payload.exe"), "utf8")).toBe(
+			"new payload",
+		);
+	}, 120000);
 });

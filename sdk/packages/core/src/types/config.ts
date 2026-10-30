@@ -157,6 +157,9 @@ export interface CoreCompactionSummarizerConfig {
 export type CoreCompactionStrategy = "basic" | "agentic";
 
 export interface CoreCompactionConfig {
+	triggerTokens?: number;
+	maxInputTokens?: number;
+	preserveRecentMessages?: number;
 	enabled?: boolean;
 	strategy?: CoreCompactionStrategy;
 	preserveRecentTokens?: number;

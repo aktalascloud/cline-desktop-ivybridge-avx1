@@ -1,9 +1,9 @@
 {
-  "upstream_commit": "59b63ab500da9859f12d8888c3298bc29bba0b92",
-  "upstream_path": "crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi",
-  "tauri_cli": "2.12.3",
-  "original_sha256": "8ae02c66f8adb4a0d15d97f984fbacd2b44262d8a4d03fefaf6177f67f7008e5",
-  "change": "currentUser requests admin; existing installations use the stock in-place update path before the legacy uninstall page; all other template bytes unchanged",
-  "license": "Apache-2.0 OR MIT; upstream notices retained by dependency license inventory",
-  "installer_revision": 2
+	"upstream_commit": "59b63ab500da9859f12d8888c3298bc29bba0b92",
+	"upstream_path": "crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi",
+	"tauri_cli": "2.12.3",
+	"original_sha256": "8ae02c66f8adb4a0d15d97f984fbacd2b44262d8a4d03fefaf6177f67f7008e5",
+	"change": "currentUser UAC and in-place update; fail on unreplaceable files; copy CLI before resources; other template content retains upstream provenance",
+	"license": "Apache-2.0 OR MIT; upstream notices retained by dependency license inventory",
+	"installer_revision": 3
 }

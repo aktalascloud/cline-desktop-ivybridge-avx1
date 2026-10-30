@@ -29,10 +29,14 @@ it("offers provider setup and refreshes readiness when provider settings change"
 				<WebSearchProviderGuidance onOpenModelProviders={navigate} />,
 			),
 		);
-		expect(container.textContent).toContain("this setting has no effect yet");
+		expect(container.textContent).toContain(
+			"Bundled free web search works separately as an MCP tool",
+		);
 		catalog.fetch.mockRejectedValueOnce(new Error("Temporary catalog failure"));
 		await act(async () => catalog.invalidate());
-		expect(container.textContent).toContain("this setting has no effect yet");
+		expect(container.textContent).toContain(
+			"Bundled free web search works separately as an MCP tool",
+		);
 		expect(container.querySelector("button")?.textContent).toContain(
 			"Connect a provider",
 		);

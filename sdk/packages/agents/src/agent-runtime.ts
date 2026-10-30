@@ -1815,6 +1815,7 @@ export class AgentRuntime {
 		interrupted?: boolean;
 	}> {
 		const usageBeforeModel = cloneUsage(this.state.usage);
+		const providerRequestStartedAt = performance.now();
 		const getTaskLifecycleDurationMs = () => Date.now() - prepared.startedAt;
 		let request = prepared.request;
 
@@ -2135,6 +2136,13 @@ export class AgentRuntime {
 		const metrics = usageDelta(usageBeforeModel, this.state.usage);
 		if (metrics) {
 			message.metrics = metrics;
+			// Per-request wall time includes prefill/waiting, excludes tools and compaction.
+			const requestDurationMs = performance.now() - providerRequestStartedAt;
+			if ((metrics.outputTokens ?? 0) > 0 && requestDurationMs > 0)
+				message.metadata = {
+					...message.metadata,
+					providerRequestDurationMs: requestDurationMs,
+				};
 			this.captureUnexpectedReasoningTokens(request, metrics);
 		}
 		if (this.config.messageModelInfo) {

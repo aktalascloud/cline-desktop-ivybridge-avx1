@@ -2,10 +2,14 @@
 
 ## 1.0.14
 
-- Auto-compaction now retains model context limits returned by the provider. Browser DeepSeek requests are not automatically replayed after errors or empty streams; no claim of protection from service account restrictions.
-- Автокомпактирование получает размер контекста из каталога провайдера. Ошибочные и пустые веб-запросы DeepSeek автоматически не переотправляются; отсутствие блокировок сервисом не гарантируется.
-- Updated upstream: Hub account validation, resumable cloud tasks and safer draft/attachment handoff. Partial local model overrides preserve explicit reasoning off. Strata, DSW2API, approvals and AVX1 profile retained.
-- Обновлён upstream: проверка аккаунта Hub, восстановление облачных задач и сохранение черновиков с вложениями. Частичные настройки локальной модели сохраняют отключение thinking. Strata, DSW2API, approvals и AVX1 сохранены.
+- Context settings: automatic trigger, maximum input and recent-message preservation. Manual compaction reuses the current summary; provider context limits and budgets survive Desktop/Hub handoff. Full saved history stays intact.
+- Настройки контекста: порог автокомпакта, предел входа и сохраняемые сообщения. Ручной компакт использует текущую сводку; лимиты модели и пороги передаются в Hub. Полная история сохраняется.
+- Bundled Ponytail rules and free keyless MCP web search. DSW2API and its Cline browser bridge have been removed. DSH channels with unverified or capped access are excluded.
+- Ponytail и бесплатный веб-поиск MCP без регистрации включены в пакет. DSW2API и его мост Cline удалены. Лимитные и неподтверждённые каналы DSH не добавлены.
+- Translated thinking and tool labels; compact per-request token rate and known cache-hit share.
+- Переведены подписи рассуждений и инструментов; добавлены краткие ток/с за запрос и подтверждённая доля кэша.
+- Updated upstream Hub/cloud handoff and model capability overlays. Silent installer rejects locked payloads instead of reporting an incomplete upgrade as success. Strata, RU/EN, approvals and AVX1 preserved.
+- Обновлены Hub, передача облачных задач и настройки возможностей моделей. Тихий установщик больше не выдаёт пропуск занятого файла за успешное обновление. Strata, RU/EN, approvals и AVX1 сохранены.
 
 ## 1.0.13
 

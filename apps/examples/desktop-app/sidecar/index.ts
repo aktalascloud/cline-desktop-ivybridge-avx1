@@ -54,9 +54,6 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 }
 
 async function main(desktopCliPath?: string) {
-	void import("./browser-extension-bridge")
-		.then((module) => module.startBrowserExtensionBridge())
-		.catch(() => {});
 	if (!BunRuntime) {
 		throw new Error("sidecar must be run with Bun");
 	}

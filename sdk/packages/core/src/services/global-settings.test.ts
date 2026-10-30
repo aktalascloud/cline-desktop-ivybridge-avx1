@@ -11,6 +11,8 @@ import {
 	readCompactionModeGlobally,
 	readCompactionStrategyGlobally,
 	readGlobalSettings,
+	readCompactionPreferencesGlobally,
+	setCompactionPreferencesGlobally,
 	readPlanActModeGlobally,
 	readToolAutoApproveGlobally,
 	readTuiThemeGlobally,
@@ -34,6 +36,44 @@ describe("global-settings", () => {
 
 	afterEach(() => {
 		process.env.CLINE_GLOBAL_SETTINGS_PATH = previousGlobalSettingsPath;
+	});
+
+	it("saves validated compaction thresholds without changing approvals or disabled tools", async () => {
+		const dir = await mkdtemp(join(tmpdir(), "compaction-preferences-"));
+		process.env.CLINE_GLOBAL_SETTINGS_PATH = join(dir, "settings.json");
+		try {
+			writeGlobalSettings({
+				telemetryOptOut: true,
+				autoUpdateEnabled: false,
+				toolAutoApprove: false,
+				disabledTools: ["run_commands"],
+			});
+			const prefs = {
+				enabled: true,
+				triggerTokens: 90000,
+				maxInputTokens: 120000,
+				preserveRecentMessages: 40,
+			};
+			expect(setCompactionPreferencesGlobally(prefs)).toEqual(prefs);
+			expect(readGlobalSettings()).toMatchObject({
+				telemetryOptOut: true,
+				autoUpdateEnabled: false,
+				toolAutoApprove: false,
+				disabledTools: ["run_commands"],
+			});
+			expect(() =>
+				setCompactionPreferencesGlobally({ ...prefs, triggerTokens: 130000 }),
+			).toThrow("below");
+			expect(() =>
+				setCompactionPreferencesGlobally({
+					...prefs,
+					preserveRecentMessages: -1,
+				}),
+			).toThrow();
+			expect(readCompactionPreferencesGlobally()).toEqual(prefs);
+		} finally {
+			await rm(dir, { recursive: true, force: true });
+		}
 	});
 
 	it("defines the global settings file schema", () => {

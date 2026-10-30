@@ -2751,6 +2751,7 @@ describe("/compact", () => {
 		busy?: boolean;
 		messages?: unknown[];
 		config?: Record<string, unknown>;
+		compactionState?: unknown;
 	}) {
 		const sessionId = "compact-session";
 		const wsSend = vi.fn();
@@ -2783,6 +2784,9 @@ describe("/compact", () => {
 					send,
 					get: vi.fn(async () => ({ status: "idle" })),
 					readMessages: vi.fn(async () => options.messages ?? []),
+					readSessionCompactionState: vi.fn(
+						async () => options.compactionState,
+					),
 					updateSessionCompactionState,
 					pendingPrompts: { list: vi.fn(async () => []) },
 				},
@@ -2807,6 +2811,77 @@ describe("/compact", () => {
 			updateSessionCompactionState,
 		};
 	}
+
+	it("recompacts the projected summary with the custom model budget and keeps canonical history", async () => {
+		const { createSessionCompactionState } = await import("@cline/core");
+		const messages = [
+			{ role: "user" as const, content: "Old task" },
+			{ role: "assistant" as const, content: "Old work" },
+			{ role: "user" as const, content: "Recent task" },
+			{ role: "assistant" as const, content: "Recent work" },
+		];
+		const state = createSessionCompactionState({
+			sourceMessages: messages.slice(0, 2),
+			compactedMessages: [{ role: "user", content: "Saved summary" }],
+			conversationId: "compact-session",
+		});
+		const compact = vi.fn(
+			async (_input: {
+				messages: Array<{ content: unknown }>;
+				model: { info: { contextWindow?: number } };
+			}) => ({ messages: [{ role: "user", content: "Smaller summary" }] }),
+		);
+		createContextCompactionPrepareTurnMock.mockReturnValueOnce(compact);
+		const { ctx, sessionId, updateSessionCompactionState } =
+			createCompactContext({
+				messages,
+				compactionState: state,
+				config: {
+					provider: "custom",
+					model: "local",
+					providerConfig: {
+						providerId: "custom",
+						modelId: "local",
+						knownModels: { local: { id: "local", contextWindow: 131072 } },
+					},
+				},
+			});
+		await handleChatSessionCommand(ctx, {
+			action: "send",
+			sessionId,
+			prompt: "/compact",
+		});
+		expect(compact.mock.calls[0]?.[0].messages[0].content).toBe(
+			"Saved summary",
+		);
+		expect(compact.mock.calls[0]?.[0].model.info.contextWindow).toBe(131072);
+		expect(updateSessionCompactionState).toHaveBeenCalledWith(
+			sessionId,
+			expect.objectContaining({ source_message_count: 4 }),
+		);
+		expect(messages[0]?.content).toBe("Old task");
+	});
+
+	it("does not report success or replace saved state when compaction makes the working context larger", async () => {
+		const compact = vi.fn(async () => ({
+			messages: [{ role: "user", content: "x".repeat(10000) }],
+		}));
+		createContextCompactionPrepareTurnMock.mockReturnValueOnce(compact);
+		const { ctx, sessionId, updateSessionCompactionState, readCommandOutput } =
+			createCompactContext({
+				messages: [
+					{ role: "user", content: "Task" },
+					{ role: "assistant", content: "Done" },
+				],
+			});
+		await handleChatSessionCommand(ctx, {
+			action: "send",
+			sessionId,
+			prompt: "/compact",
+		});
+		expect(updateSessionCompactionState).not.toHaveBeenCalled();
+		expect(JSON.stringify(readCommandOutput())).toContain("already compact");
+	});
 
 	it("compacts with the session's connection settings and saves the result", async () => {
 		const summary = { role: "user", content: "Context summary" };
@@ -2845,7 +2920,12 @@ describe("/compact", () => {
 				apiKey: "test-key",
 				baseUrl: "https://proxy.example/v1",
 				headers: { "X-Team": "desktop" },
-				compaction: { enabled: true },
+				compaction: expect.objectContaining({
+					enabled: true,
+					triggerTokens: 90000,
+					maxInputTokens: 120000,
+					preserveRecentMessages: 40,
+				}),
 			}),
 			{ mode: "manual" },
 		);

@@ -131,6 +131,9 @@ function extractMessageUsageMeta(message: JsonRecord): JsonRecord | undefined {
 	const cacheReadTokens = parseU64Value(metrics?.cacheReadTokens);
 	const cacheWriteTokens = parseU64Value(metrics?.cacheWriteTokens);
 	const totalCost = parseF64Value(metrics?.cost);
+	const requestDurationMs = parseF64Value(
+		readMessageMetadata(message)?.providerRequestDurationMs,
+	);
 	const providerId =
 		(typeof message.providerId === "string" && message.providerId) ||
 		(typeof modelInfo?.provider === "string" ? modelInfo.provider : undefined);
@@ -154,6 +157,7 @@ function extractMessageUsageMeta(message: JsonRecord): JsonRecord | undefined {
 		cacheReadTokens,
 		cacheWriteTokens,
 		totalCost,
+		requestDurationMs,
 		providerId,
 		modelId,
 	};

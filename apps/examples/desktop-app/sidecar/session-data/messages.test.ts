@@ -6,6 +6,37 @@ import { writeSessionManifest } from "../paths";
 import { readSessionMessages } from "./messages";
 
 describe("readSessionMessages", () => {
+	it("retains matching model time, output usage and cache counters for history rendering", async () => {
+		const sessionId = "request-metrics";
+		const messages = [
+			{
+				role: "assistant",
+				content: [
+					{ type: "reasoning", text: "thinking" },
+					{ type: "text", text: "done" },
+				],
+				metadata: { providerRequestDurationMs: 6000 },
+				metrics: { inputTokens: 1000, outputTokens: 120, cacheReadTokens: 750 },
+			},
+		];
+		const rows = await readSessionMessages(
+			{
+				liveSessions: new Map([[sessionId, { messages }]]),
+			} as unknown as Parameters<typeof readSessionMessages>[0],
+			sessionId,
+		);
+		expect(rows).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					meta: expect.objectContaining({
+						requestDurationMs: 6000,
+						outputTokens: 120,
+						cacheReadTokens: 750,
+					}),
+				}),
+			]),
+		);
+	});
 	it("restores persisted errors with the error display role", async () => {
 		const sessionId = "persisted-error";
 		const messages = JSON.parse(

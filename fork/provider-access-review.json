@@ -1,0 +1,30 @@
+{
+  "checked_date": "2026-10-30",
+  "required_access": {
+    "free": true,
+    "anonymous": true,
+    "user_api_key_required": false,
+    "service_quota": false
+  },
+  "qualified_remote_models": [],
+  "references": [
+    {
+      "repository": "dataelement/dsh-desktop",
+      "disposition": "Client application; its own upstream provider routes require a key or account; no anonymous unlimited model host qualified."
+    },
+    {
+      "repository": "Ebony-Vinyl/dsh-our-free-model",
+      "disposition": "Public free lanes retain upstream quotas and restrictions; not qualified."
+    },
+    {
+      "repository": "nejib1/Free-LLM",
+      "disposition": "Directory of quota-limited free tiers, credits and local engines; no remote route meeting every condition qualified."
+    },
+    {
+      "repository": "tashfeenahmed/freellmapi",
+      "disposition": "Personal API-key aggregation and per-key free-tier budget routing; does not remove registration, key or quota requirements."
+    }
+  ],
+  "official_limit_source": "https://kilo.ai/docs/gateway/usage-and-billing",
+  "notes": "No client identity spoofing, account pools or unlimited-service claim. Local/self-hosted providers are separate and existing profiles remain private."
+}

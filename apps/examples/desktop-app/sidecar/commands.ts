@@ -47,7 +47,6 @@ import {
 	getCoreBuiltinToolCatalog,
 	getLocalProviderModels,
 	getLocalTranscriptionModels,
-	getManagedDsw2Api,
 	getProviderAuthHandler,
 	identifyAccount,
 	isModelToolEnabledGlobally,
@@ -60,6 +59,8 @@ import {
 	probeMcpServerConnection,
 	RemoteEnvironmentService,
 	readGlobalSettings,
+	readCompactionPreferencesGlobally,
+	setCompactionPreferencesGlobally,
 	readSessionCheckpointHistory,
 	resolveClineAccountTelemetryIdentity,
 	resolveMcpServerRegistration,
@@ -3117,85 +3118,18 @@ export async function handleCommand(
 	}
 
 	// ── Provider management ────────────────────────────────────────────
-	if (
-		["dsw2api_status", "dsw2api_configure", "dsw2api_connect"].includes(command)
-	) {
-		if (!options?.connection?.data?.canApproveTools)
-			throw new Error(
-				"DeepSeek session management requires a trusted desktop connection",
-			);
-		const gateway = getManagedDsw2Api();
-		if (command === "dsw2api_status") return await gateway.status();
-		const manager = new ProviderSettingsManager();
-		if (command === "dsw2api_connect")
-			return await gateway.connectSaved(manager);
-		if (
-			typeof args?.token !== "string" ||
-			(args.cookies !== undefined && typeof args.cookies !== "string")
-		)
-			throw new Error("A personal DeepSeek session token is required");
-		return await gateway.configure(
-			manager,
-			args.token,
-			typeof args.cookies === "string" ? args.cookies : "",
-		);
+	if (command.startsWith("dsw2api_")) {
+		throw new Error("DSW2API has been removed from this build.");
 	}
-	if (
-		command === "dsw2api_prepare_extension" ||
-		command === "dsw2api_open_extension"
-	) {
-		if (!options?.connection?.data?.canApproveTools)
-			throw Error("Browser setup requires a trusted connection");
-		const bridge = await import("./browser-extension-bridge");
-		return command === "dsw2api_open_extension"
-			? await bridge.openBrowserExtension()
-			: await bridge.prepareBrowserExtension();
-	}
-	if (command === "list_provider_catalog") {
+	if (command === "list_providers") {
 		const manager = new ProviderSettingsManager();
 		await ensureCustomProvidersLoaded(manager);
-		const storedDsw = manager.getProviderSettings("dsw2api");
-		let dswConfigured: boolean | undefined;
-		if (
-			Object.entries(storedDsw?.headers ?? {}).some(
-				([key, value]) =>
-					key.toLowerCase() === "x-cline-managed-gateway" &&
-					value === "dsw2api-v1",
-			)
-		) {
-			try {
-				await getManagedDsw2Api().synchronize(manager);
-				dswConfigured = (await getManagedDsw2Api().status()).configured;
-			} catch {
-				dswConfigured = false;
-			}
-		}
 		const catalog = await listLocalProviders(manager, {
 			isClinePassEnabled: true,
 		});
-		if (dswConfigured !== undefined) {
-			catalog.providers = catalog.providers.map((provider) =>
-				provider.id === "dsw2api"
-					? { ...provider, configured: dswConfigured }
-					: provider,
-			);
-		}
-		if (!catalog.providers.some((provider) => provider.id === "dsw2api")) {
-			catalog.providers.push({
-				id: "dsw2api",
-				name: "DSW2API · DeepSeek",
-				models: 0,
-				color: "#4d6bfe",
-				letter: "D",
-				enabled: false,
-				configured: false,
-				modelList: [],
-				modelTools: [],
-				auth: { providerId: "dsw2api" },
-				authDescription: "Personal DeepSeek browser session",
-				baseUrlDescription: "Bundled local gateway",
-			});
-		}
+		catalog.providers = catalog.providers.filter(
+			(provider) => provider.id !== "dsw2api",
+		);
 		return catalog;
 	}
 	if (command === "list_transcription_models") {
@@ -3523,6 +3457,13 @@ export async function handleCommand(
 	}
 
 	// ── Global settings ────────────────────────────────────────────────
+	if (command === "get_compaction_settings")
+		return readCompactionPreferencesGlobally();
+	if (command === "set_compaction_settings") {
+		if (!options?.connection?.data?.canApproveTools)
+			throw new Error("Compaction settings require a trusted connection");
+		return setCompactionPreferencesGlobally(args?.settings);
+	}
 	if (command === "get_global_settings") {
 		return readGlobalSettings();
 	}

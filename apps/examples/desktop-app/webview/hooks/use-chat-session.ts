@@ -3500,14 +3500,17 @@ export function useChatSession(environmentId: string) {
 							meta: {
 								...(msg.meta ?? {}),
 								inputTokens:
+									!msg.meta?.requestDurationMs &&
 									typeof inputTokens === "number"
 										? inputTokens
 										: msg.meta?.inputTokens,
 								outputTokens:
+									!msg.meta?.requestDurationMs &&
 									typeof outputTokens === "number"
 										? outputTokens
 										: msg.meta?.outputTokens,
 								cacheReadTokens:
+									!msg.meta?.requestDurationMs &&
 									typeof resultCacheReadTokens === "number"
 										? resultCacheReadTokens
 										: msg.meta?.cacheReadTokens,

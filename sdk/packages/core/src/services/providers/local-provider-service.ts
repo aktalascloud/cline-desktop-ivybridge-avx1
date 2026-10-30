@@ -391,7 +391,7 @@ function normalizeHeaders(
 function buildProviderModels(
 	modelIds: string[],
 	existingModels: StoredProviderEntry["models"] = {},
- discovered: DiscoveredModel[] = [],
+	discovered: DiscoveredModel[] = [],
 ) {
 	// Provider capabilities are inherited at registration. Persist only model
 	// overrides so refreshing defaults cannot overwrite user customizations.
@@ -401,7 +401,7 @@ function buildProviderModels(
 			{
 				id,
 				name: id,
-                ...discovered.find(model => model.id === id),
+				...discovered.find((model) => model.id === id),
 				...existingModels[id],
 			},
 		]),
@@ -440,7 +440,7 @@ async function resolveModelIds(params: {
 	shouldRecompute: boolean;
 }): Promise<{ modelIds: string[]; discovered: DiscoveredModel[] }> {
 	if (!params.shouldRecompute) {
-		return {modelIds: params.fallbackModelIds ?? [], discovered: []};
+		return { modelIds: params.fallbackModelIds ?? [], discovered: [] };
 	}
 	let fetchedModels: DiscoveredModel[] = [];
 	if (params.modelsSourceUrl) {
@@ -454,7 +454,15 @@ async function resolveModelIds(params: {
 			throw new ModelDiscoveryError(cause);
 		}
 	}
-	return {modelIds: [...new Set([...(params.explicitModels ?? []), ...fetchedModels.map(model => model.id)])], discovered: fetchedModels};
+	return {
+		modelIds: [
+			...new Set([
+				...(params.explicitModels ?? []),
+				...fetchedModels.map((model) => model.id),
+			]),
+		],
+		discovered: fetchedModels,
+	};
 }
 
 function removeProviderFromSettingsState(
@@ -607,7 +615,7 @@ async function addLocalProviderUnlocked(
 	const typedModels = uniqueTrimmed(request.models);
 	const sourceUrl = request.modelsSourceUrl?.trim();
 	const normalizedHeaders = normalizeHeaders(request.headers);
-	const {modelIds, discovered} = await resolveModelIds({
+	const { modelIds, discovered } = await resolveModelIds({
 		providerId,
 		explicitModels: typedModels,
 		modelsSourceUrl: sourceUrl,
@@ -830,7 +838,7 @@ async function prepareProviderUpdate(
 	const existingModelIds = Object.keys(existingEntry.models ?? {})
 		.map((id) => id.trim())
 		.filter(Boolean);
-	const {modelIds, discovered} = await resolveModelIds({
+	const { modelIds, discovered } = await resolveModelIds({
 		providerId,
 		explicitModels,
 		modelsSourceUrl: nextModelsSourceUrl,
@@ -980,7 +988,7 @@ export async function listLocalProviders(
 	voiceInput?: VoiceInputSelection;
 }> {
 	const state = manager.read();
-	const ids = LlmsModels.getProviderIds();
+	const ids = LlmsModels.getProviderIds().filter((id) => id !== "dsw2api");
 
 	// The catalog is built for every provider at startup and must not wait on
 	// the network, so featured tiers come from a synchronous peek (cached live

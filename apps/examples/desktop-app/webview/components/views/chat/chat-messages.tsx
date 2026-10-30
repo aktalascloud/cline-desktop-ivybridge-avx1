@@ -517,6 +517,7 @@ function ChatMessagesImpl({
 			const firstReasoningMessage = reasoningMessages[0];
 			const lastReasoningMessage = reasoningMessages.at(-1);
 			return {
+				requestMetrics: lastReasoningMessage?.meta,
 				reasoningContent: reasoningMessages
 					.map((reasoningMessage) => reasoningMessage.reasoning?.trim())
 					.filter((content): content is string => Boolean(content))
