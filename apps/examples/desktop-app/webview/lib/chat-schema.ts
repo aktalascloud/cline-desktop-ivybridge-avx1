@@ -92,6 +92,7 @@ export const ChatMessageSchema = z.object({
 			messageKind: z.string().optional(),
 			displayRole: z.string().optional(),
 			reason: z.string().optional(),
+			contextCompacted: z.boolean().optional(),
 			inputTokens: z.number().int().nonnegative().optional(),
 			outputTokens: z.number().int().nonnegative().optional(),
 			cacheReadTokens: z.number().int().nonnegative().optional(),

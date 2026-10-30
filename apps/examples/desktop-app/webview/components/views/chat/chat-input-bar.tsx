@@ -371,6 +371,7 @@ type ChatInputBarProps = {
 	/** Opens Settings → Local Models from the local model chip. */
 	onOpenLocalModels?: () => void;
 	summary: {
+		contextCompacted?: boolean;
 		toolCalls: number;
 		tokensIn: number;
 		tokensOut: number;
@@ -1955,6 +1956,7 @@ function ChatInputBarImpl({
 								)}
 							</div>
 							<TokenUsageRing
+								compacted={summary.contextCompacted}
 								usage={{
 									contextWindow: modelContextWindow,
 									tokensIn: summary.tokensIn,

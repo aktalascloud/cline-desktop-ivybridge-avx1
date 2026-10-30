@@ -2,6 +2,9 @@
 
 ## 1.0.14
 
+- Overflow recovery can recompact previously preserved tool results; compacted context is marked separately from old request usage.
+- Восстановление после переполнения повторно сжимает старые результаты инструментов; сжатый контекст отмечен отдельно от статистики прежнего запроса.
+
 - Context settings: automatic trigger, maximum input and recent-message preservation. Manual compaction reuses the current summary; provider context limits and budgets survive Desktop/Hub handoff. Full saved history stays intact.
 - Настройки контекста: порог автокомпакта, предел входа и сохраняемые сообщения. Ручной компакт использует текущую сводку; лимиты модели и пороги передаются в Hub. Полная история сохраняется.
 - Bundled Ponytail rules and free keyless MCP web search. DSW2API and its Cline browser bridge have been removed. FreeLLM includes Nemotron 3.5 Super VL, Reflection Beam and Dots3-Note Preview, three different vendors through anonymous keyless access, sharing a 200 requests/hour/IP service limit.

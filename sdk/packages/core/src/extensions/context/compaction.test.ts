@@ -5081,3 +5081,71 @@ it("keeps forty recent messages verbatim while summarizing only the older prefix
 	expect(JSON.stringify(messages)).toBe(original);
 	expect(result?.messages.length).toBeLessThan(messages.length);
 });
+
+it("recompacts frozen tool results after a provider rejects an already compacted request", () => {
+	const frozen = { compaction: "preserved" };
+	const messages: MessageWithMetadata[] = [
+		{ role: "user", content: "Read the file and fix it" },
+		{
+			role: "assistant",
+			content: [
+				{
+					type: "tool_use",
+					id: "read-1",
+					name: "read_file",
+					input: { path: "sample.txt" },
+				},
+			],
+			metadata: frozen,
+		},
+		{
+			role: "user",
+			content: [
+				{
+					type: "tool_result",
+					tool_use_id: "read-1",
+				name: "read_file",
+					content: "large file result ".repeat(4000),
+				},
+			],
+			metadata: frozen,
+		},
+		{ role: "assistant", content: "Read sample.txt", metadata: frozen },
+		{ role: "user", content: "Continue the fix" },
+	];
+	const result = runBasicCompaction({
+		estimateMessageTokens: createTokenEstimator(),
+		context: {
+			agentId: "agent",
+			conversationId: "conversation",
+			parentAgentId: null,
+			iteration: 1,
+			messages,
+			model: { id: "test", provider: "test" },
+			mode: "overflow_recovery",
+			abortSignal: new AbortController().signal,
+			budget: {
+				request: {
+					inputTokens: 20000,
+					maxInputTokens: 10000,
+					triggerTokens: 9000,
+					targetTokens: 2000,
+					overheadTokens: 0,
+					thresholdRatio: 0.9,
+					utilizationRatio: 2,
+				},
+				messages: {
+					inputTokens: 20000,
+					triggerTokens: 9000,
+					targetTokens: 2000,
+				},
+			},
+		},
+	});
+	expect(result?.messages).toBeDefined();
+	expect(JSON.stringify(result?.messages).length).toBeLessThan(
+		JSON.stringify(messages).length / 2,
+	);
+	expect(JSON.stringify(result?.messages)).toContain("Continue the fix");
+	expect(JSON.stringify(result?.messages)).toContain("sample.txt");
+});

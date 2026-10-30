@@ -1298,5 +1298,8 @@
 	"Running command": "Выполнение команды",
 	"Searched files": "Поиск в файлах завершён",
 	"Searching files": "Поиск в файлах",
-	"No account or key. Shared limit: 200 requests/hour/IP. Cloud providers may retain prompts.": "Без аккаунта и ключа. Общий лимит: 200 запросов/ч на IP. Облачные провайдеры могут сохранять запросы."
+	"No account or key. Shared limit: 200 requests/hour/IP. Cloud providers may retain prompts.": "Без аккаунта и ключа. Общий лимит: 200 запросов/ч на IP. Облачные провайдеры могут сохранять запросы.",
+	"Context compacted": "Контекст сжат",
+	"Context compacted. The next request uses the summary. Usage below is from the previous request.": "Контекст сжат. Следующий запрос использует сводку. Ниже — статистика предыдущего запроса.",
+	"Compacting context…": "Сжимаю контекст…"
 }

@@ -80,7 +80,10 @@ import {
 	workspacePathKey,
 } from "./session-config";
 import { derivePromptFromMessages } from "./session-data/common";
-import { persistSessionMessages } from "./session-data/messages";
+import {
+	hasUnmeasuredCompaction,
+	persistSessionMessages,
+} from "./session-data/messages";
 import type {
 	ChatSessionCommandRequest,
 	JsonRecord,
@@ -1696,7 +1699,17 @@ async function handleSendOnce(
 			command: commandName,
 			text,
 		});
-		return { sessionId, ok: true, commandHandled: true };
+		return {
+			sessionId,
+			ok: true,
+			commandHandled: true,
+			...(hasUnmeasuredCompaction(
+				sessionId,
+				await manager.readMessages(sessionId),
+			)
+				? { contextCompacted: true }
+				: {}),
+		};
 	}
 	const pluginCommand =
 		commandName && !BUILTIN_SLASH_COMMAND_NAMES.has(commandName)

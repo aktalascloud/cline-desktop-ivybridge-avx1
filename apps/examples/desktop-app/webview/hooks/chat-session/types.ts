@@ -128,6 +128,7 @@ export type ChatApiResult = {
 };
 
 export type ChatSessionCommandResponse = {
+	contextCompacted?: boolean;
 	environmentId?: string;
 	sessionId?: string;
 	cwd?: string;

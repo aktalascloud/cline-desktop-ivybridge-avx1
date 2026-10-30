@@ -485,6 +485,7 @@ function updateMessageById(
 }
 
 type SessionUsageSummary = {
+	contextCompacted?: boolean;
 	tokensIn: number;
 	tokensOut: number;
 	cacheReadTokens: number;
@@ -534,6 +535,9 @@ function summarizeSessionUsage(
 		return undefined;
 	}
 	return {
+		contextCompacted: messages.some(
+			(message) => message.meta?.contextCompacted === true,
+		),
 		tokensIn: tokensIn ?? 0,
 		tokensOut: tokensOut ?? 0,
 		cacheReadTokens: cacheReadTokens ?? 0,
@@ -619,6 +623,7 @@ export function useChatSession(environmentId: string) {
 	>(null);
 	// Names what the runtime is doing before the first output of a turn (in
 	// place of "Thinking..."); ephemeral, cleared when the turn moves on.
+	const [contextCompacted, setContextCompacted] = useState(false);
 	const [activityLabel, setActivityLabel] = useState<string | null>(null);
 	const [hydratedHistorySessionId, setHydratedHistorySessionId] = useState<
 		string | null
@@ -722,6 +727,10 @@ export function useChatSession(environmentId: string) {
 				: undefined,
 		[messages, sessionId],
 	);
+	const persistedContextCompacted = persistedUsage?.contextCompacted;
+	useEffect(() => {
+		setContextCompacted(persistedContextCompacted ?? false);
+	}, [sessionId, persistedContextCompacted]);
 	const persistedTokensIn = persistedUsage?.tokensIn;
 	const persistedTokensOut = persistedUsage?.tokensOut;
 	const persistedCacheReadTokens = persistedUsage?.cacheReadTokens;
@@ -2070,6 +2079,7 @@ export function useChatSession(environmentId: string) {
 			}
 
 			if (payload.stream === "chat_usage") {
+				setContextCompacted(false);
 				let usage: ChatUsageEvent;
 				try {
 					usage = JSON.parse(payload.chunk) as ChatUsageEvent;
@@ -3100,6 +3110,8 @@ export function useChatSession(environmentId: string) {
 					activeSessionIdRef.current = activeSessionId;
 					activeTurnCostTrackerRef.current = turnCostTracker ?? null;
 					setStatus("starting");
+					if (/^\/compact(?:\s|$)/i.test(trimmed))
+						setActivityLabel("Compacting context…");
 				}
 				await precedingPromptDispatch;
 				turnEpochAtDispatch = turnEpochRef.current;
@@ -3142,6 +3154,10 @@ export function useChatSession(environmentId: string) {
 			try {
 				const payload = await sendTask;
 				if (payload.ok && payload.commandHandled) {
+					if (/^\/compact(?:\s|$)/i.test(trimmed)) {
+						setActivityLabel(null);
+						setContextCompacted(payload.contextCompacted === true);
+					}
 					// A plugin slash command (e.g. `/goal status`) was handled by
 					// the sidecar without a turn: its reply arrives as a
 					// chat_command_output toast, so retract the optimistic
@@ -4303,6 +4319,7 @@ export function useChatSession(environmentId: string) {
 
 	const summary = useMemo(
 		() => ({
+			contextCompacted,
 			toolCalls,
 			tokensIn,
 			tokensOut,
@@ -4312,6 +4329,7 @@ export function useChatSession(environmentId: string) {
 			deletions: diffSummary.deletions,
 		}),
 		[
+			contextCompacted,
 			diffSummary.additions,
 			diffSummary.deletions,
 			tokensIn,

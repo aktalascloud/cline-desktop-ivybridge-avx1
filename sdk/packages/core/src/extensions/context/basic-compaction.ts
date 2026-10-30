@@ -538,13 +538,17 @@ export function runBasicCompaction(options: {
 	}
 
 	// Output of an earlier compaction is frozen: those messages are kept
-	// as-is and never re-folded, so this pass only processes new messages.
+	// as-is during normal compaction. A provider-rejected overflow must
+	// re-fold them too; otherwise recovery resends the same oversized prompt.
 	const frozenIndices = new Set<number>();
 	for (let index = 0; index < originalMessages.length; index += 1) {
 		if (sanitizedTypedByIndex.has(index)) {
 			continue;
 		}
-		if (isPreservedByCompaction(originalMessages[index])) {
+		if (
+			options.context.mode !== "overflow_recovery" &&
+			isPreservedByCompaction(originalMessages[index])
+		) {
 			frozenIndices.add(index);
 			totalTokens += estimate(originalMessages[index]);
 		}
