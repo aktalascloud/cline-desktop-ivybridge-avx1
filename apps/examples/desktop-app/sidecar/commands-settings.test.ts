@@ -51,6 +51,13 @@ afterEach(() => {
 });
 
 describe("desktop settings commands", () => {
+	it("serves the provider catalog command used by the native Windows model picker", async () => {
+		const { ctx } = createContext();
+		const catalog = await handleCommand(ctx, "list_provider_catalog");
+		const legacy = await handleCommand(ctx, "list_providers");
+		expect(catalog).toEqual(legacy);
+		expect(catalog).toMatchObject({ providers: expect.any(Array) });
+	});
 	it("only returns hub notification content to trusted desktop connections", async () => {
 		const { ctx } = createContext();
 		const command = vi

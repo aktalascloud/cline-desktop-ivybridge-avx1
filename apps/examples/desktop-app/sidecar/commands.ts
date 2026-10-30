@@ -3121,7 +3121,7 @@ export async function handleCommand(
 	if (command.startsWith("dsw2api_")) {
 		throw new Error("DSW2API has been removed from this build.");
 	}
-	if (command === "list_providers") {
+	if (command === "list_provider_catalog" || command === "list_providers") {
 		const manager = new ProviderSettingsManager();
 		await ensureCustomProvidersLoaded(manager);
 		const catalog = await listLocalProviders(manager, {
