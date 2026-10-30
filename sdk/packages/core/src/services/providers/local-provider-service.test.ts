@@ -2566,6 +2566,37 @@ describe("updateLocalProvider", () => {
 
 	afterEach(() => cleanup());
 
+	it("replaces a stale window with endpoint metadata without losing model customizations", async () => {
+		const modelsPath = resolveModelsRegistryPath(manager),
+			state = await readModelsFile(modelsPath);
+		state.providers["editable-provider"]!.models["model-a"] = {
+			id: "model-a",
+			name: "Personal label",
+			contextWindow: 131072,
+			capabilities: ["tools"],
+		};
+		await LocalProviderRegistry.writeModelsFile(modelsPath, state);
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () =>
+				Response.json({ data: [{ id: "model-a", context_length: 256000 }] }),
+			),
+		);
+		await updateLocalProvider(manager, {
+			providerId: "editable-provider",
+			modelsSourceUrl: "https://example.invalid/v1/models",
+			models: [],
+		});
+		const result = (await readModelsFile(modelsPath)).providers[
+			"editable-provider"
+		].models["model-a"];
+		expect(result).toMatchObject({
+			name: "Personal label",
+			contextWindow: 256000,
+			capabilities: ["tools"],
+		});
+	});
+
 	it("updates provider metadata and model registry", async () => {
 		await updateLocalProvider(manager, {
 			providerId: "editable-provider",

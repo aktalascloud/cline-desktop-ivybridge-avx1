@@ -8,6 +8,7 @@ import {
 	isChatModel,
 	isDedicatedTranscriptionModel,
 	loadProviderModelCatalog,
+	loadProviderModels,
 	loadTranscriptionModels,
 	notifyVoiceInputSettingsChanged,
 	publishProviderModels,
@@ -384,7 +385,11 @@ describe("transcription model selection", () => {
 				providerId: "nvidia",
 				modelId: "whisper-large-v3",
 			}),
-		).toMatchObject({providerId: "nvidia", modelId: "whisper-large-v3", supportsStreaming: false});
+		).toMatchObject({
+			providerId: "nvidia",
+			modelId: "whisper-large-v3",
+			supportsStreaming: false,
+		});
 		expect(selectTranscriptionModel(providers, undefined)).toBeNull();
 	});
 
@@ -507,4 +512,31 @@ describe("transcription model selection", () => {
 			}),
 		).toMatchObject({ supportsStreaming: true });
 	});
+});
+
+it("publishes a changed context window once, avoiding refresh feedback loops", async () => {
+	const invoke = vi
+		.spyOn(desktopClient, "invoke")
+		.mockResolvedValue({
+			providerId: "live-local-window",
+			models: [{ id: "local", name: "Local", contextWindow: 131072 }],
+		});
+	const listener = vi.fn(),
+		unsubscribe = subscribeToProviderModels(listener);
+	try {
+		await loadProviderModels("live-local-window");
+		await loadProviderModels("live-local-window");
+		expect(listener).toHaveBeenCalledTimes(1);
+		invoke.mockResolvedValue({
+			providerId: "live-local-window",
+			models: [{ id: "local", name: "Local", contextWindow: 256000 }],
+		});
+		await loadProviderModels("live-local-window");
+		await loadProviderModels("live-local-window");
+		expect(listener).toHaveBeenCalledTimes(2);
+		expect(listener.mock.calls[1][1][0].contextWindow).toBe(256000);
+	} finally {
+		unsubscribe();
+		vi.restoreAllMocks();
+	}
 });

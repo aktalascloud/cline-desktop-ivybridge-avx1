@@ -2,6 +2,9 @@
 
 ## 1.0.14
 
+- Local endpoint metadata refreshes on focus and once a minute while visible; actual context limits replace stale cached values, including in open chats.
+- Метаданные локального сервера обновляются при возвращении в окно и раз в минуту, пока оно видно; реальный размер контекста заменяет старый кэш и в открытых чатах.
+
 - Portable subagents inherit the parent model; unknown presets are recoverable and failed runs stay failed. Known official plugin versions use the packaged fix without changing user plugin files.
 - Субагенты наследуют модель родителя; неизвестный preset не ломает плагин, неуспешные запуски не выдаются за успех. Исправление известных официальных версий включено в пакет без изменения личных файлов плагина.
 

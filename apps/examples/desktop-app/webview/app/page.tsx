@@ -876,8 +876,9 @@ function App() {
 				if (draft && (draft.text.trim() || draft.attachments.length)) {
 					toast({
 						title: t("Your cloud draft is unchanged"),
-						description:
-							t("Send or clear it before restoring the handoff prompt."),
+						description: t(
+							"Send or clear it before restoring the handoff prompt.",
+						),
 					});
 					return { opened: false };
 				}
@@ -1156,7 +1157,8 @@ function App() {
 							altText="Connect GitHub"
 							onClick={() => void openExternalUrl(connectUrl)}
 						>
-							{t("Connect GitHub")}</ToastAction>
+							{t("Connect GitHub")}
+						</ToastAction>
 					) : undefined,
 				}),
 		});
@@ -1946,6 +1948,28 @@ function ChatThreadPane({
 			});
 			setProviderCredentials(next);
 			setProviderModelContextWindows(nextContextWindows);
+			setConfig((current) => {
+				const provider = payload.providers.find(
+					(p) => p.id === current.provider,
+				);
+				if (!provider?.baseUrl || provider.modelList?.length !== 1)
+					return current;
+				try {
+					if (
+						!["127.0.0.1", "localhost", "[::1]"].includes(
+							new URL(provider.baseUrl).hostname,
+						)
+					)
+						return current;
+				} catch {
+					return current;
+				}
+				const model = provider.modelList?.[0];
+				return model && current.model !== model.id
+					? { ...current, model: model.id }
+					: current;
+			});
+
 			setHasConnectedProvider(anyConnected);
 		} catch {
 			// Keep current config if provider catalog cannot be read.
@@ -2442,7 +2466,9 @@ function ChatThreadPane({
 				setPromptInput(commandDraft);
 				toast({
 					title: t("Start the local session first"),
-					description: t("Send at least one message before handing off to cloud."),
+					description: t(
+						"Send at least one message before handing off to cloud.",
+					),
 				});
 				return;
 			}
@@ -2455,8 +2481,9 @@ function ChatThreadPane({
 				setPromptInput(commandDraft);
 				toast({
 					title: t("Wait for the current turn"),
-					description:
-						t("Handoff can start once the local agent is idle and its prompt queue is empty."),
+					description: t(
+						"Handoff can start once the local agent is idle and its prompt queue is empty.",
+					),
 				});
 				return;
 			}

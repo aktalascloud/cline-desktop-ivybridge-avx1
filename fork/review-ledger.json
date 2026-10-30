@@ -1758,5 +1758,11 @@
     "purpose": "Recover unknown presets, inherit parent model and keep failed subagent status; immutable bundled override for known official plugin hashes",
     "status": "targeted-regressions-passed; release qualification pending",
     "verification": "3 plugin contract tests; bundled override and plugin loader regressions. No browser capability is invented for a missing playwright preset."
+  },
+  {
+    "origin": "fork-local-fix",
+    "purpose": "Use endpoint context metadata instead of stale persisted windows; deduplicated loopback discovery and live updates to open chat context indicators",
+    "status": "147 provider and 109 Desktop targeted tests passed; final build pending",
+    "verification": "131072 to 256000 metadata regression, preserved model customizations, metadata failure fallback and client refresh-loop guard; synthetic 250K native transport capacity checks."
   }
 ]

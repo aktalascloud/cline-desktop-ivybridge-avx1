@@ -1,3 +1,4 @@
+import { refreshLocalModelMetadata } from "./live-model-metadata";
 import { execFile, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import {
@@ -57,6 +58,7 @@ import {
 	parseMcpServerRegistration,
 	persistClineAccountTelemetryIdentity,
 	probeMcpServerConnection,
+	refreshProviderModelsFromSource,
 	RemoteEnvironmentService,
 	readGlobalSettings,
 	readCompactionPreferencesGlobally,
@@ -3143,6 +3145,7 @@ export async function handleCommand(
 	if (command === "list_provider_models") {
 		const manager = new ProviderSettingsManager();
 		const providerId = String(args?.provider ?? "").trim();
+		await refreshLocalModelMetadata(manager, providerId);
 		return await getLocalProviderModels(
 			providerId,
 			manager.getProviderConfig(providerId, { includeKnownModels: false }),
@@ -3407,6 +3410,8 @@ export async function handleCommand(
 		const providerId = String(args?.provider ?? "").trim();
 		const manager = new ProviderSettingsManager();
 		await ensureCustomProvidersLoaded(manager);
+		if (!Array.isArray(args?.models))
+			return await refreshProviderModelsFromSource(manager, providerId);
 		return await updateLocalProvider(manager, {
 			providerId,
 			models: Array.isArray(args?.models)

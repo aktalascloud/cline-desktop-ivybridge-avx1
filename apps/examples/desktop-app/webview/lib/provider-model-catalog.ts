@@ -405,6 +405,8 @@ export function loadTranscriptionModels(
 	return promise;
 }
 
+const loadedModelSignatures = new Map<string, string>();
+
 export async function loadProviderModels(
 	providerId: string,
 ): Promise<ProviderModel[]> {
@@ -414,5 +416,10 @@ export async function loadProviderModels(
 			provider: providerId,
 		},
 	);
+	const signature = JSON.stringify(payload.models);
+	if (loadedModelSignatures.get(providerId) !== signature) {
+		loadedModelSignatures.set(providerId, signature);
+		publishProviderModels(providerId, payload.models);
+	}
 	return filterChatModels(payload.models);
 }

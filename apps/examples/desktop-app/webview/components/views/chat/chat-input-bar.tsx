@@ -2119,6 +2119,19 @@ const ModelSelector = memo(function ModelSelector({
 				// Keep the current list when the refresh fails.
 			});
 	}, [applyProviderModels, includeCloudModels, normalizedProvider]);
+	useEffect(() => {
+		if (includeCloudModels || !normalizedProvider) return;
+		const refresh = () => {
+			if (document.visibilityState !== "hidden") refreshActiveProviderModels();
+		};
+		window.addEventListener("focus", refresh);
+		const timer = window.setInterval(refresh, 60_000);
+		return () => {
+			window.removeEventListener("focus", refresh);
+			window.clearInterval(timer);
+		};
+	}, [includeCloudModels, normalizedProvider, refreshActiveProviderModels]);
+
 	const visibleProviderModels = useMemo(() => {
 		const next: Record<string, string[]> = {};
 		for (const providerId of enabledProviderIds) {

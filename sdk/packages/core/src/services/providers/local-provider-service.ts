@@ -396,15 +396,22 @@ function buildProviderModels(
 	// Provider capabilities are inherited at registration. Persist only model
 	// overrides so refreshing defaults cannot overwrite user customizations.
 	return Object.fromEntries(
-		modelIds.map((id) => [
-			id,
-			{
+		modelIds.map((id) => {
+			const discoveredModel = discovered.find((model) => model.id === id);
+			return [
 				id,
-				name: id,
-				...discovered.find((model) => model.id === id),
-				...existingModels[id],
-			},
-		]),
+				{
+					id,
+					name: id,
+					...discoveredModel,
+					...existingModels[id],
+					// The endpoint owns its allocated window; saved metadata can be stale.
+					...(discoveredModel?.contextWindow !== undefined
+						? { contextWindow: discoveredModel.contextWindow }
+						: {}),
+				},
+			];
+		}),
 	);
 }
 
