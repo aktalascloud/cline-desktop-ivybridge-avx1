@@ -1,12 +1,14 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.13",
+  "version": "1.0.14",
   "upstream_sha": "51f63e4fd63aeeb74d708b9c3d1f8b800aff9b3e",
-  "build_source_sha": "92526d83ef73948b56b04919d137d1fd5e2bc3de",
+  "build_source_sha": "82c4f32728de9fcbfb60429a911811d056e5786d",
+  "compiled_component_source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
   "release_approved": true,
   "native": {
     "kind": "source-built",
+    "source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
     "rust": "1.97.0",
     "msvc": "14.44.35207",
     "windows_sdk": "10.0.26100.0",
@@ -17,38 +19,50 @@
       "codegen-units=1",
       "target-cpu=ivybridge",
       "target-feature=-avx2,-fma",
-      "strip debuginfo",
+      "debug=0",
       "source/cargo path remapping"
     ],
-    "c_flags": "ring cc defaults observed: /MD /O2 /Brepro and vendor warning/function flags; no global CFLAGS override",
+    "c_flags": "Dependency defaults; no global CFLAGS override",
     "pgo": false,
     "affinity_or_numa_pinning": false,
-    "executable_sha256": "eacbd7e0bb39298e51774082df210754cd538c865e49b1aa92760aa6e6f03840"
+    "sha256": "35872256bfbab00de8e3b280a94d482179e3f35b956afc41d5a335b243492453"
   },
   "cli_and_hub": {
     "version": "3.0.74",
-    "kind": "JavaScript/TypeScript compiled from source into embedded prebuilt Bun",
+    "kind": "source-built JavaScript with embedded prebuilt Bun",
+    "source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
     "target": "bun-windows-x64-baseline",
-    "flags": [
-      "minify",
-      "--use-system-ca",
-      "disable launch-directory dotenv/bunfig autoload",
-      "fork storage bootstrap before imports",
-      "official auto-update disabled for fork distribution"
+    "build_flags": [
+      "compile",
+      "minify"
     ],
-    "sha256": "5987e20787f38cb20e7a5a455f027fac97d4be09fe1ec9f9f549244e38cbf6d3"
+    "launch_controls": [
+      "system CA",
+      "no launch-directory dotenv/bunfig autoload",
+      "fork storage bootstrap",
+      "official updater disabled"
+    ],
+    "sha256": "97099a2fe7d7f84a49286c60450a35ce4b7e0dbcbcdf6f1763ee3c4ba55404a4"
+  },
+  "sdk": {
+    "version": "0.2.0",
+    "kind": "source-built production JavaScript",
+    "source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
+    "sha256": "adefdd30c85476f83d859f385cf00e7fa8fe60baafd41fceb26283ff1014ad08"
   },
   "backend": {
-    "kind": "source-built JS bundle",
+    "kind": "source-built JavaScript",
+    "source_sha": "82c4f32728de9fcbfb60429a911811d056e5786d",
     "flags": [
       "target=bun",
       "minify",
       "no telemetry credentials inlined"
     ],
-    "sha256": "45de27e42d6aaeb0d29d6237027134a46c501e5935520b8b4b289593c3545ea1"
+    "sha256": "3b13a3e14bea6ee854c6eaecee579fa3868459a56b684f776c0023c27d451961"
   },
   "frontend": {
     "kind": "source-built static export",
+    "source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
     "next": "16.4.3",
     "react": "19.2.4"
   },
@@ -69,6 +83,13 @@
       "name": "WebView2",
       "version": "153.0.4234.32 at initial qualification",
       "notes": "Existing Microsoft system runtime, not rebuilt or bundled as an optimized engine."
+    },
+    {
+      "name": "Python standard-library MCP runtime",
+      "source": "https://www.python.org/ftp/python/3.14.10/python-3.14.10-embed-amd64.zip",
+      "archive_sha256": "90905e64a840557d8c1bc4f5b74db3d7ee85e3ffb217611cac1c7813acea4159",
+      "kind": "official prebuilt; no local optimization flags claimed",
+      "flags": "No local CPU compiler flags applied"
     }
   ],
   "remote_helpers": {
@@ -79,283 +100,41 @@
     ],
     "notes": "Included for upstream SSH support; Linux executables are not executed on Windows."
   },
-  "native_packages": [
-    {
-      "name": "minisign-verify",
-      "version": "0.3.0",
-      "checksum": "871285dc19d8d0ebe0eef3d0e99a205f2a71363b122632cbbfa4a6c370a960ce",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
+  "bundled_defaults": {
+    "ponytail": {
+      "repository": "https://github.com/DietrichGebert/ponytail",
+      "sha": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846",
+      "source_path": ".clinerules/ponytail.md",
+      "license": "MIT",
+      "sha256": "ca99e5958383063029b206c7c50a0eaad1c29914a362bedd46033ec16b537e1e"
     },
-    {
-      "name": "plist",
-      "version": "1.10.0",
-      "checksum": "7da1d65da6dd5d1e44199ac0f58712d241c0f439f80adea8924d832384087f85",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
-    },
-    {
-      "name": "quick-xml",
-      "version": "0.41.0",
-      "checksum": "e660451e55124f798a69a5af3f49ccfbefbd41910eefd25caf2393e1f3473ec1",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
-    },
-    {
-      "name": "ring",
-      "version": "0.17.14",
-      "checksum": "a4689e6c2294d81e88dc6261c768b63bc4fcdb852be6d1352498b114f61383b7",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
-    },
-    {
-      "name": "rustls",
-      "version": "0.23.46",
-      "checksum": "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
-    },
-    {
-      "name": "rustls-webpki",
-      "version": "0.103.16",
-      "checksum": "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
-    },
-    {
-      "name": "tauri",
-      "version": "2.12.4",
-      "checksum": "f316751027fc2644221d1a448564d519efb07067fda584879d9cda966391d212",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
-    },
-    {
-      "name": "tauri-plugin-updater",
-      "version": "2.14.0",
-      "checksum": "7259989d4fe11b2bf51f7d671642249b1837c4ae2da1430dc713ae38f98ceeec",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
-    },
-    {
-      "name": "webpki-root-certs",
-      "version": "1.0.10",
-      "checksum": "58ec80e73fd8baf57bf0d9615554c75348bda990d6d5bbeab964dd068319fecb",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
-    },
-    {
-      "name": "webview2-com",
-      "version": "0.39.1",
-      "checksum": "3f89fca7a704cee10dcb3654c1dbb8941d1783132f1917358af75bec37a7d7e6",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
-    },
-    {
-      "name": "wry",
-      "version": "0.57.0",
-      "checksum": "a819957a01b3119af85e638a38d242af76dbc87d130dca67bfd0441072e21ff0",
-      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    "web_search": "DuckDuckGo Lite MCP; Python stdlib only",
+    "subagents": "Known official agents-squad hashes use packaged repair; user plugin files are not edited"
+  },
+  "providers": {
+    "local": "User-configured OpenAI-compatible endpoint; private models/settings are not packaged",
+    "freellm": {
+      "models": [
+        "nvidia/nemotron-3.5-super-vl:free",
+        "reflection/beam-free",
+        "dots-studio/dots-3-note-preview:free"
+      ],
+      "registration_or_personal_key": false,
+      "shared_service_quota": "200 requests/hour/IP; vendor availability applies"
     }
-  ],
-  "selected_npm": [],
+  },
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "fbb9dc040cf8a100546d5d515a04e8086bd7660a8ac9f182be8a90b875d4eb54",
+  "bun_lock_sha256": "624000838da30c3dbd12022b9375832d6f9462d444ff9be3f821e81d83bf8af6",
   "cuda_used": false,
   "llm_models_included": false,
-  "authenticode": "NotSigned; Tauri updater signature is a separate verification mechanism",
+  "authenticode": "NotSigned",
   "updater_zip_support": false,
   "installer": {
-    "filename": "Cline-Desktop-AVX1-RU-Setup.exe",
-    "sha256": "318b125d6ba5fd46696d09d7b8a4a1b2d558651f1acdfe6c8b8569d9afe1b733",
-    "size": 157738493,
-    "updater_signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnVSOFV1UmlTUGNWNStwNzRTQTJPdDh1VVRwb1hickRBL0t6TDdFV2NiczJGTmpCY3g0TGd2dk5zRU15MEtRc21wSi9HaTZzNFYzMHlQeEx4WEk2SndNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMjU5MjY0CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xM194NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjEzClExbGRyL01td3FzdXhUZU5VNTExdjZjdGp5Q0gra3pTcFpRd08zczZjV3luRDlVNzF2MisvcmkzMEttREp1TDg2RnM4UlZuL2V1Nm1CU1lvVU5QUUR3PT0K",
-    "authenticode": "NotSigned",
-    "status": "installed preserving data; offline protocol/runtime checks passed; shared account lease and authentication fixtures passed; current vendor recheck unavailable"
-  },
-  "original_build_source_sha": "d4cfb426b27d705730f74310784c3a2825a0833b",
-  "sanitized_upstream_sha": "47374eb672987bd2e70b4d2025cedc158fbe5c17",
-  "voice_input": {
-    "source": "local fork patch",
-    "modes": [
-      "streaming",
-      "recorded-file"
-    ],
-    "recorded_audio": "local 16 kHz mono PCM16 WAV",
-    "text_provider_independent": true,
-    "draft_protected": true,
-    "automatic_agent_message_send": false,
-    "real_chromium_codec_test": "passed with synthetic WebM speech",
-    "physical_microphone": "not verified",
-    "provider_requires_reachable_stt": true
-  },
-  "reasoning_selector": {
-    "source": "local fork patch",
-    "new_chat": "configured providers only",
-    "historical_session_route": "preserved",
-    "composer_tests_passed": 74
-  },
-  "new_dependencies": [
-    {
-      "name": "ollama",
-      "version": "0.6.4",
-      "license": "MIT",
-      "kind": "JavaScript client, source bundled; no runtime server or models shipped"
-    },
-    {
-      "name": "whatwg-fetch",
-      "version": "3.6.20",
-      "license": "MIT",
-      "kind": "JavaScript dependency"
-    }
-  ],
-  "sampling_controls": {
-    "source": "local fork patch",
-    "protocol": "OpenAI-compatible Chat",
-    "fields": [
-      "temperature",
-      "top_p",
-      "top_k",
-      "min_p",
-      "max_tokens",
-      "seed",
-      "presence_penalty",
-      "repetition_penalty",
-      "reasoning_budget_tokens"
-    ],
-    "empty_max_tokens": "until done, wire -1; requires compatible endpoint; remaining context applies",
-    "private_presets_not_bundled": true,
-    "global_server_settings_unchanged": true,
-    "author_mode": "Separate Ultra choice, no provider-global override; High/XHigh stock"
-  },
-  "reasoning_modes": {
-    "stock": [
-      "none",
-      "low",
-      "medium",
-      "high",
-      "xhigh"
-    ],
-    "ultra": "explicit compatible model capability; xhigh + synthetic author control",
-    "adaptive": "explicit compatible model capability; xhigh + reason_mode=auto; backend support required",
-    "no_client_classifier_or_memory": true,
-    "legacy_global_ultra_ignored": true
-  },
-  "daily_patches": [
-    {
-      "pr": 15296,
-      "url": "https://github.com/cline/cline/pull/15296"
-    },
-    {
-      "pr": 15345,
-      "url": "https://github.com/cline/cline/pull/15345"
-    },
-    {
-      "pr": 15347,
-      "url": "https://github.com/cline/cline/pull/15347"
-    },
-    {
-      "pr": 15363,
-      "url": "https://github.com/cline/cline/pull/15363"
-    }
-  ],
-  "langfuse_adapter": "5.10.1; compatible v5 family, adapted from PR15363",
-  "windows_installer": {
-    "scope": "currentUser; existing install directory/registry scope retained",
-    "execution_level": "requireAdministrator",
-    "actual_pe_manifest_verified": true,
-    "shutdown": "Restart Manager, exact registered Desktop/CLI/legacy backend files; grace period then force unresponsive owners",
-    "other_installations_preserved": true,
-    "template_provenance": {
-      "upstream_commit": "59b63ab500da9859f12d8888c3298bc29bba0b92",
-      "upstream_path": "crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi",
-      "tauri_cli": "2.12.3",
-      "original_sha256": "8ae02c66f8adb4a0d15d97f984fbacd2b44262d8a4d03fefaf6177f67f7008e5",
-      "change": "currentUser requests admin; existing installations use the stock in-place update path before the legacy uninstall page; all other template bytes unchanged",
-      "license": "Apache-2.0 OR MIT; upstream notices retained by dependency license inventory",
-      "installer_revision": 2
-    }
-  },
-  "agent_completion": {
-    "source": "local fork patch",
-    "thinking_only_final": "up to two context-preserving continuations; explicit failure if exhausted",
-    "completed_tool_replay": false,
-    "cancellation_preserved": true
-  },
-  "hub_authentication": {
-    "source": "independent local hardening prompted by transmogrify-cell/cline issue 1",
-    "websocket": "installation token required before command/subscription attachment; loopback Origin alone denied",
-    "desktop_cli_remote": "authenticated existing clients preserved",
-    "source_regressions": 7,
-    "installed_socket_probe": true
-  },
-  "dsw2api": {
-    "repository": "https://github.com/snake-aabb-wtf/deepseek-web2api-free",
-    "sha": "82d7b9673ed7135ed50a96a193fc4b5d37a5c067",
-    "license": "Unlicense; Apache-2.0 independent native helper",
-    "runtime_build_id": "ed34cb136dcd047e880c73bda22b720aec23d1156a2ddcc80c4a750662d72b35",
-    "python": "3.14.10 official prebuilt",
-    "wheel_manifest": "fork/dsw2api/runtime-lock.json",
-    "native_flags": [
-      "--edition=2021",
-      "-C",
-      "opt-level=3",
-      "-C",
-      "lto=thin",
-      "-C",
-      "codegen-units=1",
-      "-C",
-      "target-cpu=x86-64",
-      "-C",
-      "target-feature=-avx2,-fma,+crt-static",
-      "-C",
-      "debuginfo=0",
-      "-C",
-      "strip=debuginfo",
-      "-C",
-      "link-arg=/PDBALTPATH:cline-dsw2api-pow.pdb",
-      "--remap-path-prefix=<checkout>=/src/cline"
-    ],
-    "helper_sha256": "b74e8898d6d7a8f6008849226b4a1f254f2bcb831e03e66769125f80da56297d",
-    "local_request_quota": null,
-    "local_output_cap": null,
-    "vendor_limits_bypassed": false,
-    "live_account_verified": false,
-    "live_validation": "not repeated for this resource delta; historical baseline passed",
-    "shared_browser_account_lease": true,
-    "usage_counts": "character heuristic, not vendor token counts"
-  },
-  "browser_bridge": {
-    "extension_id": "jaljomgoclehkemckjhifflhmlllfopc",
-    "host_sha256": "30dda845bbfa335b982d929bf6d9c4dbd81e2b223cddc9ec2f506b2b084e6f6a",
-    "source_built": true,
-    "native_flags": [
-      "--edition=2021",
-      "-C",
-      "opt-level=3",
-      "-C",
-      "lto=thin",
-      "-C",
-      "codegen-units=1",
-      "-C",
-      "target-cpu=ivybridge",
-      "-C",
-      "target-feature=-avx2,-fma,+crt-static",
-      "-C",
-      "strip=debuginfo",
-      "--remap-path-prefix=<checkout>=/src/cline"
-    ],
-    "runtime": "existing prebuilt bundled Bun; no separate Node runtime",
-    "transport": "Native Messaging, DPAPI CurrentUser encrypted inbox",
-    "profile": "existing user browser; explicit DeepSeek-only extension permission",
-    "connection_status": "live local gateway check once per minute; no credential scraping",
-    "deepseek_controls": [
-      "thinking_enabled",
-      "search_enabled"
-    ],
-    "shared_native_channels": [
-      "cloud.aktalas.cline_dsw",
-      "cloud.aktalas.owui_dsw"
-    ],
-    "session_handoff": "explicit selected applications; OWUI nonce preflight; no startup credential capture"
-  },
-  "compiled_component_source_sha": "4f541be3afb1609f765e413ff90bc6458b05173a",
-  "security_pins": {
-    "ip-address": {
-      "version": "10.7.5",
-      "license": "MIT",
-      "previous": "10.5.0",
-      "source": "https://registry.npmjs.org/ip-address/10.7.5",
-      "scope": "exact Bun override and frozen lock; no unrelated package upgrade"
-    }
+    "name": "Cline-Desktop-AVX1-RU-Setup.exe",
+    "kind": "NSIS Windows x64",
+    "uac": "requireAdministrator",
+    "compression": "lzma",
+    "sha256": "2db0724b9f56c78c6a5157b147f3bd1ebcba67205d42fe655cad7229f751ce24",
+    "size": 145258798
   }
 }
