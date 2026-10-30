@@ -2836,12 +2836,12 @@ describe("listLocalProviders", () => {
 			expect(
 				providers
 					.find((p) => p.id === "freellm")!
-					.modelList.every((m) => m.supportsAuthorModes !== true),
+					.modelList?.every((m) => m.supportsAuthorModes !== true),
 			).toBe(true);
 			expect(
 				providers
 					.find((p) => p.id === "freellm")!
-					.modelList.find((m) => m.id === "reflection/beam-free")
+					.modelList?.find((m) => m.id === "reflection/beam-free")
 					?.reasoningOptions,
 			).toEqual([
 				{ type: "effort", values: ["low", "medium", "high", "xhigh", "max"] },

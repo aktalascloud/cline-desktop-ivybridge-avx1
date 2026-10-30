@@ -2,7 +2,7 @@ name: Windows AVX1 qualification
 on:
   push:
     branches: [avx1]
-    paths: ['apps/**', 'sdk/**', '!sdk/ARCHITECTURE.md', '!sdk/DOC.md', 'fork/build-windows.ps1', 'fork/defaults/**', 'fork/prepare-defaults.py', 'fork/test-defaults.py', 'fork/defaults/**', 'fork/prepare-defaults.py', 'fork/test-defaults.py', 'fork/validate-windows.ps1', 'fork/check-bundle-paths.py', 'fork/logging-bundle.ts', 'fork/logging-bundle.test.ts', 'fork/download.py', 'fork/seed-bun.py', 'fork/seed-nsis.py', 'fork/collect-licenses.py', 'fork/verify-updater/**', 'fork/updater/public-key.txt', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
+    paths: ['apps/**', 'sdk/**', '!sdk/ARCHITECTURE.md', '!sdk/DOC.md', 'fork/build-windows.ps1', 'fork/defaults/**', 'fork/prepare-defaults.py', 'fork/test-defaults.py', 'fork/validate-windows.ps1', 'fork/check-bundle-paths.py', 'fork/logging-bundle.ts', 'fork/logging-bundle.test.ts', 'fork/download.py', 'fork/seed-bun.py', 'fork/seed-nsis.py', 'fork/collect-licenses.py', 'fork/verify-updater/**', 'fork/updater/public-key.txt', 'patches/**', 'bun.lock', 'package.json', 'rust-toolchain.toml', '.github/workflows/avx1-windows.yml']
   workflow_dispatch:
     inputs:
       source_sha:
@@ -13,7 +13,7 @@ permissions:
   contents: read
 concurrency:
   group: cline-avx1-windows
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   validate:
     if: github.repository == 'aktalascloud/cline-desktop-ivybridge-avx1' && github.ref == 'refs/heads/avx1'
