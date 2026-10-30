@@ -138,7 +138,7 @@ const BUILTIN_SLASH_COMMANDS: SlashCommand[] = [
 ];
 const CLOUD_HANDOFF_SLASH_COMMAND: SlashCommand = {
 	name: "cloud",
-	description: t("Continue this local session in Cline Cloud"),
+	description: "Continue this local session in Cline Cloud",
 };
 
 export function withCloudHandoffSlashCommand(
@@ -1370,7 +1370,7 @@ function ChatInputBarImpl({
 											<span className="font-medium">/{cmd.name}</span>
 											{cmd.description && (
 												<span className="text-[10px] opacity-70">
-													{cmd.description}
+													{cmd === CLOUD_HANDOFF_SLASH_COMMAND ? t(cmd.description) : cmd.description}
 												</span>
 											)}
 										</button>
