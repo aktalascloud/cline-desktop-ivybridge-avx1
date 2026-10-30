@@ -136,6 +136,21 @@ const BUILTIN_SLASH_COMMANDS: SlashCommand[] = [
 	},
 	{ name: "team", description: "Start the task with an agent team" },
 ];
+const CLOUD_HANDOFF_SLASH_COMMAND: SlashCommand = {
+	name: "cloud",
+	description: t("Continue this local session in Cline Cloud"),
+};
+
+export function withCloudHandoffSlashCommand(
+	commands: SlashCommand[],
+	enabled: boolean,
+): SlashCommand[] {
+	if (!enabled) return commands;
+	return [
+		CLOUD_HANDOFF_SLASH_COMMAND,
+		...commands.filter((command) => command.name !== "cloud"),
+	];
+}
 
 export function buildUserInstructionSlashCommands(
 	response: UserInstructionConfigResponse,
@@ -314,6 +329,7 @@ type ChatInputBarProps = {
 	environmentId: string;
 	variant?: "conversation" | "welcome";
 	readOnly?: boolean;
+	cloudHandoffAvailable?: boolean;
 	status: ChatSessionStatus;
 	hasRunningAgents?: boolean;
 	provider: string;
@@ -371,6 +387,7 @@ function ChatInputBarImpl({
 	environmentId,
 	variant = "conversation",
 	readOnly = false,
+	cloudHandoffAvailable = false,
 	status,
 	hasRunningAgents = false,
 	provider,
@@ -736,11 +753,15 @@ function ChatInputBarImpl({
 	const [instructionError, setInstructionError] = useState<string>();
 	const slashLoading = pluginLoading || instructionLoading;
 	const slashError = pluginError ?? instructionError;
+	const visibleSlashCommands = useMemo(
+		() => withCloudHandoffSlashCommand(slashCommands, cloudHandoffAvailable),
+		[cloudHandoffAvailable, slashCommands],
+	);
 	const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
 	const loadedCommandCatalogKeyRef = useRef<string | null>(null);
 	useEffect(() => {
-		setKnownSlashCommands(slashCommands.map((command) => command.name));
-	}, [slashCommands]);
+		setKnownSlashCommands(visibleSlashCommands.map((command) => command.name));
+	}, [visibleSlashCommands]);
 	const composerHighlights = useMemo(
 		() =>
 			executionTarget === "local"
@@ -1252,9 +1273,9 @@ function ChatInputBarImpl({
 		if (!slashOpen) return [];
 		const query = (activeSlash?.query ?? "").trim().toLowerCase();
 		if (!query) {
-			return slashCommands.slice(0, 10);
+			return visibleSlashCommands.slice(0, 10);
 		}
-		return slashCommands
+		return visibleSlashCommands
 			.filter((cmd) => cmd.name.toLowerCase().includes(query))
 			.sort((a, b) => {
 				const aStarts = a.name.toLowerCase().startsWith(query);
@@ -1264,7 +1285,7 @@ function ChatInputBarImpl({
 				return a.name.localeCompare(b.name);
 			})
 			.slice(0, 10);
-	}, [slashOpen, activeSlash?.query, slashCommands]);
+	}, [slashOpen, activeSlash?.query, visibleSlashCommands]);
 
 	const insertSlashCommandItem = useCallback(
 		(commandName: string) => {

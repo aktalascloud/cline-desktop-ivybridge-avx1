@@ -322,6 +322,9 @@ function toSdkModelInfo(selection: ResolvedModelSelection): SdkModelInfo {
 		// silently disabling tool calling at the runtime gate (#13463).
 		const supportsTools = (modelInfo as { supportsTools?: boolean }).supportsTools
 		setCapability("tools", supportsTools !== false)
+		// Likewise "reasoning": the gateway skips an explicit reasoning disable
+		// for a list without it. Only supportsReasoning: false denies it.
+		if (modelInfo.supportsReasoning === undefined) setCapability("reasoning", true)
 	}
 
 	const maxTokens = positiveFiniteNumber(modelInfo.maxTokens)
@@ -400,7 +403,6 @@ const PROVIDER_API_KEY_MAP: Record<string, keyof ApiConfiguration> = {
 	cline: "clineApiKey",
 	"cline-pass": "clineApiKey",
 	ollama: "ollamaApiKey",
-	lmstudio: "apiKey", // LM Studio doesn't need a key but uses the generic field
 	requesty: "requestyApiKey",
 	together: "togetherApiKey",
 	fireworks: "fireworksApiKey",

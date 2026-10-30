@@ -1,5 +1,10 @@
 # Cline Desktop Changelog
 
+## 1.0.14
+
+- Updated upstream: Hub account validation, resumable cloud tasks and safer draft/attachment handoff. Partial local model overrides preserve explicit reasoning off. Strata, DSW2API, approvals and AVX1 profile retained.
+- Обновлён upstream: проверка аккаунта Hub, восстановление облачных задач и сохранение черновиков с вложениями. Частичные настройки локальной модели сохраняют отключение thinking. Strata, DSW2API, approvals и AVX1 сохранены.
+
 ## 1.0.13
 
 - Existing managed DeepSeek chats refresh their local gateway endpoint before the next turn after reconnect/restart; no automatic request replay.

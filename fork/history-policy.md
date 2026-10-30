@@ -48,3 +48,5 @@ Server-side eradication of historical objects is controlled by GitHub and
 the upstream owner, beyond this fork's branch/tag cleanup.
 
 The 2026-10-29 import maps raw 51f63e4fd63aeeb74d708b9c3d1f8b800aff9b3e to sanitized 47374eb672987bd2e70b4d2025cedc158fbe5c17, anchored on verified raw 817e59f698f01487920c00ede2dbecad5c0fa50 / sanitized df8cbef585dd5ed1d00fb5e1497f36f8d7052653. All 98 newly reachable objects (883,540 bytes) were scanned against the private UTF-8/UTF-16 removed-value set, with zero matches. The protected original incremental bundle is retained; no raw ancestry was imported.
+
+The 2026-10-30 import maps raw a47448718ad77e6316b12d81927fc1373ade1243 to sanitized 80204854b867bdcc41ed906b9970e00b27a7e832, anchored on the verified 2026-10-29 pair. All 147 new reachable objects (2,253,247 bytes) passed the private UTF-8/UTF-16 removed-value scan. Original incremental bundle remains private; raw ancestry is excluded.

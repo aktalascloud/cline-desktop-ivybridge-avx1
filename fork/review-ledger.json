@@ -680,15 +680,6 @@
     "review_material_sha256": "29080c180555bc27abd082395449732977950447dd6e3480a6a644b452a94ec1"
   },
   {
-    "url": "https://github.com/cline/cline/pull/15217",
-    "sha": "8201a31d1e6c8f011e5e86ef1571cb91ef6a19bc",
-    "purpose": "feat(desktop): continue local conversations with /cloud",
-    "origin": "official-upstream-pr",
-    "status": "discovered-not-qualified",
-    "verification": "Metadata and applicability screened; downloaded material is not claimed as an implemented or tested fix.",
-    "review_material_sha256": "9d0bb4d86f3aca99d70d9d0307b7b0fa5a9cc3a721e529401e0b9dc69389f546"
-  },
-  {
     "url": "https://github.com/cline/cline/pull/15393",
     "sha": "848b6654903791e9e8ec4dca7faef178896c100c",
     "purpose": "feat: display and read conversation artifacts",
@@ -841,15 +832,6 @@
     "status": "deferred-approval-contract",
     "verification": "26-file MCP annotations/session-mode change affects approvals and VS Code/core. No blanket auto-approval imported; not qualified.",
     "downloaded_diff_sha256": "a2fc58ddfca5882d0ec35568905972f5f7b68c89183059933d64555914dacc4a"
-  },
-  {
-    "url": "https://github.com/cline/cline/pull/15347",
-    "sha": "7d2aeef1987a32206a6b47111e15e1a907fa4fb3",
-    "purpose": "fix(core): discover all pages of MCP tools",
-    "origin": "official-upstream-pr",
-    "status": "retained-qualified-adaptation",
-    "verification": "Full updated two-file diff read at head 7d2aeef. Our existing adaptation from 5eda8284 already paginates both transports, detects all cursor cycles and bounds pages. The new stdio null-cursor leniency conflicts with our strict non-string cursor contract and was not imported; existing transport/pagination tests pass. No loss of the previously applied fix.",
-    "downloaded_diff_sha256": "630dc19ac6225b39cb7909f4b9470b80c65aa8e0850eeb7dc69b107a94b3cc85"
   },
   {
     "url": "https://github.com/cline/cline/pull/15378",
@@ -1304,15 +1286,6 @@
     "review_material_sha256": "fbeebd03567e4cb6d65921fe6d82b4fe787379ecd9d6210f3cb551b0819deb23"
   },
   {
-    "url": "https://github.com/cline/cline/pull/15415",
-    "sha": "abfe74f9b5b6727196a409ac009885597f981680",
-    "purpose": "fix(hub): validate caller accounts and configure daemon environment",
-    "origin": "official-upstream-pr",
-    "status": "deferred-cloud-contract",
-    "verification": "Read caller account scope and child-only launcher environment changes. Optional expectedAccountId requires coordinated host participation; current Tauri/Bun launcher does not need Electron mode. No patch copied.",
-    "review_material_sha256": "f033f8d75e352c67fa18633ced3a527965aa614a48ac16b7ac8958acc8e0b198"
-  },
-  {
     "url": "https://github.com/cline/cline/pull/15419",
     "sha": "609110c7a773b9e9f376e04e29dd895d0010d181",
     "purpose": "fix(editor): preserve parallel edits to the same file",
@@ -1738,5 +1711,37 @@
     "status": "tracked-unqualified",
     "verification": "Description/comment updates indexed and screened for applicability; no independent fix claimed.",
     "comment_records_indexed": 7
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15216",
+    "sha": "8c8b1f75d46b2dc29510a8e6612ff3b12284c3a6",
+    "purpose": "Preserve reasoning disable with partial model overlays",
+    "origin": "adapted-upstream-pr",
+    "status": "adapted-awaiting-CI",
+    "verification": "Full diff and source reviewed. Adds reasoning only for non-authoritative language-model overlays when not explicitly denied; generated catalogs and false stay authoritative. Existing DavidAU author-mode gate unchanged. Apache-2.0. CI provider/storage regressions required."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15347",
+    "sha": "6765d4f97f3f002694a8eb9be35e144ddc7ec212",
+    "purpose": "MCP pagination refresh",
+    "origin": "official-upstream-pr",
+    "status": "already-adapted",
+    "verification": "Full refreshed diff and comments reviewed; independent cursor-set detection already in fork 181dbe4422. No duplicate patch applied."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15415",
+    "sha": "abfe74f9b5b6727196a409ac009885597f981680",
+    "purpose": "Validate caller account and child daemon environment",
+    "origin": "official-upstream-merge",
+    "status": "integrated-awaiting-CI",
+    "verification": "Full implementation reviewed: controller checks generation and expected account before Personal operations; child-only env copy. Apache-2.0; account-scope and daemon tests required."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15217",
+    "sha": "8201a31d1e6c8f011e5e86ef1571cb91ef6a19bc",
+    "purpose": "Explicit local-to-cloud handoff and draft preservation",
+    "origin": "official-upstream-merge",
+    "status": "integrated-awaiting-CI",
+    "verification": "Reviewed trusted-connection and feature gates, captured plan/account binding, explicit Git confirmation and no unconfirmed prompt replay. Preserved Ultra/Adaptive normalization after helper relocation; translated new UI. Local typecheck and 144 focused tests after plural repair; full affected CI remains required."
   }
 ]
