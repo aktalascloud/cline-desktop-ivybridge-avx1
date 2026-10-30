@@ -4,6 +4,7 @@ import { dirname, extname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PLUGIN_FILE_EXTENSIONS } from "@cline/shared";
 
+import { resolveBundledAgentPlugin } from "../../services/bundled-agent-plugin";
 import { resolvePluginRuntimeDirectory } from "./plugin-runtime";
 
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
@@ -714,6 +715,7 @@ export async function importPluginModule(
 	pluginPath: string,
 	options: ImportPluginModuleOptions = {},
 ): Promise<Record<string, unknown>> {
+	pluginPath = resolveBundledAgentPlugin(pluginPath);
 	const preferHostRuntimeDependencies = !isPackageBasedPlugin(pluginPath);
 	assertPluginDependenciesInstalled(pluginPath, preferHostRuntimeDependencies);
 	const aliases = collectPluginImportAliases(

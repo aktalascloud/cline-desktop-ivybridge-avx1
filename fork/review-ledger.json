@@ -1751,5 +1751,12 @@
     "purpose": "Preserve discovered context limits for automatic compaction",
     "status": "implemented-local-tested-awaiting-CI",
     "verification": "Real local backend read-only metadata confirmed missing Swift limit 131072; no inference. Common metadata parser retains validated context_length/max_model_len/meta.n_ctx through catalogs and custom-provider updates; explicit overrides preserved. Synthetic compaction keeps original transcript/current request; 248 provider/context tests and 29 catalog tests passed. No model files, IDs or backend changes."
+  },
+  {
+    "url": "https://github.com/cline/cline/tree/main/sdk/examples/plugins/agents-squad",
+    "origin": "fork-local-fix",
+    "purpose": "Recover unknown presets, inherit parent model and keep failed subagent status; immutable bundled override for known official plugin hashes",
+    "status": "targeted-regressions-passed; release qualification pending",
+    "verification": "3 plugin contract tests; bundled override and plugin loader regressions. No browser capability is invented for a missing playwright preset."
   }
 ]

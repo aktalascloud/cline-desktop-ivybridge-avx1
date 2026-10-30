@@ -26,6 +26,7 @@ if(@($changed|Where-Object {$_ -like 'sdk/packages/agents/*'}).Count){
  $agentTests=@('src/agent-runtime.test.ts')+@(Changed-Tests 'sdk/packages/agents')
  Invoke-Check 'Agent loop and completion regressions' "$root/sdk/packages/agents" (@('x','vitest','run','--maxWorkers=2','--config','vitest.config.ts')+@($agentTests|Sort-Object -Unique))
 }
+Invoke-Check 'Portable subagent regressions' "$root/sdk/examples/plugins/agents-squad" @('x','vitest','run','--config','vitest.config.ts')
 Invoke-Check 'Distribution profile bootstrap' "$root/apps/cli" @('test','script/distribution-bootstrap.test.ts')
 $cliTests=@('src/runtime/run-agent.test.ts','src/commands/update.test.ts')+@(Changed-Tests 'apps/cli')
 if($Mode -eq 'full'){$cliTests=@('src/runtime','src/commands','src/utils/hooks.test.ts')}

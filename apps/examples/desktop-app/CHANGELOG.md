@@ -2,6 +2,9 @@
 
 ## 1.0.14
 
+- Portable subagents inherit the parent model; unknown presets are recoverable and failed runs stay failed. Known official plugin versions use the packaged fix without changing user plugin files.
+- Субагенты наследуют модель родителя; неизвестный preset не ломает плагин, неуспешные запуски не выдаются за успех. Исправление известных официальных версий включено в пакет без изменения личных файлов плагина.
+
 - Overflow recovery can recompact previously preserved tool results; compacted context is marked separately from old request usage.
 - Восстановление после переполнения повторно сжимает старые результаты инструментов; сжатый контекст отмечен отдельно от статистики прежнего запроса.
 

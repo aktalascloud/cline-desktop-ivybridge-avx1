@@ -6,6 +6,14 @@ for name in ('ponytail.md','PONYTAIL-LICENSE.txt','ponytail-source.json','free-w
  path=source/name
  if path.is_symlink() or path.is_junction() or not path.is_file():raise RuntimeError('Invalid bundled default resource')
  data=path.read_bytes().replace(b'\r\n',b'\n');(dest/name).write_bytes(data);files[name]=hashlib.sha256(data).hexdigest()
+plugin=dest/'agents-squad';plugin.mkdir(exist_ok=True)
+subprocess.run(['bun','build',str(root/'sdk/examples/plugins/agents-squad/index.ts'),'--target=bun','--external=@cline/core','--outfile',str(plugin/'index.js')],check=True,cwd=root)
+for folder in ['agents','skills']:
+ for src in (root/'sdk/examples/plugins/agents-squad'/folder).glob('*.md'):
+  target=plugin/folder/src.name;target.parent.mkdir(exist_ok=True);target.write_bytes(src.read_bytes().replace(b'\r\n',b'\n'))
+(plugin/'LICENSE.txt').write_bytes((root/'LICENSE').read_bytes())
+for path in plugin.rglob('*'):
+ if path.is_file():files[path.relative_to(dest).as_posix()]=hashlib.sha256(path.read_bytes()).hexdigest()
 runtime=json.loads((source/'python-runtime.json').read_text('utf8'))
 archive=root/'.build-cache/python'/runtime['url'].rsplit('/',1)[-1];archive.parent.mkdir(parents=True,exist_ok=True)
 subprocess.run([sys.executable,str(root/'fork/download.py'),runtime['url'],str(archive),runtime['sha256']],check=True)
