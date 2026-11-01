@@ -1,14 +1,14 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.14",
-  "upstream_sha": "51f63e4fd63aeeb74d708b9c3d1f8b800aff9b3e",
-  "build_source_sha": "82c4f32728de9fcbfb60429a911811d056e5786d",
-  "compiled_component_source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
+  "version": "1.0.15",
+  "upstream_sha": "a6507a62a147db4a35e27f4294589742ccac5060",
+  "build_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
+  "compiled_component_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
   "release_approved": true,
   "native": {
     "kind": "source-built",
-    "source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
+    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
     "rust": "1.97.0",
     "msvc": "14.44.35207",
     "windows_sdk": "10.0.26100.0",
@@ -25,12 +25,12 @@
     "c_flags": "Dependency defaults; no global CFLAGS override",
     "pgo": false,
     "affinity_or_numa_pinning": false,
-    "sha256": "35872256bfbab00de8e3b280a94d482179e3f35b956afc41d5a335b243492453"
+    "sha256": "d6e74c4ffe55160ca5fb23e3bb82fbeeaf95671dd163259ea56f10cffa995264"
   },
   "cli_and_hub": {
     "version": "3.0.74",
     "kind": "source-built JavaScript with embedded prebuilt Bun",
-    "source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
+    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
     "target": "bun-windows-x64-baseline",
     "build_flags": [
       "compile",
@@ -42,23 +42,23 @@
       "fork storage bootstrap",
       "official updater disabled"
     ],
-    "sha256": "97099a2fe7d7f84a49286c60450a35ce4b7e0dbcbcdf6f1763ee3c4ba55404a4"
+    "sha256": "d090a14cd97e355e6d5c3fa7dd080720de14e302f0f0f1f12a7efddd5e5e3b19"
   },
   "sdk": {
     "version": "0.2.0",
     "kind": "source-built production JavaScript",
-    "source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
-    "sha256": "adefdd30c85476f83d859f385cf00e7fa8fe60baafd41fceb26283ff1014ad08"
+    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
+    "sha256": "b6de40f8f6aebe2dec0975c3b291b66194c7d6a871f9c4853ada9cee7ea3f0d4"
   },
   "backend": {
     "kind": "source-built JavaScript",
-    "source_sha": "82c4f32728de9fcbfb60429a911811d056e5786d",
+    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
     "flags": [
       "target=bun",
       "minify",
       "no telemetry credentials inlined"
     ],
-    "sha256": "3b13a3e14bea6ee854c6eaecee579fa3868459a56b684f776c0023c27d451961"
+    "sha256": "ad6568a4555d12a30a2e190f9c3490411831a2aefdccadc06040d33cc3b7f329"
   },
   "frontend": {
     "kind": "source-built static export",
@@ -116,15 +116,14 @@
     "freellm": {
       "models": [
         "nvidia/nemotron-3.5-super-vl:free",
-        "reflection/beam-free",
-        "dots-studio/dots-3-note-preview:free"
+        "reflection/beam-free"
       ],
       "registration_or_personal_key": false,
       "shared_service_quota": "200 requests/hour/IP; vendor availability applies"
     }
   },
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "624000838da30c3dbd12022b9375832d6f9462d444ff9be3f821e81d83bf8af6",
+  "bun_lock_sha256": "e904accaea39eb21b1c87b7899eeb71102d8bb1402f6659c4f1073493ff008cf",
   "cuda_used": false,
   "llm_models_included": false,
   "authenticode": "NotSigned",
@@ -134,7 +133,7 @@
     "kind": "NSIS Windows x64",
     "uac": "requireAdministrator",
     "compression": "lzma",
-    "sha256": "2db0724b9f56c78c6a5157b147f3bd1ebcba67205d42fe655cad7229f751ce24",
-    "size": 145258798
+    "sha256": "5e45554cd5fd1eb48f9b248c6d89c8ba3ab6e6fccad698949c48a292d9ec7515",
+    "size": 144383416
   }
 }
