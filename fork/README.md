@@ -19,3 +19,5 @@ Updates: review upstream and relevant active forks, PRs/issues and complete appl
 Keep only current receipts and necessary tools. Preserve personal data, keys and original history. Cloud catalogs are provider data, not build requirements. Context/sampling follow the endpoint and user preferences. Never embed private models, URLs or settings in recipes.
 
 Current decisions: `review-ledger.json`. Package: `components.json`, `qualification.json`. One daily Codex chat task at 08:00 Asia/Bishkek; no CI cron.
+
+[Current status, included fixes and remaining validation](STATUS.md). Documentation-only maintenance does not require a new installer.
