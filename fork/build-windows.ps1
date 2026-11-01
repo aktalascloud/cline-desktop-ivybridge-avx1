@@ -67,17 +67,21 @@ try {
     if($LASTEXITCODE){throw 'Production frontend build failed'}
 
   }
+  $flagArgs=@("--remap-path-prefix=$root=/src/cline")
   $env:RUSTFLAGS="--remap-path-prefix=$root=/src/cline"
-  if($env:CARGO_HOME){$env:RUSTFLAGS+=" --remap-path-prefix=$env:CARGO_HOME=/src/cargo"}
+  if($env:CARGO_HOME){$env:RUSTFLAGS+=" --remap-path-prefix=$env:CARGO_HOME=/src/cargo";$flagArgs+="--remap-path-prefix=$env:CARGO_HOME=/src/cargo"}
   $env:CARGO_PROFILE_RELEASE_OPT_LEVEL='3'
   $env:CARGO_PROFILE_RELEASE_DEBUG='0'
   if($Profile -eq 'default'){
     $env:CARGO_PROFILE_RELEASE_LTO='false';$env:CARGO_PROFILE_RELEASE_CODEGEN_UNITS='16'
   }else{
     $env:RUSTFLAGS+=' -C target-cpu=ivybridge -C target-feature=-avx2,-fma'
+    $flagArgs+=@('-C','target-cpu=ivybridge','-C','target-feature=-avx2,-fma')
     $env:CARGO_PROFILE_RELEASE_LTO=if($Profile -eq 'ivy-fat1'){'fat'}else{'thin'}
     $env:CARGO_PROFILE_RELEASE_CODEGEN_UNITS=if($Profile -eq 'ivy-thin8'){'8'}else{'1'}
   }
+  # Cargo's whitespace-separated RUSTFLAGS cannot preserve source paths with spaces.
+  $env:CARGO_ENCODED_RUSTFLAGS=$flagArgs -join [char]0x1f
   Push-Location $app
   try {
     if($Checks -eq 'full' -or $nativeChanges.Count){
