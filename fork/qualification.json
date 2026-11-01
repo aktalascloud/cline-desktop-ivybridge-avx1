@@ -27,9 +27,11 @@
     "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
     "asset_sha256": "5e45554cd5fd1eb48f9b248c6d89c8ba3ab6e6fccad698949c48a292d9ec7515",
     "size": 144383416,
-    "published": false,
+    "published": true,
     "download_skipped_by_user": true,
-    "anonymous_download_verified": false
+    "anonymous_download_verified": false,
+    "release_id": 430442234,
+    "asset_id": 697926271
   },
   "verified_utc": "2026-11-01T09:51:17.577016+00:00"
 }

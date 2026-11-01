@@ -27,48 +27,54 @@
     "sha": "46996c999",
     "origin": "official-upstream",
     "purpose": "Typed, authenticated artifact download references",
-    "status": "integrated; qualification in progress",
-    "verification": "Reviewed URL HTTPS validation, account binding, scoped cache and abort handling."
+    "status": "qualified-installed",
+    "verification": "Reviewed URL HTTPS validation, account binding, scoped cache and abort handling.",
+    "release_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538"
   },
   {
     "url": "https://github.com/cline/cline/pull/15393",
     "sha": "53383d541",
     "origin": "official-upstream",
     "purpose": "Lazy artifact previews in Desktop",
-    "status": "integrated; qualification in progress",
-    "verification": "Reviewed viewport-triggered image loading, account scope, bounded retries and no-referrer downloads."
+    "status": "qualified-installed",
+    "verification": "Reviewed viewport-triggered image loading, account scope, bounded retries and no-referrer downloads.",
+    "release_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538"
   },
   {
     "url": "https://github.com/cline/cline/pull/15438",
     "sha": "fc467c0e1",
     "origin": "official-upstream",
     "purpose": "Reusable evidence carousel",
-    "status": "integrated; qualification in progress",
-    "verification": "Reviewed schema validation, accessible keyboard navigation, timers disposed on unmount."
+    "status": "qualified-installed",
+    "verification": "Reviewed schema validation, accessible keyboard navigation, timers disposed on unmount.",
+    "release_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538"
   },
   {
     "url": "https://github.com/cline/cline/pull/15453",
     "sha": "a6507a62a147db4a35e27f4294589742ccac5060",
     "origin": "official-upstream",
     "purpose": "Desktop evidence rendering",
-    "status": "integrated; qualification in progress",
-    "verification": "Reviewed canonical media, existing history rendering and fallback to older Hubs."
+    "status": "qualified-installed",
+    "verification": "Reviewed canonical media, existing history rendering and fallback to older Hubs.",
+    "release_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538"
   },
   {
     "url": "https://github.com/cline/cline/pull/15256",
     "sha": "13017841c0c4e670aa0f7b7cef0b9cda3030ef34",
     "origin": "official-upstream",
     "purpose": "Cancellable manual compaction",
-    "status": "integrated; qualification in progress",
-    "verification": "Full diff/discussion reviewed. Adapted to retained shrink guard; added reattach/status regression and kept opt-out telemetry."
+    "status": "qualified-installed",
+    "verification": "Full diff/discussion reviewed. Adapted to retained shrink guard; added reattach/status regression and kept opt-out telemetry.",
+    "release_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538"
   },
   {
     "url": "https://github.com/cline/cline/pull/15117",
     "sha": "7e7839775de7937a14212e9a0b9e20744057a8d2",
     "origin": "official-upstream",
     "purpose": "Explicit MCP OAuth",
-    "status": "integrated; qualification in progress",
-    "verification": "Full diff/discussion reviewed; kept pinned SDK 1.32.2 and issuer/client binding. Fixtures adapted to owned tokens; loopback redirect boundary tested."
+    "status": "qualified-installed",
+    "verification": "Full diff/discussion reviewed; kept pinned SDK 1.32.2 and issuer/client binding. Fixtures adapted to owned tokens; loopback redirect boundary tested.",
+    "release_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538"
   },
   {
     "url": "https://github.com/AI-Hydro/AI-Hydro/pull/142",
@@ -120,8 +126,9 @@
     "sha": "4dff0d689fea592144de4fc5a91960ebd5f8a2a8",
     "origin": "major-derived-fork",
     "purpose": "Count consecutive failed compactions, not every successful cycle",
-    "status": "independent-adaptation-tested",
-    "verification": "MIT reference implementation and full regression diff read. Found analogous one-per-run guard in Cline SDK. New synthetic long-task regression failed before the change; 162 Agent tests pass after allowing one retry per distinct rejected step. A repeated failed compacted request still stops; no uncertain tool action is replayed."
+    "status": "qualified-installed",
+    "verification": "MIT reference implementation and full regression diff read. Found analogous one-per-run guard in Cline SDK. New synthetic long-task regression failed before the change; 162 Agent tests pass after allowing one retry per distinct rejected step. A repeated failed compacted request still stops; no uncertain tool action is replayed.",
+    "release_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538"
   },
   {
     "url": "https://github.com/Kilo-Org/kilocode/pull/15548",
