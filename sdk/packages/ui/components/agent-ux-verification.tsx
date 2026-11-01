@@ -1,4 +1,6 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
+
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -44,6 +46,7 @@ function EvidenceImage({
 	renderScreenshot?: UxScreenshotRenderer;
 	presentation: UxScreenshotPresentation;
 }) {
+	const t = useTranslation();
 	const image = check.screenshot;
 	const [failedImage, setFailedImage] = useState<typeof image>();
 	if (image && renderScreenshot) {
@@ -64,10 +67,10 @@ function EvidenceImage({
 			<CircleAlert className="size-7" />
 			<span>
 				{failedImage && failedImage === image
-					? "Screenshot could not be loaded"
+					? t("Screenshot could not be loaded")
 					: image
-						? "Screenshot requires a host image resolver"
-						: "No screenshot available"}
+						? t("Screenshot requires a host image resolver")
+						: t("No screenshot available")}
 			</span>
 		</div>
 	);
@@ -85,6 +88,7 @@ export interface AgentUxVerificationProps {
 }
 
 function StatusIcon({ status }: { status: UxVerificationCheck["status"] }) {
+
 	const Icon =
 		status === "passed" ? Check : status === "failed" ? X : CircleAlert;
 	return (
@@ -102,6 +106,7 @@ export function AgentUxVerification({
 	renderScreenshot,
 	onExpandScreenshot,
 }: AgentUxVerificationProps) {
+	const t = useTranslation();
 	const [api, setApi] = useState<CarouselApi>();
 	const [selected, setSelected] = useState(0);
 	const [playing, setPlaying] = useState(false);
@@ -145,15 +150,15 @@ export function AgentUxVerification({
 				<div>
 					<strong>
 						{pending
-							? "Verifying UX"
-							: "UX verification could not be completed"}
+							? t("Verifying UX")
+							: t("UX verification could not be completed")}
 					</strong>
 					<p>
 						{pending
-							? "Walking through the checklist and capturing evidence."
+							? t("Walking through the checklist and capturing evidence.")
 							: typeof error === "string"
 								? error
-								: "The verifier did not return a valid evidence report."}
+								: t("The verifier did not return a valid evidence report.")}
 					</p>
 				</div>
 			</div>
@@ -188,12 +193,11 @@ export function AgentUxVerification({
 					)}
 				>
 					<Check className="size-3.5" />
-					{passed}/{report.checks.length} checks passed
-				</span>
+					{passed}/{report.checks.length} {t(" checks passed")}</span>
 			</header>
 			<Carousel
 				setApi={setApi}
-				aria-label="UX verification evidence"
+				aria-label={t("UX verification evidence")}
 				className="cline-ui-ux-evidence-carousel"
 				onPointerDown={() => setPlaying(false)}
 				aria-keyshortcuts="ArrowLeft ArrowRight Space"
@@ -252,8 +256,8 @@ export function AgentUxVerification({
 						onExpandScreenshot?.(current);
 					}}
 					className="cline-ui-ux-evidence-expand"
-					aria-label="Expand screenshot"
-					title="Expand screenshot"
+					aria-label={t("Expand screenshot")}
+					title={t("Expand screenshot")}
 				>
 					<Expand className="size-4" />
 				</button>
@@ -277,7 +281,7 @@ export function AgentUxVerification({
 				<div
 					className="cline-ui-ux-evidence-thumbnails"
 					role="group"
-					aria-label="Choose verification check"
+					aria-label={t("Choose verification check")}
 				>
 					{report.checks.map((check, index) => (
 						<button
@@ -307,7 +311,7 @@ export function AgentUxVerification({
 						type="button"
 						className="cline-ui-ux-evidence-play"
 						onClick={() => setPlaying((value) => !value)}
-						aria-label={playing ? "Pause slideshow" : "Play slideshow"}
+						aria-label={playing ? t("Pause slideshow") : t("Play slideshow")}
 						aria-pressed={playing}
 					>
 						{playing ? (
@@ -319,7 +323,7 @@ export function AgentUxVerification({
 				)}
 			</footer>
 			<p className="sr-only" aria-live={playing ? "off" : "polite"}>
-				Check {selected + 1} of {report.checks.length}: {current.title}.{" "}
+				Check {selected + 1} {t(" of ")}{report.checks.length}: {current.title}.{" "}
 				{current.status}. {current.subtitle}
 			</p>
 		</section>

@@ -2825,7 +2825,7 @@ describe("listLocalProviders", () => {
 
 	afterEach(() => cleanup());
 
-	it("loads the three-vendor bundled FreeLLM catalog and enables it without a key or default switch", async () => {
+	it.each([false, true])("loads the two-vendor FreeLLM catalog without a key or default switch (stale=%s)", async (stale) => {
 		const install = mkdtempSync(path.join(os.tmpdir(), "freellm-bundle-"));
 		const previous = process.env.CLINE_DESKTOP_CLI_PATH;
 		try {
@@ -2844,14 +2844,19 @@ describe("listLocalProviders", () => {
 			const bundledManager = new ProviderSettingsManager({
 				filePath: path.join(install, "fixture.json"),
 			});
+			if (stale) {
+				const catalog = JSON.parse(readFileSync(path.join(folder, "freellm.json"), "utf8"));
+				catalog.providers.freellm.models["retired/fixture"] = { id: "retired/fixture" };
+				writeFileSync(path.join(install, "models.json"), JSON.stringify(catalog));
+			}
 			const before = bundledManager.read().lastUsedProvider;
 			await ensureCustomProvidersLoaded(bundledManager);
 			const collection = LlmsModels.getProviderCollectionSync("freellm")!;
-			expect(Object.keys(collection.models)).toHaveLength(3);
+			expect(Object.keys(collection.models)).toHaveLength(2);
 			expect(
 				new Set(Object.keys(collection.models).map((id) => id.split("/")[0]))
 					.size,
-			).toBe(3);
+			).toBe(2);
 			expect(collection.provider.metadata?.apiKeyOptional).toBe(true);
 			markLocalProviderEnabled(bundledManager, "freellm");
 			const saved = bundledManager.getProviderSettings("freellm")!;
@@ -2862,7 +2867,7 @@ describe("listLocalProviders", () => {
 			expect(providers.find((p) => p.id === "freellm")).toMatchObject({
 				enabled: true,
 				configured: true,
-				models: 3,
+				models: 2,
 			});
 			expect(
 				providers

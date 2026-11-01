@@ -1,4 +1,6 @@
 "use client";
+import { useTranslation } from "@/lib/i18n";
+
 
 import { SUPPORTED_IMAGE_MEDIA_TYPES } from "@cline/shared/browser";
 import { z } from "zod";
@@ -38,6 +40,7 @@ export function PublishedArtifacts({
 	files: z.infer<typeof PublicationSchema>["files"];
 	sessionId: string;
 }) {
+
 	return (
 		<ul className="space-y-2 py-1 text-sm">
 			{files.map((file, index) => {
@@ -95,6 +98,7 @@ function DownloadArtifact({
 	sessionId: string;
 	artifactId: string;
 }) {
+	const t = useTranslation();
 	const { accountReady, state, open } = useArtifactResource({
 		sessionId,
 		reference: { type: "artifact", artifactId },
@@ -110,12 +114,11 @@ function DownloadArtifact({
 				disabled={!accountReady || busy}
 				onClick={() => void open()}
 			>
-				{busy ? "Preparing…" : failed ? "Retry download" : "Download"}
+				{busy ? t("Preparing…") : failed ? t("Retry download") : t("Download")}
 			</Button>
 			{failed && (
 				<output className="text-destructive">
-					Could not download this file.
-				</output>
+					{t("Could not download this file.")}</output>
 			)}
 		</>
 	);

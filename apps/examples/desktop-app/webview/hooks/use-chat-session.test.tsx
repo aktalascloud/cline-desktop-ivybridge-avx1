@@ -433,6 +433,70 @@ afterEach(async () => {
 });
 
 describe("useChatSession", () => {
+	it.each([
+		false,
+		true,
+	])("keeps manual compaction stoppable and settles its command reply (cancel=%s)", async (cancel) => {
+		const reply = deferred<{ ok: boolean; commandHandled: boolean }>();
+		const requested = deferred<void>();
+		invokeMock.mockImplementation(
+			async (command: string, args?: Record<string, unknown>) => {
+				if (command === "chat_session_command") {
+					const request = args?.request as { action?: string };
+					if (request.action === "start") return { sessionId: "compact-ui" };
+					if (request.action === "send") {
+						requested.resolve();
+						return reply.promise;
+					}
+					if (request.action === "abort") return { ok: true };
+				}
+				return [];
+			},
+		);
+		await act(async () => current.start(current.config));
+		const previousStatus = current.status;
+		let pending!: Promise<boolean>;
+		await act(async () => {
+			pending = current.sendPrompt("/compact");
+			await requested.promise;
+		});
+		expect(current.status).toBe("running");
+		await act(async () => {
+			expect(await current.sendPrompt("follow-up while compacting")).toBe(
+				false,
+			);
+		});
+		expect(current.status).toBe("running");
+		if (cancel) await act(async () => current.abort());
+		await act(async () => {
+			reply.resolve({ ok: true, commandHandled: true });
+			await pending;
+		});
+		expect(current.status).toBe(cancel ? "cancelled" : previousStatus);
+		expect(
+			current.messages.some((message) => message.content === "/compact"),
+		).toBe(false);
+		await act(async () => {
+			expect(await current.sendPrompt("/compact")).toBe(true);
+		});
+	});
+
+	it("reattaches to manual compaction and settles without the original send promise", async () => {
+		const sessionId = "compact-reattach";
+		invokeMock.mockImplementation(async (command: string) => {
+			if (command === "read_session_messages") return [{ id: "answer", sessionId, role: "assistant", content: "Previous completed answer", createdAt: 1 }];
+			if (command === "chat_session_command") return { sessionId, status: "running", compacting: true };
+			return [];
+		});
+		await act(async () => current.hydrateSession({ sessionId, origin: "local", status: "completed", provider: "fixture", model: "fixture", startedAt: "2026-10-31T00:00:00Z" }));
+		expect(current.status).toBe("running");
+		await act(async () => { expect(await current.sendPrompt("keep draft")).toBe(false); });
+		await act(async () => handlerFor("chat_session_status")({ sessionId, status: "idle" }));
+		expect(current.status).toBe("running");
+		await act(async () => handlerFor("chat_command_output")({ sessionId, command: "compact", text: "Compaction cancelled." }));
+		expect(current.status).toBe("cancelled");
+	});
+
 	it("keeps flushing streamed text after the app is hidden and restored", async () => {
 		vi.useFakeTimers();
 		try {

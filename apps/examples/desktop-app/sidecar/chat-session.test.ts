@@ -2788,6 +2788,7 @@ describe("/compact", () => {
 						async () => options.compactionState,
 					),
 					updateSessionCompactionState,
+					stop: vi.fn(async () => undefined),
 					pendingPrompts: { list: vi.fn(async () => []) },
 				},
 				{ sessionIds: [sessionId] },
@@ -2940,6 +2941,64 @@ describe("/compact", () => {
 		expect(readCommandOutput()).toMatchObject({
 			text: "Compacted context from 2 to 1 messages.",
 		});
+	});
+
+	it.each([
+		"abort",
+		"stop",
+		"reset",
+	] as const)("cancels manual compaction on %s without saving a partial summary", async (action) => {
+		let signal!: AbortSignal;
+		const compact = vi.fn(({ abortSignal }: { abortSignal: AbortSignal }) => {
+			signal = abortSignal;
+			return new Promise((resolve) => {
+				// Even a provider that returns a partial summary on abort must not save it.
+				abortSignal.addEventListener(
+					"abort",
+					() =>
+						resolve({
+							messages: [{ role: "user", content: "partial summary" }],
+						}),
+					{ once: true },
+				);
+			});
+		});
+		createContextCompactionPrepareTurnMock.mockReturnValueOnce(compact);
+		const { ctx, sessionId, readCommandOutput, updateSessionCompactionState } =
+			createCompactContext({
+				messages: [{ role: "user", content: "original history ".repeat(100) }],
+			});
+		const pending = handleChatSessionCommand(ctx, {
+			action: "send",
+			sessionId,
+			prompt: "/compact",
+		});
+		await vi.waitFor(() => expect(compact).toHaveBeenCalledOnce());
+		await expect(handleChatSessionCommand(ctx, { action: "attach", sessionId })).resolves.toMatchObject({ status: "running", compacting: true });
+		await expect(
+			handleChatSessionCommand(ctx, {
+				action: "send",
+				sessionId,
+				prompt: "/compact",
+			}),
+		).rejects.toThrow("Compaction is in progress");
+		await handleChatSessionCommand(ctx, { action, sessionId });
+		await pending;
+		expect(signal.aborted).toBe(true);
+		expect(updateSessionCompactionState).not.toHaveBeenCalled();
+		expect(readCommandOutput()).toMatchObject({
+			text: "Compaction cancelled.",
+		});
+
+		createContextCompactionPrepareTurnMock.mockReturnValueOnce(async () => ({
+			messages: [{ role: "user", content: "complete summary" }],
+		}));
+		await handleChatSessionCommand(ctx, {
+			action: "send",
+			sessionId,
+			prompt: "/compact",
+		});
+		expect(updateSessionCompactionState).toHaveBeenCalledOnce();
 	});
 
 	it("refuses to compact while a turn is running without reaching the model", async () => {

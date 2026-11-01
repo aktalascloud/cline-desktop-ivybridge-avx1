@@ -1,19 +1,18 @@
 {
   "version": 1,
-  "reviewed_date": "2026-10-30",
+  "reviewed_date": "2026-11-01",
   "source": "https://ai-gateway.kilo.ai/api/v1/models",
   "shared_hourly_limit": 200,
   "user_key_required": false,
   "vendors": [
     "NVIDIA",
-    "Reflection",
-    "Dots Studio"
+    "Reflection"
   ],
   "providers": {
     "freellm": {
       "provider": {
         "name": "FreeLLM",
-        "description": "Three free cloud models from different vendors. Shared 200 requests/hour/IP; no account/key. Providers may retain prompts.",
+        "description": "Two free cloud models from different vendors. Shared 200 requests/hour/IP; no account/key. Providers may retain prompts.",
         "baseUrl": "https://ai-gateway.kilo.ai/api/v1",
         "defaultModelId": "nvidia/nemotron-3.5-super-vl:free",
         "protocol": "openai-chat",
@@ -28,7 +27,7 @@
       "models": {
         "nvidia/nemotron-3.5-super-vl:free": {
           "id": "nvidia/nemotron-3.5-super-vl:free",
-          "name": "NVIDIA: Nemotron 3.5 Super VL",
+          "name": "Nemotron 3.5 Super VL · 120B",
           "contextWindow": 1000000,
           "maxTokens": 131072,
           "capabilities": [
@@ -49,7 +48,7 @@
         },
         "reflection/beam-free": {
           "id": "reflection/beam-free",
-          "name": "Reflection: Beam 1.0",
+          "name": "Beam 1.0 · 501B",
           "contextWindow": 1048576,
           "maxTokens": 131072,
           "capabilities": [
@@ -73,29 +72,12 @@
           "supportsAuthorModes": false,
           "inputPrice": 0,
           "outputPrice": 0
-        },
-        "dots-studio/dots-3-note-preview:free": {
-          "id": "dots-studio/dots-3-note-preview:free",
-          "name": "Dots Studio: Dots3-Note Preview",
-          "contextWindow": 512000,
-          "maxTokens": 460800,
-          "capabilities": [
-            "tools",
-            "streaming",
-            "reasoning",
-            "temperature",
-            "images"
-          ],
-          "reasoningOptions": [
-            {
-              "type": "toggle"
-            }
-          ],
-          "supportsAuthorModes": false,
-          "inputPrice": 0,
-          "outputPrice": 0
         }
       }
     }
+  },
+  "parameter_sources": {
+    "nvidia/nemotron-3.5-super-vl:free": "https://github.com/NVIDIA-NeMo/Nemotron/blob/main/usage-cookbook/Nemotron-3.5-Super-VL/README.md",
+    "reflection/beam-free": "https://reflection.ai/blog/introducing-beam"
   }
 }

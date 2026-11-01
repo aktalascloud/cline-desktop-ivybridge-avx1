@@ -577,6 +577,11 @@ authentication. Omit it to retain local account authentication and rollout check
 MCP OAuth persistence retains the SDK-provided `issuer` in both tokens and client information. Pre-registered confidential clients must set `oauthClient.issuer` to the trusted authorization-server issuer alongside their locally configured client secret. An MCP server must not choose that trusted issuer for an existing secret.
 
 Legacy unbound records remain on disk but are not reused automatically; users sign in again. Tokens are returned only for the matching client and issuer. Issuer changes during a pending authorization invalidate that write rather than overwriting changed credentials.
+## Explicit MCP OAuth authorization
+
+`authorizeMcpServerOAuth` first probes `initialize` and `tools/list` to check saved access tokens and capture OAuth metadata and scope from a 401 challenge. Anonymous discovery success does not establish account authorization. When authorization is needed, the SDK flow keeps the native callback listener open until the code arrives, validates state, exchanges the code with PKCE and reconnects. Saved credentials use the SDK refresh path without another consent when possible. A server without OAuth metadata reports an authorization error rather than treating public discovery as authorization.
+
+Interactive OAuth fetches use the server's request timeout and caller cancellation signal, including discovery and client registration. Ordinary MCP discovery and protected tool calls keep their existing behavior.
 
 ## MCP Apps (experimental)
 

@@ -1,44 +1,21 @@
-# Fork build and release
+# Build and maintenance
 
-One Windows x64 channel, application ID `cloud.aktalas.cline.desktop.avx1.ru`.
-Use Bun 1.4.2, Node 24.20.0, Python 3.13.14, Rust 1.97.0, MSVC 14.44.35207 and Windows SDK 10.0.26100.0.
-Build a clean, pinned checkout with `fork/build-windows.ps1 -SourceSha <full-sha>`.
-The release candidate is `dist/avx1/Cline-Desktop-AVX1-RU-Setup.exe`.
+Windows x64; PowerShell 7, Git, Bun 1.4.2 (x64 baseline), Node 24.20.0, Python 3.13.14, Rust 1.97.0, MSVC 14.44.35207, Windows SDK 10.0.26100.0. No fixed drive, user name, model, server or personal profile is required.
 
-`ivy-thin8`, `ivy-thin1` and `ivy-fat1` are candidates for measured comparison
-with `default`. All use Rust opt-level 3; Ivy Bridge candidates explicitly
-disable AVX2/FMA. No PGO, fast-math, affinity, NUMA policy or CUDA is added.
-MSVC has no `/O3`; its supported speed profile is `/O2`. Native C flags are
-not imposed on prebuilt dependencies or libraries with their own dispatch.
+1. Install pinned prerequisites. Use the MSVC developer shell, or let the bootstrap discover Visual Studio Build Tools.
+2. Check out the exact reviewed commit. Keep the existing updater key outside this repository.
+3. Run from the repository root:
 
-Bun/JavaScriptCore, WebView2 and npm native libraries are upstream prebuilts.
-Compiling the CLI embeds Bun; it does not rebuild the runtime. Both Bun 1.4.2
-x64 download aliases produced the same executable and ran on the target CPU.
+```powershell
+pwsh -File fork/bootstrap-windows.ps1 -SourceSha <40-character-SHA> -SigningKeyFile <private-key-file>
+```
 
-The updater public key is committed in Tauri config. The permanent private
-key belongs only in a restricted local private directory and the
-`AVX1Release` GitHub environment secret `TAURI_SIGNING_PRIVATE_KEY`.
-Tauri updater signatures are independent of Authenticode. No publicly trusted
-Authenticode signature is claimed.
+Output: `dist/avx1/Cline-Desktop-AVX1-RU-Setup.exe`, manifest and check receipts. Frozen lockfiles are mandatory. Reuse matching caches; relocation may invalidate native cache entries. Stop on failure, fix the first failed stage and continue. Never suppress errors or publish a repaired payload.
 
-Before publishing: pass tests/typecheck/production build, inspect licenses and
-package/privacy, install and run on Ivy Bridge, exercise providers/history/tools/
-MCP/stream/cancel, compare profiles, verify update over the previous fork build,
-and verify independent processes and one Startup shortcut. Wait for idle sessions.
-The installer refuses to replace files held by running processes.
+Default profile: O3, Ivy Bridge, fat LTO, one codegen unit, AVX2/FMA disabled. No PGO/pinning. Bun/JSC, Python and system WebView2 are prebuilts. Other compiler profiles are measurement inputs, not release channels. [Measurements](performance.md).
 
-Create a draft first. Publish only after local gates pass. Keep one current
-release with exactly one asset `Cline-Desktop-AVX1-RU-Setup.exe`; put SHA256,
-component manifest and the updater signature in release text or repository.
-Write `fork/updater/latest.json` only for the verified EXE in this fork.
-Delete prior release assets and obsolete CI artifacts only after successful
-installation/publication. Retain Git history, tags and licenses.
+Updates: review upstream and relevant active forks, PRs/issues and complete applicable code. Import upstream through [sanitized history](history-policy.md). Keep licenses and tags. Run targeted tests, typechecks and production build; audit/sign; wait for idle; install; compare profile and payload; run installed protocol checks. GUI is optional. Then publish one release/EXE, update the fork feed, verify server digest/size/tag/feed and copy EXE to Desktop. No repeat EXE download. Delete rollback only after success.
 
-The only daily trigger is the local Codex chat heartbeat at 09:00 Asia/Bishkek,
-UTC+06. No workflow cron or independent Windows build loop is used. The agent
-owns research, code adaptation, repairs, qualification and publication.
+Keep only current receipts and necessary tools. Preserve personal data, keys and original history. Cloud catalogs are provider data, not build requirements. Context/sampling follow the endpoint and user preferences. Never embed private models, URLs or settings in recipes.
 
-Every daily cycle reviews upstream PRs/issues and active forks/their PRs even
-when main is unchanged. An identical build fingerprint skips rebuilding only.
-Interactive GUI checks were waived by the owner; record coverage honestly.
-Integrate upstream through the [sanitized-history procedure](history-policy.md).
+Current decisions: `review-ledger.json`. Package: `components.json`, `qualification.json`. One daily Codex chat task at 08:00 Asia/Bishkek; no CI cron.

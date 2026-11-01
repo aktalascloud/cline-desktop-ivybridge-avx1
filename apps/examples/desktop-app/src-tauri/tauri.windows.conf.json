@@ -18,10 +18,14 @@
 		"windows": {
 			"nsis": {
 				"installerHooks": "nsis/installer-hooks.nsh",
-				"languages": ["Russian", "English"],
+				"languages": [
+					"Russian",
+					"English"
+				],
 				"displayLanguageSelector": true,
 				"installMode": "currentUser",
-				"template": "nsis/installer.nsi"
+				"template": "nsis/installer.nsi",
+				"compression": "lzma"
 			}
 		}
 	}

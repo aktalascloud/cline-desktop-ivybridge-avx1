@@ -757,6 +757,20 @@ function registerBundledProviders(userState: StoredModelsFile): void {
 		"freellm.json",
 	);
 	const bundled = readModelsFileSync(file);
+	const managed = userState.providers.freellm;
+	const current = bundled.providers.freellm;
+	if (
+		managed?.provider.forkManagedCatalog === "freellm-v1" &&
+		current &&
+		managed.provider.baseUrl === current.provider.baseUrl
+	) {
+		// Refresh only our managed catalog in memory; never rewrite personal settings.
+		userState.providers.freellm = {
+			...managed,
+			provider: { ...managed.provider, description: current.provider.description },
+			models: current.models,
+		};
+	}
 	if (!userState.providers.freellm && bundled.providers.freellm)
 		registerCustomProvider("freellm", bundled.providers.freellm);
 }

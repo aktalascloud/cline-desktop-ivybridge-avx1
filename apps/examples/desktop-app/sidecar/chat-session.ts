@@ -125,6 +125,7 @@ const WORKSPACE_RESTORE_BUSY_ERROR =
  */
 const BUILTIN_SLASH_COMMAND_NAMES = new Set(["compact", "fork", "team"]);
 
+const manualCompactions = new Map<string, AbortController>();
 const FALLBACK_MANUAL_COMPACTION_MAX_INPUT_TOKENS = 64_000;
 const COMPACT_WHILE_RUNNING_MESSAGE =
 	"Cannot compact while a response is in progress. Try again once the current turn finishes.";
@@ -140,6 +141,7 @@ async function compactSession(
 	manager: ClineCore,
 	sessionId: string,
 	config: JsonRecord,
+	abortSignal: AbortSignal,
 ): Promise<string> {
 	if ((await manager.get(sessionId))?.status === "running") {
 		return COMPACT_WHILE_RUNNING_MESSAGE;
@@ -178,7 +180,7 @@ async function compactSession(
 				enabled: true,
 				strategy:
 					readGlobalSettings().compactionStrategy ??
-					(providerId === "dsw2api" ? "basic" : "agentic"),
+					"agentic",
 			},
 			logger: ctx.logger,
 			telemetry: ctx.telemetry,
@@ -186,6 +188,7 @@ async function compactSession(
 		},
 		{ mode: "manual" },
 	);
+	abortSignal.throwIfAborted();
 	const result = await compact?.({
 		agentId: "cline-desktop",
 		conversationId: sessionId,
@@ -193,7 +196,7 @@ async function compactSession(
 		iteration: 0,
 		messages: conversationMessages,
 		apiMessages: conversationMessages,
-		abortSignal: new AbortController().signal,
+		abortSignal,
 		systemPrompt: "",
 		tools: [],
 		model: {
@@ -207,6 +210,7 @@ async function compactSession(
 				},
 		},
 	});
+	abortSignal.throwIfAborted();
 	if (!result?.messages) {
 		return "No compaction needed.";
 	}
@@ -714,9 +718,7 @@ function buildCoreSessionConfig(
 			enabled: true,
 			strategy:
 				readGlobalSettings().compactionStrategy ??
-				((config.provider ?? config.providerId) === "dsw2api"
-					? "basic"
-					: "agentic"),
+				"agentic",
 		},
 		sessions: config.sessions,
 		extensionContext: createDesktopExtensionContext(telemetryUser),
@@ -1229,7 +1231,7 @@ async function handleAttach(
 			environmentId: binding.environmentId,
 			messages: existing?.messages ?? [],
 			promptsInQueue: existing?.promptsInQueue ?? [],
-			status: session.status,
+			status: manualCompactions.has(sessionId) ? "running" : session.status,
 			prompt:
 				session.prompt ||
 				(typeof metadata?.prompt === "string" ? metadata.prompt : undefined) ||
@@ -1251,7 +1253,8 @@ async function handleAttach(
 	return {
 		sessionId,
 		environmentId: binding.environmentId,
-		status: session.status,
+		status: manualCompactions.has(sessionId) ? "running" : session.status,
+		compacting: manualCompactions.has(sessionId),
 		provider: session.provider,
 		model: session.model,
 		cwd: session.cwd,
@@ -1678,7 +1681,14 @@ async function handleSendOnce(
 	// The handler's reply goes to the webview as a toast and
 	// only its `submitPrompt` (if any) reaches the model.
 	const commandName = prompt.match(/^\/(\S+)/)?.[1]?.toLowerCase();
+	if (manualCompactions.has(sessionId)) {
+		throw new Error(
+			"Compaction is in progress. Stop it before sending another message.",
+		);
+	}
 	if (commandName === "compact") {
+		const controller = new AbortController();
+		manualCompactions.set(sessionId, controller);
 		let text: string;
 		try {
 			text = session?.busy
@@ -1690,9 +1700,14 @@ async function handleSendOnce(
 						request.config
 							? mergeSessionConfig(session?.config ?? {}, request.config)
 							: (session?.config ?? {}),
+						controller.signal,
 					);
 		} catch (error) {
-			text = `Compaction failed: ${error instanceof Error ? error.message : String(error)}`;
+			text = controller.signal.aborted
+				? "Compaction cancelled."
+				: `Compaction failed: ${error instanceof Error ? error.message : String(error)}`;
+		} finally {
+			manualCompactions.delete(sessionId);
 		}
 		sendEvent(ctx, "chat_command_output", {
 			sessionId,
@@ -2022,6 +2037,7 @@ async function handleStop(
 	const sessionId = request.sessionId?.trim();
 	if (!sessionId) throw new Error("sessionId is required");
 	cancelHubReconnect(sessionId);
+	manualCompactions.get(sessionId)?.abort();
 	cancelSidecarMistakeQuestions(ctx, sessionId, "Session stopped");
 	await getSessionManager(ctx, sessionId, request.config).stop(sessionId);
 	const session = ctx.liveSessions.get(sessionId);
@@ -2039,6 +2055,11 @@ async function handleAbort(
 	const sessionId = request.sessionId?.trim();
 	if (!sessionId) throw new Error("sessionId is required");
 	cancelHubReconnect(sessionId);
+	const compaction = manualCompactions.get(sessionId);
+	if (compaction) {
+		compaction.abort();
+		return { sessionId, ok: true };
+	}
 	cancelSidecarMistakeQuestions(ctx, sessionId, "Run aborted");
 	await getSessionManager(ctx, sessionId, request.config).abort(
 		sessionId,
@@ -2309,6 +2330,7 @@ async function handleReset(
 	const sessionId = request.sessionId?.trim();
 	if (sessionId) {
 		cancelHubReconnect(sessionId);
+		manualCompactions.get(sessionId)?.abort();
 		cancelSidecarMistakeQuestions(ctx, sessionId, "Session reset");
 		const session = ctx.liveSessions.get(sessionId);
 		if (
