@@ -106,5 +106,36 @@
     "purpose": "vLLM reasoning field rename",
     "status": "tracked",
     "verification": "Legacy extension report; no supplied current Desktop reproduction. No speculative request rewriting or provider-specific workaround added."
+  },
+  {
+    "url": "https://github.com/Kilo-Org/kilocode/pull/15536",
+    "sha": "697ee1c959982ec5d1d18219b6672c43701b363d",
+    "origin": "major-derived-fork",
+    "purpose": "Require credentials for explicit MCP sign-in",
+    "status": "reviewed-already-covered",
+    "verification": "MIT; reviewed full sign-in implementation, related tests/discussion. Our adapted Cline #15117 additionally verifies existing owned access tokens, captures 401 metadata/scope and retains issuer/client binding. No duplicate OpenCode transport imported."
+  },
+  {
+    "url": "https://github.com/Kilo-Org/kilocode/pull/15070",
+    "sha": "4dff0d689fea592144de4fc5a91960ebd5f8a2a8",
+    "origin": "major-derived-fork",
+    "purpose": "Count consecutive failed compactions, not every successful cycle",
+    "status": "independent-adaptation-tested",
+    "verification": "MIT reference implementation and full regression diff read. Found analogous one-per-run guard in Cline SDK. New synthetic long-task regression failed before the change; 162 Agent tests pass after allowing one retry per distinct rejected step. A repeated failed compacted request still stops; no uncertain tool action is replayed."
+  },
+  {
+    "url": "https://github.com/Kilo-Org/kilocode/pull/15548",
+    "sha": "6846d45ec8f840e2c33ba46cd837b5d57a80554d",
+    "origin": "major-derived-fork",
+    "purpose": "Host-specific TUI seams and terminal input policy",
+    "status": "screened-not-imported",
+    "verification": "MIT; inspected changed TUI/runtime implementations. This is a broad OpenCode/Solid migration with workflow downgrades, not a Windows Cline SDK optimization; no mixed migration imported."
+  },
+  {
+    "url": "https://github.com/RooCodeInc/Roo-Code",
+    "origin": "major-derived-fork",
+    "purpose": "PR/issue screening",
+    "status": "indexed-not-a-qualified-patch",
+    "verification": "Apache-2.0; paginated 480 open PRs and 551 open issues plus recent-closed boundary pages; no recent activity matching this cycle window. Legacy extension architecture is not the Desktop SDK."
   }
 ]

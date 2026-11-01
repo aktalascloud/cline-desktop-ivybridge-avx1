@@ -2,6 +2,9 @@
 
 ## 1.0.15
 
+- Distinct overflows after completed tool steps can recover again; a failed compacted retry still stops.
+- Новое переполнение после успешных шагов снова восстанавливается; неудачный повтор после сжатия по-прежнему останавливается.
+
 - Removed client output/thinking caps, penalties and seed from OpenAI-compatible controls; the endpoint supplies these defaults, including for old sessions.
 - Максимум ответа/мышления, штрафы и seed задаются сервером; остальные sampling-настройки сохранены, старые переопределения не отправляются.
 - Updated compatible security dependencies and backported early collection bounds for legacy Zod; dependency warnings are reported by applicability, not hidden.
