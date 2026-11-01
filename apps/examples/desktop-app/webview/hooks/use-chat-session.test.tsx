@@ -488,7 +488,7 @@ describe("useChatSession", () => {
 			if (command === "chat_session_command") return { sessionId, status: "running", compacting: true };
 			return [];
 		});
-		await act(async () => current.hydrateSession({ sessionId, origin: "local", status: "completed", provider: "fixture", model: "fixture", startedAt: "2026-10-31T00:00:00Z" }));
+		await act(async () => current.hydrateSession({ sessionId, origin: "local", status: "completed", provider: "fixture", model: "fixture", cwd: "/workspace", workspaceRoot: "/workspace", environmentId: "local", startedAt: "2026-10-31T00:00:00Z" }));
 		expect(current.status).toBe("running");
 		await act(async () => { expect(await current.sendPrompt("keep draft")).toBe(false); });
 		await act(async () => handlerFor("chat_session_status")({ sessionId, status: "idle" }));
