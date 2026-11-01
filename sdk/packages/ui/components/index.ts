@@ -138,3 +138,18 @@ export {
 	useUiLocale,
 	type UiTranslator,
 } from "./ui-locale.js";
+
+export {
+	AgentUxVerification,
+	type AgentUxVerificationProps,
+	type UxScreenshotRenderer,
+	type UxScreenshotPresentation,
+} from "./agent-ux-verification.js";
+export {
+	Carousel,
+	CarouselContent,
+	CarouselItem,
+	CarouselPrevious,
+	CarouselNext,
+	type CarouselApi,
+} from "./carousel.js";

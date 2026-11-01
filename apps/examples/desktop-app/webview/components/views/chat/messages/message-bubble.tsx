@@ -2,7 +2,6 @@
 import { readLanguage } from "@/lib/i18n";
 import { t, useTranslation } from "@/lib/i18n";
 
-import { GeneratedMediaContent } from "@cline/ui";
 import {
 	Message as AgentMessage,
 	type AgentMessageRole,
@@ -33,6 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 import { MemoizedMarkdown } from "../../../ui/markdown";
 import { formatChatMessageContent } from "../message-content";
+import { ArtifactImage } from "./artifact-image";
 import { isSystemSteeringMessage } from "./group-messages";
 import { MessageImageCarousel } from "./image-carousel";
 import { ReasoningBlock } from "./reasoning-block";
@@ -100,12 +100,19 @@ function UserMessageMarkdown({
 	return <MemoizedMarkdown chipTokens={chipTokens} content={content} />;
 }
 
-function MessageMedia({ media }: { media: ChatMessageMedia[] }) {
+function MessageMedia({
+	media,
+	sessionId,
+}: {
+	media: ChatMessageMedia[];
+	sessionId: string | null;
+}) {
 	const t = useTranslation();
 	return (
 		<div className="flex max-w-2xl flex-col gap-2">
 			{media.map((item) => (
-				<GeneratedMediaContent
+				<ArtifactImage
+					sessionId={sessionId}
 					classNames={{
 						image:
 							"max-h-96 max-w-full rounded-lg border border-border bg-muted object-contain",
@@ -292,7 +299,9 @@ export const MessageBubble = memo(function MessageBubble({
 					/>
 				) : null}
 
-				{message.media?.length ? <MessageMedia media={message.media} /> : null}
+				{message.media?.length ? (
+					<MessageMedia media={message.media} sessionId={message.sessionId} />
+				) : null}
 
 				{displayContent ? (
 					<div className="min-w-0 max-w-full wrap-break-word">
