@@ -178,7 +178,7 @@ function coerceFieldValue(
 	}
 	const trimmed = value.trim();
 	if (trimmed.length === 0) {
-		return field.path === "sampling.max_tokens" ? 0 : null;
+		return null;
 	}
 	if (field.type === "number") {
 		const parsed = Number(trimmed);

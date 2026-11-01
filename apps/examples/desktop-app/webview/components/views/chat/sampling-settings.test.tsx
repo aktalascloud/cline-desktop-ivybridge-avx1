@@ -40,7 +40,7 @@ describe("sampling controls", () => {
 				{ temperature: "0", seed: "0", top_p: "", top_k: "20" },
 				{ temperature: "1", top_p: "0.95", top_k: "20" },
 			),
-		).toEqual({ temperature: 0, seed: 0, top_p: null, max_tokens: 0 });
+		).toEqual({ temperature: 0, top_p: null });
 	});
 	it.each([
 		["temperature", "-1"],
@@ -49,11 +49,11 @@ describe("sampling controls", () => {
 		["top_k", "1.5"],
 		["top_k", "65"],
 		["min_p", "-0.1"],
-		["max_tokens", "-1"],
-		["seed", "NaN"],
-		["reasoning_budget_tokens", "-1"],
 	])("rejects invalid %s=%s", (key, value) => {
 		expect(() => samplingPatch({ [key]: value }, {})).toThrow();
+	});
+	it("ignores all removed fields in an old draft", () => {
+		expect(samplingPatch({ max_tokens: "1", presence_penalty: "1", repetition_penalty: "2", seed: "7", reasoning_budget_tokens: "16" }, {})).toEqual({});
 	});
 	it("loads only on open and saves a provider-local patch without credentials", async () => {
 		mocks.catalog.mockResolvedValue({
@@ -85,7 +85,7 @@ describe("sampling controls", () => {
 		await act(async () => button("Save").click());
 		expect(mocks.invoke).toHaveBeenCalledWith("save_provider_settings", {
 			provider: "local-test",
-			settings: { sampling: { temperature: 0.7, max_tokens: 0 } },
+			settings: { sampling: { temperature: 0.7 } },
 		});
 		expect(mocks.invalidate).toHaveBeenCalledOnce();
 	});
@@ -122,8 +122,5 @@ it("sampling controls do not persist a hidden author mode", async () => {
 		document.querySelector('select[aria-label="Author reasoning mode"]'),
 	).toBeNull();
 	await act(async () => button("Save").click());
-	expect(mocks.invoke).toHaveBeenCalledWith("save_provider_settings", {
-		provider: "local-test",
-		settings: { sampling: { max_tokens: 0 } },
-	});
+	expect(mocks.invoke).not.toHaveBeenCalled();
 });

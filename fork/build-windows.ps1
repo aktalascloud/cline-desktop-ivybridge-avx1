@@ -49,6 +49,8 @@ try {
     if($LASTEXITCODE){throw 'Generated runtime privacy check failed'}
     bun test fork/logging-bundle.test.ts
     if($LASTEXITCODE){throw 'Relocatable logger worker tests failed'}
+    bun test fork/zod-bounds.test.ts
+    if($LASTEXITCODE){throw 'Schema resource-bound checks failed'}
     & "$app\src-tauri\bin\cline-cli-x86_64-pc-windows-msvc.exe" --version
     if($LASTEXITCODE){throw 'Compiled CLI execution failed'}
     cargo fetch --locked --manifest-path "$app\src-tauri\Cargo.toml"

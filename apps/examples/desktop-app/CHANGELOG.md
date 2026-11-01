@@ -2,6 +2,11 @@
 
 ## 1.0.15
 
+- Removed client output/thinking caps, penalties and seed from OpenAI-compatible controls; the endpoint supplies these defaults, including for old sessions.
+- Максимум ответа/мышления, штрафы и seed задаются сервером; остальные sampling-настройки сохранены, старые переопределения не отправляются.
+- Updated compatible security dependencies and backported early collection bounds for legacy Zod; dependency warnings are reported by applicability, not hidden.
+- Обновлены совместимые зависимости безопасности и ранняя проверка ограничений коллекций Zod; предупреждения не скрываются.
+
 - Stop manual compaction without saving partial summaries; restore Stop after reattaching.
 - Компакт можно остановить без сохранения частичной сводки; остановка доступна после возврата в чат.
 - Explicit MCP OAuth checks saved authorization and keeps headers bound to their origin.

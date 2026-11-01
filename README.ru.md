@@ -9,6 +9,6 @@
 - `/compact` и автокомпакт уменьшают рабочий запрос, сохраняя полную историю. Компакт можно отменить. Субагенты наследуют модель родителя, approvals сохраняются. Поиск MCP работает без ключа.
 - Сборка не зависит от личной модели или пути установки; [одна пошаговая инструкция](fork/README.md), закреплённые зависимости и SHA. Без AVX2/FMA/PGO/pinning.
 
-[Патчи / PR](fork/review-ledger.json) · [Состав](fork/components.json) · [Проверки](fork/qualification.json) · [Замеры и ограничения](fork/performance.md). GUI и повторное скачивание EXE исключены пользователем. Новое ускорение LLM не заявляется. Bun/JSC, Python и WebView2 — готовые компоненты.
+[Безопасность](fork/security.md) · [Патчи / PR](fork/review-ledger.json) · [Состав](fork/components.json) · [Проверки](fork/qualification.json) · [Замеры и ограничения](fork/performance.md). GUI и повторное скачивание EXE исключены пользователем. Новое ускорение LLM не заявляется. Bun/JSC, Python и WebView2 — готовые компоненты.
 
 [Apache-2.0](LICENSE); upstream history, notices и имена тегов сохраняются по [правилам очистки истории](fork/history-policy.md). Личные настройки, ключи, история и веса моделей в пакет не входят.

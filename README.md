@@ -9,6 +9,6 @@ Unofficial [Cline](https://github.com/cline/cline) for Windows x64 / Ivy Bridge 
 - Manual/automatic compaction reduces working requests and retains complete history. Manual compaction is cancellable. Subagents inherit the parent model and preserve approvals. Key-free MCP web search included.
 - Relocatable sources with [one build guide](fork/README.md), pinned dependencies and SHA; no personal model/installation path. No AVX2/FMA, PGO or pinning.
 
-[PRs / patches](fork/review-ledger.json) · [Components](fork/components.json) · [Checks](fork/qualification.json) · [Measurements and limits](fork/performance.md). GUI and repeat EXE downloads waived by owner. No new LLM speedup claimed. Bun/JSC, Python and WebView2 are prebuilts.
+[Security](fork/security.md) · [PRs / patches](fork/review-ledger.json) · [Components](fork/components.json) · [Checks](fork/qualification.json) · [Measurements and limits](fork/performance.md). GUI and repeat EXE downloads waived by owner. No new LLM speedup claimed. Bun/JSC, Python and WebView2 are prebuilts.
 
 [Apache-2.0](LICENSE). Preserve upstream history, notices and tag names under the [history policy](fork/history-policy.md). Personal settings, keys, history and model weights are excluded.

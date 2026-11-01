@@ -1325,5 +1325,6 @@
 	"Previous screenshot": "Предыдущий снимок",
 	"Next screenshot": "Следующий снимок",
 	"Compaction cancelled.": "Сжатие отменено.",
-	"Compaction is in progress. Stop it before sending another message.": "Контекст сжимается. Остановите сжатие перед отправкой сообщения."
+	"Compaction is in progress. Stop it before sending another message.": "Контекст сжимается. Остановите сжатие перед отправкой сообщения.",
+	"Empty: inherit server settings. Applies to the next request.": "Пусто: как на сервере. Изменение действует со следующего запроса."
 }

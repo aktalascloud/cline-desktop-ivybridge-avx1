@@ -4,27 +4,8 @@ import {
 	withOpenAIChatSampling,
 } from "./openai-chat-sampling";
 describe("OpenAI Chat sampling defaults", () => {
-	it("unlimited mode replaces automatic client budgets with the local endpoint sentinel", () => {
-		expect(
-			withOpenAIChatSampling(
-				{ max_tokens: 23871, reasoning_effort: "xhigh", stream: true },
-				{ max_tokens: 0 },
-			),
-		).toEqual({ max_tokens: -1, reasoning_effort: "xhigh", stream: true });
-	});
-	it("caps automatic output budgets without exceeding tighter request limits", () => {
-		expect(
-			withOpenAIChatSampling({ max_tokens: 23871 }, { max_tokens: 2048 }),
-		).toEqual({ max_tokens: 2048 });
-		expect(
-			withOpenAIChatSampling({ max_tokens: 128 }, { max_tokens: 2048 }),
-		).toEqual({ max_tokens: 128 });
-		expect(
-			withOpenAIChatSampling(
-				{ max_completion_tokens: 4096 },
-				{ max_tokens: 2048 },
-			),
-		).toEqual({ max_completion_tokens: 2048 });
+	it.each([undefined, { max_tokens: "obsolete", seed: -1, presence_penalty: 1, repetition_penalty: 1.1, reasoning_budget_tokens: 512 }])("leaves output budgets, penalties and seed to the server even with stale settings", (defaults) => {
+		expect(withOpenAIChatSampling({ max_tokens: 128, max_completion_tokens: 256, presence_penalty: 2, frequency_penalty: 1, repetition_penalty: 1.2, seed: 42, reasoning_budget_tokens: 4096, reasoning_effort: "xhigh", stream: true }, defaults)).toEqual({ reasoning_effort: "xhigh", stream: true });
 	});
 	it("retains explicit request controls, tools, stream and reasoning", () => {
 		const body = {
@@ -45,12 +26,13 @@ describe("OpenAI Chat sampling defaults", () => {
 				reasoning_budget_tokens: 512,
 			}),
 		).toEqual({
-			...body,
+			temperature: 0,
+			reasoning_effort: "xhigh",
+			tools: body.tools,
+			stream: true,
 			top_p: 0.95,
 			top_k: 20,
 			min_p: 0.05,
-			seed: 0,
-			reasoning_budget_tokens: 512,
 		});
 	});
 	it("undefined SDK values do not erase defaults; an absent settings object leaves requests intact", () => {
@@ -58,7 +40,7 @@ describe("OpenAI Chat sampling defaults", () => {
 			withOpenAIChatSampling({ temperature: undefined }, { temperature: 0 }),
 		).toEqual({ temperature: 0 });
 		const body = { model: "local" };
-		expect(withOpenAIChatSampling(body, undefined)).toBe(body);
+		expect(withOpenAIChatSampling(body, undefined)).toEqual(body);
 	});
 	it.each([
 		{ temperature: NaN },

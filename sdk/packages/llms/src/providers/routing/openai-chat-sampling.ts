@@ -18,34 +18,25 @@ export const OpenAIChatSamplingSchema = z
 
 export type OpenAIChatSampling = z.infer<typeof OpenAIChatSamplingSchema>;
 
-/** Request controls win, except the provider output cap also bounds automatic budgets. */
+/** These controls belong to the endpoint; ignore stale saved/session values. */
+export const SERVER_MANAGED_SAMPLING_KEYS = [
+	"max_tokens", "max_completion_tokens", "max_output_tokens",
+	"presence_penalty", "frequency_penalty", "repetition_penalty",
+	"seed", "reasoning_budget_tokens",
+] as const;
+
 export function withOpenAIChatSampling(
 	body: Record<string, unknown>,
 	defaults: unknown,
 ): Record<string, unknown> {
-	if (defaults === undefined) return body;
-	const sampling = OpenAIChatSamplingSchema.parse(defaults);
+	const inherited = defaults && typeof defaults === "object" && !Array.isArray(defaults)
+		? Object.fromEntries(Object.entries(defaults).filter(([key]) => !SERVER_MANAGED_SAMPLING_KEYS.some((field) => field === key)))
+		: defaults;
+	const sampling = inherited === undefined ? {} : OpenAIChatSamplingSchema.parse(inherited);
 	const result: Record<string, unknown> = {
 		...sampling,
-		...Object.fromEntries(
-			Object.entries(body).filter(([, v]) => v !== undefined),
-		),
+		...Object.fromEntries(Object.entries(body).filter(([, value]) => value !== undefined)),
 	};
-	if (sampling.max_tokens === 0) {
-		// Strata/local compatible endpoints use -1 for the remaining context, without a client cap.
-		delete result.max_completion_tokens;
-		result.max_tokens = -1;
-	} else if (sampling.max_tokens !== undefined) {
-		const key =
-			typeof body.max_completion_tokens === "number"
-				? "max_completion_tokens"
-				: "max_tokens";
-		const requested = body[key];
-		result[key] =
-			typeof requested === "number"
-				? Math.min(requested, sampling.max_tokens)
-				: sampling.max_tokens;
-		if (key === "max_completion_tokens") delete result.max_tokens;
-	}
+	for (const key of SERVER_MANAGED_SAMPLING_KEYS) delete result[key];
 	return result;
 }
