@@ -760,8 +760,8 @@ function registerBundledProviders(userState: StoredModelsFile): void {
 	const managed = userState.providers.freellm;
 	const current = bundled.providers.freellm;
 	if (
-		managed?.provider.forkManagedCatalog === "freellm-v1" &&
-		current &&
+		managed?.provider?.forkManagedCatalog === "freellm-v1" &&
+		current?.provider &&
 		managed.provider.baseUrl === current.provider.baseUrl
 	) {
 		// Refresh only our managed catalog in memory; never rewrite personal settings.
