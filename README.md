@@ -2,6 +2,8 @@
 
 Unofficial [Cline](https://github.com/cline/cline) for Windows x64 / Ivy Bridge AVX1/F16C. Local and OpenAI-compatible LLMs, including Strata; RU/EN, MCP, tools, voice, subagents and configurable context compaction. Choose your own model, endpoint and context.
 
+Project goal: keep this fork aligned with compatible official Cline updates, improve AVX1 performance, extend model support, and selectively adapt useful features, security fixes and performance patches from active forks. Performance claims require matched measurements.
+
 [Installer](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest/download/Cline-Desktop-AVX1-RU-Setup.exe) · [Release / SHA256](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) · [Русский](README.ru.md)
 
 - One NSIS EXE: Desktop + CLI/Hub, UAC and data-preserving updates. Signed updater uses only this fork. Authenticode: NotSigned.

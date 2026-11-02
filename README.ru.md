@@ -2,6 +2,8 @@
 
 Неофициальный [Cline](https://github.com/cline/cline) для Windows x64 / Ivy Bridge AVX1/F16C. Локальные и OpenAI-совместимые LLM, включая Strata; RU/EN, MCP, инструменты, голос, субагенты и управляемый компакт. Модель, сервер и контекст задаются пользователем.
 
+Цель проекта: регулярно переносить совместимые обновления официального Cline, улучшать работу и производительность на AVX1, расширять поддержку моделей и выборочно адаптировать полезные функции, исправления безопасности и производительности из активных форков. Ускорение подтверждается сопоставимыми измерениями.
+
 [Установщик](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest/download/Cline-Desktop-AVX1-RU-Setup.exe) · [Релиз / SHA256](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) · [English](README.md)
 
 - Один NSIS EXE: Desktop + CLI/Hub, UAC, обновление с сохранением данных. Подписанный updater обращается только к этому форку. Authenticode: NotSigned.

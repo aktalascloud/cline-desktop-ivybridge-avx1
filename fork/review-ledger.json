@@ -144,5 +144,86 @@
     "purpose": "PR/issue screening",
     "status": "indexed-not-a-qualified-patch",
     "verification": "Apache-2.0; paginated 480 open PRs and 551 open issues plus recent-closed boundary pages; no recent activity matching this cycle window. Legacy extension architecture is not the Desktop SDK."
+  },
+  {
+    "url": "https://github.com/abeatrix/cline/pull/1",
+    "origin": "active-fork",
+    "purpose": "Avoid deprecated hyphenated AI SDK provider option buckets",
+    "status": "reviewed-already-covered",
+    "verification": "Read full production diff and discussion; current routing/utils.ts already implements toProviderOptionsBucket and matching regressions. No workflow deletion imported.",
+    "reviewed_date": "2026-11-02"
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15483",
+    "origin": "official-issue",
+    "purpose": "Rejected tool arguments and compaction exemplars",
+    "status": "scoped-reproduction-and-tracked",
+    "verification": "Read issue/comments. Pinned Zod 4.6.7 reports unrecognized arguments and missing commands in the synthetic strict-object probe. No silent argument coercion or deletion of failed canonical tool history. Retained-tail quality needs a separate representative regression before policy changes.",
+    "reviewed_date": "2026-11-02"
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14091",
+    "origin": "official-issue",
+    "purpose": "Streaming snapshot amplification and long-session memory",
+    "status": "reviewed-existing-mitigation-not-complete-fix",
+    "verification": "Fresh comments reviewed. Fork already drops per-chunk hook capability traffic and bounds replay SQLite to 64 MiB with burst pruning. These do not prove the reported long-session heap retention resolved.",
+    "reviewed_date": "2026-11-02"
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/14924",
+    "origin": "official-issue",
+    "purpose": "Dynamic MCP tool-list changes",
+    "status": "tracked-not-imported",
+    "verification": "Read issue and full paginated discussion, then the complete production diff/review of #14946. Candidate refresh removes by name, not tool ownership: extracted real method drops an unrelated extension tool when previous MCP descriptor has the same name (synthetic probe reproduced). Candidate also swaps descriptors silently and only refreshes lead agent. No partial import; preserve current approvals/tool ownership until a qualified adaptation.",
+    "reviewed_date": "2026-11-02"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15212",
+    "origin": "official-upstream",
+    "purpose": "DotHoosh provider",
+    "status": "reviewed-not-imported",
+    "verification": "Read mapper, protocol routing and discussion. Paid regional gateway needs an account/key and lacks live inference qualification from this environment; generic OpenAI-compatible setup remains available. No special provider added.",
+    "reviewed_date": "2026-11-02"
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15430",
+    "origin": "official-upstream",
+    "purpose": "Opt-in local artifact storage",
+    "status": "reviewed-not-imported",
+    "verification": "Read local adapter, shared fetch contract and discussion. Host-owned session retention/registration is required; exported adapter alone does not add a Desktop feature. No partial integration.",
+    "reviewed_date": "2026-11-02"
+  },
+  {
+    "url": "https://github.com/Ebony-Vinyl/dsh-our-free-model/pull/735",
+    "origin": "tracked-reference",
+    "purpose": "Undici TLS renegotiation security",
+    "status": "reviewed-already-covered",
+    "reviewed_date": "2026-11-02",
+    "verification": "Read advisory ranges and dependency update. Fork pins undici 7.30.1, the patched 7.x release for GHSA-qrxm-fqhp-jwvm; 8.12.2 belongs to DSH 8.x branch. No cross-major update needed."
+  },
+  {
+    "url": "https://github.com/DietrichGebert/ponytail/pull/1320",
+    "origin": "tracked-reference",
+    "purpose": "Hostile workspace paths in Cursor hook notice",
+    "status": "reviewed-not-applicable",
+    "reviewed_date": "2026-11-02",
+    "verification": "Read full fix/test and discussion. Bundled Cline rule is Markdown; the Cursor runtime hooks touched by this patch are not distributed by this fork."
+  },
+  {
+    "url": "https://github.com/nejib1/Free-LLM/pull/26",
+    "origin": "tracked-reference",
+    "purpose": "IteraCompute trial eligibility",
+    "status": "reviewed-excluded-from-anonymous-catalog",
+    "reviewed_date": "2026-11-02",
+    "verification": "Read full listing correction/discussion. Account requirement and expiring promotion exclude this candidate from the no-registration catalog. No provider credentials requested."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/14946",
+    "origin": "official-upstream",
+    "purpose": "MCP tools/list_changed refresh",
+    "sha": "467a67db16bba7c1939861144dafe9c220a12871",
+    "status": "reviewed-rejected-pending-safe-adaptation",
+    "reviewed_date": "2026-11-02",
+    "verification": "Full production diff and paginated discussion reviewed. Synthetic execution of the actual extracted refreshTools method demonstrates removal of an unrelated same-name extension tool. No production code changed. Future adaptation must preserve object ownership, maintain approvals and surface descriptor drift; existing spawned agents also need explicit semantics."
   }
 ]
