@@ -225,5 +225,13 @@
     "status": "reviewed-rejected-pending-safe-adaptation",
     "reviewed_date": "2026-11-02",
     "verification": "Full production diff and paginated discussion reviewed. Synthetic execution of the actual extracted refreshTools method demonstrates removal of an unrelated same-name extension tool. No production code changed. Future adaptation must preserve object ownership, maintain approvals and surface descriptor drift; existing spawned agents also need explicit semantics."
+  },
+  {
+    "url": "https://github.com/Kilo-Org/kilocode/pull/15374",
+    "origin": "major-derived-fork",
+    "purpose": "Windows ACP git stdin ownership",
+    "status": "reviewed-not-applicable",
+    "reviewed_date": "2026-11-02",
+    "verification": "Read full implementation and review discussion. Changes OpenCode-specific project-id.ts Bun shell lookup; this SDK does not contain that ACP project-id path. No engine migration or speculative git-spawn rewrite."
   }
 ]
