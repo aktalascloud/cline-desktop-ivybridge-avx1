@@ -268,6 +268,7 @@ export function toProviderConfig(
 		sampling: settings.sampling,
 		// Legacy provider-wide author mode is intentionally not projected. Modes are session-owned.
 		maxInputTokens: settings.contextWindow,
+		contextWindow: settings.contextWindow,
 		thinking: settings.reasoning?.enabled,
 		reasoningEffort,
 		thinkingBudgetTokens: settings.reasoning?.budgetTokens,

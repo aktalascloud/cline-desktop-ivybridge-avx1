@@ -1,4 +1,4 @@
-param([ValidateSet('minimal','full')][string]$Mode='minimal',[string]$BaselineSha)
+param([ValidateSet('minimal','full')][string]$Mode='minimal',[string]$BaselineSha,[ValidateSet('CLI affected regressions','Core affected/security regressions','Provider/catalog compatibility')][string]$ResumeAfter,[string]$ReuseLog)
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
 $app=Join-Path $root 'apps/examples/desktop-app'
@@ -7,7 +7,11 @@ if($BaselineSha -notmatch '^[0-9a-f]{40}$'){throw 'A verified baseline SHA is re
 $changed=@(git -C $root diff --name-only $BaselineSha --)
 if($LASTEXITCODE){throw 'Cannot compare validation inputs'}
 $timings=[Collections.Generic.List[object]]::new()
+$script:resumeReached=-not $ResumeAfter
+$reusedChecks=[Collections.Generic.List[string]]::new()
+if($ResumeAfter -and -not (Test-Path -LiteralPath $ReuseLog -PathType Leaf)){throw 'A prior validation log is required for checkpoint continuation'}
 function Invoke-Check([string]$label,[string]$directory,[string[]]$commandArgs){
+ if(-not $script:resumeReached){$reusedChecks.Add($label);if($label -eq $ResumeAfter){$script:resumeReached=$true};return}
  $watch=[Diagnostics.Stopwatch]::StartNew()
  Push-Location $directory
  try{& bun @commandArgs;if($LASTEXITCODE){throw "$label failed"}}finally{Pop-Location;$watch.Stop()}
@@ -61,4 +65,5 @@ if($Mode -eq 'full'){
  Invoke-Check 'Desktop affected regressions' $app (@('x','vitest','run','--maxWorkers=2','--config','vitest.config.ts')+$desktopTests)
 }
 $output=Join-Path $root 'dist/avx1';New-Item -ItemType Directory -Path $output -Force|Out-Null
-[ordered]@{mode=$Mode;baseline_sha=$BaselineSha;changed_files=$changed.Count;desktop_test_files=$desktopTests;checks=$timings}|ConvertTo-Json -Depth 8|Set-Content "$output/validation.json" -Encoding utf8
+if(-not $script:resumeReached){throw 'Validation continuation checkpoint not reached'}
+[ordered]@{resumed_after=$ResumeAfter;reused_checks=$reusedChecks;reuse_log_sha256=$(if($ResumeAfter){(Get-FileHash -LiteralPath $ReuseLog -Algorithm SHA256).Hash.ToLowerInvariant()}else{$null});mode=$Mode;baseline_sha=$BaselineSha;changed_files=$changed.Count;desktop_test_files=$desktopTests;checks=$timings}|ConvertTo-Json -Depth 8|Set-Content "$output/validation.json" -Encoding utf8

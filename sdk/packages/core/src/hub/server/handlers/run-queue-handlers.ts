@@ -36,6 +36,10 @@ const DRAIN_REFUSED_COMMANDS = new Set<string>([
 	"run.enqueue",
 	"plugins.commands.run",
 	"plugins.commands.list",
+	"providers.models.list",
+	"providers.settings.save",
+	"providers.add",
+	"providers.models.update",
 ]);
 
 export function isDrainRefusedCommand(command: string): boolean {

@@ -233,5 +233,179 @@
     "status": "reviewed-not-applicable",
     "reviewed_date": "2026-11-02",
     "verification": "Read full implementation and review discussion. Changes OpenCode-specific project-id.ts Bun shell lookup; this SDK does not contain that ACP project-id path. No engine migration or speculative git-spawn rewrite."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15310",
+    "sha": "25655277ed76c971bfdc2c65822f0c72c4598667",
+    "origin": "official-upstream",
+    "purpose": "refactor(desktop): move provider and model management to hub (#15310)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15489",
+    "sha": "59cce11bc2fe2aaf250f8b97ccdf75af195c09c2",
+    "origin": "official-upstream",
+    "purpose": "fix(llms): snap the portable reasoning level for the native OpenAI adapter (#15489)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15462",
+    "sha": "7c8ed827fe68fde5e600a15d996914ca7b053e25",
+    "origin": "official-upstream",
+    "purpose": "fix(core): use filenames as default artifact IDs (#15462)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15459",
+    "sha": "d19f176b6e4eab8f8f44f5f4649b085479b47b94",
+    "origin": "official-upstream",
+    "purpose": "chore(llms): remove provider request capture (#15459)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15466",
+    "sha": "5b454165353ac1edc9a7db0ff416739044985908",
+    "origin": "official-upstream",
+    "purpose": "feat(core): add structured visual verification reports (#15466)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15460",
+    "sha": "f2a74fc093bd1f9c5c5350a7cbe99e84fba94fe3",
+    "origin": "official-upstream",
+    "purpose": "fix(desktop): keep published images visible in a carousel (#15460)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15509",
+    "sha": "fda76e0af8810deb8da057b3f342fc2cd9599c4c",
+    "origin": "official-upstream",
+    "purpose": "fix(core): retain Hub session handlers when deletion fails (#15509)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15456",
+    "sha": "a542151bb737e25eb332d34c647ab4b9d99dd98b",
+    "origin": "official-upstream",
+    "purpose": "refactor(core): share confirmed cloud handoff publication (#15456)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15524",
+    "sha": "97a5caa856011f1429efdb8d2282989402cd503b",
+    "origin": "official-upstream",
+    "purpose": "fix: centralize hardcoded default model ids on CLINE_DEFAULT_MODEL_ID (#15524)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15529",
+    "sha": "1f168342dd3c8c2d00033023e2489fd31e2fde9b",
+    "origin": "official-upstream",
+    "purpose": "fix(deps): temporarily pin @pierre/diffs to 1.6.2 (#15529)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15530",
+    "sha": "e68a6ddc2c7a7b4ced07a3ec5947cdb4af3af6e8",
+    "origin": "official-upstream",
+    "purpose": "fix(llms): send reasoning placeholder for models that need interleaved reasoning (#15530)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15254",
+    "sha": "7a7878cb52fc33967d8b464b3e3d899beac42d4d",
+    "origin": "official-upstream",
+    "purpose": "fix(core): stop re-cutting read_files results to the 8k tool-result cap (#15254)",
+    "status": "integrated-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed complete production diff and paginated PR/review discussion; targeted source/wire checks cover affected surfaces. Imported only through anchored sanitized history."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15515",
+    "sha": "5f5bb6c6da83678b820355e9b1dc02a166dc399b",
+    "origin": "official-upstream-open-pr",
+    "purpose": "Startup/inactivity deadlines for local inference, heartbeats and cancellation",
+    "status": "adapted-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed full implementation and regression diffs. Adapted against fork sampling/server-owned controls and live context metadata, preserving explicit settings; targeted regressions run locally."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15494",
+    "sha": "f6cf96d4e3b1461ca5ee047a4adab6e5e06222f3",
+    "origin": "official-upstream-open-pr",
+    "purpose": "Explicit context-window overrides reach compaction and custom model catalogs",
+    "status": "adapted-awaiting-package-qualification",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed full implementation and regression diffs. Adapted against fork sampling/server-owned controls and live context metadata, preserving explicit settings; targeted regressions run locally."
+  },
+  {
+    "url": "https://github.com/Kilo-Org/kilocode/pull/15736",
+    "origin": "major-derived-fork",
+    "purpose": "Explicit OAuth for anonymously discoverable MCP servers",
+    "status": "reviewed-already-covered",
+    "reviewed_date": "2026-11-04",
+    "verification": "Read advertised-oauth helper, transport integration and review discussion. Fork already awaits explicit OAuth via adapted Cline #15117 with accepted-owned-token probes, issuer/client binding and origin-bound headers; no OpenCode engine imported."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15500",
+    "origin": "official-upstream-report",
+    "purpose": "Fork already exposes Max while preserving ordinary reasoning modes and restricting Ultra/Adaptive.",
+    "status": "screened-tracked-not-imported",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed the relevant fresh report/PR metadata; not claimed as a qualified fix in this package."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15498",
+    "origin": "official-upstream-report",
+    "purpose": "Broad MCP ownership migration remains open; provider migration from main is separately qualified.",
+    "status": "screened-tracked-not-imported",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed the relevant fresh report/PR metadata; not claimed as a qualified fix in this package."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15501",
+    "origin": "official-upstream-report",
+    "purpose": "Open MCP OAuth ownership refactor is not needed to retain the qualified issuer/header boundary.",
+    "status": "screened-tracked-not-imported",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed the relevant fresh report/PR metadata; not claimed as a qualified fix in this package."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15541",
+    "origin": "official-upstream-report",
+    "purpose": "New Anthropic signature-loss report tracked separately; no speculative conversion of signatures.",
+    "status": "screened-tracked-not-imported",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed the relevant fresh report/PR metadata; not claimed as a qualified fix in this package."
+  },
+  {
+    "url": "https://github.com/cline/cline/issues/15540",
+    "origin": "official-upstream-report",
+    "purpose": "New basic-compaction tool-summary completeness report tracked; canonical history remains authoritative.",
+    "status": "screened-tracked-not-imported",
+    "reviewed_date": "2026-11-04",
+    "verification": "Reviewed the relevant fresh report/PR metadata; not claimed as a qualified fix in this package."
   }
 ]

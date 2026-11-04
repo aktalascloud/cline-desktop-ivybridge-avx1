@@ -1,8 +1,8 @@
 import {
 	ensureCustomProvidersLoaded,
 	refreshProviderModelsFromSource,
-	type ProviderSettingsManager,
-} from "@cline/core";
+} from "./local-provider-service";
+import type { ProviderSettingsManager } from "../storage/provider-settings-manager";
 const pending = new Map<string, { at: number; task: Promise<unknown> }>();
 /** Local engines can change their allocated window without changing a model id. */
 export async function refreshLocalModelMetadata(

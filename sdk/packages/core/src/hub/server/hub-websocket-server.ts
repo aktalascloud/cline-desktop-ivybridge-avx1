@@ -717,7 +717,7 @@ export async function startHubWebSocketServer(
 						});
 					});
 					const detach = adapter.attach(wrapWsSocket(websocket), {
-						allowRegisteredWorkspace: isTokenAuthorized,
+						tokenAuthenticated: isTokenAuthorized,
 					});
 					cleanup.add(detach);
 					websocket.once("close", () => {

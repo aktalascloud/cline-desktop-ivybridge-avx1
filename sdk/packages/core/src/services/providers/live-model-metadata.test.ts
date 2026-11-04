@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({
 	ensure: vi.fn(async () => {}),
 	refresh: vi.fn(async () => ({ refreshed: true })),
 }));
-vi.mock("@cline/core", () => ({
+vi.mock("./local-provider-service", () => ({
 	ensureCustomProvidersLoaded: mocks.ensure,
 	refreshProviderModelsFromSource: mocks.refresh,
 }));

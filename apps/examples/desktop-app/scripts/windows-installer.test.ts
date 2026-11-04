@@ -106,7 +106,10 @@ async function start(dir: string, name: string): Promise<ChildProcess> {
 		stdio: "ignore",
 	});
 	children.push(child);
-	await waitFor(() => existsSync(ready));
+	await waitFor(() => {
+		if (child.exitCode !== null || child.signalCode !== null) throw new Error(`Fixture exited before readiness: code=${child.exitCode}, signal=${child.signalCode}`);
+		return existsSync(ready);
+	});
 	return child;
 }
 
@@ -276,7 +279,7 @@ describe.skipIf(!windows)("Windows installer process cleanup", () => {
 			await run(process.execPath, [
 				"build",
 				"--compile",
-				"--target=bun-windows-x64",
+				"--target=bun-windows-x64-baseline",
 				source,
 				"--outfile",
 				fixture,

@@ -836,7 +836,10 @@ describe("HubRuntimeHost", () => {
 		expect(eventOrder).toEqual(["tool-started", "approval-requested"]);
 	});
 
-	it("uses one app runtime capability object for hub tool executors and approvals", async () => {
+	it.each([
+		true,
+		false,
+	])("retains app capabilities after failed deletion and cleans up on retry (deleted=%s)", async (deleted) => {
 		let onEvent: ((event: HubEventEnvelope) => void) | undefined;
 		subscribeMock.mockImplementation((listener) => {
 			onEvent = listener;
@@ -855,8 +858,7 @@ describe("HubRuntimeHost", () => {
 					},
 				},
 			})
-			.mockResolvedValueOnce({ ok: true, payload: {} })
-			.mockResolvedValueOnce({ ok: true, payload: {} });
+			.mockResolvedValue({ ok: true, payload: {} });
 		const askQuestion = vi.fn(
 			async (
 				_question: string,
@@ -909,6 +911,10 @@ describe("HubRuntimeHost", () => {
 				],
 			},
 		});
+
+		commandMock.mockRejectedValueOnce(new Error("delete failed"));
+		await expect(host.deleteSession("sess-1")).rejects.toThrow("delete failed");
+		expect(host.hasSessionSubscription("sess-1")).toBe(true);
 
 		onEvent?.({
 			version: "v1",
@@ -993,6 +999,13 @@ describe("HubRuntimeHost", () => {
 			},
 			"sess-1",
 		);
+		commandMock.mockResolvedValueOnce({ ok: true, payload: { deleted } });
+		await expect(host.deleteSession("sess-1")).resolves.toBe(deleted);
+		expect(commandMock).toHaveBeenLastCalledWith("session.delete", {
+			sessionId: "sess-1",
+		});
+		expect(host.hasSessionSubscription("sess-1")).toBe(false);
+		await host.dispose();
 	});
 
 	it("passes cancellation into long-running hub capability handlers", async () => {

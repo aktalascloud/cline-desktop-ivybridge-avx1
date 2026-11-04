@@ -324,19 +324,24 @@ export interface GetProviderModelsActionRequest {
 	providerId: string;
 }
 
+/** Nested settings are merged; null and empty strings remove a field. */
+export type ProviderSettingsObjectPatch<T> = {
+	[K in keyof T]?: T[K] | null | "";
+};
+
 export interface SaveProviderSettingsActionRequest {
 	action: "saveProviderSettings";
 	providerId: string;
 	enabled?: boolean;
 	// Authentication
 	apiKey?: string;
-	auth?: {
+	auth?: ProviderSettingsObjectPatch<{
 		apiKey?: string;
 		accessToken?: string;
 		refreshToken?: string;
 		expiresAt?: number;
 		accountId?: string;
-	};
+	}>;
 	// Model configuration
 	model?: string;
 	protocol?: ProviderProtocol;
@@ -346,7 +351,7 @@ export interface SaveProviderSettingsActionRequest {
 	contextWindow?: number;
 	// Endpoint configuration
 	baseUrl?: string;
-	headers?: Record<string, string>;
+	headers?: Record<string, string | null>;
 	timeout?: number;
 	/** Opt-in author template mode; null clears the default. */
 	authorReasoningMode?: "ultra" | null;
@@ -363,13 +368,13 @@ export interface SaveProviderSettingsActionRequest {
 		reasoning_budget_tokens?: number | null;
 	};
 	// Reasoning/thinking configuration
-	reasoning?: {
+	reasoning?: ProviderSettingsObjectPatch<{
 		enabled?: boolean;
 		effort?: ReasoningLevel;
 		budgetTokens?: number;
-	};
+	}>;
 	// AWS/Bedrock configuration
-	aws?: {
+	aws?: ProviderSettingsObjectPatch<{
 		accessKey?: string;
 		secretKey?: string;
 		sessionToken?: string;
@@ -381,19 +386,19 @@ export interface SaveProviderSettingsActionRequest {
 		useGlobalInference?: boolean;
 		endpoint?: string;
 		customModelBaseId?: string;
-	};
+	}>;
 	// GCP/Vertex configuration
-	gcp?: {
+	gcp?: ProviderSettingsObjectPatch<{
 		projectId?: string;
 		region?: string;
-	};
+	}>;
 	// Azure configuration
-	azure?: {
+	azure?: ProviderSettingsObjectPatch<{
 		apiVersion?: string;
 		useIdentity?: boolean;
-	};
+	}>;
 	// SAP AI Core configuration
-	sap?: {
+	sap?: ProviderSettingsObjectPatch<{
 		clientId?: string;
 		clientSecret?: string;
 		tokenUrl?: string;
@@ -402,12 +407,12 @@ export interface SaveProviderSettingsActionRequest {
 		useOrchestrationMode?: boolean;
 		api?: "orchestration" | "foundation-models";
 		defaultSettings?: Record<string, unknown>;
-	};
+	}>;
 	// OCA configuration
-	oca?: {
+	oca?: ProviderSettingsObjectPatch<{
 		mode?: "internal" | "external";
 		usePromptCache?: boolean;
-	};
+	}>;
 	// Region configuration
 	region?: string;
 	apiLine?: "china" | "international";

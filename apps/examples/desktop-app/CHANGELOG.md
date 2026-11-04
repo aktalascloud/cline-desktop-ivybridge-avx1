@@ -1,5 +1,14 @@
 # Cline Desktop Changelog
 
+## 1.0.16
+
+- Updated to reviewed official Cline main; file reads retain their bounded content, failed session deletion keeps approval handlers, provider management uses the authenticated Hub, and published images remain visible.
+- Обновлён официальный Cline: чтение файлов больше не обрезается повторно до 8k, ошибки удаления сессии сохраняют approvals, настройки провайдеров обслуживает защищённый Hub, опубликованные изображения остаются видимыми.
+- Local inference has startup and inactivity deadlines with live cancellation; active heartbeat streams may continue beyond the startup budget. Explicit user timeouts remain authoritative.
+- Для локального вывода разделены ожидание начала и простой потока; heartbeat поддерживает долгую генерацию, отмена и пользовательский timeout сохраняются.
+- Context-window overrides and live local metadata survive the provider migration. Beam supports assistant history after compaction without inventing prior reasoning.
+- Сохранены пользовательские размеры контекста и актуальные метаданные локального движка. Beam получает совместимую историю после компакта без выдумывания прежних размышлений.
+
 ## 1.0.15
 
 - Distinct overflows after completed tool steps can recover again; a failed compacted retry still stops.

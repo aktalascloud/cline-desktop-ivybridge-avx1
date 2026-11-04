@@ -8,6 +8,7 @@ const { manager } = vi.hoisted(() => ({
 	},
 }));
 vi.mock("@cline/core", () => ({
+	Llms: { CLINE_DEFAULT_MODEL_ID: "anthropic/claude-sonnet-5.5" },
 	ClineCore: { create: async () => manager },
 	createTool: (tool: unknown) => tool,
 	stripUtf8Bom: (s: string) => s,
