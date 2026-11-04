@@ -1,14 +1,14 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.15",
-  "upstream_sha": "a6507a62a147db4a35e27f4294589742ccac5060",
-  "build_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
-  "compiled_component_source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
+  "version": "1.0.16",
+  "upstream_sha": "7a7878cb52fc33967d8b464b3e3d899beac42d4d",
+  "build_source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
+  "compiled_component_source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
   "release_approved": true,
   "native": {
     "kind": "source-built",
-    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
+    "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
     "rust": "1.97.0",
     "msvc": "14.44.35207",
     "windows_sdk": "10.0.26100.0",
@@ -25,12 +25,12 @@
     "c_flags": "Dependency defaults; no global CFLAGS override",
     "pgo": false,
     "affinity_or_numa_pinning": false,
-    "sha256": "d6e74c4ffe55160ca5fb23e3bb82fbeeaf95671dd163259ea56f10cffa995264"
+    "sha256": "3eb0068688f974c564530c8450d1f4a0f5e7a24639332652df2bfed1527bd2d9"
   },
   "cli_and_hub": {
     "version": "3.0.74",
     "kind": "source-built JavaScript with embedded prebuilt Bun",
-    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
+    "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
     "target": "bun-windows-x64-baseline",
     "build_flags": [
       "compile",
@@ -42,23 +42,23 @@
       "fork storage bootstrap",
       "official updater disabled"
     ],
-    "sha256": "d090a14cd97e355e6d5c3fa7dd080720de14e302f0f0f1f12a7efddd5e5e3b19"
+    "sha256": "749f6b4f39862b6b4683c237bf899dc41064c51368eda114597d11b3d2c16724"
   },
   "sdk": {
     "version": "0.2.0",
     "kind": "source-built production JavaScript",
-    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
-    "sha256": "b6de40f8f6aebe2dec0975c3b291b66194c7d6a871f9c4853ada9cee7ea3f0d4"
+    "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
+    "sha256": "994663522b773fb9a9eb0f519d39b9e157da9085f8e98c79185a7cf9954f83c9"
   },
   "backend": {
     "kind": "source-built JavaScript",
-    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
+    "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
     "flags": [
       "target=bun",
       "minify",
       "no telemetry credentials inlined"
     ],
-    "sha256": "ad6568a4555d12a30a2e190f9c3490411831a2aefdccadc06040d33cc3b7f329"
+    "sha256": "ebe02f2e3ac28bcfd6387cb6dd483a977f0a4b7a6ae6e0f3385704e653e915ae"
   },
   "frontend": {
     "kind": "source-built static export",
@@ -123,7 +123,7 @@
     }
   },
   "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "e904accaea39eb21b1c87b7899eeb71102d8bb1402f6659c4f1073493ff008cf",
+  "bun_lock_sha256": "d9bb8240fe68fa01406fb6d14e659a72da89682e2d2d530d69018e18fbe5a611",
   "cuda_used": false,
   "llm_models_included": false,
   "authenticode": "NotSigned",
@@ -133,7 +133,7 @@
     "kind": "NSIS Windows x64",
     "uac": "requireAdministrator",
     "compression": "lzma",
-    "sha256": "5e45554cd5fd1eb48f9b248c6d89c8ba3ab6e6fccad698949c48a292d9ec7515",
-    "size": 144383416
+    "sha256": "c025424be1fdbe2ecaa27048045d51d746d8cab9335895a11d0b932592530134",
+    "size": 145490922
   }
 }

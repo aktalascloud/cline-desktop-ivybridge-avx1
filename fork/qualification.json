@@ -1,11 +1,11 @@
 {
   "status": "qualified-installed",
   "release_approved": true,
-  "version": "1.0.15",
-  "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
+  "version": "1.0.16",
+  "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
   "ci": {
-    "run": 41291591830,
-    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
+    "run": 41810554978,
+    "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
     "conclusion": "success"
   },
   "validation": {
@@ -22,16 +22,14 @@
     "new_performance_claims": false
   },
   "publication": {
-    "version": "1.0.15",
-    "tag": "avx1-v1.0.15",
-    "source_sha": "887511a556fb97f66d61a4ef93f1a303766c0538",
-    "asset_sha256": "5e45554cd5fd1eb48f9b248c6d89c8ba3ab6e6fccad698949c48a292d9ec7515",
-    "size": 144383416,
-    "published": true,
+    "version": "1.0.16",
+    "tag": "avx1-v1.0.16",
+    "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
+    "asset_sha256": "c025424be1fdbe2ecaa27048045d51d746d8cab9335895a11d0b932592530134",
+    "size": 145490922,
+    "published": false,
     "download_skipped_by_user": true,
-    "anonymous_download_verified": false,
-    "release_id": 430442234,
-    "asset_id": 697926271
+    "anonymous_download_verified": false
   },
-  "verified_utc": "2026-11-01T09:51:17.577016+00:00"
+  "verified_utc": "2026-11-04T10:45:08.211501+00:00"
 }
