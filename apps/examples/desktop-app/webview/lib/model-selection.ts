@@ -124,6 +124,7 @@ export const REASONING_SELECTION_VALUES = [
 	"medium",
 	"high",
 	"xhigh",
+	"max",
 	"ultra",
 	"adaptive",
 ] as const;

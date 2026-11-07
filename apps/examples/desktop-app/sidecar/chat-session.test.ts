@@ -358,6 +358,16 @@ describe("buildSessionConnectionUpdate", () => {
 		});
 		expect(Object.hasOwn(update, "thinkingBudgetTokens")).toBe(false);
 	});
+
+	it("passes the max level through to the session", () => {
+		expect(
+			buildSessionConnectionUpdate({
+				provider: "nvidia",
+				model: "moonshotai/kimi-k3",
+				reasoningEffort: "max",
+			}),
+		).toMatchObject({ thinking: true, reasoningEffort: "max" });
+	});
 });
 
 describe("shouldUpdateSessionConnection", () => {
@@ -2974,7 +2984,9 @@ describe("/compact", () => {
 			prompt: "/compact",
 		});
 		await vi.waitFor(() => expect(compact).toHaveBeenCalledOnce());
-		await expect(handleChatSessionCommand(ctx, { action: "attach", sessionId })).resolves.toMatchObject({ status: "running", compacting: true });
+		await expect(
+			handleChatSessionCommand(ctx, { action: "attach", sessionId }),
+		).resolves.toMatchObject({ status: "running", compacting: true });
 		await expect(
 			handleChatSessionCommand(ctx, {
 				action: "send",

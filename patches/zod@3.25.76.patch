@@ -1,6 +1,3 @@
-diff --git a/node_modules/@cline/code/node_modules/zod/.bun-tag-9ddff9ee6859388f b/.bun-tag-9ddff9ee6859388f
-new file mode 100644
-index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/src/v3/types.ts b/src/v3/types.ts
 index b10e84f1beb1dacdae5e01c42a223974b9e20b73..bb44cb120a2050152e9e1f0e2e6a374cc39ca9dc 100644
 --- a/src/v3/types.ts

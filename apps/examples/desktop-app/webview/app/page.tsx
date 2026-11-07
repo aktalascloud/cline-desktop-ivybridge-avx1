@@ -1579,9 +1579,11 @@ function ChatThreadPane({
 		chatTransportState,
 		chatTransportError,
 		isHydratingSession,
+		historyPreview,
 		isCloudSessionExpired,
 		activeAssistantMessageId,
 		activityLabel,
+		isCompacting,
 		config,
 		messages,
 		error,
@@ -3097,7 +3099,16 @@ function ChatThreadPane({
 	const activeSessionForTitle = hideDeletedSessionUi
 		? null
 		: (sessionId ?? visibleHistorySession?.sessionId ?? null);
-	const displayedMessages = hideDeletedSessionUi ? [] : messages;
+	const showingHistoryPreview =
+		isCloudSession &&
+		isHydratingSession &&
+		messages.length === 0 &&
+		historyPreview.length > 0;
+	const displayedMessages = hideDeletedSessionUi
+		? []
+		: showingHistoryPreview
+			? historyPreview
+			: messages;
 	const displayedError = hideDeletedSessionUi ? null : error;
 	const cloudSessionError = isCloudSession
 		? parseCloudSessionError(displayedError)
@@ -3123,10 +3134,13 @@ function ChatThreadPane({
 		displayedStatus === "stopping";
 	const derivedAgentActivity = useMemo(
 		() =>
-			buildSessionAgentActivity(displayedMessages, {
-				sessionActive: isSessionActive,
-			}),
-		[displayedMessages, isSessionActive],
+			buildSessionAgentActivity(
+				showingHistoryPreview ? [] : displayedMessages,
+				{
+					sessionActive: isSessionActive,
+				},
+			),
+		[displayedMessages, isSessionActive, showingHistoryPreview],
 	);
 	// The roster is read for every displayed session, not gated on the tally
 	// above: that tally only sees the newest messages, so gating on it would hide
@@ -3302,7 +3316,7 @@ function ChatThreadPane({
 	const chatComposer = (
 		<ChatInputBar
 			sessionId={sessionId}
-			readOnly={isCloudSessionExpired}
+			readOnly={isCloudSessionExpired || showingHistoryPreview}
 			attachments={attachmentList}
 			cloudHandoffAvailable={cloudAgentsEnabled}
 			environmentId={environmentId}
@@ -3336,6 +3350,8 @@ function ChatThreadPane({
 			provider={config.provider}
 			reasoningEffort={config.reasoningEffort}
 			status={status}
+			placeholder={showingHistoryPreview ? "Getting session ready…" : undefined}
+			isCompacting={isCompacting}
 			summary={summary}
 			thinking={config.thinking}
 			variant={isWelcomeState ? "welcome" : "conversation"}
@@ -3381,7 +3397,7 @@ function ChatThreadPane({
 								"grid h-full min-h-0 flex-1 grid-cols-[minmax(0,1fr)_auto] grid-rows-[minmax(0,1fr)_auto] overflow-hidden"
 							: "grid h-full min-h-0 flex-1 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)_auto] overflow-hidden"
 				}
-				disabled={isCloudSessionExpired}
+				disabled={isCloudSessionExpired || showingHistoryPreview}
 				description={
 					isCloudSession
 						? t("Images will be added to your next message")
@@ -3481,7 +3497,10 @@ function ChatThreadPane({
 								pendingAskQuestions={pendingAskQuestions}
 								sessionId={displayedSessionId}
 								streamingMessageId={activeAssistantMessageId}
-								isSessionSwitching={displayedIsSwitching}
+								isHistoryPreview={showingHistoryPreview}
+								isSessionSwitching={
+									displayedIsSwitching && !showingHistoryPreview
+								}
 								status={
 									isProvisioningCloudSession ? "starting" : displayedStatus
 								}

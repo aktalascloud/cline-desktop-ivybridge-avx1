@@ -221,6 +221,7 @@ const EFFORT_LEVELS: ReasoningEffortOption[] = [
 	{ label: "Medium", value: "medium" },
 	{ label: "High", value: "high" },
 	{ label: "XHigh", value: "xhigh" },
+	{ label: "Max", value: "max" },
 	{ label: "Ultra · DavidAU", value: "ultra" },
 	{ label: "Adaptive", value: "adaptive" },
 ];
@@ -335,6 +336,8 @@ type ChatInputBarProps = {
 	readOnly?: boolean;
 	cloudHandoffAvailable?: boolean;
 	status: ChatSessionStatus;
+	placeholder?: string;
+	isCompacting?: boolean;
 	hasRunningAgents?: boolean;
 	provider: string;
 	model: string;
@@ -394,6 +397,8 @@ function ChatInputBarImpl({
 	readOnly = false,
 	cloudHandoffAvailable = false,
 	status,
+	placeholder,
+	isCompacting = false,
 	hasRunningAgents = false,
 	provider,
 	model,
@@ -1634,23 +1639,28 @@ function ChatInputBarImpl({
 									? t("Transcribing voice inputвЂ¦")
 									: needsCloudRepository
 										? t("Choose a repository")
-										: isBusy && variant !== "welcome"
-											? promptsInQueue.length > 0
-												? t(
-														"Agent is working... submit to queue another message, or Enter to send the first message from the queue",
-													)
-												: t(
-														"Agent is working... submit to queue another message",
-													)
-											: executionTarget === "cloud"
-												? t("Describe what Cline should do in this repository.")
-												: variant === "welcome"
+										: (placeholder ??
+											(isBusy && variant !== "welcome"
+												? isCompacting
+													? t("Compacting... click Stop to cancel")
+													: promptsInQueue.length > 0
+														? t(
+																"Agent is working... submit to queue another message, or Enter to send the first message from the queue",
+															)
+														: t(
+																"Agent is working... submit to queue another message",
+															)
+												: executionTarget === "cloud"
 													? t(
-															"Ask to make changes, @mention files, reference #PRs, or run /commands.",
+															"Describe what Cline should do in this repository.",
 														)
-													: t(
-															"Enter your question or type / for commands or @ for context",
-														)
+													: variant === "welcome"
+														? t(
+																"Ask to make changes, @mention files, reference #PRs, or run /commands.",
+															)
+														: t(
+																"Enter your question or type / for commands or @ for context",
+															)))
 							}
 							readOnly={speechInputActive || readOnly}
 							ref={promptInputRef}

@@ -13,6 +13,8 @@ $env:PATH="$env:VCToolsInstallDir\bin\Hostx64\x64;${env:ProgramFiles}\Git\usr\bi
 Push-Location $root
 try {
   if((git rev-parse HEAD).Trim() -ne $SourceSha){throw 'Checkout does not match the pinned source SHA'}
+  python (Join-Path $PSScriptRoot 'local-patches.py') --check
+  if($LASTEXITCODE){throw 'Active local patch inventory verification failed'}
   $configuration=Get-Content "$app/src-tauri/tauri.conf.json" -Raw|ConvertFrom-Json
   $package=Get-Content "$app/package.json" -Raw|ConvertFrom-Json
   $changelogVersion=[regex]::Match((Get-Content "$app/CHANGELOG.md" -Raw),'(?m)^## ([^\r\n ]+)').Groups[1].Value

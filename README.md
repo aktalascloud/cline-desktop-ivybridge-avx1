@@ -14,3 +14,5 @@ Project goal: keep this fork aligned with compatible official Cline updates, imp
 [Security](fork/security.md) · [PRs / patches](fork/review-ledger.json) · [Components](fork/components.json) · [Checks](fork/qualification.json) · [Measurements and limits](fork/performance.md). GUI and repeat EXE downloads waived by owner. No new LLM speedup claimed. Bun/JSC, Python and WebView2 are prebuilts.
 
 [Apache-2.0](LICENSE). Preserve upstream history, notices and tag names under the [history policy](fork/history-policy.md). Personal settings, keys, history and model weights are excluded.
+
+[Active applied patches](patches/README.md) — source overlays are replay-checked against the pinned sanitized upstream; no unused PR mirror.

@@ -14,3 +14,5 @@
 [Безопасность](fork/security.md) · [Патчи / PR](fork/review-ledger.json) · [Состав](fork/components.json) · [Проверки](fork/qualification.json) · [Замеры и ограничения](fork/performance.md). GUI и повторное скачивание EXE исключены пользователем. Новое ускорение LLM не заявляется. Bun/JSC, Python и WebView2 — готовые компоненты.
 
 [Apache-2.0](LICENSE); upstream history, notices и имена тегов сохраняются по [правилам очистки истории](fork/history-policy.md). Личные настройки, ключи, история и веса моделей в пакет не входят.
+
+[Действующие применяемые патчи](patches/README.md) — source overlays are replay-checked against the pinned sanitized upstream; no unused PR mirror.

@@ -1,5 +1,14 @@
 # Cline Desktop Changelog
 
+## 1.0.17
+
+- Updated to reviewed official Cline main: bounded browser-history transfers, compaction cancellation accounting, Max reasoning, archived-history opening, screenshot downloads and refreshed theme tokens.
+- Обновлён официальный Cline: ограниченные передачи истории, учёт отмены компакта, Max reasoning, открытие архивной истории, скачивание снимков и новая тема.
+- Kept saved model choices, including Cloud drafts inheriting a local choice, and retained RU/EN, server-owned generation controls and AVX1 packaging.
+- Сохранены личный выбор модели, включая наследуемый Cloud draft, RU/EN, серверные лимиты генерации и AVX1-сборка.
+- Active fork overlays and Bun dependency fixes now have a documented, replay-checked inventory in patches; upstream main history and rejected research candidates are not duplicated there.
+- Действующие патчи форка и зависимостей описаны в patches и проверяются воспроизведением; основной upstream и отклонённые кандидаты не дублируются.
+
 ## 1.0.16
 
 - Updated to reviewed official Cline main; file reads retain their bounded content, failed session deletion keeps approval handlers, provider management uses the authenticated Hub, and published images remain visible.

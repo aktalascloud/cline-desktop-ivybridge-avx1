@@ -21,3 +21,5 @@ Keep only current receipts and necessary tools. Preserve personal data, keys and
 Current decisions: `review-ledger.json`. Package: `components.json`, `qualification.json`. One daily Codex chat task at 08:00 Asia/Bishkek; no CI cron.
 
 [Current status, included fixes and remaining validation](STATUS.md). Documentation-only maintenance does not require a new installer.
+
+Applied fork changes are indexed in [patches](../patches/README.md). Their source overlays must replay exactly against the recorded sanitized base; builds run `python fork/local-patches.py --check`. A fork checkout already has these changes; do not apply them twice. The patch directory contains no unadopted research candidates.

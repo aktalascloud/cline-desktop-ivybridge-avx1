@@ -89,7 +89,7 @@ it("renders evidence and derived counts, with host-owned expansion", async () =>
 			/>,
 		),
 	);
-	expect(container.textContent).toContain("1/2 checks passed");
+	expect(container.textContent?.replace(/\s+/g, " ")).toContain("1/2 checks passed");
 	expect(container.querySelector("img")?.src).toBe("blob:ux-evidence");
 	await act(async () =>
 		(

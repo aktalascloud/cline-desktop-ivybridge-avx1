@@ -32,3 +32,7 @@ A Tauri v2 (Rust) shell + Next.js webview + a Bun "sidecar" backend. Rust and th
 - **Rust version caveat:** the crate graph needs Cargo's `edition2024` feature, so **Rust ≥1.85** is required (the VM's base 1.83 fails with "feature `edition2024` is required"). The toolchain here was updated via `rustup default stable` (currently 1.97). First `cargo` build downloads/compiles the full Tauri crate graph (a few minutes); subsequent builds are cached.
 - **System libs (already installed):** `libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, `libayatana-appindicator3-dev`, `librsvg2-dev`, `libxdo-dev`, `libssl-dev`, `build-essential`.
 - **Test/typecheck:** `bun run typecheck`, `bun run test:chat-ui` (Vitest). Both trigger `build:ui` first.
+
+## Active fork patches
+
+Maintain `patches/README.md` and `patches/manifest.json` for every locally applied source adaptation. Export only the effective delta against the recorded sanitized upstream; keep only dependency patches referenced by patchedDependencies. Never copy merely indexed/rejected PRs or duplicate merged mainstream commits there. Stage reviewed changes, run `python fork/local-patches.py` to regenerate, and `python fork/local-patches.py --check` before a build. Generated release receipts are excluded explicitly; private orchestration/user state never belongs in these patches.

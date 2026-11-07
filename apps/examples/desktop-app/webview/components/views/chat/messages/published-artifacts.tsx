@@ -10,9 +10,8 @@ import {
 	CarouselPrevious,
 } from "@cline/ui";
 import type { ReactNode } from "react";
-import { Button } from "@/components/ui/button";
-import { useArtifactResource } from "@/hooks/use-artifact-resource";
 import { imageAttachmentMediaType } from "@/lib/image-attachments";
+import { ArtifactDownload } from "./artifact-download";
 import { ArtifactImage } from "./artifact-image";
 import type { PublishedFile } from "./tool-summaries";
 
@@ -37,7 +36,7 @@ export function PublishedArtifacts({
 				{file.error ? (
 					<span className="text-destructive">{file.error.message}</span>
 				) : (
-					<DownloadArtifact
+					<ArtifactDownload
 						sessionId={sessionId}
 						artifactId={file.artifactId}
 					/>
@@ -82,47 +81,19 @@ export function PublishedArtifacts({
 							<span className="mr-auto text-muted-foreground">
 								{t("{count} images", { count: images.length })}
 							</span>
-							<CarouselPrevious aria-label={t("Previous screenshot")} className="rounded-md border border-border p-2 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring" />
-							<CarouselNext aria-label={t("Next screenshot")} className="rounded-md border border-border p-2 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring" />
+							<CarouselPrevious
+								aria-label={t("Previous screenshot")}
+								className="rounded-md border border-border p-2 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+							/>
+							<CarouselNext
+								aria-label={t("Next screenshot")}
+								className="rounded-md border border-border p-2 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+							/>
 						</div>
 					)}
 				</Carousel>
 			)}
 			{otherFiles.length > 0 && <ul className="space-y-2">{otherFiles}</ul>}
 		</div>
-	);
-}
-
-function DownloadArtifact({
-	sessionId,
-	artifactId,
-}: {
-	sessionId: string;
-	artifactId: string;
-}) {
-	const t = useTranslation();
-	const { accountReady, state, open } = useArtifactResource({
-		sessionId,
-		reference: { type: "artifact", artifactId },
-	});
-	const busy = state.status === "loading";
-	const failed = state.status === "error";
-	return (
-		<>
-			<Button
-				type="button"
-				size="sm"
-				variant="outline"
-				disabled={!accountReady || busy}
-				onClick={() => void open()}
-			>
-				{busy ? t("Preparing…") : failed ? t("Retry download") : t("Download")}
-			</Button>
-			{failed && (
-				<output className="text-destructive">
-					{t("Could not download this file.")}
-				</output>
-			)}
-		</>
 	);
 }

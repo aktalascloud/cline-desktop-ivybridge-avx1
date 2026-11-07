@@ -54,7 +54,7 @@ export function AgentChangesPanel({
 					<span className="text-cline-ui-xs font-medium text-cline-ui-foreground">
 						{title}
 					</span>
-					<span className="cline-ui-agent-changes__count rounded bg-cline-ui-secondary px-1.5 py-0.5 text-[10px] font-cline-ui-mono text-cline-ui-muted-foreground">
+					<span className="cline-ui-agent-changes__count rounded bg-cline-ui-secondary px-1.5 py-0.5 text-cline-ui-xxs font-cline-ui-mono text-cline-ui-muted-foreground">
 						{t("Files: ")}
 						{fileCount}
 					</span>
@@ -154,7 +154,7 @@ export function AgentChangedFile({
 					type="button"
 				/>
 				{actions}
-				<span className="cline-ui-agent-changes__additions shrink-0 font-cline-ui-mono text-[11px] text-cline-ui-primary">
+				<span className="cline-ui-agent-changes__additions shrink-0 font-cline-ui-mono text-[11px] text-cline-ui-success-text">
 					+{additions}
 				</span>
 				<span className="cline-ui-agent-changes__deletions shrink-0 font-cline-ui-mono text-[11px] text-cline-ui-destructive">
