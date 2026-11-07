@@ -421,5 +421,106 @@
     "status": "screened-tracked-not-imported",
     "reviewed_date": "2026-11-04",
     "verification": "Reviewed the relevant fresh report/PR metadata; not claimed as a qualified fix in this package."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15378",
+    "sha": "030e2da1294a8bf99154303d9f5e9e9706b00b7f",
+    "origin": "official-upstream-open-pr",
+    "reviewed_date": "2026-11-07",
+    "purpose": "fix: pass commit search terms to git as arguments, not shell text",
+    "status": "reviewed-not-imported",
+    "verification": "Not imported: legacy VS Code source is not bundled Desktop runtime; review also identifies unresolved git option injection for --output revisions. Track a complete argv/end-of-options fix.",
+    "scope": "Full production diff, tests, metadata and paginated comments/reviews/inline threads; inventory is not exhaustive code review."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15406",
+    "sha": "53481b9683c5f2c1016c2edcbaf74e3c644e846f",
+    "origin": "official-upstream-open-pr",
+    "reviewed_date": "2026-11-07",
+    "purpose": "fix(core): enforce Hub workspace authority across all session commands",
+    "status": "reviewed-not-imported",
+    "verification": "Not imported: this Desktop requires Hub token for upgrades; origin-only authority is rejected at the transport boundary. Keep mandatory-token policy rather than introducing origin-only access.",
+    "scope": "Full production diff, tests, metadata and paginated comments/reviews/inline threads; inventory is not exhaustive code review."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15583",
+    "sha": "c9705242d8778a548d70a863ffb37980dc0cc623",
+    "origin": "official-upstream-open-pr",
+    "reviewed_date": "2026-11-07",
+    "purpose": "fix(deps): upgrade simple-git to 4.0.2 to clear published advisories",
+    "status": "already-covered",
+    "verification": "Already covered: all active package pins use simple-git 4.0.2 with named imports; no duplicate patch.",
+    "scope": "Full production diff, tests, metadata and paginated comments/reviews/inline threads; inventory is not exhaustive code review."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15591",
+    "sha": "3b3df142205fb310626fa133a966956763f1e7ba",
+    "origin": "official-upstream-open-pr",
+    "reviewed_date": "2026-11-07",
+    "purpose": "fix(core): stop subscription recovery after client close",
+    "status": "reviewed-not-imported",
+    "verification": "Reviewed reconnect-close race and tests; track unmerged candidate for next runtime cycle, not claimed fixed by this main refresh.",
+    "scope": "Full production diff, tests, metadata and paginated comments/reviews/inline threads; inventory is not exhaustive code review."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15551",
+    "sha": "59d30d7eced2890498178e0061dfe79636104eb0",
+    "origin": "official-upstream-open-pr",
+    "reviewed_date": "2026-11-07",
+    "purpose": "fix(core): keep structured tool results in compaction summaries",
+    "status": "reviewed-not-imported",
+    "verification": "Reviewed structured tool-result fallback and regression; track unmerged compaction-summary completeness candidate; canonical history preservation is separate and remains tested.",
+    "scope": "Full production diff, tests, metadata and paginated comments/reviews/inline threads; inventory is not exhaustive code review."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15547",
+    "sha": "aab6297d38f3f3af42fdbef4fc760c1ce31957fa",
+    "origin": "official-upstream-open-pr",
+    "reviewed_date": "2026-11-07",
+    "purpose": "fix(core): retry the compaction summarizer without the reasoning disable when its request fails",
+    "status": "reviewed-not-imported",
+    "verification": "Rejected current implementation: unconditional retry replays authentication/billing/context failures; discussion requests shared provider policy and wire proof. Keep cancellation and no hidden quota retry.",
+    "scope": "Full production diff, tests, metadata and paginated comments/reviews/inline threads; inventory is not exhaustive code review."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15542",
+    "sha": "9e3788a017fb7202caaf9627014fcf5c4f450e37",
+    "origin": "official-upstream-open-pr",
+    "reviewed_date": "2026-11-07",
+    "purpose": "fix(core): keep file paths in basic compaction summaries",
+    "status": "reviewed-not-imported",
+    "verification": "Reviewed patch-target extractor/read aliases and basic-summary regressions; track unmerged summary-completeness candidate, not claimed fixed.",
+    "scope": "Full production diff, tests, metadata and paginated comments/reviews/inline threads; inventory is not exhaustive code review."
+  },
+  {
+    "url": "https://github.com/cline/cline/pull/15577",
+    "sha": "701f6b6f428a245ea4c979e2f365447163fbf978",
+    "origin": "official-upstream-open-pr",
+    "reviewed_date": "2026-11-07",
+    "purpose": "Reduce context usage by pruning completed-turn reasoning",
+    "status": "reviewed-not-imported",
+    "verification": "Draft not imported: historical signed reasoning pruning lacks live provider/quality/cache validation; preserve current provider-aware history policy.",
+    "scope": "Full production diff, tests, metadata and paginated comments/reviews/inline threads; inventory is not exhaustive code review."
+  },
+  {
+    "origin": "fork-local-fix",
+    "purpose": "Preserve saved local model when opening a cloud draft, even when equal to the bundled default",
+    "status": "qualified-installed",
+    "reviewed_date": "2026-11-07",
+    "sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3"
+  },
+  {
+    "origin": "fork-local-fix",
+    "purpose": "Guard manual compaction before asynchronous session startup so follow-up cannot hide Stop",
+    "status": "qualified-installed",
+    "reviewed_date": "2026-11-07",
+    "sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3"
+  },
+  {
+    "origin": "fork-local-fix",
+    "purpose": "Keep only active source overlays/dependency patches with provenance, SHA256 and disposable-index exact replay",
+    "status": "qualified-installed",
+    "reviewed_date": "2026-11-07",
+    "sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3"
   }
 ]

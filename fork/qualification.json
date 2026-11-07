@@ -1,11 +1,11 @@
 {
   "status": "qualified-installed",
   "release_approved": true,
-  "version": "1.0.16",
-  "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
+  "version": "1.0.17",
+  "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
   "ci": {
-    "run": 41810554978,
-    "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
+    "run": 42366235084,
+    "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
     "conclusion": "success"
   },
   "validation": {
@@ -19,19 +19,24 @@
     "privacy_licenses_signature_tamper": "passed",
     "gui": "waived",
     "real_local_inference": false,
-    "new_performance_claims": false
+    "new_performance_claims": false,
+    "sdk_ui_tests_and_typecheck": "passed; whitespace-only assertion fixed and verifier suite rerun",
+    "strict_desktop_webview": "historical baseline, not requalified fully green",
+    "local_native_checks": "exact input reuse from 1.0.16; current installer independently audited",
+    "patches": "3 active source overlays, 4 bound Bun patches; hashes and exact disposable-index replay passed"
   },
   "publication": {
-    "version": "1.0.16",
-    "tag": "avx1-v1.0.16",
-    "source_sha": "9c115197448ad98272f947a351eebaeade0fbe22",
-    "asset_sha256": "c025424be1fdbe2ecaa27048045d51d746d8cab9335895a11d0b932592530134",
-    "size": 145490922,
+    "version": "1.0.17",
+    "tag": "avx1-v1.0.17",
+    "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
+    "asset_sha256": "849c3b6b0e8ad7c8687c71ccd8c729744f76b9a9b8b72317bb715ce14616c799",
+    "size": 144601083,
     "published": true,
     "download_skipped_by_user": true,
     "anonymous_download_verified": false,
-    "release_id": 433758077,
-    "asset_id": 709154737
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.17",
+    "exe_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.17/Cline-Desktop-AVX1-RU-Setup.exe",
+    "asset_readback_verified": true
   },
-  "verified_utc": "2026-11-04T10:45:08.211501+00:00"
+  "verified_utc": "2026-11-07T11:25:47.349123+00:00"
 }

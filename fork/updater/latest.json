@@ -1,11 +1,11 @@
 {
-  "version": "1.0.16",
-  "notes": "Reviewed Cline main, whole bounded file reads, authenticated Hub provider management, local stream deadlines and context overrides, Beam compaction history, RU/EN. Personal settings and history preserved.",
-  "pub_date": "2026-11-04T10:53:38.710064+00:00",
+  "version": "1.0.17",
+  "notes": "Current Cline main: compaction cancellation, bounded cloud history, saved model preservation, Wally/Max, RU/EN theme; active patches with exact replay. User data preserved.",
+  "pub_date": "2026-11-07T11:32:47.732957+00:00",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmlMVkllbGdrYWx1Sm5jU1lsZzIrTnljeDJTbTlrQUNmTHN2RUl0ZGtWakZoeVdQa2krU09uelIxNmtmcXVFajlFb1Izdldlc0NYL0R0dXF5MVVzY0FNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzNzg2ODE5CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xNl94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjE2CkgwMVJxQzk0bklSNlFQWk1LbUtUYnVzR0hjZkZkTjljRkpqZTJ1ZmRUM0pES29HSjFSWU5rREdQeVlyVWxacytjRlIwbzJoYTZDV3JaZUd1RHJGQkNBPT0K",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.16/Cline-Desktop-AVX1-RU-Setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYmh4Z3BPK25kbnBnSklFSjZMcXpkV0paRWVIbWxndXhYY3l3eThSbFpScWFlRVZLVk5ZVFM1WjE4WnVDWVN6aHExK0l5b3BBRzVuQzJzVkdaMHJXSmdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0MDQ5ODczCWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xN194NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjE3CkhVZGVYK21DZU9QWnlUMXAvc1oxRVhPSjlES2FxY2dkd3cweEQ1ZVBPL3gyLzd1VVdQZldwY2toaWJaOE9ieEdISjFRSUY3UnEyNXd5KzZ4QmQ4K0FBPT0K",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.17/Cline-Desktop-AVX1-RU-Setup.exe"
     }
   }
 }
