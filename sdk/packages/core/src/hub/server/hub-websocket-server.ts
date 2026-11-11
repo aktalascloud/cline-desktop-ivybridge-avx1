@@ -687,10 +687,8 @@ export async function startHubWebSocketServer(
 			readWebSocketAuthToken(request.headers["sec-websocket-protocol"]),
 			authToken,
 		);
-		const isAuthorized =
-			isTokenAuthorized ||
-			(isLocalHubHostName(host) && isLocalHubOrigin(request.headers.origin));
-		if (!isAuthorized) {
+		// A loopback Origin can be supplied by any local client.
+		if (!isTokenAuthorized) {
 			rejectUnauthorizedUpgradeSocket(socket);
 			return;
 		}

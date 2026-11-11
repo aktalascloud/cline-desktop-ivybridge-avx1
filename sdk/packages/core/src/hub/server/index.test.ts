@@ -59,6 +59,10 @@ async function sendRawHttpRequest(
 		socket.setEncoding("utf8");
 		socket.on("data", (chunk) => {
 			response += chunk;
+			if (response.startsWith("HTTP/1.1 101 ") && response.includes("\r\n\r\n")) {
+				socket.destroy();
+				resolve(response);
+			}
 		});
 		socket.on("end", () => {
 			resolve(response);
@@ -696,7 +700,7 @@ describe("hub server startup", () => {
 		expect(onShutdownRequested).not.toHaveBeenCalled();
 	});
 
-	it("rejects WebSocket upgrade with 401 when no auth token is provided", async () => {
+	it.each([undefined, "wrong-token"])("rejects loopback Origin with missing or wrong token (%s)", async (token) => {
 		const owner = createInMemoryHubOwnerContext("hub-server-test-ws-unauth");
 		const result = await ensureHubWebSocketServer({
 			owner,
@@ -709,12 +713,13 @@ describe("hub server startup", () => {
 
 		const hubUrl = new URL(result.url);
 
-		// WebSocket upgrade with no Sec-WebSocket-Protocol token
 		const response = await sendRawHttpRequest(
 			Number(hubUrl.port),
 			[
 				"GET /hub HTTP/1.1",
 				"Host: 127.0.0.1",
+				"Origin: http://localhost:3000",
+				...(token ? [`Sec-WebSocket-Protocol: cline-hub-auth.${token}`] : []),
 				"Connection: Upgrade",
 				"Upgrade: websocket",
 				"Sec-WebSocket-Version: 13",

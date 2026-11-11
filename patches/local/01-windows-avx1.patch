@@ -86,14 +86,14 @@ index 0000000000000000000000000000000000000000..2825f90ba80229d5e8232430e6335bf9
 +	return "if (!process.env.CLINE_DIR?.trim() && !process.env.CLINE_DATA_DIR?.trim()) { process.env.CLINE_DIR = process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:os').homedir(), '.cline-avx1'); }";
 +}
 diff --git a/apps/examples/desktop-app/package.json b/apps/examples/desktop-app/package.json
-index 61c3ef3890ebf51c3780bf74e2dd47948853fc0b..32be1eeb1a2af0707772038d4de4552fe8631d40 100644
+index 61c3ef3890ebf51c3780bf74e2dd47948853fc0b..bbbe8bfe8d9563a128612bb46bbd258c91c86001 100644
 --- a/apps/examples/desktop-app/package.json
 +++ b/apps/examples/desktop-app/package.json
 @@ -1,6 +1,6 @@
  {
  	"name": "@cline/code",
 -	"version": "0.0.49",
-+	"version": "1.0.18",
++	"version": "1.0.19",
  	"private": true,
  	"scripts": {
  		"build:ui": "bun -F @cline/ui build",
@@ -1641,7 +1641,7 @@ index 0000000000000000000000000000000000000000..de49e1493998e5eae5ee10d967243f5a
 +    }
 +}
 diff --git a/apps/examples/desktop-app/src-tauri/tauri.conf.json b/apps/examples/desktop-app/src-tauri/tauri.conf.json
-index 7e0be406428b77eafc9c26db50915cae76d7d280..156393fcb90bdc120a8709162518d96c8920dbc6 100644
+index 7e0be406428b77eafc9c26db50915cae76d7d280..588a1038828427d882aa73582ee66660d7d6e6d1 100644
 --- a/apps/examples/desktop-app/src-tauri/tauri.conf.json
 +++ b/apps/examples/desktop-app/src-tauri/tauri.conf.json
 @@ -1,19 +1,18 @@
@@ -1651,7 +1651,7 @@ index 7e0be406428b77eafc9c26db50915cae76d7d280..156393fcb90bdc120a8709162518d96c
 -	"version": "0.0.49",
 -	"identifier": "bot.cline.app",
 +	"productName": "Cline Desktop AVX1 RU",
-+	"version": "1.0.18",
++	"version": "1.0.19",
 +	"identifier": "cloud.aktalas.cline.desktop.avx1.ru",
  	"build": {
  		"beforeDevCommand": "bun run build:runtime && bun run dev:web",
@@ -1934,3 +1934,59 @@ index 0000000000000000000000000000000000000000..5e38aeb1b90965a040ec7403746b27da
 +++ b/fork/updater/public-key.txt
 @@ -0,0 +1 @@
 +dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZFMUI5QzJEOERGQzMyMDEKUldRQk12eU5MWndiYmpsazRZZ2k4ZUhsM0hObWtYSkZ1YzRrMEVQYkt1dFI1L01INzVvY1crWmcK
+diff --git a/sdk/packages/core/src/hub/server/hub-websocket-server.ts b/sdk/packages/core/src/hub/server/hub-websocket-server.ts
+index aee393c5fcc755e77b01dff7c31cd960f4a880e6..243dc3359a173168e904ec2d395230e64d77a460 100644
+--- a/sdk/packages/core/src/hub/server/hub-websocket-server.ts
++++ b/sdk/packages/core/src/hub/server/hub-websocket-server.ts
+@@ -687,10 +687,8 @@ export async function startHubWebSocketServer(
+ 			readWebSocketAuthToken(request.headers["sec-websocket-protocol"]),
+ 			authToken,
+ 		);
+-		const isAuthorized =
+-			isTokenAuthorized ||
+-			(isLocalHubHostName(host) && isLocalHubOrigin(request.headers.origin));
+-		if (!isAuthorized) {
++		// A loopback Origin can be supplied by any local client.
++		if (!isTokenAuthorized) {
+ 			rejectUnauthorizedUpgradeSocket(socket);
+ 			return;
+ 		}
+diff --git a/sdk/packages/core/src/hub/server/index.test.ts b/sdk/packages/core/src/hub/server/index.test.ts
+index a9f725aed72f886f4217af5fc2773a49554f41cd..61eec8e06a06222d057f03c87236bf6df71d320d 100644
+--- a/sdk/packages/core/src/hub/server/index.test.ts
++++ b/sdk/packages/core/src/hub/server/index.test.ts
+@@ -59,6 +59,10 @@ async function sendRawHttpRequest(
+ 		socket.setEncoding("utf8");
+ 		socket.on("data", (chunk) => {
+ 			response += chunk;
++			if (response.startsWith("HTTP/1.1 101 ") && response.includes("\r\n\r\n")) {
++				socket.destroy();
++				resolve(response);
++			}
+ 		});
+ 		socket.on("end", () => {
+ 			resolve(response);
+@@ -696,7 +700,7 @@ describe("hub server startup", () => {
+ 		expect(onShutdownRequested).not.toHaveBeenCalled();
+ 	});
+ 
+-	it("rejects WebSocket upgrade with 401 when no auth token is provided", async () => {
++	it.each([undefined, "wrong-token"])("rejects loopback Origin with missing or wrong token (%s)", async (token) => {
+ 		const owner = createInMemoryHubOwnerContext("hub-server-test-ws-unauth");
+ 		const result = await ensureHubWebSocketServer({
+ 			owner,
+@@ -709,12 +713,13 @@ describe("hub server startup", () => {
+ 
+ 		const hubUrl = new URL(result.url);
+ 
+-		// WebSocket upgrade with no Sec-WebSocket-Protocol token
+ 		const response = await sendRawHttpRequest(
+ 			Number(hubUrl.port),
+ 			[
+ 				"GET /hub HTTP/1.1",
+ 				"Host: 127.0.0.1",
++				"Origin: http://localhost:3000",
++				...(token ? [`Sec-WebSocket-Protocol: cline-hub-auth.${token}`] : []),
+ 				"Connection: Upgrade",
+ 				"Upgrade: websocket",
+ 				"Sec-WebSocket-Version: 13",

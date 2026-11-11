@@ -6,7 +6,7 @@ Four patches on the verified Cline main tree. The manifest pins the base, build 
 
 | Patch | Русский | English |
 | --- | --- | --- |
-| `01-windows-avx1.patch` | Ivy Bridge, baseline Bun, NSIS, трей и переносимые логи | Ivy Bridge, baseline Bun, NSIS, tray locale and relocatable logging |
+| `01-windows-avx1.patch` | Ivy Bridge, baseline Bun, NSIS, трей, переносимые логи и обязательный токен Hub | Ivy Bridge, baseline Bun, NSIS, tray locale, relocatable logging and required Hub token |
 | `02-russian-and-stock-reasoning.patch` | Русский интерфейс и штатные уровни reasoning | Russian UI and stock reasoning levels |
 | `03-compaction.patch` | Лимит, порог и сохранение истории при автокомпакте | Context budget, threshold and history preservation |
 | `04-freellm-and-model-context.patch` | FreeLLM без ключа и лимиты моделей из API | Keyless FreeLLM and model limits from the API |
