@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { HubReplyEnvelope } from "@cline/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import WebSocket from "ws";
 import { LocalRuntimeHost } from "../../runtime/host/local-runtime-host";
@@ -180,7 +181,6 @@ describe("hub provider management", () => {
 		"providers.add",
 		"providers.settings.save",
 		"providers.models.update",
-		"providers.models.list",
 	] as const)("refuses %s during drain before validation or persistence", async (command) => {
 		await transport.handleCommand({ version: "v1", command: "hub.drain" });
 		expect(
@@ -296,7 +296,7 @@ describe("hub provider management", () => {
 		);
 	});
 
-	it("denies tokenless loopback upgrades and ignores spoofed provider authority", async () => {
+	it("denies provider access to a registered loopback page without the Hub token", async () => {
 		await api.saveSettings({ providerId: "anthropic", apiKey: "original-key" });
 		const server = await startHubWebSocketServer({
 			host: "127.0.0.1",
@@ -311,41 +311,60 @@ describe("hub provider management", () => {
 		const socket = new WebSocket(server.url, {
 			origin: "http://localhost:3125",
 		});
+		let requestId = 0;
+		const command = (name: string, payload: Record<string, unknown> = {}) =>
+			new Promise<HubReplyEnvelope>((resolve, reject) => {
+				const id = String(++requestId);
+				socket.once("message", (data) => {
+					try {
+						resolve(JSON.parse(String(data)).envelope);
+					} catch (error) {
+						reject(error);
+					}
+				});
+				socket.send(
+					JSON.stringify({
+						kind: "command",
+						envelope: {
+							version: "v1",
+							requestId: id,
+							clientId: "local-page",
+							command: name,
+							payload,
+						},
+					}),
+				);
+			});
 		try {
-			const status = await new Promise<number | undefined>(
-				(resolve, reject) => {
-					socket.once("unexpected-response", (_request, response) => {
-						response.resume();
-						resolve(response.statusCode);
-					});
-					socket.once("open", () =>
-						reject(new Error("Tokenless upgrade accepted")),
-					);
-					socket.once("error", reject);
-				},
-			);
-			expect(status).toBe(401);
-			for (const command of [
+			await new Promise<void>((resolve, reject) => {
+				socket.once("open", resolve);
+				socket.once("error", reject);
+			});
+			expect(
+				await command("client.register", {
+					clientId: "local-page",
+					clientType: "browser",
+					displayName: "Local page",
+					transport: "browser",
+					actorKind: "client",
+					// A caller cannot grant itself token authority through registration.
+					tokenAuthenticated: true,
+					crossWorkspace: true,
+				}),
+			).toMatchObject({ ok: true });
+			for (const name of [
 				"providers.list",
 				"providers.models.list",
 				"providers.models.recommended",
 				"providers.settings.save",
 				"providers.add",
 				"providers.models.update",
-			] as const) {
-				const reply = await transport.handleCommand(
-					{
-						version: "v1",
-						clientId: "local-page",
-						command,
-						payload: {
-							providerId: "anthropic",
-							apiKey: "attacker-key",
-							tokenAuthenticated: true,
-						},
-					},
-					{ clientId: "local-page" },
-				);
+			]) {
+				const reply = await command(name, {
+					providerId: "anthropic",
+					apiKey: "attacker-key",
+					tokenAuthenticated: true,
+				});
 				expect(reply).toMatchObject({
 					ok: false,
 					error: { code: "authentication_required" },
@@ -360,40 +379,6 @@ describe("hub provider management", () => {
 			socket.terminate();
 			await server.close();
 		}
-	});
-
-	it("refreshes local engine models without overwriting personal settings", async () => {
-		await api.add({
-			providerId: "local-live-fixture",
-			name: "Local Live",
-			baseUrl: "http://127.0.0.1:12345/v1",
-			models: ["old"],
-			modelsSourceUrl: "http://127.0.0.1:12345/v1/models",
-		});
-		await api.saveSettings({
-			providerId: "local-live-fixture",
-			model: "old",
-			contextWindow: 123456,
-			apiKey: "private-fixture",
-		});
-		vi.stubGlobal(
-			"fetch",
-			vi.fn(async () =>
-				Response.json({ data: [{ id: "fresh", context_length: 65536 }] }),
-			),
-		);
-		expect(
-			(await api.listModels({ providerId: "local-live-fixture" })).models.map(
-				(m) => m.id,
-			),
-		).toContain("fresh");
-		expect(
-			new ProviderSettingsManager().getProviderSettings("local-live-fixture"),
-		).toMatchObject({
-			model: "old",
-			contextWindow: 123456,
-			apiKey: "private-fixture",
-		});
 	});
 
 	it("serves provider reads and writes over a token-authenticated connection without a workspace", async () => {

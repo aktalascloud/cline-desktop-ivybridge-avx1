@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "reviewed_date": "2026-11-04",
+  "reviewed_date": "2026-11-11",
   "source": "https://ai-gateway.kilo.ai/api/v1/models",
   "shared_hourly_limit": 200,
   "user_key_required": false,
   "vendors": [
     "NVIDIA",
-    "Reflection"
+    "Cohere"
   ],
   "providers": {
     "freellm": {
@@ -42,45 +42,28 @@
               "type": "toggle"
             }
           ],
-          "supportsAuthorModes": false,
           "inputPrice": 0,
           "outputPrice": 0
         },
-        "reflection/beam-free": {
-          "id": "reflection/beam-free",
-          "name": "Beam 1.0 · 501B",
-          "contextWindow": 1048576,
-          "maxTokens": 131072,
+        "cohere/north-mini-code:free": {
+          "id": "cohere/north-mini-code:free",
+          "name": "North Mini Code · 30B",
+          "contextWindow": 256000,
+          "maxTokens": 64000,
           "capabilities": [
             "tools",
             "streaming",
             "reasoning",
             "temperature"
           ],
-          "reasoningOptions": [
-            {
-              "type": "effort",
-              "values": [
-                "low",
-                "medium",
-                "high",
-                "xhigh",
-                "max"
-              ]
-            }
-          ],
-          "supportsAuthorModes": false,
           "inputPrice": 0,
-          "outputPrice": 0,
-          "metadata": {
-            "interleavedReasoningField": "reasoning_content"
-          }
+          "outputPrice": 0
         }
       }
     }
   },
   "parameter_sources": {
     "nvidia/nemotron-3.5-super-vl:free": "https://github.com/NVIDIA-NeMo/Nemotron/blob/main/usage-cookbook/Nemotron-3.5-Super-VL/README.md",
-    "reflection/beam-free": "https://reflection.ai/blog/introducing-beam"
+    "cohere/north-mini-code:free": "https://docs.cohere.com/docs/north-mini-code-1.0"
   }
 }

@@ -125,8 +125,6 @@ export const REASONING_SELECTION_VALUES = [
 	"high",
 	"xhigh",
 	"max",
-	"ultra",
-	"adaptive",
 ] as const;
 
 export type ReasoningSelectionValue =

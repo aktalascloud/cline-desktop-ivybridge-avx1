@@ -37,33 +37,7 @@ const CUSTOM_MODELS: Map<string, Map<string, ModelInfo>> = new Map();
 const CUSTOM_PROVIDERS: Map<string, ModelCollection> = new Map();
 
 function getProviderFromCache(providerId: string): ModelCollection | undefined {
-	const base =
-		CUSTOM_PROVIDERS.get(providerId) ?? PROVIDER_CACHE.get(providerId);
-	const customModels = CUSTOM_MODELS.get(providerId);
-	if (!customModels || customModels.size === 0) {
-		return base;
-	}
-	if (!base) {
-		const firstModelId = customModels.keys().next().value ?? "default";
-		return {
-			provider: {
-				id: providerId,
-				name: providerId,
-				defaultModelId: firstModelId,
-				client: "custom",
-				source: "file",
-				capabilities: [],
-			},
-			models: Object.fromEntries(customModels),
-		};
-	}
-	return {
-		...base,
-		models: {
-			...base.models,
-			...Object.fromEntries(customModels),
-		},
-	};
+	return CUSTOM_PROVIDERS.get(providerId) ?? PROVIDER_CACHE.get(providerId);
 }
 
 export function getProviderIds(): string[] {

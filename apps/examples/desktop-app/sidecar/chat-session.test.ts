@@ -3,12 +3,11 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
-	realpathSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join } from "node:path";
 import { SessionNotFoundError } from "@cline/core";
 import { resolveClineDir, setClineDir } from "@cline/shared/storage";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -33,7 +32,6 @@ import {
 	requestSidecarAskQuestion,
 	resolveSidecarAskQuestion,
 } from "./context";
-import { sharedSessionMessagesPath } from "./paths";
 import * as sessionPaths from "./paths";
 import * as pluginCommands from "./plugin-commands";
 import {
@@ -179,12 +177,7 @@ describe("starting SSH sessions", () => {
 		expect(start).toHaveBeenCalledWith(
 			expect.objectContaining({ initialMessages: transcript }),
 		);
-		expect(start.mock.calls[0]?.[0]).not.toHaveProperty(
-			"config.initialMessages",
-		);
 		expect(ctx.liveSessions.get(sessionId)?.messages).toEqual(transcript);
-		// The remote Hub keeps its own store, so it always gets the history inline.
-		expect(start.mock.calls[0]?.[0]).not.toHaveProperty("resumeFromStore");
 	});
 
 	it("propagates other read failures without creating a session", async () => {
@@ -215,99 +208,6 @@ describe("starting SSH sessions", () => {
 		expect(
 			(start.mock.calls[0]?.[0] as { config: object }).config,
 		).not.toHaveProperty("initialMessages");
-	});
-});
-
-describe("starting local sessions from a saved transcript", () => {
-	const sessionId = "session-saved-local";
-	const transcript = [
-		{ role: "user" as const, content: "earlier prompt" },
-		{ role: "assistant" as const, content: "earlier reply" },
-	];
-	let dataDir = "";
-	let previousSessionDataDir: string | undefined;
-
-	beforeEach(() => {
-		dataDir = mkdtempSync(join(tmpdir(), "cline-saved-local-"));
-		previousSessionDataDir = process.env.CLINE_SESSION_DATA_DIR;
-		process.env.CLINE_SESSION_DATA_DIR = dataDir;
-		const messagesPath = sharedSessionMessagesPath(sessionId);
-		mkdirSync(dirname(messagesPath), { recursive: true });
-		writeFileSync(messagesPath, JSON.stringify(transcript));
-	});
-
-	afterEach(() => {
-		if (previousSessionDataDir === undefined) {
-			delete process.env.CLINE_SESSION_DATA_DIR;
-		} else {
-			process.env.CLINE_SESSION_DATA_DIR = previousSessionDataDir;
-		}
-		rmSync(dataDir, { recursive: true, force: true });
-	});
-
-	function setup() {
-		const start = vi.fn(async (_input: Record<string, unknown>) => ({
-			sessionId,
-			manifest: { cwd: "/workspace", workspace_root: "/workspace" },
-			manifestPath: "/tmp/session.json",
-			messagesPath: "/tmp/session.messages.json",
-		}));
-		const ctx = {
-			liveSessions: new Map(),
-			restoringWorkspacePaths: new Set(),
-			...localRuntimeContext({ start }),
-			telemetryUser: { distinctId: "account-1" },
-		} as unknown as SidecarContext;
-		const config = {
-			provider: "cline",
-			model: "anthropic/claude-sonnet-4.6",
-			enableTools: true,
-		};
-		return { ctx, config, start };
-	}
-
-	it("asks the hub to load the stored transcript instead of sending it", async () => {
-		const { ctx, config, start } = setup();
-
-		await handleChatSessionCommand(ctx, {
-			action: "start",
-			config: { ...config, sessionId },
-		});
-
-		// The transcript stays in memory for the UI, and the hub is told it may
-		// load the same transcript itself so a long one never exceeds the hub's
-		// inbound frame limit.
-		expect(start).toHaveBeenCalledWith(
-			expect.objectContaining({
-				initialMessages: transcript,
-				resumeFromStore: true,
-			}),
-		);
-		expect(ctx.liveSessions.get(sessionId)?.messages).toEqual(transcript);
-	});
-
-	it("sends messages the caller supplied without claiming they are the stored ones", async () => {
-		const { ctx, config, start } = setup();
-		const supplied = [{ role: "user" as const, content: "a forked prompt" }];
-
-		await handleChatSessionCommand(ctx, {
-			action: "start",
-			config: { ...config, sessionId, initialMessages: supplied },
-		});
-
-		expect(start).toHaveBeenCalledWith(
-			expect.objectContaining({ initialMessages: supplied }),
-		);
-		expect(start.mock.calls[0]?.[0]).not.toHaveProperty("resumeFromStore");
-	});
-
-	it("does not ask for a stored transcript when starting a new session", async () => {
-		const { ctx, config, start } = setup();
-
-		await handleChatSessionCommand(ctx, { action: "start", config });
-
-		expect(start.mock.calls[0]?.[0]).not.toHaveProperty("initialMessages");
-		expect(start.mock.calls[0]?.[0]).not.toHaveProperty("resumeFromStore");
 	});
 });
 
@@ -771,7 +671,7 @@ describe("session forks", () => {
 		await restoreStarted;
 		try {
 			expect(ctx.restoringWorkspacePaths).toEqual(
-				new Set([resolve("/workspace/project")]),
+				new Set(["/workspace/project"]),
 			);
 			await expect(
 				handleChatSessionCommand(ctx, {
@@ -1176,7 +1076,7 @@ describe("session forks", () => {
 					},
 				],
 			]),
-			restoringWorkspacePaths: new Set([resolve("/workspace/project")]),
+			restoringWorkspacePaths: new Set(["/workspace/project"]),
 			...localRuntimeContext({ send }, { sessionIds: [sessionId] }),
 		} as unknown as SidecarContext;
 
@@ -1614,7 +1514,6 @@ describe("first-send connection updates", () => {
 			prompt: "continue with Codex",
 			config: {
 				...baseConfig,
-				initialMessages: [{ role: "user", content: "old seed" }],
 				provider: "openai-codex",
 				model: "gpt-5.3-codex",
 			},
@@ -1634,9 +1533,6 @@ describe("first-send connection updates", () => {
 					{ role: "assistant", content: "first response" },
 				],
 			}),
-		);
-		expect(start.mock.calls[0]?.[0]).not.toHaveProperty(
-			"config.initialMessages",
 		);
 		expect(updateSessionConnection).toHaveBeenCalledWith(sessionId, {
 			providerId: "openai-codex",
@@ -2387,8 +2283,8 @@ describe("runtime slash command expansion on send", () => {
 	let originalClineDir: string;
 	beforeEach(() => {
 		originalClineDir = resolveClineDir();
-		const settingsRoot = realpathSync.native(
-			mkdtempSync(join(tmpdir(), "desktop-command-settings-")),
+		const settingsRoot = mkdtempSync(
+			join(tmpdir(), "desktop-command-settings-"),
 		);
 		tempRoots.push(settingsRoot);
 		setClineDir(settingsRoot);
@@ -2410,9 +2306,7 @@ describe("runtime slash command expansion on send", () => {
 	}
 
 	function createWorkspaceWithSkill(): string {
-		const workspace = realpathSync.native(
-			mkdtempSync(join(tmpdir(), "desktop-slash-send-")),
-		);
+		const workspace = mkdtempSync(join(tmpdir(), "desktop-slash-send-"));
 		tempRoots.push(workspace);
 		const skillDir = join(workspace, ".cline", "skills", "desktop-send-skill");
 		mkdirSync(skillDir, { recursive: true });
@@ -2761,7 +2655,6 @@ describe("/compact", () => {
 		busy?: boolean;
 		messages?: unknown[];
 		config?: Record<string, unknown>;
-		compactionState?: unknown;
 	}) {
 		const sessionId = "compact-session";
 		const wsSend = vi.fn();
@@ -2794,9 +2687,6 @@ describe("/compact", () => {
 					send,
 					get: vi.fn(async () => ({ status: "idle" })),
 					readMessages: vi.fn(async () => options.messages ?? []),
-					readSessionCompactionState: vi.fn(
-						async () => options.compactionState,
-					),
 					updateSessionCompactionState,
 					stop: vi.fn(async () => undefined),
 					pendingPrompts: { list: vi.fn(async () => []) },
@@ -2822,77 +2712,6 @@ describe("/compact", () => {
 			updateSessionCompactionState,
 		};
 	}
-
-	it("recompacts the projected summary with the custom model budget and keeps canonical history", async () => {
-		const { createSessionCompactionState } = await import("@cline/core");
-		const messages = [
-			{ role: "user" as const, content: "Old task" },
-			{ role: "assistant" as const, content: "Old work" },
-			{ role: "user" as const, content: "Recent task" },
-			{ role: "assistant" as const, content: "Recent work" },
-		];
-		const state = createSessionCompactionState({
-			sourceMessages: messages.slice(0, 2),
-			compactedMessages: [{ role: "user", content: "Saved summary" }],
-			conversationId: "compact-session",
-		});
-		const compact = vi.fn(
-			async (_input: {
-				messages: Array<{ content: unknown }>;
-				model: { info: { contextWindow?: number } };
-			}) => ({ messages: [{ role: "user", content: "Smaller summary" }] }),
-		);
-		createContextCompactionPrepareTurnMock.mockReturnValueOnce(compact);
-		const { ctx, sessionId, updateSessionCompactionState } =
-			createCompactContext({
-				messages,
-				compactionState: state,
-				config: {
-					provider: "custom",
-					model: "local",
-					providerConfig: {
-						providerId: "custom",
-						modelId: "local",
-						knownModels: { local: { id: "local", contextWindow: 131072 } },
-					},
-				},
-			});
-		await handleChatSessionCommand(ctx, {
-			action: "send",
-			sessionId,
-			prompt: "/compact",
-		});
-		expect(compact.mock.calls[0]?.[0].messages[0].content).toBe(
-			"Saved summary",
-		);
-		expect(compact.mock.calls[0]?.[0].model.info.contextWindow).toBe(131072);
-		expect(updateSessionCompactionState).toHaveBeenCalledWith(
-			sessionId,
-			expect.objectContaining({ source_message_count: 4 }),
-		);
-		expect(messages[0]?.content).toBe("Old task");
-	});
-
-	it("does not report success or replace saved state when compaction makes the working context larger", async () => {
-		const compact = vi.fn(async () => ({
-			messages: [{ role: "user", content: "x".repeat(10000) }],
-		}));
-		createContextCompactionPrepareTurnMock.mockReturnValueOnce(compact);
-		const { ctx, sessionId, updateSessionCompactionState, readCommandOutput } =
-			createCompactContext({
-				messages: [
-					{ role: "user", content: "Task" },
-					{ role: "assistant", content: "Done" },
-				],
-			});
-		await handleChatSessionCommand(ctx, {
-			action: "send",
-			sessionId,
-			prompt: "/compact",
-		});
-		expect(updateSessionCompactionState).not.toHaveBeenCalled();
-		expect(JSON.stringify(readCommandOutput())).toContain("already compact");
-	});
 
 	it("compacts with the session's connection settings and saves the result", async () => {
 		const summary = { role: "user", content: "Context summary" };
@@ -2931,12 +2750,7 @@ describe("/compact", () => {
 				apiKey: "test-key",
 				baseUrl: "https://proxy.example/v1",
 				headers: { "X-Team": "desktop" },
-				compaction: expect.objectContaining({
-					enabled: true,
-					triggerTokens: 90000,
-					maxInputTokens: 120000,
-					preserveRecentMessages: 40,
-				}),
+				compaction: { enabled: true },
 			}),
 			{ mode: "manual" },
 		);
@@ -2976,7 +2790,7 @@ describe("/compact", () => {
 		createContextCompactionPrepareTurnMock.mockReturnValueOnce(compact);
 		const { ctx, sessionId, readCommandOutput, updateSessionCompactionState } =
 			createCompactContext({
-				messages: [{ role: "user", content: "original history ".repeat(100) }],
+				messages: [{ role: "user", content: "original history" }],
 			});
 		const pending = handleChatSessionCommand(ctx, {
 			action: "send",
@@ -2984,9 +2798,6 @@ describe("/compact", () => {
 			prompt: "/compact",
 		});
 		await vi.waitFor(() => expect(compact).toHaveBeenCalledOnce());
-		await expect(
-			handleChatSessionCommand(ctx, { action: "attach", sessionId }),
-		).resolves.toMatchObject({ status: "running", compacting: true });
 		await expect(
 			handleChatSessionCommand(ctx, {
 				action: "send",
@@ -3542,27 +3353,4 @@ describe("queue steering routing", () => {
 			expect(steerFirst).not.toHaveBeenCalled();
 		}
 	});
-});
-
-it("normalizes only virtual Ultra/Adaptive into native XHigh at the Core boundary", () => {
-	for (const mode of ["ultra", "adaptive"]) {
-		expect(
-			buildSessionConnectionUpdate({
-				provider: "fixture",
-				model: "fixture",
-				thinking: true,
-				reasoningEffort: mode,
-			}),
-		).toMatchObject({ thinking: true, reasoningEffort: "xhigh" });
-	}
-	for (const mode of ["high", "xhigh"]) {
-		expect(
-			buildSessionConnectionUpdate({
-				provider: "fixture",
-				model: "fixture",
-				thinking: true,
-				reasoningEffort: mode,
-			}),
-		).toMatchObject({ thinking: true, reasoningEffort: mode });
-	}
 });

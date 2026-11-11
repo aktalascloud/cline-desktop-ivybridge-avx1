@@ -11,7 +11,6 @@ import { isProviderConnected } from "@/lib/provider-connection";
 import {
 	fetchProviderCatalog,
 	isStreamingTranscriptionModel,
-	isDedicatedTranscriptionModel,
 	loadTranscriptionModels,
 	notifyVoiceInputSettingsChanged,
 	readVoiceInputCatalog,
@@ -30,11 +29,11 @@ type VoiceProviderEntry = {
 	models: ProviderModel[];
 };
 
-/** Prefer live transcription; recorded-file STT remains available for local servers. */
+/** Voice input only offers models that return text while the user speaks. */
 export function defaultTranscriptionModel(
 	models: ProviderModel[],
 ): ProviderModel | undefined {
-	return models.find(isStreamingTranscriptionModel) ?? models.find(isDedicatedTranscriptionModel);
+	return models.find(isStreamingTranscriptionModel);
 }
 
 export function VoiceInputContent({
@@ -99,14 +98,14 @@ export function VoiceInputContent({
 	const voiceProviders: VoiceProviderEntry[] = connectedProviders
 		.map((provider) => ({
 			provider,
-			models: (provider.modelList ?? []).filter(isDedicatedTranscriptionModel),
+			models: (provider.modelList ?? []).filter(isStreamingTranscriptionModel),
 		}))
 		.filter((entry) => entry.models.length > 0);
 	// Providers that would qualify once connected, so the empty states can
 	// point the user at something actionable.
 	const voiceCapableProviderNames = (providers ?? [])
 		.filter((provider) =>
-			(provider.modelList ?? []).some(isDedicatedTranscriptionModel),
+			(provider.modelList ?? []).some(isStreamingTranscriptionModel),
 		)
 		.map((provider) => provider.name);
 
@@ -224,7 +223,7 @@ export function VoiceInputContent({
 					</p>
 					<p className="text-sm text-muted-foreground">
 						{voiceCapableProviderNames.length > 0
-							? `Connect a provider with speech-to-text models — for example ${voiceCapableProviderNames
+							? `Connect a provider with streaming transcription models — for example ${voiceCapableProviderNames
 									.slice(0, 4)
 									.join(", ")} — and this page unlocks automatically.`
 							: t(

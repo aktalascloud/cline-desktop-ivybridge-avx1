@@ -1,6 +1,11 @@
 "use client";
 import { t, useTranslation } from "@/lib/i18n";
 
+import type {
+	McpServerConfigView as McpServer,
+	McpServersResponse,
+	McpServerConfigInput as McpServerUpsertInput,
+} from "@cline/shared";
 import { Switch } from "@cline/ui";
 import {
 	ChevronRight,
@@ -73,50 +78,9 @@ const TRANSPORT_TYPE_LABELS: Record<McpTransportType, string> = {
 	streamableHttp: "Remote · Streamable HTTP",
 };
 
-interface McpServer {
-	name: string;
-	transportType: McpTransportType;
-	disabled: boolean;
-	command?: string;
-	args?: string[];
-	cwd?: string;
-	env?: Record<string, string>;
-	url?: string;
-	headers?: Record<string, string>;
-	metadata?: unknown;
-	configurationError?: string;
-	oauthStatus?: {
-		supported: boolean;
-		configured: boolean;
-		authorizationRequired: boolean;
-		lastError?: string;
-		lastAuthenticatedAt?: number;
-	};
-}
-
-interface McpServersResponse {
-	settingsPath: string;
-	hasSettingsFile: boolean;
-	servers: McpServer[];
-}
-
-interface McpServerUpsertInput {
-	name: string;
-	previousName?: string;
-	transportType: McpTransportType;
-	command?: string;
-	args?: string[];
-	cwd?: string;
-	env?: Record<string, string>;
-	url?: string;
-	headers?: Record<string, string>;
-	disabled?: boolean;
-	metadata?: unknown;
-}
-
 type McpServerFormState = {
 	name: string;
-	previousName: string;
+	previousName: string | undefined;
 	transportType: McpTransportType;
 	command: string;
 	argsText: string;
@@ -192,7 +156,7 @@ function createEnvEntries(
 function createServerFormState(existing?: McpServer): McpServerFormState {
 	return {
 		name: existing?.name ?? "",
-		previousName: existing?.name ?? "",
+		previousName: existing?.name,
 		transportType: existing?.transportType ?? "stdio",
 		command: existing?.command ?? "",
 		argsText: existing?.args?.join(", ") ?? "",
@@ -315,6 +279,7 @@ export function McpServersContent({
 					name: server.name,
 					disabled,
 				},
+				{ timeoutMs: null },
 			);
 			applyResponse(response);
 		} catch (error) {
@@ -334,6 +299,7 @@ export function McpServersContent({
 				{
 					input,
 				},
+				{ timeoutMs: null },
 			);
 			applyResponse(response);
 		} finally {
@@ -351,6 +317,7 @@ export function McpServersContent({
 				{
 					name: serverName,
 				},
+				{ timeoutMs: null },
 			);
 			applyResponse(response);
 		} catch (error) {
@@ -422,7 +389,7 @@ export function McpServersContent({
 			const args = splitCsv(form.argsText);
 			return {
 				name,
-				previousName: form.previousName.trim() || undefined,
+				previousName: form.previousName,
 				transportType: form.transportType,
 				command,
 				args: args.length > 0 ? args : undefined,
@@ -438,7 +405,7 @@ export function McpServersContent({
 		}
 		return {
 			name,
-			previousName: form.previousName.trim() || undefined,
+			previousName: form.previousName,
 			transportType: form.transportType,
 			url,
 			headers: parseKeyValuePairs(form.headersText),
@@ -484,6 +451,8 @@ export function McpServersContent({
 		try {
 			const openedPath = await desktopClient.invoke<string>(
 				"open_mcp_settings_file",
+				undefined,
+				{ timeoutMs: null },
 			);
 			if (openedPath.trim().length > 0) {
 				setSettingsPath(openedPath);

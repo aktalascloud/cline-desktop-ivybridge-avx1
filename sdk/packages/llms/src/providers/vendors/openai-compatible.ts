@@ -1,5 +1,3 @@
-import { withAuthorReasoningMode } from "../routing/author-reasoning-mode";
-import { withOpenAIChatSampling } from "../routing/openai-chat-sampling";
 import { createGateway } from "@ai-sdk/gateway";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { LanguageModelV4 } from "@ai-sdk/provider";
@@ -13,10 +11,6 @@ import { wrapLanguageModel } from "ai";
 import { ensureFetch, resolveApiKey } from "../http";
 import { splitToolImagesMiddleware } from "../middleware/split-tool-images";
 import { isOpenAIReasoningEraModelId } from "../model-facts";
-import {
-	readInferenceTimeoutMs,
-	withInferenceTimeout,
-} from "../streaming-fetch";
 import type { ProviderFactoryResult } from "./types";
 
 type FetchInput = Parameters<typeof fetch>[0];
@@ -238,11 +232,7 @@ export async function createOpenAICompatibleProviderModule(
 	// authoritative error and is surfaced to the user as-is. This keeps
 	// `llms` unopinionated about which providers do or don't need a key.
 	const apiKey = await resolveApiKey(config);
-	const fetch = withInferenceTimeout(
-		ensureFetch(createAzureApiVersionFetch(config)),
-		readInferenceTimeoutMs(config.timeoutMs),
-		"OpenAI-compatible request",
-	);
+	const fetch = createAzureApiVersionFetch(config);
 	const onResponseError = readResponseErrorHandler(config);
 	const providerFetch = onResponseError
 		? createResponseErrorFetch({
@@ -257,13 +247,7 @@ export async function createOpenAICompatibleProviderModule(
 		...(config.headers ? { headers: config.headers } : {}),
 		...(providerFetch ? { fetch: providerFetch } : {}),
 		includeUsage: true,
-		transformRequestBody: (body: Record<string, unknown>) =>
-			withMaxCompletionTokensForReasoningModels(
-				withAuthorReasoningMode(
-					withOpenAIChatSampling(body, config.options?.sampling),
-					config.options?.authorReasoningMode,
-				),
-			),
+		transformRequestBody: withMaxCompletionTokensForReasoningModels,
 	} as never);
 	const useOpenRouterImageTransport =
 		context.provider.metadata?.imageTransport === "openrouter" &&

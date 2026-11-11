@@ -153,7 +153,6 @@ function createBuiltinToolsList(
 	executorOverrides?: Partial<ToolExecutors>,
 	telemetry?: ITelemetryService,
 	runCommandExecutionController?: RunCommandExecutionController,
-	shellEnvironment?: import("../../services/shell-environment").ShellEnvironment,
 ): AgentTool[] {
 	const preset = ToolPresets[resolveToolPresetName({ mode })];
 	const toolRoutingConfig = resolveToolRoutingConfig(
@@ -168,12 +167,7 @@ function createBuiltinToolsList(
 			cwd,
 			telemetry,
 			executorOptions: {
-				bash: {
-					executionController: runCommandExecutionController,
-					...(shellEnvironment
-						? { env: shellEnvironment, inheritEnv: false }
-						: {}),
-				},
+				bash: { executionController: runCommandExecutionController },
 			},
 			...preset,
 			enableSkills: !!skillsExecutor,
@@ -616,7 +610,6 @@ export class DefaultRuntimeBuilder implements RuntimeBuilder {
 					toolExecutors,
 					telemetry ?? config.telemetry,
 					input.runCommandExecutionController,
-					input.shellEnvironment,
 				),
 			);
 			const agentPluginMcpServers = pluginsEnabled
@@ -721,7 +714,6 @@ export class DefaultRuntimeBuilder implements RuntimeBuilder {
 												toolExecutors,
 												telemetry ?? config.telemetry,
 												input.runCommandExecutionController,
-												input.shellEnvironment,
 											),
 											agent,
 										)
@@ -825,7 +817,6 @@ export class DefaultRuntimeBuilder implements RuntimeBuilder {
 									toolExecutors,
 									telemetry ?? config.telemetry,
 									input.runCommandExecutionController,
-									input.shellEnvironment,
 								)
 						: undefined,
 					teammateConfigProvider: delegatedAgentConfigProvider,

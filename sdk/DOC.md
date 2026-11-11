@@ -441,6 +441,56 @@ settings path, allowing hosts to update account and cloud views. Provider API
 calls do not automatically resend dispatched requests after a connection loss.
 OAuth login and audio transcription remain separate APIs.
 
+### Hub MCP management
+
+`createHubMcpApi(client)` uses an existing registered, token-authenticated local
+Hub connection. Desktop Settings and Marketplace use it for machine-wide MCP
+settings even while a remote environment is selected.
+
+```ts
+const mcp = createHubMcpApi(client);
+await mcp.upsert({ name: "local", transportType: "stdio", command: "node", args: ["server.js"] });
+const config = await mcp.list();
+await mcp.setDisabled("local", true);
+const inspection = await mcp.inspect("local"); // explicit connect + tool discovery, then disconnect
+await mcp.delete("local");
+```
+
+`ensureSettings()` creates the settings file without rewriting an existing file;
+`install(args)` accepts marketplace MCP install arguments using the existing
+parser and registers the transport without opening a connection. Callers cannot choose a settings path. Invalid requests fail before
+writing. Deletion and rename-source lookup use the exact stored key, including
+whitespace and reserved names, so malformed entries remain removable or repairable.
+New names still follow creation-name validation. Catalog responses include invalid entries with configuration errors and
+OAuth readiness, without OAuth token state. Static environment/header values are
+available only to authenticated clients for editing.
+
+Remote enable and changed-endpoint Settings saves passively probe existing credentials;
+failed probes leave the server disabled and never open a browser.
+URL connection deadlines cover transport startup and initialization, closing the
+in-flight transport on timeout so a stalled SSE endpoint cannot hold the shared
+queue or shutdown open. Same-endpoint edits retain OAuth credentials and metadata; endpoint changes discard those
+credentials. MCP requests are not replayed after dispatch. Mutations and probes
+are serialized, accepted work keeps the Hub busy, draining rejects new work, and
+shutdown waits for accepted operations. Lock acquisition yields the event loop,
+and Desktop mutation calls wait for completion of queued work. Inspection opens a temporary client and
+always disconnects it.
+
+`mcp.authorize(name, { openUrl, signal })` starts an interactive OAuth attempt in
+the Hub. Only the initiating client can poll its browser URLs or cancel it. The
+API returns the refreshed catalog after completion or cancellation; it never
+returns OAuth credentials. Desktop owns browser opening and cancels its viewer
+interaction when the webview closes. CLI entry points are unchanged.
+
+`mcp.oauth.start/next/cancel` are authenticated, owner-scoped commands. The Hub
+keeps interaction URLs out of broadcasts and the durable event log. User cancel
+restores a previously enabled server; disable/delete/edit/reinstall, superseding
+login, disconnect, expiry and shutdown prevent that restoration. New attempts
+wait for superseded callback listeners to retire. Settings mutations cancel
+attempts before entering the management queue, and token persistence checks the
+abort signal and original endpoint under the settings lock. Pending OAuth work
+participates in drain/replacement checks; shutdown aborts it and waits for cleanup.
+
 ### Provider authentication metadata for host UIs
 
 `@cline/shared` (including its browser entry point) exports `ProviderAuthInfo`,
@@ -648,17 +698,6 @@ and `createLocalHubScheduleRuntimeHandlers` to supply connector authentication.
 Paths start with `/api/v1/connectors`; the host supplies the API origin and
 authentication. Omit it to retain local account authentication and rollout checks.
 
-## MCP OAuth issuer binding
-
-MCP OAuth persistence retains the SDK-provided `issuer` in both tokens and client information. Pre-registered confidential clients must set `oauthClient.issuer` to the trusted authorization-server issuer alongside their locally configured client secret. An MCP server must not choose that trusted issuer for an existing secret.
-
-Legacy unbound records remain on disk but are not reused automatically; users sign in again. Tokens are returned only for the matching client and issuer. Issuer changes during a pending authorization invalidate that write rather than overwriting changed credentials.
-## Explicit MCP OAuth authorization
-
-`authorizeMcpServerOAuth` first probes `initialize` and `tools/list` to check saved access tokens and capture OAuth metadata and scope from a 401 challenge. Anonymous discovery success does not establish account authorization. When authorization is needed, the SDK flow keeps the native callback listener open until the code arrives, validates state, exchanges the code with PKCE and reconnects. Saved credentials use the SDK refresh path without another consent when possible. A server without OAuth metadata reports an authorization error rather than treating public discovery as authorization.
-
-Interactive OAuth fetches use the server's request timeout and caller cancellation signal, including discovery and client registration. Ordinary MCP discovery and protected tool calls keep their existing behavior.
-
 ## MCP Apps (experimental)
 
 MCP Apps support is off by default.
@@ -742,21 +781,6 @@ run returns.
 No message text leaves the client: `textSignature` and `session.input_sent`'s
 `bumpKind` are enums computed locally
 (`packages/core/src/services/telemetry/stall-signals.ts`).
-
-Voice input accepts dedicated audio-to-text models in streaming or recorded-file mode. Recorded audio uses the selected provider through `transcribeConfiguredVoiceInput`; it never changes the text-chat provider. Desktop submits the completed recording through the host SDK and keeps the draft protected while recognition runs. Custom transcription endpoints advertise their explicit model catalog, without unrelated builtin realtime models.
-
-
-## Local CLI shell environment snapshots
-
-`ClineCoreOptions.hub.captureShellEnvironment` is an explicit opt-in callback. It is honored only for CLI clients using a discovered loopback Hub; explicit/remote endpoints and the default SDK do not capture ambient environment. The CLI opts in when it creates its Core. Each session start/restore takes a fresh bounded immutable snapshot (4096 entries, 256 KiB, string values without NUL). Built-in shell children use that replacement environment, including nested shell tools; absent variables are not inherited from another Hub client. The snapshot is ephemeral, is not session metadata, and never mutates the Hub process environment. Hooks and MCP process environments are unchanged. Do not log or serialize environment contents as diagnostics.
-
-## UTF-16 string truncation
-
-`@cline/shared` exports `sliceUtf16(text, start, end?)`, with `String.slice`
-offset semantics. Cuts move inward by one code unit if they would split a
-surrogate pair. Existing unpaired surrogates are not repaired, and grapheme
-clusters are not preserved. `truncateStr`, `truncateSplit`, and command-output
-truncation use this helper while retaining UTF-16 budgets and existing notices.
 
 ### UX verification report renderer
 

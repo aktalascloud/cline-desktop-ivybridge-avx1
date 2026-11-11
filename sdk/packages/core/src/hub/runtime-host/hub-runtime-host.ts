@@ -55,7 +55,6 @@ import type {
 import { isSessionNotFoundError } from "../../runtime/host/runtime-host";
 import { RuntimeHostEventBus } from "../../runtime/host/runtime-host-support";
 import type { PluginCommandsApi } from "../../services/plugin-command-api";
-import { captureShellEnvironment } from "../../services/shell-environment";
 import { withSessionHistoryOriginMetadata } from "../../session/history-origin";
 import {
 	parseSessionCompactionState,
@@ -575,8 +574,6 @@ function hubReplyErrorMessage(
 }
 
 export interface HubRuntimeHostOptions {
-	/** Explicit host opt-in; never capture ambient SDK environment by default. */
-	captureShellEnvironment?: () => Readonly<Record<string, string | undefined>>;
 	url: string;
 	authToken?: string;
 	/** Header-based upgrade auth for remote proxies; see NodeHubClient. */
@@ -585,12 +582,6 @@ export interface HubRuntimeHostOptions {
 	displayName?: string;
 	capabilities?: RuntimeCapabilities;
 	telemetry?: ITelemetryService;
-}
-
-function isUnsupportedCommandError(error: unknown): boolean {
-	return (
-		(error as { code?: unknown } | undefined)?.code === "unsupported_command"
-	);
 }
 
 function mapStatus(
@@ -781,14 +772,12 @@ export class HubRuntimeHost implements RuntimeHost {
 	>();
 	private readonly defaultCapabilities: RuntimeCapabilities;
 	private readonly telemetry?: ITelemetryService;
-	private readonly captureShellEnvironment?: HubRuntimeHostOptions["captureShellEnvironment"];
 
 	constructor(
 		options: HubRuntimeHostOptions,
 		clientContext?: { workspaceRoot?: string; cwd?: string },
 	) {
 		this.clientContext = clientContext;
-		this.captureShellEnvironment = options.captureShellEnvironment;
 		this.clientOptions = {
 			authToken: options.authToken,
 			resolveConnectionHeaders: options.resolveConnectionHeaders,
@@ -874,9 +863,6 @@ export class HubRuntimeHost implements RuntimeHost {
 
 	async startSession(input: StartSessionInput): Promise<StartSessionResult> {
 		const capabilities = this.resolveCapabilities(input);
-		const shellEnvironment = this.captureShellEnvironment
-			? captureShellEnvironment(this.captureShellEnvironment())
-			: undefined;
 		const clientContributions = buildClientContributionRegistration(
 			input.localRuntime,
 			capabilities,
@@ -889,8 +875,8 @@ export class HubRuntimeHost implements RuntimeHost {
 		);
 		const plannedSessionId =
 			input.config.sessionId?.trim() || createSessionId();
-		const sendStartCommand = (command: "session.create" | "session.resume") =>
-			this.client.command(command, {
+		const sendCreateCommand = () =>
+			this.client.command("session.create", {
 				workspaceRoot: input.config.workspaceRoot?.trim() || input.config.cwd,
 				cwd: input.config.cwd,
 				sessionConfig: toJsonRecord(
@@ -898,7 +884,6 @@ export class HubRuntimeHost implements RuntimeHost {
 				),
 				metadata: buildCommandSessionMetadata(input),
 				runtimeOptions: {
-					...(shellEnvironment ? { shellEnvironment } : {}),
 					...(clientContext ? { clientContext } : {}),
 					...(userContext ? { userContext } : {}),
 					...(clientContributions.manifest.length > 0
@@ -916,29 +901,11 @@ export class HubRuntimeHost implements RuntimeHost {
 							plugins: toJsonRecord(input.plugins as Record<string, unknown>),
 						}
 					: {}),
-				// `session.resume` makes the Hub read the history from its own store.
-				...(command === "session.create"
-					? { initialMessages: input.initialMessages }
-					: {}),
+				initialMessages: input.initialMessages,
 				...(input.initialCompactionState
 					? { initialCompactionState: input.initialCompactionState }
 					: {}),
 			});
-		const sendCreateCommand = async () => {
-			// A saved transcript can exceed the Hub's inbound frame limit, which made
-			// the chat impossible to reopen, so resume it by ID instead of sending it.
-			// Only a Hub that predates the command may fall back to sending it.
-			if (input.resumeFromStore) {
-				try {
-					return await sendStartCommand("session.resume");
-				} catch (error) {
-					if (!isUnsupportedCommandError(error)) {
-						throw error;
-					}
-				}
-			}
-			return await sendStartCommand("session.create");
-		};
 		this.registerPlannedSession(
 			plannedSessionId,
 			capabilities,
@@ -1015,10 +982,6 @@ export class HubRuntimeHost implements RuntimeHost {
 			throw new Error("start is required when restore.messages is true");
 		}
 		const startConfig = input.start;
-		const shellEnvironment =
-			startConfig && this.captureShellEnvironment
-				? captureShellEnvironment(this.captureShellEnvironment())
-				: undefined;
 		const capabilities = startConfig
 			? this.resolveCapabilities(startConfig)
 			: undefined;
@@ -1074,7 +1037,6 @@ export class HubRuntimeHost implements RuntimeHost {
 								sessionConfig: toJsonRecord(startSessionConfig),
 								metadata: buildCommandSessionMetadata(startConfig),
 								runtimeOptions: {
-									...(shellEnvironment ? { shellEnvironment } : {}),
 									...(clientContext ? { clientContext } : {}),
 									...(userContext ? { userContext } : {}),
 									...(clientContributions.manifest.length > 0

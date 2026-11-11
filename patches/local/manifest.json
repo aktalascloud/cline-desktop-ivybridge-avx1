@@ -1,0 +1,47 @@
+{
+  "official_commit": "c5df41f937c496ce8c8e689ba58776593c703dfa",
+  "official_tree": "59f9cc41dc8593017c7502b0101fe72f96e15dce",
+  "verified_local_base": "f00d4287ed850fa4dfa486769ab67c3b8dc4ab5b",
+  "compiled_source": "6c0c1a084f6eb796378290e533cd5e9add98cada",
+  "patches": [
+    {
+      "file": "01-windows-avx1.patch",
+      "sha256": "88cf5b2c0e2aeedc4068c81e443fc68a4b8714c545d426be8b97ec19d9f267f2",
+      "files": 16
+    },
+    {
+      "file": "02-russian-and-stock-reasoning.patch",
+      "sha256": "afff59bb4c6c4e1793f5ed177f020b7ef62a7b793164da0df401898299711a17",
+      "files": 113
+    },
+    {
+      "file": "03-compaction.patch",
+      "sha256": "128256f72fd9795bef1510de235b3082bc405564d929fef67cdf7b20e2ecb5e6",
+      "files": 15
+    },
+    {
+      "file": "04-freellm-and-model-context.patch",
+      "sha256": "5b260f1cbd3e9f239e2aaffbe740fb7a6e0f17203f4b3af6b463820f1674b951",
+      "files": 6
+    }
+  ],
+  "exact_git_tree_replay": true,
+  "sanitized_base": "0ced6cb38bf0cedbdf0c370d94ef63bc21ae81a3",
+  "build_tree": "312481ab111532f9a8988400c1de8697d15a28cc",
+  "publication_files": [
+    ".gitattributes",
+    ".github/workflows/avx1-verify.yml",
+    "README.md",
+    "fork/build-windows.ps1",
+    "fork/check-patches.py",
+    "fork/components.json",
+    "fork/qualification.json",
+    "fork/updater/latest.json",
+    "patches/local/01-windows-avx1.patch",
+    "patches/local/02-russian-and-stock-reasoning.patch",
+    "patches/local/03-compaction.patch",
+    "patches/local/04-freellm-and-model-context.patch",
+    "patches/local/README.md",
+    "patches/local/manifest.json"
+  ]
+}

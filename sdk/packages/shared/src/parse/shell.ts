@@ -400,8 +400,7 @@ export function getShellInvocation(
 						"[Console]::OutputEncoding=[Text.UTF8Encoding]::new();" +
 						"$ErrorActionPreference='Stop';" +
 						"$c=[Console]::In.ReadToEnd();" +
-						// Use the native failure code when available, otherwise 1.
-						"$c+=[Environment]::NewLine+'if(-not $?){if($LASTEXITCODE){exit $LASTEXITCODE};exit 1}';" +
+						"$c+=[Environment]::NewLine+'if(-not $?){exit 1}';" +
 						"& ([ScriptBlock]::Create($c))",
 				],
 				input: selected.script,

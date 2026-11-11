@@ -1,0 +1,1936 @@
+diff --git a/apps/cli/script/compile-binary.ts b/apps/cli/script/compile-binary.ts
+index 1a7fc444d960b90eda3d55d20cda1199d5b4458f..d49af98e5961f714ed1ae7c40c7c9e46d7d6b6d3 100644
+--- a/apps/cli/script/compile-binary.ts
++++ b/apps/cli/script/compile-binary.ts
+@@ -12,6 +12,12 @@ import { tmpdir } from "node:os";
+ import { dirname, join, relative, resolve } from "node:path";
+ import { $ } from "bun";
+ import { buildDashboardRuntimeDirectory } from "./dashboard-runtime";
++import { distributionBootstrap } from "./distribution-bootstrap";
++import {
++	loggingBundlePlugin,
++	loggingWorkers,
++	discordWorkerPath,
++} from "../../../fork/logging-bundle";
+ 
+ const cliDir = resolve(import.meta.dir, "..");
+ const rootDir = resolve(cliDir, "../..");
+@@ -80,6 +86,7 @@ export async function installOpenTuiNativeVariants(): Promise<void> {
+ }
+ 
+ export interface CompileCliBinaryOptions {
++	distribution?: "avx1";
+ 	bunTarget: Bun.Build.CompileTarget;
+ 	outfile: string;
+ 	/** Runtime flags baked into the executable, e.g. `--use-system-ca`. */
+@@ -99,6 +106,8 @@ export async function compileCliBinary(
+ 	const pluginRuntime = join(rootDir, "sdk/packages/core/dist/plugin-runtime");
+ 	const dashboardRuntime = await buildDashboardRuntimeDirectory();
+ 	const parserWorker = findOpenTuiParserWorker();
++	const logWorkers = loggingWorkers(cliDir);
++	const discordWorker = discordWorkerPath(cliDir);
+ 	const targetOs = input.bunTarget.includes("windows") ? "windows" : "posix";
+ 	const bunfsRoot = targetOs === "windows" ? "B:/~BUN/root/" : "/$bunfs/root/";
+ 	const parserWorkerPath = relative(rootDir, parserWorker).replaceAll(
+@@ -124,8 +133,15 @@ export async function compileCliBinary(
+ 	try {
+ 		const autoload = input.autoloadLaunchDirectoryConfig !== false;
+ 		result = await Bun.build({
+-			entrypoints: [entrypoint, parserWorker],
++			entrypoints: [
++				entrypoint,
++				parserWorker,
++				discordWorker,
++				...Object.values(logWorkers),
++			],
+ 			root: rootDir,
++			banner: distributionBootstrap(input.distribution),
++			plugins: [loggingBundlePlugin()],
+ 			splitting: true,
+ 			compile: {
+ 				target: input.bunTarget,
+@@ -140,6 +156,22 @@ export async function compileCliBinary(
+ 			minify: true,
+ 			external: ["@anthropic-ai/vertex-sdk"],
+ 			define: {
++				__CLINE_DISCORD_WS_WORKER__: JSON.stringify(
++					bunfsRoot + relative(rootDir, discordWorker).replaceAll("\\", "/"),
++				),
++				__CLINE_LOG_THREAD__: JSON.stringify(
++					bunfsRoot +
++						relative(rootDir, logWorkers.thread).replaceAll("\\", "/"),
++				),
++				__CLINE_LOG_PINO__: JSON.stringify(
++					bunfsRoot + relative(rootDir, logWorkers.pino).replaceAll("\\", "/"),
++				),
++				__CLINE_LOG_FILE__: JSON.stringify(
++					bunfsRoot + relative(rootDir, logWorkers.file).replaceAll("\\", "/"),
++				),
++				"process.env.CLINE_DESKTOP_DISTRIBUTION": JSON.stringify(
++					input.distribution ?? "",
++				),
+ 				OTUI_TREE_SITTER_WORKER_PATH: bunfsRoot + parserWorkerPath,
+ 				// compile.assets keeps each directory tree under its basename.
+ 				__CLINE_PLUGIN_RUNTIME_DIR__: JSON.stringify(
+diff --git a/apps/cli/script/distribution-bootstrap.ts b/apps/cli/script/distribution-bootstrap.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..2825f90ba80229d5e8232430e6335bf9ff638c23
+--- /dev/null
++++ b/apps/cli/script/distribution-bootstrap.ts
+@@ -0,0 +1,7 @@
++/** Runs before bundled imports, including modules that cache storage paths. */
++export function distributionBootstrap(
++	distribution?: "avx1",
++): string | undefined {
++	if (distribution !== "avx1") return undefined;
++	return "if (!process.env.CLINE_DIR?.trim() && !process.env.CLINE_DATA_DIR?.trim()) { process.env.CLINE_DIR = process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:os').homedir(), '.cline-avx1'); }";
++}
+diff --git a/apps/examples/desktop-app/package.json b/apps/examples/desktop-app/package.json
+index 61c3ef3890ebf51c3780bf74e2dd47948853fc0b..32be1eeb1a2af0707772038d4de4552fe8631d40 100644
+--- a/apps/examples/desktop-app/package.json
++++ b/apps/examples/desktop-app/package.json
+@@ -1,6 +1,6 @@
+ {
+ 	"name": "@cline/code",
+-	"version": "0.0.49",
++	"version": "1.0.18",
+ 	"private": true,
+ 	"scripts": {
+ 		"build:ui": "bun -F @cline/ui build",
+diff --git a/apps/examples/desktop-app/scripts/build-desktop-runtime.ts b/apps/examples/desktop-app/scripts/build-desktop-runtime.ts
+index f9ff299f5792ec308250aaea83c62346d9acd973..9572c9e9f17c3c01d8224240e397e4920a6aac2e 100644
+--- a/apps/examples/desktop-app/scripts/build-desktop-runtime.ts
++++ b/apps/examples/desktop-app/scripts/build-desktop-runtime.ts
+@@ -6,6 +6,11 @@ import {
+ 	installOpenTuiNativeVariants,
+ } from "../../../cli/script/compile-binary";
+ import { telemetryDefineArgs } from "./telemetry-define-args";
++import {
++	backendLoggingOptions,
++	loggingWorkers,
++	loggingWorkerNames,
++} from "../../../../fork/logging-bundle";
+ 
+ // The desktop app ships two runtime artifacts and no app-specific executable:
+ //
+@@ -52,7 +57,8 @@ const resolveBunCompileTarget = (
+ 	if (targetTriple.startsWith("aarch64-apple-darwin"))
+ 		return "bun-darwin-arm64";
+ 	if (targetTriple.startsWith("x86_64-apple-darwin")) return "bun-darwin-x64";
+-	if (targetTriple.startsWith("x86_64-pc-windows")) return "bun-windows-x64";
++	if (targetTriple.startsWith("x86_64-pc-windows"))
++		return "bun-windows-x64-baseline";
+ 	if (targetTriple.startsWith("aarch64-pc-windows")) return "bun-windows-arm64";
+ 	// SSH hosts may predate AVX2 (e.g. Ivy Bridge Xeons). The default Bun
+ 	// x64 runtime can SIGILL before our entrypoint runs on those CPUs.
+@@ -73,6 +79,7 @@ const compileDesktopCli = async (
+ 	outfile = desktopCliOutfile(targetTriple),
+ ): Promise<string> => {
+ 	await compileCliBinary({
++		distribution: "avx1",
+ 		bunTarget: resolveBunCompileTarget(targetTriple),
+ 		outfile: fileURLToPath(new URL(`../${outfile}`, import.meta.url)),
+ 		// A packaged app and an SSH session launch the CLI from directories the
+@@ -103,7 +110,39 @@ const bundleDesktopBackend = async (): Promise<void> => {
+ 		recursive: true,
+ 	});
+ 	const defines = telemetryDefineArgs();
+-	await $`bun build ./sidecar/index.ts --target bun --minify ${defines} --outfile ${DESKTOP_BACKEND_BUNDLE}`;
++	const define: Record<string, string> = {};
++	for (let index = 0; index < defines.length; index += 2) {
++		const pair = defines[index + 1];
++		const separator = pair.indexOf("=");
++		define[pair.slice(0, separator)] = pair.slice(separator + 1);
++	}
++	const logWorkers = loggingWorkers(APP_ROOT);
++	const logging = backendLoggingOptions();
++	for (const key of Object.keys(logWorkers) as Array<keyof typeof logWorkers>) {
++		const result = await Bun.build({
++			...logging,
++			entrypoints: [logWorkers[key]],
++			target: "bun",
++			minify: true,
++		});
++		if (!result.success) throw new Error("Logger worker build failed");
++		await Bun.write(
++			`${BIN_DIR}/desktop-backend/${loggingWorkerNames[key]}`,
++			result.outputs[0],
++		);
++	}
++	const result = await Bun.build({
++		entrypoints: ["./sidecar/index.ts"],
++		target: "bun",
++		minify: true,
++		...logging,
++		define: {
++			...define,
++			...logging.define,
++		},
++	});
++	if (!result.success) throw new Error("Desktop backend build failed");
++	await Bun.write(DESKTOP_BACKEND_BUNDLE, result.outputs[0]);
+ };
+ 
+ // Each compiled CLI embeds a full Bun runtime (~100 MB), and both Linux copies
+@@ -180,17 +219,20 @@ const main = async () => {
+ 	if (needed.some(([os, arch]) => !hasOpenTuiNativeVariant(os, arch))) {
+ 		await installOpenTuiNativeVariants();
+ 	}
++	console.log("Building desktop backend and logger workers");
+ 	await bundleDesktopBackend();
++	console.log("Building host CLI");
+ 	if (targetTriple === "universal-apple-darwin") {
+ 		await buildUniversalMacCli();
+ 	} else {
+ 		await compileDesktopCli(targetTriple);
+ 	}
++	console.log("Building remote CLI helpers");
+ 	await buildRemoteClis();
+ };
+ 
+ if (import.meta.main) {
+-	main().catch((error: unknown) => {
++	await main().catch((error: unknown) => {
+ 		console.error(error);
+ 		process.exitCode = 1;
+ 	});
+diff --git a/apps/examples/desktop-app/src-tauri/nsis/LICENSE.tauri-MIT b/apps/examples/desktop-app/src-tauri/nsis/LICENSE.tauri-MIT
+new file mode 100644
+index 0000000000000000000000000000000000000000..b08530d59433b3060f4fad8751ac2610c0b0aff3
+--- /dev/null
++++ b/apps/examples/desktop-app/src-tauri/nsis/LICENSE.tauri-MIT
+@@ -0,0 +1,21 @@
++MIT License
++
++Copyright (c) 2017 - Present Tauri Apps Contributors
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++SOFTWARE.
+diff --git a/apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh b/apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh
+index 8d403e6d84bf7e38ea8d614b98c7586108bb3b96..a741d62c32a410162c818735be7c144521cce1dc 100644
+--- a/apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh
++++ b/apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh
+@@ -1,4 +1,16 @@
+ !include "Win\RestartManager.nsh"
++!ifndef AVX1_AUTOSTART_LINK
++!define AVX1_AUTOSTART_LINK "Cline Desktop AVX1 RU.lnk"
++!endif
++
++; Existing installations use Tauri's normal in-place updater path. This
++; bypasses older uninstallers that only reject a hidden Hub instead of
++; closing it. The preinstall hook below then owns shutdown before writes.
++!macro AVX1_DETECT_EXISTING_INSTALLATION
++  ${If} ${FileExists} "$INSTDIR\${MAINBINARYNAME}.exe"
++    StrCpy $UpdateMode 1
++  ${EndIf}
++!macroend
+ 
+ ; The bundled cline-cli.exe runs the desktop backend and, as a detached
+ ; daemon, the Hub, which outlives the desktop. Stop users of every installed
+@@ -16,6 +28,8 @@
+   Push $2
+   Push $3
+   Push $4
++  Push $5
++  StrCpy $5 0
+ 
+   retry:
+     System::Call 'rstrtmgr::RmStartSession(*i .r1, i 0, w .r2) i .r0'
+@@ -38,18 +52,58 @@
+       Goto end_session
+     ${EndIf}
+ 
++    !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\bin\dsw2api\runtime\python.exe"
++    ${If} $0 != 0
++      Goto end_session
++    ${EndIf}
++    !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\bin\dsw2api\runtime\pythonw.exe"
++    ${If} $0 != 0
++      Goto end_session
++    ${EndIf}
++    !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\bin\dsw2api\cline-dsw2api-pow.exe"
++    ${If} $0 != 0
++      Goto end_session
++    ${EndIf}
++    !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\bin\browser-login\node.exe"
++    ${If} $0 != 0
++      Goto end_session
++    ${EndIf}
++    !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\bin\browser-bridge\native-host.exe"
++    ${If} $0 != 0
++      Goto end_session
++    ${EndIf}
++
+     StrCpy $3 0
+     System::Call 'rstrtmgr::RmGetList(i r1, *i .r2, *i r3, p 0, *i .r4) i .r0'
+     ${If} $0 == 234 ; ERROR_MORE_DATA: at least one process uses these files
+-      ; RmShutdown waits for shutdown; unlike TerminateProcess + Sleep, its
+-      ; return value tells us whether stopping the file users failed.
+-      System::Call 'rstrtmgr::RmShutdown(i r1, i ${RmForceShutdown}, p 0) i .r0'
++      ; A hidden backend/Hub can outlive the window. 234 is a size-query
++      ; result, not a shutdown failure. Ask Windows to close owners of these
++      ; exact files; force only nonresponsive owners after its grace period.
++      ; Never kill by image name: another installation must keep running.
++      ${If} $LANGUAGE == ${LANG_RUSSIAN}
++        DetailPrint "Закрытие Cline Desktop AVX1 RU и фоновых компонентов..."
++      ${Else}
++        DetailPrint "Closing Cline Desktop AVX1 RU and its background components..."
++      ${EndIf}
++      System::Call 'rstrtmgr::RmShutdown(i r1, i 1, p 0) i .r0'
++      ${If} $0 == 0
++      ${OrIf} $0 == 351 ; some owners may still be releasing their images
++        StrCpy $3 0
++        System::Call 'rstrtmgr::RmGetList(i r1, *i .r2, *i r3, p 0, *i .r4) i .r0'
++      ${EndIf}
+     ${EndIf}
+     ; A 0 from RmGetList means nothing holds the files: $0 stays 0.
+ 
+   end_session:
+     ; Release the session on every path, preserving the operation's error.
+     System::Call 'rstrtmgr::RmEndSession(i r1)'
++    ${If} $0 == 234
++    ${AndIf} $5 < 10
++      ; Allow the updater's already-exiting process to release its image.
++      IntOp $5 $5 + 1
++      Sleep 200
++      Goto retry
++    ${EndIf}
+     ${If} $0 == 0
+       Goto done
+     ${EndIf}
+@@ -61,7 +115,12 @@
+     ; have shown in that mode anyway, so offer a retry. Silent (/S) takes
+     ; the default and fails closed. Aborting rather than continuing keeps
+     ; the install from ending half-replaced.
+-    MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Could not stop Cline processes using files in:$\r$\n$INSTDIR$\r$\n$\r$\nClose Cline and its background tasks, then retry. Windows error: $0." /SD IDCANCEL IDRETRY retry
++    ${If} $LANGUAGE == ${LANG_RUSSIAN}
++      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Не удалось автоматически закрыть компоненты приложения:$\r$\n$INSTDIR$\r$\n$\r$\nЗакройте оставшиеся процессы Cline Desktop AVX1 RU и нажмите «Повтор». Код Windows: $0." /SD IDCANCEL IDRETRY retry
++    ${Else}
++      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Could not automatically close application components:$\r$\n$INSTDIR$\r$\n$\r$\nClose the remaining Cline Desktop AVX1 RU processes and click Retry. Windows code: $0." /SD IDCANCEL IDRETRY retry
++    ${EndIf}
++    Pop $5
+     Pop $4
+     Pop $3
+     Pop $2
+@@ -73,6 +132,7 @@
+   done:
+     ; Nothing installs the earlier backend executable any more.
+     Delete "$INSTDIR\code-sidecar.exe"
++    Pop $5
+     Pop $4
+     Pop $3
+     Pop $2
+@@ -86,4 +146,14 @@
+ 
+ !macro NSIS_HOOK_PREUNINSTALL
+   !insertmacro CallArtificialFunction StopDesktopProcesses
++  Delete "$SMSTARTUP\${AVX1_AUTOSTART_LINK}"
++!macroend
++
++!macro NSIS_HOOK_POSTINSTALL
++  ; Retire this fork's browser integration; other applications use different host names.
++  DeleteRegKey HKCU "Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\cloud.aktalas.cline_dsw"
++  DeleteRegKey HKCU "Software\Google\Chrome\NativeMessagingHosts\cloud.aktalas.cline_dsw"
++  DeleteRegKey HKCU "Software\Microsoft\Edge\NativeMessagingHosts\cloud.aktalas.cline_dsw"
++  SetOutPath "$INSTDIR"
++  CreateShortCut "$SMSTARTUP\${AVX1_AUTOSTART_LINK}" "$INSTDIR\${MAINBINARYNAME}.exe"
+ !macroend
+diff --git a/apps/examples/desktop-app/src-tauri/nsis/installer.nsi b/apps/examples/desktop-app/src-tauri/nsis/installer.nsi
+new file mode 100644
+index 0000000000000000000000000000000000000000..355305ccb5833a0d12e839eeb91f9bd7e241eb55
+--- /dev/null
++++ b/apps/examples/desktop-app/src-tauri/nsis/installer.nsi
+@@ -0,0 +1,999 @@
++Unicode true
++ManifestDPIAware true
++; Add in `dpiAwareness` `PerMonitorV2` to manifest for Windows 10 1607+ (note this should not affect lower versions since they should be able to ignore this and pick up `dpiAware` `true` set by `ManifestDPIAware true`)
++; Currently undocumented on NSIS's website but is in the Docs folder of source tree, see
++; https://github.com/kichik/nsis/blob/5fc0b87b819a9eec006df4967d08e522ddd651c9/Docs/src/attributes.but#L286-L300
++; https://github.com/tauri-apps/tauri/pull/10106
++ManifestDPIAwareness PerMonitorV2
++
++!if "{{compression}}" == "none"
++  SetCompress off
++!else
++  ; Set the compression algorithm. We default to LZMA.
++  SetCompressor /SOLID "{{compression}}"
++!endif
++
++; Keep above !include to stay ahead of any plugin command
++; see https://github.com/tauri-apps/tauri/pull/15422#discussion_r3289239624
++{{#if signed_plugins_path}}
++!addplugindir "{{signed_plugins_path}}"
++{{/if}}
++
++!include MUI2.nsh
++!include FileFunc.nsh
++!include x64.nsh
++!include WordFunc.nsh
++!include "utils.nsh"
++!include "FileAssociation.nsh"
++!include "Win\COM.nsh"
++!include "Win\Propkey.nsh"
++!include "Win\RestartManager.nsh"
++!include "StrFunc.nsh"
++${StrCase}
++${StrLoc}
++
++{{#if installer_hooks}}
++!include "{{installer_hooks}}"
++{{/if}}
++
++!define WEBVIEW2APPGUID "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
++
++!define MANUFACTURER "{{manufacturer}}"
++!define PRODUCTNAME "{{product_name}}"
++!define VERSION "{{version}}"
++!define VERSIONWITHBUILD "{{version_with_build}}"
++!define HOMEPAGE "{{homepage}}"
++!define INSTALLMODE "{{install_mode}}"
++!define LICENSE "{{license}}"
++!define INSTALLERICON "{{installer_icon}}"
++!define SIDEBARIMAGE "{{sidebar_image}}"
++!define HEADERIMAGE "{{header_image}}"
++!define UNINSTALLERICON "{{uninstaller_icon}}"
++!define UNINSTALLERHEADERIMAGE "{{uninstaller_header_image}}"
++!define MAINBINARYNAME "{{main_binary_name}}"
++!define MAINBINARYSRCPATH "{{main_binary_path}}"
++!define BUNDLEID "{{bundle_id}}"
++!define COPYRIGHT "{{copyright}}"
++!define OUTFILE "{{out_file}}"
++!define ARCH "{{arch}}"
++!define ADDITIONALPLUGINSPATH "{{additional_plugins_path}}"
++!define ALLOWDOWNGRADES "{{allow_downgrades}}"
++!define DISPLAYLANGUAGESELECTOR "{{display_language_selector}}"
++!define INSTALLWEBVIEW2MODE "{{install_webview2_mode}}"
++!define WEBVIEW2INSTALLERARGS "{{webview2_installer_args}}"
++!define WEBVIEW2BOOTSTRAPPERPATH "{{webview2_bootstrapper_path}}"
++!define WEBVIEW2INSTALLERPATH "{{webview2_installer_path}}"
++!define MINIMUMWEBVIEW2VERSION "{{minimum_webview2_version}}"
++!define UNINSTKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCTNAME}"
++!define MANUKEY "Software\${MANUFACTURER}"
++!define MANUPRODUCTKEY "${MANUKEY}\${PRODUCTNAME}"
++!define UNINSTALLERSIGNCOMMAND "{{uninstaller_sign_cmd}}"
++!define ESTIMATEDSIZE "{{estimated_size}}"
++!define STARTMENUFOLDER "{{start_menu_folder}}"
++
++Var PassiveMode
++Var UpdateMode
++Var NoShortcutMode
++Var WixMode
++Var OldMainBinaryName
++
++Name "${PRODUCTNAME}"
++BrandingText "${COPYRIGHT}"
++OutFile "${OUTFILE}"
++
++; We don't actually use this value as default install path,
++; it's just for nsis to append the product name folder in the directory selector
++; https://nsis.sourceforge.io/Reference/InstallDir
++!define PLACEHOLDER_INSTALL_DIR "placeholder\${PRODUCTNAME}"
++InstallDir "${PLACEHOLDER_INSTALL_DIR}"
++
++VIProductVersion "${VERSIONWITHBUILD}"
++VIAddVersionKey "ProductName" "${PRODUCTNAME}"
++VIAddVersionKey "FileDescription" "${PRODUCTNAME}"
++VIAddVersionKey "LegalCopyright" "${COPYRIGHT}"
++VIAddVersionKey "FileVersion" "${VERSION}"
++VIAddVersionKey "ProductVersion" "${VERSION}"
++
++# additional plugins
++!addplugindir "${ADDITIONALPLUGINSPATH}"
++
++; Uninstaller signing command
++!if "${UNINSTALLERSIGNCOMMAND}" != ""
++  !uninstfinalize '${UNINSTALLERSIGNCOMMAND}'
++!endif
++
++; Handle install mode, `perUser`, `perMachine` or `both`
++!if "${INSTALLMODE}" == "perMachine"
++  RequestExecutionLevel admin
++!endif
++
++!if "${INSTALLMODE}" == "currentUser"
++  RequestExecutionLevel admin
++!endif
++
++!if "${INSTALLMODE}" == "both"
++  !define MULTIUSER_MUI
++  !define MULTIUSER_INSTALLMODE_INSTDIR "${PRODUCTNAME}"
++  !define MULTIUSER_INSTALLMODE_COMMANDLINE
++  !if "${ARCH}" == "x64"
++    !define MULTIUSER_USE_PROGRAMFILES64
++  !else if "${ARCH}" == "arm64"
++    !define MULTIUSER_USE_PROGRAMFILES64
++  !endif
++  !define MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_KEY "${UNINSTKEY}"
++  !define MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_VALUENAME "CurrentUser"
++  !define MULTIUSER_INSTALLMODEPAGE_SHOWUSERNAME
++  !define MULTIUSER_INSTALLMODE_FUNCTION RestorePreviousInstallLocation
++  !define MULTIUSER_EXECUTIONLEVEL Highest
++  !include MultiUser.nsh
++!endif
++
++; Installer icon
++!if "${INSTALLERICON}" != ""
++  !define MUI_ICON "${INSTALLERICON}"
++!endif
++
++; Installer sidebar image
++!if "${SIDEBARIMAGE}" != ""
++  !define MUI_WELCOMEFINISHPAGE_BITMAP "${SIDEBARIMAGE}"
++!endif
++
++; Enable header images for installer and uninstaller pages when either image is configured.
++!if "${HEADERIMAGE}" != ""
++  !define MUI_HEADERIMAGE
++!else if "${UNINSTALLERHEADERIMAGE}" != ""
++  !define MUI_HEADERIMAGE
++!endif
++
++; Installer header image
++!if "${HEADERIMAGE}" != ""
++  !define MUI_HEADERIMAGE_BITMAP "${HEADERIMAGE}"
++!endif
++
++; Uninstaller header image
++!if "${UNINSTALLERHEADERIMAGE}" != ""
++  !define MUI_HEADERIMAGE_UNBITMAP "${UNINSTALLERHEADERIMAGE}"
++!endif
++
++; Uninstaller icon
++!if "${UNINSTALLERICON}" != ""
++  !define MUI_UNICON "${UNINSTALLERICON}"
++!endif
++
++; Define registry key to store installer language
++!define MUI_LANGDLL_REGISTRY_ROOT "HKCU"
++!define MUI_LANGDLL_REGISTRY_KEY "${MANUPRODUCTKEY}"
++!define MUI_LANGDLL_REGISTRY_VALUENAME "Installer Language"
++
++; Installer pages, must be ordered as they appear
++; 1. Welcome Page
++!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
++!insertmacro MUI_PAGE_WELCOME
++
++; 2. License Page (if defined)
++!if "${LICENSE}" != ""
++  !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
++  !insertmacro MUI_PAGE_LICENSE "${LICENSE}"
++!endif
++
++; 3. Install mode (if it is set to `both`)
++!if "${INSTALLMODE}" == "both"
++  !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
++  !insertmacro MULTIUSER_PAGE_INSTALLMODE
++!endif
++
++; 4. Custom page to ask user if he wants to reinstall/uninstall
++;    only if a previous installation was detected
++Var ReinstallPageCheck
++Page custom PageReinstall PageLeaveReinstall
++Function PageReinstall
++  ; Uninstall previous WiX installation if exists.
++  ;
++  ; A WiX installer stores the installation info in registry
++  ; using a UUID and so we have to loop through all keys under
++  ; `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`
++  ; and check if `DisplayName` and `Publisher` keys match ${PRODUCTNAME} and ${MANUFACTURER}
++  ;
++  ; This has a potential issue that there maybe another installation that matches
++  ; our ${PRODUCTNAME} and ${MANUFACTURER} but wasn't installed by our WiX installer,
++  ; however, this should be fine since the user will have to confirm the uninstallation
++  ; and they can chose to abort it if doesn't make sense.
++  StrCpy $0 0
++  wix_loop:
++    EnumRegKey $1 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" $0
++    StrCmp $1 "" wix_loop_done ; Exit loop if there is no more keys to loop on
++    IntOp $0 $0 + 1
++    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1" "DisplayName"
++    ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1" "Publisher"
++    StrCmp "$R0$R1" "${PRODUCTNAME}${MANUFACTURER}" 0 wix_loop
++    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1" "UninstallString"
++    ${StrCase} $R1 $R0 "L"
++    ${StrLoc} $R0 $R1 "msiexec" ">"
++    StrCmp $R0 0 0 wix_loop_done
++    StrCpy $WixMode 1
++    StrCpy $R6 "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$1"
++    Goto compare_version
++  wix_loop_done:
++
++  ; Check if there is an existing installation, if not, abort the reinstall page
++  ReadRegStr $R0 SHCTX "${UNINSTKEY}" ""
++  ReadRegStr $R1 SHCTX "${UNINSTKEY}" "UninstallString"
++  ${IfThen} "$R0$R1" == "" ${|} Abort ${|}
++
++  ; Compare this installar version with the existing installation
++  ; and modify the messages presented to the user accordingly
++  compare_version:
++  StrCpy $R4 "$(older)"
++  ${If} $WixMode = 1
++    ReadRegStr $R0 HKLM "$R6" "DisplayVersion"
++  ${Else}
++    ReadRegStr $R0 SHCTX "${UNINSTKEY}" "DisplayVersion"
++  ${EndIf}
++  ${IfThen} $R0 == "" ${|} StrCpy $R4 "$(unknown)" ${|}
++
++  nsis_tauri_utils::SemverCompare "${VERSION}" $R0
++  Pop $R0
++  ; Reinstalling the same version
++  ${If} $R0 = 0
++    StrCpy $R1 "$(alreadyInstalledLong)"
++    StrCpy $R2 "$(addOrReinstall)"
++    StrCpy $R3 "$(uninstallApp)"
++    !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(chooseMaintenanceOption)"
++  ; Upgrading
++  ${ElseIf} $R0 = 1
++    StrCpy $R1 "$(olderOrUnknownVersionInstalled)"
++    StrCpy $R2 "$(uninstallBeforeInstalling)"
++    StrCpy $R3 "$(dontUninstall)"
++    !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(choowHowToInstall)"
++  ; Downgrading
++  ${ElseIf} $R0 = -1
++    StrCpy $R1 "$(newerVersionInstalled)"
++    StrCpy $R2 "$(uninstallBeforeInstalling)"
++    !if "${ALLOWDOWNGRADES}" == "true"
++      StrCpy $R3 "$(dontUninstall)"
++    !else
++      StrCpy $R3 "$(dontUninstallDowngrade)"
++    !endif
++    !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(choowHowToInstall)"
++  ${Else}
++    Abort
++  ${EndIf}
++
++  ; Skip showing the page if passive
++  ;
++  ; Note that we don't call this earlier at the beginning
++  ; of this function because we need to populate some variables
++  ; related to current installed version if detected and whether
++  ; we are downgrading or not.
++  ${If} $PassiveMode = 1
++  ${OrIf} $UpdateMode = 1
++    Call PageLeaveReinstall
++  ${Else}
++    nsDialogs::Create 1018
++    Pop $R4
++    ${IfThen} $(^RTL) = 1 ${|} nsDialogs::SetRTL $(^RTL) ${|}
++
++    ${NSD_CreateLabel} 0 0 100% 24u $R1
++    Pop $R1
++
++    ${NSD_CreateRadioButton} 30u 50u -30u 8u $R2
++    Pop $R2
++    ${NSD_OnClick} $R2 PageReinstallUpdateSelection
++
++    ${NSD_CreateRadioButton} 30u 70u -30u 8u $R3
++    Pop $R3
++    ; Disable this radio button if downgrading and downgrades are disabled
++    !if "${ALLOWDOWNGRADES}" == "false"
++      ${IfThen} $R0 = -1 ${|} EnableWindow $R3 0 ${|}
++    !endif
++    ${NSD_OnClick} $R3 PageReinstallUpdateSelection
++
++    ; Check the first radio button if this the first time
++    ; we enter this page or if the second button wasn't
++    ; selected the last time we were on this page
++    ${If} $ReinstallPageCheck <> 2
++      SendMessage $R2 ${BM_SETCHECK} ${BST_CHECKED} 0
++    ${Else}
++      SendMessage $R3 ${BM_SETCHECK} ${BST_CHECKED} 0
++    ${EndIf}
++
++    ${NSD_SetFocus} $R2
++    nsDialogs::Show
++  ${EndIf}
++FunctionEnd
++Function PageReinstallUpdateSelection
++  ${NSD_GetState} $R2 $R1
++  ${If} $R1 == ${BST_CHECKED}
++    StrCpy $ReinstallPageCheck 1
++  ${Else}
++    StrCpy $ReinstallPageCheck 2
++  ${EndIf}
++FunctionEnd
++Function PageLeaveReinstall
++  ${NSD_GetState} $R2 $R1
++
++  ; If migrating from Wix, always uninstall
++  ${If} $WixMode = 1
++    Goto reinst_uninstall
++  ${EndIf}
++
++  ; In update mode, always proceeds without uninstalling
++  ${If} $UpdateMode = 1
++    Goto reinst_done
++  ${EndIf}
++
++  ; $R0 holds whether same(0)/upgrading(1)/downgrading(-1) version
++  ; $R1 holds the radio buttons state:
++  ;   1 => first choice was selected
++  ;   0 => second choice was selected
++  ${If} $R0 = 0 ; Same version, proceed
++    ${If} $R1 = 1              ; User chose to add/reinstall
++      Goto reinst_done
++    ${Else}                    ; User chose to uninstall
++      Goto reinst_uninstall
++    ${EndIf}
++  ${ElseIf} $R0 = 1 ; Upgrading
++    ${If} $R1 = 1              ; User chose to uninstall
++      Goto reinst_uninstall
++    ${Else}
++      Goto reinst_done         ; User chose NOT to uninstall
++    ${EndIf}
++  ${ElseIf} $R0 = -1 ; Downgrading
++    ${If} $R1 = 1              ; User chose to uninstall
++      Goto reinst_uninstall
++    ${Else}
++      Goto reinst_done         ; User chose NOT to uninstall
++    ${EndIf}
++  ${EndIf}
++
++  reinst_uninstall:
++    HideWindow
++    ClearErrors
++
++    ${If} $WixMode = 1
++      ReadRegStr $R1 HKLM "$R6" "UninstallString"
++      ExecWait '$R1' $0
++    ${Else}
++      ReadRegStr $4 SHCTX "${MANUPRODUCTKEY}" ""
++      ReadRegStr $R1 SHCTX "${UNINSTKEY}" "UninstallString"
++      ${IfThen} $UpdateMode = 1 ${|} StrCpy $R1 "$R1 /UPDATE" ${|} ; append /UPDATE
++      ${IfThen} $PassiveMode = 1 ${|} StrCpy $R1 "$R1 /P" ${|} ; append /P
++      StrCpy $R1 "$R1 _?=$4" ; append uninstall directory
++      ExecWait '$R1' $0
++    ${EndIf}
++
++    BringToFront
++
++    ${IfThen} ${Errors} ${|} StrCpy $0 2 ${|} ; ExecWait failed, set fake exit code
++
++    ${If} $0 <> 0
++    ${OrIf} ${FileExists} "$INSTDIR\${MAINBINARYNAME}.exe"
++      ; User cancelled wix uninstaller? return to select un/reinstall page
++      ${If} $WixMode = 1
++      ${AndIf} $0 = 1602
++        Abort
++      ${EndIf}
++
++      ; User cancelled NSIS uninstaller? return to select un/reinstall page
++      ${If} $0 = 1
++        Abort
++      ${EndIf}
++
++      ; Other errors? show generic error message and return to select un/reinstall page
++      MessageBox MB_ICONEXCLAMATION "$(unableToUninstall)"
++      Abort
++    ${EndIf}
++
++    ; The NSIS uninstaller was run in place (`_?=`), so it cannot delete itself
++    ; and the install directory, clean them up here once the uninstall succeeded
++    ; https://nsis.sourceforge.io/Docs/Chapter3.html#:~:text=path%20contains%20spaces.-,3.2.3%20Examples,-installer.exe%20/NCRC
++    ${If} $WixMode = 0
++    ${AndIf} $4 != ""
++      Delete "$4\uninstall.exe"
++      RMDir "$4"
++    ${EndIf}
++  reinst_done:
++FunctionEnd
++
++; 5. Choose install directory page
++!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
++!insertmacro MUI_PAGE_DIRECTORY
++
++; 6. Start menu shortcut page
++Var AppStartMenuFolder
++!if "${STARTMENUFOLDER}" != ""
++  !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
++  !define MUI_STARTMENUPAGE_DEFAULTFOLDER "${STARTMENUFOLDER}"
++!else
++  !define MUI_PAGE_CUSTOMFUNCTION_PRE Skip
++!endif
++!insertmacro MUI_PAGE_STARTMENU Application $AppStartMenuFolder
++
++; 7. Installation page
++!insertmacro MUI_PAGE_INSTFILES
++
++; 8. Finish page
++;
++; Don't auto jump to finish page after installation page,
++; because the installation page has useful info that can be used debug any issues with the installer.
++!define MUI_FINISHPAGE_NOAUTOCLOSE
++; Use show readme button in the finish page as a button create a desktop shortcut
++!define MUI_FINISHPAGE_SHOWREADME
++!define MUI_FINISHPAGE_SHOWREADME_TEXT "$(createDesktop)"
++!define MUI_FINISHPAGE_SHOWREADME_FUNCTION CreateOrUpdateDesktopShortcut
++; Show run app after installation.
++!define MUI_FINISHPAGE_RUN
++!define MUI_FINISHPAGE_RUN_FUNCTION RunMainBinary
++!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
++!insertmacro MUI_PAGE_FINISH
++
++Function RunMainBinary
++  nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" ""
++FunctionEnd
++
++; Uninstaller Pages
++; 1. Confirm uninstall page
++Var DeleteAppDataCheckbox
++Var DeleteAppDataCheckboxState
++!define /ifndef WS_EX_LAYOUTRTL         0x00400000
++!define MUI_PAGE_CUSTOMFUNCTION_SHOW un.ConfirmShow
++Function un.ConfirmShow ; Add add a `Delete app data` check box
++  ; $1 inner dialog HWND
++  ; $2 window DPI
++  ; $3 style
++  ; $4 x
++  ; $5 y
++  ; $6 width
++  ; $7 height
++  FindWindow $1 "#32770" "" $HWNDPARENT ; Find inner dialog
++  System::Call "user32::GetDpiForWindow(p r1) i .r2"
++  ${If} $(^RTL) = 1
++    StrCpy $3 "${__NSD_CheckBox_EXSTYLE} | ${WS_EX_LAYOUTRTL}"
++    IntOp $4 50 * $2
++  ${Else}
++    StrCpy $3 "${__NSD_CheckBox_EXSTYLE}"
++    IntOp $4 0 * $2
++  ${EndIf}
++  IntOp $5 100 * $2
++  IntOp $6 400 * $2
++  IntOp $7 25 * $2
++  IntOp $4 $4 / 96
++  IntOp $5 $5 / 96
++  IntOp $6 $6 / 96
++  IntOp $7 $7 / 96
++  System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(deleteAppData)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
++  Pop $DeleteAppDataCheckbox
++  SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
++  SendMessage $DeleteAppDataCheckbox ${WM_SETFONT} $1 1
++FunctionEnd
++!define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.ConfirmLeave
++Function un.ConfirmLeave
++  SendMessage $DeleteAppDataCheckbox ${BM_GETCHECK} 0 0 $DeleteAppDataCheckboxState
++FunctionEnd
++!define MUI_PAGE_CUSTOMFUNCTION_PRE un.SkipIfPassive
++!insertmacro MUI_UNPAGE_CONFIRM
++
++; 2. Uninstalling Page
++!insertmacro MUI_UNPAGE_INSTFILES
++
++;Languages
++{{#each languages}}
++!insertmacro MUI_LANGUAGE "{{this}}"
++{{/each}}
++!insertmacro MUI_RESERVEFILE_LANGDLL
++{{#each language_files}}
++  !include "{{this}}"
++{{/each}}
++
++Function .onInit
++  ${GetOptions} $CMDLINE "/P" $PassiveMode
++  ${IfNot} ${Errors}
++    StrCpy $PassiveMode 1
++  ${EndIf}
++
++  ${GetOptions} $CMDLINE "/NS" $NoShortcutMode
++  ${IfNot} ${Errors}
++    StrCpy $NoShortcutMode 1
++  ${EndIf}
++
++  ${GetOptions} $CMDLINE "/UPDATE" $UpdateMode
++  ${IfNot} ${Errors}
++    StrCpy $UpdateMode 1
++  ${EndIf}
++
++  !if "${DISPLAYLANGUAGESELECTOR}" == "true"
++    !insertmacro MUI_LANGDLL_DISPLAY
++  !endif
++
++  !insertmacro SetContext
++
++  ${If} $INSTDIR == "${PLACEHOLDER_INSTALL_DIR}"
++    ; Set default install location
++    !if "${INSTALLMODE}" == "perMachine"
++      ${If} ${RunningX64}
++        !if "${ARCH}" == "x64"
++          StrCpy $INSTDIR "$PROGRAMFILES64\${PRODUCTNAME}"
++        !else if "${ARCH}" == "arm64"
++          StrCpy $INSTDIR "$PROGRAMFILES64\${PRODUCTNAME}"
++        !else
++          StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCTNAME}"
++        !endif
++      ${Else}
++        StrCpy $INSTDIR "$PROGRAMFILES\${PRODUCTNAME}"
++      ${EndIf}
++    !else if "${INSTALLMODE}" == "currentUser"
++      StrCpy $INSTDIR "$LOCALAPPDATA\${PRODUCTNAME}"
++    !endif
++
++    Call RestorePreviousInstallLocation
++  ${EndIf}
++
++
++  !if "${INSTALLMODE}" == "both"
++    !insertmacro MULTIUSER_INIT
++  !endif
++
++  !insertmacro AVX1_DETECT_EXISTING_INSTALLATION
++
++  ; Abort downgrades if they are disabled, in the modes that skip the reinstall page choice:
++  ; silent, passive and update
++  !if "${ALLOWDOWNGRADES}" == "false"
++  ${If} ${Silent}
++  ${OrIf} $PassiveMode = 1
++  ${OrIf} $UpdateMode = 1
++    ReadRegStr $R0 SHCTX "${UNINSTKEY}" "DisplayVersion"
++    nsis_tauri_utils::SemverCompare "${VERSION}" $R0
++    Pop $R0
++    ; If downgrading
++    ${If} $R0 = -1
++      ${If} ${Silent}
++        System::Call 'kernel32::AttachConsole(i -1)i.r0'
++        ${If} $0 <> 0
++          System::Call 'kernel32::GetStdHandle(i -11)i.r0'
++          System::call 'kernel32::SetConsoleTextAttribute(i r0, i 0x0004)' ; set red color
++          FileWrite $0 "$(silentDowngrades)"
++        ${EndIf}
++      ${Else}
++        MessageBox MB_ICONSTOP "$(silentDowngrades)"
++      ${EndIf}
++      Abort
++    ${EndIf}
++  ${EndIf}
++  !endif
++FunctionEnd
++
++Section WebView2
++  ; Check if Webview2 is already installed and skip this section
++  ${If} ${RunningX64}
++    ReadRegStr $4 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\${WEBVIEW2APPGUID}" "pv"
++  ${Else}
++    ReadRegStr $4 HKLM "SOFTWARE\Microsoft\EdgeUpdate\Clients\${WEBVIEW2APPGUID}" "pv"
++  ${EndIf}
++  ${If} $4 == ""
++    ReadRegStr $4 HKCU "SOFTWARE\Microsoft\EdgeUpdate\Clients\${WEBVIEW2APPGUID}" "pv"
++  ${EndIf}
++
++  ${If} $4 == ""
++    ; Webview2 installation
++    ;
++    ; Skip if updating
++    ${If} $UpdateMode <> 1
++      !if "${INSTALLWEBVIEW2MODE}" == "downloadBootstrapper"
++        Delete "$TEMP\MicrosoftEdgeWebview2Setup.exe"
++        DetailPrint "$(webview2Downloading)"
++        NSISdl::download "https://go.microsoft.com/fwlink/p/?LinkId=2124703" "$TEMP\MicrosoftEdgeWebview2Setup.exe"
++        Pop $0
++        ${If} $0 == "success"
++          DetailPrint "$(webview2DownloadSuccess)"
++        ${Else}
++          DetailPrint "$(webview2DownloadError)"
++          Abort "$(webview2AbortError)"
++        ${EndIf}
++        StrCpy $6 "$TEMP\MicrosoftEdgeWebview2Setup.exe"
++        Goto install_webview2
++      !endif
++
++      !if "${INSTALLWEBVIEW2MODE}" == "embedBootstrapper"
++        Delete "$TEMP\MicrosoftEdgeWebview2Setup.exe"
++        File "/oname=$TEMP\MicrosoftEdgeWebview2Setup.exe" "${WEBVIEW2BOOTSTRAPPERPATH}"
++        DetailPrint "$(installingWebview2)"
++        StrCpy $6 "$TEMP\MicrosoftEdgeWebview2Setup.exe"
++        Goto install_webview2
++      !endif
++
++      !if "${INSTALLWEBVIEW2MODE}" == "offlineInstaller"
++        Delete "$TEMP\MicrosoftEdgeWebView2RuntimeInstaller.exe"
++        File "/oname=$TEMP\MicrosoftEdgeWebView2RuntimeInstaller.exe" "${WEBVIEW2INSTALLERPATH}"
++        DetailPrint "$(installingWebview2)"
++        StrCpy $6 "$TEMP\MicrosoftEdgeWebView2RuntimeInstaller.exe"
++        Goto install_webview2
++      !endif
++
++      Goto webview2_done
++
++      install_webview2:
++        DetailPrint "$(installingWebview2)"
++        ; $6 holds the path to the webview2 installer
++        ExecWait "$6 ${WEBVIEW2INSTALLERARGS} /install" $1
++        ${If} $1 = 0
++          DetailPrint "$(webview2InstallSuccess)"
++        ${Else}
++          DetailPrint "$(webview2InstallError)"
++          Abort "$(webview2AbortError)"
++        ${EndIf}
++      webview2_done:
++    ${EndIf}
++  ${Else}
++    !if "${MINIMUMWEBVIEW2VERSION}" != ""
++      ${VersionCompare} "${MINIMUMWEBVIEW2VERSION}" "$4" $R0
++      ${If} $R0 = 1
++        update_webview:
++          DetailPrint "$(installingWebview2)"
++          ${If} ${RunningX64}
++            ReadRegStr $R1 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate" "path"
++          ${Else}
++            ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\EdgeUpdate" "path"
++          ${EndIf}
++          ${If} $R1 == ""
++            ReadRegStr $R1 HKCU "SOFTWARE\Microsoft\EdgeUpdate" "path"
++          ${EndIf}
++          ${If} $R1 != ""
++            ; Chromium updater docs: https://source.chromium.org/chromium/chromium/src/+/main:docs/updater/user_manual.md
++            ; Modified from "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Microsoft EdgeWebView\ModifyPath"
++            ExecWait `"$R1" /install appguid=${WEBVIEW2APPGUID}&needsadmin=true` $1
++            ${If} $1 = 0
++              DetailPrint "$(webview2InstallSuccess)"
++            ${Else}
++              MessageBox MB_ICONEXCLAMATION|MB_ABORTRETRYIGNORE "$(webview2InstallError)" IDIGNORE ignore IDRETRY update_webview
++              Quit
++              ignore:
++            ${EndIf}
++          ${EndIf}
++      ${EndIf}
++    !endif
++  ${EndIf}
++SectionEnd
++
++; Never silently skip a locked owned binary and report a successful update.
++AllowSkipFiles off
++
++Section Install
++  SetOutPath $INSTDIR
++
++  !ifmacrodef NSIS_HOOK_PREINSTALL
++    !insertmacro NSIS_HOOK_PREINSTALL
++  !endif
++
++  !insertmacro CheckIfAppIsRunning "$INSTDIR\${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
++
++  ; Copy main executable
++  File "${MAINBINARYSRCPATH}"
++
++  ; Copy external binaries
++  {{#each binaries}}
++    File /a "/oname={{this}}" "{{no-escape @key}}"
++  {{/each}}
++
++  ; Copy resources
++  {{#each resources_dirs}}
++    CreateDirectory "$INSTDIR\\{{this}}"
++  {{/each}}
++  {{#each resources}}
++    File /a "/oname={{this.[1]}}" "{{no-escape @key}}"
++  {{/each}}
++
++  ; Create file associations
++  {{#each file_associations as |association| ~}}
++    {{#each association.ext as |ext| ~}}
++       !insertmacro APP_ASSOCIATE "{{ext}}" "{{or association.name ext}}" "{{association-description association.description ext}}" "$INSTDIR\${MAINBINARYNAME}.exe,0" "Open with ${PRODUCTNAME}" "$INSTDIR\${MAINBINARYNAME}.exe $\"%1$\""
++    {{/each}}
++  {{/each}}
++
++  ; Register deep links
++  {{#each deep_link_protocols as |protocol| ~}}
++    WriteRegStr SHCTX "Software\Classes\\{{protocol}}" "URL Protocol" ""
++    WriteRegStr SHCTX "Software\Classes\\{{protocol}}" "" "URL:${BUNDLEID} protocol"
++    WriteRegStr SHCTX "Software\Classes\\{{protocol}}\DefaultIcon" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\",0"
++    WriteRegStr SHCTX "Software\Classes\\{{protocol}}\shell\open\command" "" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\" $\"%1$\""
++  {{/each}}
++
++  ; Create uninstaller
++  WriteUninstaller "$INSTDIR\uninstall.exe"
++
++  ; Save $INSTDIR in registry for future installations
++  WriteRegStr SHCTX "${MANUPRODUCTKEY}" "" $INSTDIR
++
++  !if "${INSTALLMODE}" == "both"
++    ; Save install mode to be selected by default for the next installation such as updating
++    ; or when uninstalling
++    WriteRegStr SHCTX "${UNINSTKEY}" $MultiUser.InstallMode 1
++  !endif
++
++  ; Remove old main binary if it doesn't match new main binary name
++  ReadRegStr $OldMainBinaryName SHCTX "${UNINSTKEY}" "MainBinaryName"
++  ${If} $OldMainBinaryName != ""
++  ${AndIf} $OldMainBinaryName != "${MAINBINARYNAME}.exe"
++    Delete "$INSTDIR\$OldMainBinaryName"
++  ${EndIf}
++
++  ; Save current MAINBINARYNAME for future updates
++  WriteRegStr SHCTX "${UNINSTKEY}" "MainBinaryName" "${MAINBINARYNAME}.exe"
++
++  ; Registry information for add/remove programs
++  WriteRegStr SHCTX "${UNINSTKEY}" "DisplayName" "${PRODUCTNAME}"
++  WriteRegStr SHCTX "${UNINSTKEY}" "DisplayIcon" "$\"$INSTDIR\${MAINBINARYNAME}.exe$\""
++  WriteRegStr SHCTX "${UNINSTKEY}" "DisplayVersion" "${VERSION}"
++  WriteRegStr SHCTX "${UNINSTKEY}" "Publisher" "${MANUFACTURER}"
++  WriteRegStr SHCTX "${UNINSTKEY}" "InstallLocation" "$\"$INSTDIR$\""
++  WriteRegStr SHCTX "${UNINSTKEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
++  WriteRegDWORD SHCTX "${UNINSTKEY}" "NoModify" "1"
++  WriteRegDWORD SHCTX "${UNINSTKEY}" "NoRepair" "1"
++
++  ${GetSize} "$INSTDIR" "/M=uninstall.exe /S=0K /G=0" $0 $1 $2
++  IntOp $0 $0 + ${ESTIMATEDSIZE}
++  IntFmt $0 "0x%08X" $0
++  WriteRegDWORD SHCTX "${UNINSTKEY}" "EstimatedSize" "$0"
++
++  !if "${HOMEPAGE}" != ""
++    WriteRegStr SHCTX "${UNINSTKEY}" "URLInfoAbout" "${HOMEPAGE}"
++    WriteRegStr SHCTX "${UNINSTKEY}" "URLUpdateInfo" "${HOMEPAGE}"
++    WriteRegStr SHCTX "${UNINSTKEY}" "HelpLink" "${HOMEPAGE}"
++  !endif
++
++  ; Create start menu shortcut
++  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
++    Call CreateOrUpdateStartMenuShortcut
++  !insertmacro MUI_STARTMENU_WRITE_END
++
++  ; Create desktop shortcut for silent and passive installers
++  ; because finish page will be skipped
++  ${If} $PassiveMode = 1
++  ${OrIf} ${Silent}
++    Call CreateOrUpdateDesktopShortcut
++  ${EndIf}
++
++  !ifmacrodef NSIS_HOOK_POSTINSTALL
++    !insertmacro NSIS_HOOK_POSTINSTALL
++  !endif
++
++  ; Auto close this page for passive mode
++  ${If} $PassiveMode = 1
++    SetAutoClose true
++  ${EndIf}
++SectionEnd
++
++Function .onInstSuccess
++  ; Check for `/R` flag only in silent and passive installers because
++  ; GUI installer has a toggle for the user to (re)start the app
++  ${If} $PassiveMode = 1
++  ${OrIf} ${Silent}
++    ${GetOptions} $CMDLINE "/R" $R0
++    ${IfNot} ${Errors}
++      ${GetOptions} $CMDLINE "/ARGS" $R0
++      nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" "$R0"
++    ${EndIf}
++  ${EndIf}
++FunctionEnd
++
++Function un.onInit
++  !insertmacro SetContext
++
++  !if "${INSTALLMODE}" == "both"
++    !insertmacro MULTIUSER_UNINIT
++  !endif
++
++  !insertmacro MUI_UNGETLANGUAGE
++
++  ${GetOptions} $CMDLINE "/P" $PassiveMode
++  ${IfNot} ${Errors}
++    StrCpy $PassiveMode 1
++  ${EndIf}
++
++  ${GetOptions} $CMDLINE "/UPDATE" $UpdateMode
++  ${IfNot} ${Errors}
++    StrCpy $UpdateMode 1
++  ${EndIf}
++FunctionEnd
++
++Section Uninstall
++
++  !ifmacrodef NSIS_HOOK_PREUNINSTALL
++    !insertmacro NSIS_HOOK_PREUNINSTALL
++  !endif
++
++  !insertmacro CheckIfAppIsRunning "$INSTDIR\${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
++
++  ; Delete the app directory and its content from disk
++  ; Copy main executable
++  Delete "$INSTDIR\${MAINBINARYNAME}.exe"
++
++  ; Delete resources
++  {{#each resources}}
++    Delete "$INSTDIR\\{{this.[1]}}"
++  {{/each}}
++
++  ; Delete external binaries
++  {{#each binaries}}
++    Delete "$INSTDIR\\{{this}}"
++  {{/each}}
++
++  ; Delete app associations
++  {{#each file_associations as |association| ~}}
++    {{#each association.ext as |ext| ~}}
++      !insertmacro APP_UNASSOCIATE "{{ext}}" "{{or association.name ext}}"
++    {{/each}}
++  {{/each}}
++
++  ; Delete deep links
++  {{#each deep_link_protocols as |protocol| ~}}
++    ReadRegStr $R7 SHCTX "Software\Classes\\{{protocol}}\shell\open\command" ""
++    ${If} $R7 == "$\"$INSTDIR\${MAINBINARYNAME}.exe$\" $\"%1$\""
++      DeleteRegKey SHCTX "Software\Classes\\{{protocol}}"
++    ${EndIf}
++  {{/each}}
++
++
++  ; Delete uninstaller
++  Delete "$INSTDIR\uninstall.exe"
++
++  {{#each resources_ancestors}}
++  RMDir /REBOOTOK "$INSTDIR\\{{this}}"
++  {{/each}}
++  RMDir "$INSTDIR"
++
++  ; Remove shortcuts if not updating
++  ${If} $UpdateMode <> 1
++    !insertmacro DeleteAppUserModelId
++
++    ; Remove start menu shortcut
++    !insertmacro MUI_STARTMENU_GETFOLDER Application $AppStartMenuFolder
++    !insertmacro IsShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
++    Pop $0
++    ${If} $0 = 1
++      !insertmacro UnpinShortcut "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
++      Delete "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
++      RMDir "$SMPROGRAMS\$AppStartMenuFolder"
++    ${EndIf}
++    !insertmacro IsShortcutTarget "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
++    Pop $0
++    ${If} $0 = 1
++      !insertmacro UnpinShortcut "$SMPROGRAMS\${PRODUCTNAME}.lnk"
++      Delete "$SMPROGRAMS\${PRODUCTNAME}.lnk"
++    ${EndIf}
++
++    ; Remove desktop shortcuts
++    !insertmacro IsShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
++    Pop $0
++    ${If} $0 = 1
++      !insertmacro UnpinShortcut "$DESKTOP\${PRODUCTNAME}.lnk"
++      Delete "$DESKTOP\${PRODUCTNAME}.lnk"
++    ${EndIf}
++  ${EndIf}
++
++  ; Remove registry information for add/remove programs
++  !if "${INSTALLMODE}" == "both"
++    DeleteRegKey SHCTX "${UNINSTKEY}"
++  !else if "${INSTALLMODE}" == "perMachine"
++    DeleteRegKey HKLM "${UNINSTKEY}"
++  !else
++    DeleteRegKey HKCU "${UNINSTKEY}"
++  !endif
++
++  ; Removes the Autostart entry for ${PRODUCTNAME} from the HKCU Run key if it exists.
++  ; This ensures the program does not launch automatically after uninstallation if it exists.
++  ; If it doesn't exist, it does nothing.
++  ; We do this when not updating (to preserve the registry value on updates)
++  ${If} $UpdateMode <> 1
++    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCTNAME}"
++  ${EndIf}
++
++  ; Delete app data if the checkbox is selected
++  ; and if not updating
++  ${If} $DeleteAppDataCheckboxState = 1
++  ${AndIf} $UpdateMode <> 1
++    ; Clear the install location $INSTDIR from registry
++    DeleteRegKey SHCTX "${MANUPRODUCTKEY}"
++    DeleteRegKey /ifempty SHCTX "${MANUKEY}"
++
++    ; Clear the install language from registry
++    DeleteRegValue HKCU "${MANUPRODUCTKEY}" "Installer Language"
++    DeleteRegKey /ifempty HKCU "${MANUPRODUCTKEY}"
++    DeleteRegKey /ifempty HKCU "${MANUKEY}"
++
++    SetShellVarContext current
++    RmDir /r "$APPDATA\${BUNDLEID}"
++    RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
++  ${EndIf}
++
++  !ifmacrodef NSIS_HOOK_POSTUNINSTALL
++    !insertmacro NSIS_HOOK_POSTUNINSTALL
++  !endif
++
++  ; Auto close if passive mode or updating
++  ${If} $PassiveMode = 1
++  ${OrIf} $UpdateMode = 1
++    SetAutoClose true
++  ${EndIf}
++SectionEnd
++
++Function RestorePreviousInstallLocation
++  ReadRegStr $4 SHCTX "${MANUPRODUCTKEY}" ""
++  StrCmp $4 "" +2 0
++    StrCpy $INSTDIR $4
++FunctionEnd
++
++Function Skip
++  Abort
++FunctionEnd
++
++Function SkipIfPassive
++  ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
++FunctionEnd
++Function un.SkipIfPassive
++  ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
++FunctionEnd
++
++Function CreateOrUpdateStartMenuShortcut
++  ; We used to use product name as MAINBINARYNAME
++  ; migrate old shortcuts to target the new MAINBINARYNAME
++  StrCpy $R0 0
++
++  !insertmacro IsShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\$OldMainBinaryName"
++  Pop $0
++  ${If} $0 = 1
++    !insertmacro SetShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
++    StrCpy $R0 1
++  ${EndIf}
++
++  !insertmacro IsShortcutTarget "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\$OldMainBinaryName"
++  Pop $0
++  ${If} $0 = 1
++    !insertmacro SetShortcutTarget "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
++    StrCpy $R0 1
++  ${EndIf}
++
++  ${If} $R0 = 1
++    Return
++  ${EndIf}
++
++  ; Skip creating shortcut if in update mode or no shortcut mode
++  ; but always create if migrating from wix
++  ${If} $WixMode = 0
++    ${If} $UpdateMode = 1
++    ${OrIf} $NoShortcutMode = 1
++      Return
++    ${EndIf}
++  ${EndIf}
++
++  !if "${STARTMENUFOLDER}" != ""
++    CreateDirectory "$SMPROGRAMS\$AppStartMenuFolder"
++    CreateShortcut "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
++    !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
++  !else
++    CreateShortcut "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
++    !insertmacro SetLnkAppUserModelId "$SMPROGRAMS\${PRODUCTNAME}.lnk"
++  !endif
++FunctionEnd
++
++Function CreateOrUpdateDesktopShortcut
++  ; We used to use product name as MAINBINARYNAME
++  ; migrate old shortcuts to target the new MAINBINARYNAME
++  !insertmacro IsShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\$OldMainBinaryName"
++  Pop $0
++  ${If} $0 = 1
++    !insertmacro SetShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
++    Return
++  ${EndIf}
++
++  ; Skip creating shortcut if in update mode or no shortcut mode
++  ; but always create if migrating from wix
++  ${If} $WixMode = 0
++    ${If} $UpdateMode = 1
++    ${OrIf} $NoShortcutMode = 1
++      Return
++    ${EndIf}
++  ${EndIf}
++
++  CreateShortcut "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
++  !insertmacro SetLnkAppUserModelId "$DESKTOP\${PRODUCTNAME}.lnk"
++FunctionEnd
+diff --git a/apps/examples/desktop-app/src-tauri/nsis/template-provenance.json b/apps/examples/desktop-app/src-tauri/nsis/template-provenance.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..0985309c6adb3093dcab2482eceed7bc451b2ebe
+--- /dev/null
++++ b/apps/examples/desktop-app/src-tauri/nsis/template-provenance.json
+@@ -0,0 +1,9 @@
++{
++	"upstream_commit": "59b63ab500da9859f12d8888c3298bc29bba0b92",
++	"upstream_path": "crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi",
++	"tauri_cli": "2.12.3",
++	"original_sha256": "8ae02c66f8adb4a0d15d97f984fbacd2b44262d8a4d03fefaf6177f67f7008e5",
++	"change": "currentUser UAC and in-place update; fail on unreplaceable files; copy CLI before resources; other template content retains upstream provenance",
++	"license": "Apache-2.0 OR MIT; upstream notices retained by dependency license inventory",
++	"installer_revision": 3
++}
+diff --git a/apps/examples/desktop-app/src-tauri/src/main.rs b/apps/examples/desktop-app/src-tauri/src/main.rs
+index bc6380efda951e16238fe549413aacf2c297217e..f60efa628a43bd69541af42f4521a350917867af 100644
+--- a/apps/examples/desktop-app/src-tauri/src/main.rs
++++ b/apps/examples/desktop-app/src-tauri/src/main.rs
+@@ -6,6 +6,7 @@ mod linux_tray;
+ mod linux_webview;
+ #[cfg(target_os = "macos")]
+ mod macos_notification;
++mod native_locale;
+ mod terminal;
+ 
+ use serde::{Deserialize, Serialize};
+@@ -87,6 +88,8 @@ impl DesktopActionState {
+ }
+ 
+ struct TrayMenuState {
++    static_items: Vec<(MenuItem<tauri::Wry>, &'static str)>,
++    active_sessions: std::sync::atomic::AtomicU32,
+     status: MenuItem<tauri::Wry>,
+     hub_healthy: Mutex<bool>,
+     running_sessions: MenuItem<tauri::Wry>,
+@@ -169,31 +172,33 @@ impl UpdateState {
+ }
+ 
+ fn tray_status_text(update_status: &UpdateStatus, hub_healthy: bool) -> &'static str {
+-    match update_status.state.as_str() {
++    native_locale::text(match update_status.state.as_str() {
+         "checking" => "Status: Checking for Updates",
+         "downloading" => "Status: Downloading Update",
+         "ready" => "Status: Update Available",
+         "error" => "Status: Update Check Failed",
+         _ if hub_healthy => "Status: Healthy",
+         _ => "Status: Hub Disconnected",
+-    }
++    })
+ }
+ 
+ // Label for the "Check for Updates..." menu item. While a cycle is in flight
+ // the item is disabled (see update_menu_item_enabled) and narrates progress;
+ // once an update is staged it turns into the restart action instead.
+ fn update_menu_item_text(update_status: &UpdateStatus) -> String {
+-    match (
+-        update_status.state.as_str(),
+-        update_status.version.as_deref(),
+-    ) {
+-        ("checking", _) => "Checking for Updates...".to_string(),
+-        ("downloading", Some(version)) => format!("Downloading Update v{version}..."),
+-        ("downloading", None) => "Downloading Update...".to_string(),
+-        ("ready", Some(version)) => format!("Restart to Update to v{version}"),
+-        ("ready", None) => "Restart to Update".to_string(),
+-        _ => "Check for Updates...".to_string(),
+-    }
++    native_locale::update_label(
++        match (
++            update_status.state.as_str(),
++            update_status.version.as_deref(),
++        ) {
++            ("checking", _) => "Checking for Updates...".to_string(),
++            ("downloading", Some(version)) => format!("Downloading Update v{version}..."),
++            ("downloading", None) => "Downloading Update...".to_string(),
++            ("ready", Some(version)) => format!("Restart to Update to v{version}"),
++            ("ready", None) => "Restart to Update".to_string(),
++            _ => "Check for Updates...".to_string(),
++        },
++    )
+ }
+ 
+ fn update_menu_item_enabled(update_status: &UpdateStatus) -> bool {
+@@ -201,6 +206,9 @@ fn update_menu_item_enabled(update_status: &UpdateStatus) -> bool {
+ }
+ 
+ fn running_sessions_text(running_sessions: u32) -> String {
++    if native_locale::is_russian() {
++        return native_locale::sessions(running_sessions);
++    }
+     match running_sessions {
+         1 => "1 session running".to_string(),
+         count => format!("{count} sessions running"),
+@@ -935,6 +943,29 @@ async fn pick_workspace_directory(
+     rx.await.ok().flatten()
+ }
+ 
++#[tauri::command]
++fn set_interface_language(app: tauri::AppHandle, language: String) -> Result<(), String> {
++    if !matches!(language.as_str(), "en" | "ru") {
++        return Err("Unsupported interface language".to_string());
++    }
++    let directory = app.path().app_config_dir().map_err(|e| e.to_string())?;
++    fs::create_dir_all(&directory).map_err(|e| e.to_string())?;
++    fs::write(directory.join("interface-language.txt"), &language).map_err(|e| e.to_string())?;
++    native_locale::set(&language);
++    let menu = app.state::<TrayMenuState>();
++    for (item, label) in &menu.static_items {
++        item.set_text(native_locale::text(label))
++            .map_err(|e| e.to_string())?;
++    }
++    let count = menu.active_sessions.load(AtomicOrdering::Relaxed);
++    if count != u32::MAX {
++        let _ = menu.running_sessions.set_text(running_sessions_text(count));
++    }
++    let update_state = app.state::<Arc<UpdateState>>();
++    refresh_tray_status(&app, &update_state);
++    Ok(())
++}
++
+ #[tauri::command]
+ fn get_update_status(update_state: State<'_, Arc<UpdateState>>) -> UpdateStatus {
+     update_state.snapshot()
+@@ -1492,7 +1523,33 @@ fn setup_tray_icon(
+     app: &tauri::App,
+     check_for_updates: Option<MenuItem<tauri::Wry>>,
+ ) -> tauri::Result<()> {
+-    let status = MenuItem::new(app, "Status: Healthy", false, None::<&str>)?;
++    let status = MenuItem::new(
++        app,
++        native_locale::text("Status: Healthy"),
++        false,
++        None::<&str>,
++    )?;
++    let new_session = MenuItem::with_id(
++        app,
++        TRAY_NEW_SESSION_MENU_ID,
++        native_locale::text("New Session"),
++        true,
++        None::<&str>,
++    )?;
++    let settings = MenuItem::with_id(
++        app,
++        TRAY_SETTINGS_MENU_ID,
++        native_locale::text("Settings"),
++        true,
++        None::<&str>,
++    )?;
++    let quit = MenuItem::with_id(
++        app,
++        TRAY_QUIT_MENU_ID,
++        native_locale::text("Quit"),
++        true,
++        None::<&str>,
++    )?;
+     let running_sessions = MenuItem::new(app, running_sessions_text(0), false, None::<&str>)?;
+     let mut menu = MenuBuilder::new(app)
+         .text(
+@@ -1511,12 +1568,12 @@ fn setup_tray_icon(
+     }
+     let menu = menu
+         .separator()
+-        .text(TRAY_NEW_SESSION_MENU_ID, "New Session")
++        .item(&new_session)
+         .item(&running_sessions)
+         .separator()
+-        .text(TRAY_SETTINGS_MENU_ID, "Settings")
++        .item(&settings)
+         .separator()
+-        .text(TRAY_QUIT_MENU_ID, "Quit")
++        .item(&quit)
+         .build()?;
+ 
+     // This is the same glyph used by webview/components/cline-logo.tsx,
+@@ -1547,6 +1604,12 @@ fn setup_tray_icon(
+     })
+     .build(app)?;
+     app.manage(TrayMenuState {
++        static_items: vec![
++            (new_session, "New Session"),
++            (settings, "Settings"),
++            (quit, "Quit"),
++        ],
++        active_sessions: std::sync::atomic::AtomicU32::new(u32::MAX),
+         status,
+         hub_healthy: Mutex::new(true),
+         running_sessions,
+@@ -1592,6 +1655,14 @@ fn set_tray_status(
+ }
+ 
+ fn main() {
++    // Fork data and the bundled CLI stay separate from other Cline installs.
++    // Set before creating threads. Explicit user data-directory overrides win.
++    if non_empty_env("CLINE_DIR").is_none() && non_empty_env("CLINE_DATA_DIR").is_none() {
++        if let Ok(home) = std::env::var("USERPROFILE").or_else(|_| std::env::var("HOME")) {
++            std::env::set_var("CLINE_DIR", PathBuf::from(home).join(".cline-avx1"));
++        }
++    }
++    std::env::set_var("CLINE_NO_AUTO_UPDATE", "1");
+     // Must stay first: WebKitGTK reads the environment while initializing,
+     // and the variable has to be in place before any thread exists.
+     #[cfg(target_os = "linux")]
+@@ -1619,6 +1690,13 @@ fn main() {
+         .manage(DesktopActionState::default())
+         .manage(terminal::TerminalState::default())
+         .setup(move |app| {
++            let language = app
++                .path()
++                .app_config_dir()
++                .ok()
++                .and_then(|dir| fs::read_to_string(dir.join("interface-language.txt")).ok())
++                .unwrap_or_else(|| "ru".to_string());
++            native_locale::set(language.trim());
+             app.manage(AppContext {
+                 launch_cwd: launch_cwd.clone(),
+                 workspace_root: workspace_root.clone(),
+@@ -1703,6 +1781,7 @@ fn main() {
+             }
+         })
+         .invoke_handler(tauri::generate_handler![
++            set_interface_language,
+             get_desktop_backend_endpoint,
+             pick_workspace_directory,
+             open_mcp_settings_file,
+diff --git a/apps/examples/desktop-app/src-tauri/src/native_locale.rs b/apps/examples/desktop-app/src-tauri/src/native_locale.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..de49e1493998e5eae5ee10d967243f5ac7d7abec
+--- /dev/null
++++ b/apps/examples/desktop-app/src-tauri/src/native_locale.rs
+@@ -0,0 +1,55 @@
++use std::sync::atomic::{AtomicBool, Ordering};
++static RUSSIAN: AtomicBool = AtomicBool::new(false);
++pub fn is_russian() -> bool {
++    RUSSIAN.load(Ordering::Relaxed)
++}
++pub fn set(language: &str) {
++    RUSSIAN.store(language == "ru", Ordering::Relaxed);
++}
++pub fn text(en: &'static str) -> &'static str {
++    if !is_russian() {
++        return en;
++    }
++    match en {
++        "New Session" => "Новый сеанс",
++        "Settings" => "Настройки",
++        "Quit" => "Выйти",
++        "Status: Checking for Updates" => "Проверка обновлений",
++        "Status: Downloading Update" => "Загрузка обновления",
++        "Status: Update Available" => "Доступно обновление",
++        "Status: Update Check Failed" => "Ошибка проверки обновлений",
++        "Status: Healthy" => "Работает",
++        "Status: Hub Disconnected" => "Hub отключён",
++        _ => en,
++    }
++}
++pub fn update_label(en: String) -> String {
++    if !is_russian() {
++        return en;
++    }
++    en.replace("Checking for Updates", "Проверка обновлений")
++        .replace("Downloading Update", "Загрузка обновления")
++        .replace("Restart to Update to", "Перезапустить для обновления до")
++        .replace("Restart to Update", "Перезапустить для обновления")
++        .replace("Check for Updates", "Проверить обновления")
++}
++pub fn sessions(count: u32) -> String {
++    let word = if count % 10 == 1 && count % 100 != 11 {
++        "сеанс"
++    } else if (2..=4).contains(&(count % 10)) && !(12..=14).contains(&(count % 100)) {
++        "сеанса"
++    } else {
++        "сеансов"
++    };
++    format!("Активно: {count} {word}")
++}
++#[cfg(test)]
++mod tests {
++    #[test]
++    fn russian_plural_forms() {
++        assert_eq!(super::sessions(1), "Активно: 1 сеанс");
++        assert_eq!(super::sessions(2), "Активно: 2 сеанса");
++        assert_eq!(super::sessions(11), "Активно: 11 сеансов");
++        assert_eq!(super::sessions(21), "Активно: 21 сеанс");
++    }
++}
+diff --git a/apps/examples/desktop-app/src-tauri/tauri.conf.json b/apps/examples/desktop-app/src-tauri/tauri.conf.json
+index 7e0be406428b77eafc9c26db50915cae76d7d280..156393fcb90bdc120a8709162518d96c8920dbc6 100644
+--- a/apps/examples/desktop-app/src-tauri/tauri.conf.json
++++ b/apps/examples/desktop-app/src-tauri/tauri.conf.json
+@@ -1,19 +1,18 @@
+ {
+ 	"$schema": "https://schema.tauri.app/config/2",
+-	"productName": "Cline",
+-	"version": "0.0.49",
+-	"identifier": "bot.cline.app",
++	"productName": "Cline Desktop AVX1 RU",
++	"version": "1.0.18",
++	"identifier": "cloud.aktalas.cline.desktop.avx1.ru",
+ 	"build": {
+ 		"beforeDevCommand": "bun run build:runtime && bun run dev:web",
+ 		"devUrl": "http://localhost:3125",
+-		"beforeBuildCommand": "bun run dmg:background && bun run build",
+ 		"frontendDist": "../webview/out"
+ 	},
+ 	"plugins": {
+ 		"updater": {
+-			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENEMTJDNzk2RUExQUY3RDEKUldUUjl4cnFsc2NTelYxNzlFR1NkWnI0VTM1V0hvQXRyOW0xV2c0bFhkL3dhdkdpNGhNRW1MQXEK",
++			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZFMUI5QzJEOERGQzMyMDEKUldRQk12eU5MWndiYmpsazRZZ2k4ZUhsM0hObWtYSkZ1YzRrMEVQYkt1dFI1L01INzVvY1crWmcK",
+ 			"endpoints": [
+-				"https://github.com/cline/cline/releases/download/desktop-latest/latest.json"
++				"https://raw.githubusercontent.com/aktalascloud/cline-desktop-ivybridge-avx1/avx1/fork/updater/latest.json"
+ 			]
+ 		}
+ 	},
+@@ -21,7 +20,7 @@
+ 		"windows": [
+ 			{
+ 				"label": "main",
+-				"title": "Cline",
++				"title": "Cline Desktop AVX1 RU",
+ 				"width": 1500,
+ 				"height": 980,
+ 				"resizable": true,
+@@ -36,17 +35,23 @@
+ 	},
+ 	"bundle": {
+ 		"active": true,
+-		"targets": "all",
++		"targets": [
++			"nsis"
++		],
+ 		"category": "DeveloperTool",
+ 		"shortDescription": "Cline AI coding agent",
+ 		"longDescription": "Cline is an AI coding agent. It reads your code, edits files, runs commands, and works through tasks with you in any project on your machine.",
+ 		"homepage": "https://cline.bot",
+-		"externalBin": ["bin/cline-cli"],
++		"externalBin": [
++			"bin/cline-cli"
++		],
+ 		"resources": [
+ 			"icons/app/*.png",
+ 			"icons/app/macos/*.png",
+ 			"bin/remote-helpers/*",
+-			"bin/desktop-backend/**/*"
++			"bin/desktop-backend/**/*",
++			"licenses/**/*",
++			"bin/defaults/freellm.json"
+ 		],
+ 		"icon": [
+ 			"icons/32x32.png",
+@@ -85,6 +90,9 @@
+ 					"y": 200
+ 				}
+ 			}
+-		}
++		},
++		"useLocalToolsDir": true,
++		"createUpdaterArtifacts": true,
++		"license": "Apache-2.0"
+ 	}
+ }
+diff --git a/apps/examples/desktop-app/src-tauri/tauri.windows.conf.json b/apps/examples/desktop-app/src-tauri/tauri.windows.conf.json
+index 27ef18dce7fce9a12883ede9742adc3fc0fb912a..ffa35a71eaa9fd5e077c10968689e93fea6c7938 100644
+--- a/apps/examples/desktop-app/src-tauri/tauri.windows.conf.json
++++ b/apps/examples/desktop-app/src-tauri/tauri.windows.conf.json
+@@ -4,7 +4,7 @@
+ 		"windows": [
+ 			{
+ 				"label": "main",
+-				"title": "Cline",
++				"title": "Cline Desktop AVX1 RU",
+ 				"width": 1500,
+ 				"height": 980,
+ 				"resizable": true,
+@@ -17,7 +17,15 @@
+ 	"bundle": {
+ 		"windows": {
+ 			"nsis": {
+-				"installerHooks": "nsis/installer-hooks.nsh"
++				"installerHooks": "nsis/installer-hooks.nsh",
++				"languages": [
++					"Russian",
++					"English"
++				],
++				"displayLanguageSelector": true,
++				"installMode": "currentUser",
++				"template": "nsis/installer.nsi",
++				"compression": "lzma"
+ 			}
+ 		}
+ 	}
+diff --git a/fork/check-bundle-paths.py b/fork/check-bundle-paths.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..008be3dcec95fdd69f602cc58819bef19178502a
+--- /dev/null
++++ b/fork/check-bundle-paths.py
+@@ -0,0 +1,23 @@
++"""Fail before packaging if generated runtimes contain checkout paths or the signing secret."""
++import base64, os, pathlib, sys
++root=pathlib.Path(__file__).resolve().parents[1]
++patterns=[]
++for value in {str(root),str(root).replace('\\','/'),str(root).replace('\\','\\\\')}:
++    patterns += [('checkout path',value.encode()),('checkout path',value.encode('utf-16le'))]
++key=os.environ.get('TAURI_SIGNING_PRIVATE_KEY','').strip()
++if key:
++    patterns.append(('signing secret',key.encode()))
++    try:patterns.append(('decoded signing secret',base64.b64decode(key,validate=True)))
++    except ValueError:pass
++overlap=max(len(value) for _,value in patterns)
++count=0
++for path in (root/'apps/examples/desktop-app/src-tauri/bin').rglob('*'):
++    if not path.is_file():continue
++    count+=1;tail=b''
++    with path.open('rb') as stream:
++        while block:=stream.read(4*1024*1024):
++            data=tail+block
++            for kind,value in patterns:
++                if value and value in data:raise SystemExit(f'Bundle rejected: {kind} in {path.name}')
++            tail=data[-overlap:]
++print(f'Generated runtime privacy check passed ({count} files)')
+diff --git a/fork/collect-licenses.py b/fork/collect-licenses.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..0294c8703a3bef0b81e300e5280eeecd0983e4d9
+--- /dev/null
++++ b/fork/collect-licenses.py
+@@ -0,0 +1,63 @@
++"""Conservative license inventory including build and optional dependencies."""
++import json,re,shutil,os,urllib.request,subprocess,tomllib
++from pathlib import Path
++base=Path(__file__).resolve().parents[1];root=base;out=root/'apps/examples/desktop-app/src-tauri/licenses';out.mkdir(exist_ok=True)
++rows=[]
++# Cached packages from earlier cycles must not enter a new package inventory.
++lock_script = '''import ts from "typescript";const x=ts.parseConfigFileTextToJson("bun.lock",await Bun.file("bun.lock").text());if(x.error)throw Error("Invalid lockfile");console.log(JSON.stringify(Object.values(x.config.packages).map(v=>v[0])));'''
++npm_specs=json.loads(subprocess.check_output(['bun','-e',lock_script],cwd=root,text=True,encoding='utf-8'))
++allowed_npm={tuple(spec.rsplit('@',1)) for spec in npm_specs if isinstance(spec,str) and '@' in spec}
++cargo_lock=tomllib.loads((root/'apps/examples/desktop-app/src-tauri/Cargo.lock').read_text('utf-8'))
++allowed_cargo={(p['name'],p['version']) for p in cargo_lock['package']}
++if out.is_symlink() or not out.resolve().is_relative_to(root.resolve()):raise RuntimeError('License output redirects outside source')
++managed=[]
++def collect(package,version,directory,kind):
++ texts=[]
++ for p in directory.iterdir():
++  if p.is_file() and re.match(r'(?i)^(licen[cs]e|copying|notice|authors|copyright)([.\-_]|$)',p.name):
++   try:texts.append(p.name+'\n'+p.read_text('utf-8',errors='replace'))
++   except OSError:pass
++ rows.append({'package':package,'version':version,'scope':kind,'notice_files':len(texts)})
++ if texts:
++  name=re.sub(r'[^a-zA-Z0-9._-]','_',package+'-'+version+'-'+kind)+'.txt'
++  (out/name).write_text('\n\n'.join(texts),encoding='utf-8');managed.append(name)
++for store in sorted((root/'node_modules/.bun').iterdir()):
++ deps=store/'node_modules'
++ if not deps.is_dir():continue
++ for d in sorted(deps.iterdir()):
++  candidates=list(d.iterdir()) if d.is_dir() and d.name.startswith('@') else [d]
++  for package in candidates:
++   p=package/'package.json'
++   if not p.is_file() or package.is_symlink():continue
++   try:meta=json.loads(p.read_text('utf-8'))
++   except (OSError,ValueError):continue
++   if (meta.get('name'),meta.get('version')) not in allowed_npm:continue
++   if not any(r['package']==meta.get('name') and r['version']==meta.get('version') and r['scope']=='npm' for r in rows):collect(meta.get('name',package.name),meta.get('version','unknown'),package,'npm')
++for registry in (Path(os.environ.get('CARGO_HOME',str(Path.home()/'.cargo')))/'registry/src').glob('*'):
++ for crate in sorted(registry.iterdir()):
++  if crate.is_dir():
++   name,_,version=crate.name.rpartition('-')
++   if (name,version) in allowed_cargo:collect(name,version,crate,'cargo')
++for old in out.iterdir():
++ if old.is_file() and old.name.endswith(('-npm.txt','-cargo.txt')) and old.name not in managed:
++  if old.is_symlink() or not old.resolve().is_relative_to(out.resolve()):raise RuntimeError('Managed notice path escape')
++  old.unlink()
++shutil.copyfile(root/'LICENSE',out/'Cline-Apache-2.0.txt')
++shutil.copyfile(root/'apps/examples/desktop-app/src-tauri/nsis/LICENSE.tauri-MIT',out/'Tauri-installer-MIT.txt')
++(out/'INDEX.json').write_text(json.dumps(rows,indent=2)+'\n',encoding='utf-8')
++(out/'README.txt').write_text('Cline Desktop AVX1 RU is an unofficial Apache-2.0 fork of https://github.com/cline/cline.\nCorresponding source: https://github.com/aktalascloud/cline-desktop-ivybridge-avx1\nThis conservative notice inventory includes build, test and optional dependencies; listing does not imply that all are redistributed.\nBun is a prebuilt upstream runtime; see Bun-NOTICE.txt for its bundled third-party notices. WebView2 is a Microsoft system runtime and is not rebuilt here.\n',encoding='utf-8')
++print('License inventory',len(rows),'packages',sum(r['notice_files']>0 for r in rows),'with notices')
++
++# Upstream's own runtime license statement and corresponding source/relinking notes.
++for name,url in {
++ 'Bun-LICENSE.md':'https://raw.githubusercontent.com/oven-sh/bun/744846f844374847c902b5e7fd59b4342a51ef99/LICENSE.md',
++ 'JavaScriptCore-LGPL-2.0.txt':'https://raw.githubusercontent.com/oven-sh/WebKit/2e2aa2290fac856d6f451ceacb58f7f5b44dd057/Source/JavaScriptCore/COPYING.LIB',
++ 'Bun-uSockets-Apache-2.0.txt':'https://raw.githubusercontent.com/oven-sh/bun/744846f844374847c902b5e7fd59b4342a51ef99/packages/bun-usockets/LICENSE',
++ 'Bun-uWebSockets-Apache-2.0.txt':'https://raw.githubusercontent.com/oven-sh/bun/744846f844374847c902b5e7fd59b4342a51ef99/packages/bun-uws/LICENSE'
++ ,'Rust-MIT.txt':'https://raw.githubusercontent.com/rust-lang/rust/1.97.0/LICENSE-MIT'
++ ,'Rust-Apache-2.0.txt':'https://raw.githubusercontent.com/rust-lang/rust/1.97.0/LICENSE-APACHE'
++ ,'Rust-COPYRIGHT.txt':'https://raw.githubusercontent.com/rust-lang/rust/1.97.0/COPYRIGHT'
++}.items():
++ request=urllib.request.Request(url,headers={'User-Agent':'Cline-AVX1-build'})
++ with urllib.request.urlopen(request,timeout=60) as response: (out/name).write_bytes(response.read())
++(out/'Bun-NOTICE.txt').write_text('Bun 1.4.2 (744846f84) is embedded unchanged. Its upstream license statement, linked-library inventory and WebKit relinking instructions are in Bun-LICENSE.md.\nCorresponding Bun source: https://github.com/oven-sh/bun/tree/bun-v1.4.2\nCorresponding WebKit/JSC source: https://github.com/oven-sh/WebKit/tree/2e2aa2290fac856d6f451ceacb58f7f5b44dd057\nTo replace the runtime, build that Bun source with your modified WebKit and rerun the CLI embedding recipe from this fork. All application and CLI source is available in this fork. No local Ivy Bridge compilation flags are attributed to prebuilt Bun/JSC.\n',encoding='utf-8')
+diff --git a/fork/logging-bundle.ts b/fork/logging-bundle.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..4b4d57cd4cb471cab12a29a881a0371167875cb5
+--- /dev/null
++++ b/fork/logging-bundle.ts
+@@ -0,0 +1,77 @@
++import { dirname, join } from "node:path";
++import type { BunPlugin } from "bun";
++
++export function loggingWorkers(resolveFrom: string) {
++	const pino = Bun.resolveSync("pino", resolveFrom);
++	const thread = Bun.resolveSync("thread-stream", pino);
++	return {
++		thread: join(dirname(thread), "lib", "worker.js"),
++		pino: join(dirname(pino), "lib", "worker.js"),
++		file: join(dirname(pino), "file.js"),
++	};
++}
++
++export function discordWorkerPath(resolveFrom: string) {
++	const adapter = Bun.resolveSync("@chat-adapter/discord", resolveFrom);
++	const discord = Bun.resolveSync("discord.js", adapter);
++	return join(
++		dirname(Bun.resolveSync("@discordjs/ws", discord)),
++		"defaultWorker.js",
++	);
++}
++
++export const loggingWorkerNames = {
++	thread: "thread-stream-worker.js",
++	pino: "pino-worker.js",
++	file: "pino-file.js",
++};
++
++export function backendLoggingOptions() {
++	return {
++		plugins: [loggingBundlePlugin()],
++		banner: `globalThis.__clineLoggingPaths = Object.fromEntries(Object.entries(${JSON.stringify(loggingWorkerNames)}).map(([key, name]) => [key, process.getBuiltinModule('node:url').fileURLToPath(new URL(name, import.meta.url))]));`,
++		define: {
++			__CLINE_LOG_THREAD__: "globalThis.__clineLoggingPaths.thread",
++			__CLINE_LOG_PINO__: "globalThis.__clineLoggingPaths.pino",
++			__CLINE_LOG_FILE__: "globalThis.__clineLoggingPaths.file",
++		},
++	};
++}
++
++/** Keep logger workers relocatable instead of embedding build-machine __dirname. */
++export function loggingBundlePlugin(): BunPlugin {
++	return {
++		name: "relocatable-logging-workers",
++		setup(build) {
++			build.onLoad(
++				{
++					filter:
++						/[\\/]thread-stream[\\/]index\.js$|[\\/]pino[\\/]lib[\\/]transport\.js$|[\\/]@discordjs[\\/]ws[\\/]dist[\\/]index\.js$/,
++				},
++				async ({ path }) => {
++					let contents = await Bun.file(path).text();
++					contents = contents
++						.replace(
++							/\(0, import_node_path\.join\)\(__dirname,\s*['"]defaultWorker\.js['"]\)/g,
++							"__CLINE_DISCORD_WS_WORKER__",
++						)
++						.replace(
++							/join\(__dirname,\s*['"]lib['"],\s*['"]worker\.js['"]\)/g,
++							"__CLINE_LOG_THREAD__",
++						)
++						.replace(
++							/join\(__dirname,\s*['"]worker\.js['"]\)/g,
++							"__CLINE_LOG_PINO__",
++						)
++						.replace(
++							/join\(__dirname,\s*['"]\.\.['"],\s*['"]file\.js['"]\)/g,
++							"__CLINE_LOG_FILE__",
++						);
++					if (contents.includes("__dirname"))
++						throw new Error("Unmapped logging asset path");
++					return { contents, loader: "js" };
++				},
++			);
++		},
++	};
++}
+diff --git a/fork/updater/public-key.txt b/fork/updater/public-key.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..5e38aeb1b90965a040ec7403746b27daaa36aa0d
+--- /dev/null
++++ b/fork/updater/public-key.txt
+@@ -0,0 +1 @@
++dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZFMUI5QzJEOERGQzMyMDEKUldRQk12eU5MWndiYmpsazRZZ2k4ZUhsM0hObWtYSkZ1YzRrMEVQYkt1dFI1L01INzVvY1crWmcK

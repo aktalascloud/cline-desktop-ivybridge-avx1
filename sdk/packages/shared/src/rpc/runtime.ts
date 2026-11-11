@@ -11,7 +11,6 @@ import type {
 } from "../llms/model-info";
 import type { ModelToolName } from "../llms/model-tools";
 import type { ReasoningLevel } from "../llms/reasoning-options";
-import type { ModelReasoningOption } from "../llms/reasoning-options";
 import type { ProviderAuthInfo } from "../provider-auth";
 import type {
 	RuntimeConfigExtensionKind,
@@ -186,8 +185,6 @@ export interface ProviderModel {
 	supportsAttachments?: boolean;
 	supportsVision?: boolean;
 	supportsReasoning?: boolean;
-	supportsAuthorModes?: boolean;
-	reasoningOptions?: ModelReasoningOption[];
 	operationModes?: ModelOperationMode[];
 	inputModalities?: ModelModality[];
 	outputModalities?: ModelModality[];
@@ -353,20 +350,6 @@ export interface SaveProviderSettingsActionRequest {
 	baseUrl?: string;
 	headers?: Record<string, string | null>;
 	timeout?: number;
-	/** Opt-in author template mode; null clears the default. */
-	authorReasoningMode?: "ultra" | null;
-	/** OpenAI Chat sampling defaults; null values clear individual overrides. */
-	sampling?: {
-		presence_penalty?: number | null;
-		repetition_penalty?: number | null;
-		temperature?: number | null;
-		top_p?: number | null;
-		top_k?: number | null;
-		min_p?: number | null;
-		max_tokens?: number | null;
-		seed?: number | null;
-		reasoning_budget_tokens?: number | null;
-	};
 	// Reasoning/thinking configuration
 	reasoning?: ProviderSettingsObjectPatch<{
 		enabled?: boolean;

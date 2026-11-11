@@ -37,9 +37,7 @@ describe("live Cline default model", () => {
 		invoke.mockRejectedValue(new Error("offline"));
 		const c = await load();
 		expect(await c.loadLiveClineDefaultModelId()).toBeUndefined();
-		expect(c.isUntouchedDefaultModel(c.getInitialChatConfig("local"))).toBe(
-			true,
-		);
+		expect(c.isUntouchedDefaultModel(c.getInitialChatConfig("local"))).toBe(true);
 	});
 
 	it("does not treat a remembered model as untouched", async () => {
@@ -51,9 +49,7 @@ describe("live Cline default model", () => {
 			lastProvider: "cline",
 			lastModelByProvider: { cline: "x/y" },
 		});
-		expect(c.isUntouchedDefaultModel(c.getInitialChatConfig("local"))).toBe(
-			false,
-		);
+		expect(c.isUntouchedDefaultModel(c.getInitialChatConfig("local"))).toBe(false);
 	});
 
 	it("does not treat a saved cloud model as untouched", async () => {
@@ -70,23 +66,6 @@ describe("live Cline default model", () => {
 			},
 			"cloud",
 		);
-		const cloud = c.getInitialChatConfig("local", { executionTarget: "cloud" });
-		expect(c.isUntouchedDefaultModel(cloud)).toBe(false);
-	});
-	it.each([
-		"cline",
-		"cline-pass",
-	])("keeps an inherited saved %s choice matching the bundled model", async (provider) => {
-		const c = await load();
-		const { writeModelSelectionStorageToWindow } = await import(
-			"@/lib/model-selection"
-		);
-		writeModelSelectionStorageToWindow({
-			lastProvider: provider,
-			lastModelByProvider: {
-				[provider]: GENERATED_CLINE_RECOMMENDED_MODELS.free?.[0]?.id ?? "",
-			},
-		});
 		const cloud = c.getInitialChatConfig("local", { executionTarget: "cloud" });
 		expect(c.isUntouchedDefaultModel(cloud)).toBe(false);
 	});

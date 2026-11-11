@@ -284,7 +284,9 @@ function toSdkModelInfo(selection: ResolvedModelSelection): SdkModelInfo {
 		setCapability("tools", supportsTools !== false)
 		// Likewise "reasoning": the gateway skips an explicit reasoning disable
 		// for a list without it. Only supportsReasoning: false denies it.
-		if (modelInfo.supportsReasoning === undefined) setCapability("reasoning", true)
+		if (modelInfo.supportsReasoning === undefined && (modelInfo.operation ?? "language") === "language") {
+			setCapability("reasoning", true)
+		}
 	}
 
 	const maxTokens = positiveFiniteNumber(modelInfo.maxTokens)

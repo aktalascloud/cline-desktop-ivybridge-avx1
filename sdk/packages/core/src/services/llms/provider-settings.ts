@@ -141,8 +141,6 @@ export type ModelCatalogConfig = ModelCatalogSettings;
 
 export const ProviderSettingsSchema = z.object({
 	provider: ProviderIdSchema,
-	sampling: Llms.OpenAIChatSamplingSchema.optional(),
-	authorReasoningMode: z.enum(["ultra"]).optional(),
 	apiKey: z.string().optional(),
 	auth: AuthSettingsSchema.optional(),
 	model: z.string().optional(),
@@ -265,8 +263,6 @@ export function toProviderConfig(
 		headers: settings.headers,
 		timeoutMs: settings.timeout,
 		maxOutputTokens: settings.maxTokens,
-		sampling: settings.sampling,
-		// Legacy provider-wide author mode is intentionally not projected. Modes are session-owned.
 		maxInputTokens: settings.contextWindow,
 		contextWindow: settings.contextWindow,
 		thinking: settings.reasoning?.enabled,

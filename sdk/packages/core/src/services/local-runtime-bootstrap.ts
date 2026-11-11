@@ -1,4 +1,3 @@
-import { createBundledDefaults } from "./bundled-defaults";
 import { resolveProviderRequestHeaders } from "@cline/llms";
 import type {
 	AgentConfig,
@@ -355,7 +354,6 @@ export async function prepareLocalRuntimeBootstrap(
 		userInstructionService,
 		configExtensions,
 		onTeamRestored,
-		shellEnvironment,
 		...localConfigFields
 	} = localRuntime ?? {};
 	const localConfig =
@@ -547,9 +545,7 @@ export async function prepareLocalRuntimeBootstrap(
 		request: connectorsRequest,
 		logger: localConfig?.logger,
 	});
-	const bundledDefaults = createBundledDefaults();
 	const builtInExtensionList = [
-		...(bundledDefaults ? [bundledDefaults.extension] : []),
 		...(fileHookExtension ? [fileHookExtension] : []),
 		...(composioToolsExtension ? [composioToolsExtension] : []),
 	];
@@ -651,13 +647,9 @@ export async function prepareLocalRuntimeBootstrap(
 			userInstructionService: userInstructionService,
 			pluginSkillDirectories,
 			agentPluginSkills: loadedAgentPluginPackages?.skills,
-			agentPluginMcpServers: [
-				...(loadedAgentPluginPackages?.mcpServers ?? []),
-				...(bundledDefaults?.mcpServers ?? []),
-			],
+			agentPluginMcpServers: loadedAgentPluginPackages?.mcpServers,
 			configExtensions: configExtensions,
 			toolExecutors: effectiveToolExecutors,
-			shellEnvironment,
 			toolPolicies,
 			workspaceManager,
 			logger: config.logger,

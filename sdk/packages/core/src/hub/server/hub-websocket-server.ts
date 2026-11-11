@@ -687,9 +687,10 @@ export async function startHubWebSocketServer(
 			readWebSocketAuthToken(request.headers["sec-websocket-protocol"]),
 			authToken,
 		);
-		// Local origins are forgeable and do not authenticate a browser or process.
-		// Reject before attaching commands or event subscriptions to an elevated Hub.
-		if (!isTokenAuthorized) {
+		const isAuthorized =
+			isTokenAuthorized ||
+			(isLocalHubHostName(host) && isLocalHubOrigin(request.headers.origin));
+		if (!isAuthorized) {
 			rejectUnauthorizedUpgradeSocket(socket);
 			return;
 		}

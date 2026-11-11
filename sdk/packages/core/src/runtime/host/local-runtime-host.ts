@@ -762,12 +762,6 @@ export class LocalRuntimeHost implements RuntimeHost {
 					bootstrap.config,
 					sessionId,
 					sessionToolExecutors,
-					{
-						executionController: this.runCommandExecutionController,
-						...(input.localRuntime?.shellEnvironment
-							? { env: input.localRuntime.shellEnvironment, inheritEnv: false }
-							: {}),
-					},
 				),
 			createSubAgentLifecycleCallbacks: (config) =>
 				createSessionSubAgentLifecycleCallbacks(
@@ -2809,11 +2803,6 @@ export class LocalRuntimeHost implements RuntimeHost {
 		session: ActiveSession,
 		options?: { forceRefresh?: boolean },
 	): Promise<void> {
-		if (session.config.providerId === "dsw2api") {
-			throw new Error(
-				"DSW2API has been removed. Select another provider to continue this chat.",
-			);
-		}
 		let resolved: RuntimeOAuthResolution | null = null;
 		try {
 			resolved = await this.oauthTokenManager.resolveProviderApiKey({

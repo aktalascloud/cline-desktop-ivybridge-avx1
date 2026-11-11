@@ -515,11 +515,7 @@ export function SettingsView({
 			void loadProviderModels(effectiveSelectedProviderId);
 		}, 0);
 		return () => window.clearTimeout(timeoutId);
-	}, [
-		loadProviderModels,
-		effectiveSelectedProviderId,
-		selectedProvider?.configured,
-	]);
+	}, [loadProviderModels, effectiveSelectedProviderId]);
 
 	const backToProviderList = () => {
 		onNavigateSection("Providers");
@@ -738,6 +734,10 @@ function GeneralSettingsContent() {
 	const [telemetryLoading, setTelemetryLoading] = useState(true);
 	const [telemetrySaving, setTelemetrySaving] = useState(false);
 	const [telemetryError, setTelemetryError] = useState<string | null>(null);
+	const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
+	const [autoUpdateLoading, setAutoUpdateLoading] = useState(true);
+	const [autoUpdateSaving, setAutoUpdateSaving] = useState(false);
+	const [autoUpdateError, setAutoUpdateError] = useState<string | null>(null);
 
 	useEffect(() => setAppIconLocation(appIconSurface(navigator.userAgent)), []);
 	useEffect(() => subscribeToAppFontSize(setFontSize), []);
@@ -745,17 +745,21 @@ function GeneralSettingsContent() {
 	const loadGlobalSettings = useCallback(async () => {
 		setTelemetryLoading(true);
 		setTelemetryError(null);
-
+		setAutoUpdateLoading(true);
+		setAutoUpdateError(null);
 		try {
 			const settings = await desktopClient.invoke<GlobalSettingsResponse>(
 				"get_global_settings",
 			);
 			setTelemetryOptOut(settings.telemetryOptOut);
+			setAutoUpdateEnabled(settings.autoUpdateEnabled);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			setTelemetryError(message);
+			setAutoUpdateError(message);
 		} finally {
 			setTelemetryLoading(false);
+			setAutoUpdateLoading(false);
 		}
 	}, []);
 
@@ -783,6 +787,26 @@ function GeneralSettingsContent() {
 			setTelemetryError(message);
 		} finally {
 			setTelemetrySaving(false);
+		}
+	};
+
+	const updateAutoUpdateEnabled = async (nextValue: boolean) => {
+		const previousValue = autoUpdateEnabled;
+		setAutoUpdateEnabled(nextValue);
+		setAutoUpdateSaving(true);
+		setAutoUpdateError(null);
+		try {
+			const settings = await desktopClient.invoke<GlobalSettingsResponse>(
+				"set_auto_update_enabled",
+				{ auto_update_enabled: nextValue },
+			);
+			setAutoUpdateEnabled(settings.autoUpdateEnabled);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			setAutoUpdateEnabled(previousValue);
+			setAutoUpdateError(message);
+		} finally {
+			setAutoUpdateSaving(false);
 		}
 	};
 
@@ -1006,7 +1030,7 @@ function GeneralSettingsContent() {
 						<p className="text-sm text-muted-foreground">
 							{t("Enable error and usage reports to help improve Cline.")}
 						</p>
-						{telemetryError ? (
+						{autoUpdateError ? (
 							<p className="mt-2 text-xs text-destructive" role="alert">
 								{t("Failed to update telemetry setting: ")}
 								{telemetryError}

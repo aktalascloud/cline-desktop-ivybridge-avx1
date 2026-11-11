@@ -7,7 +7,6 @@ import {
 	ANTHROPIC_DEFAULT_MODEL_ID,
 	CLINE_DEFAULT_MODEL_ID,
 	formatDisplayUserInput,
-	isQwen38NextAuthorModel,
 } from "@cline/shared/browser";
 import {
 	AgentComposer,
@@ -85,13 +84,9 @@ import {
 	VOICE_INPUT_SETTINGS_CHANGED_EVENT,
 } from "@/lib/provider-model-catalog";
 import type { ProviderModel } from "@/lib/provider-schema";
-import { modelReasoningChoices } from "@/lib/reasoning-choices";
-import { transcribeRecordedAudio } from "@/lib/recorded-transcription";
 import { startStreamingTranscription } from "@/lib/streaming-transcription";
 import { cn } from "@/lib/utils";
 import { LOCAL_WORKSPACE_ENVIRONMENT_ID } from "@/lib/workspace-paths";
-import { SamplingSettings } from "./sampling-settings";
-import { DeepSeekControls } from "./deepseek-controls";
 import { LocalModelIndicator } from "./local-model-indicator";
 import { TokenUsageRing } from "./token-usage-ring";
 import { WorkspaceSelector as WorkspaceSelectorImpl } from "./workspace-selector";
@@ -220,10 +215,8 @@ const EFFORT_LEVELS: ReasoningEffortOption[] = [
 	DEFAULT_REASONING_EFFORT,
 	{ label: "Medium", value: "medium" },
 	{ label: "High", value: "high" },
-	{ label: "XHigh", value: "xhigh" },
+	{ label: "Extra", value: "xhigh" },
 	{ label: "Max", value: "max" },
-	{ label: "Ultra · DavidAU", value: "ultra" },
-	{ label: "Adaptive", value: "adaptive" },
 ];
 const PROMPT_INPUT_COLLAPSED_ROWS = 1;
 const PROMPT_INPUT_EXPANDED_ROWS = 2;
@@ -303,7 +296,7 @@ function getActiveSlash(input: string, cursor: number): ActiveSlash | null {
 		return null;
 	}
 	const query = left.slice(slashIndex + 1);
-	// No whitespace allowed inside the query вЂ” once the user typed a space
+	// No whitespace allowed inside the query — once the user typed a space
 	// the slash command has been committed.
 	if (/\s/.test(query)) {
 		return null;
@@ -377,7 +370,6 @@ type ChatInputBarProps = {
 	/** Opens Settings → Local Models from the local model chip. */
 	onOpenLocalModels?: () => void;
 	summary: {
-		contextCompacted?: boolean;
 		toolCalls: number;
 		tokensIn: number;
 		tokensOut: number;
@@ -510,8 +502,6 @@ function ChatInputBarImpl({
 		provider: string;
 		model: string;
 		supported: boolean | null;
-		authorModesSupported?: boolean | null;
-		reasoningOptions?: ProviderModel["reasoningOptions"];
 	} | null>(null);
 	const modelSupportsReasoning =
 		reasoningCapability?.provider === provider &&
@@ -519,29 +509,16 @@ function ChatInputBarImpl({
 			? reasoningCapability.supported
 			: null;
 	const handleModelSupportsReasoningChange = useCallback(
-		(
-			supported: boolean | null,
-			authorModesSupported: boolean | null = null,
-			reasoningOptions?: ProviderModel["reasoningOptions"],
-		) => {
+		(supported: boolean | null) => {
 			setReasoningCapability((current) => {
 				if (
 					current?.provider === provider &&
 					current.model === model &&
-					current.supported === supported &&
-					current.authorModesSupported === authorModesSupported &&
-					JSON.stringify(current.reasoningOptions) ===
-						JSON.stringify(reasoningOptions)
+					current.supported === supported
 				) {
 					return current;
 				}
-				return {
-					provider,
-					model,
-					supported,
-					authorModesSupported,
-					reasoningOptions,
-				};
+				return { provider, model, supported };
 			});
 		},
 		[model, provider],
@@ -576,7 +553,7 @@ function ChatInputBarImpl({
 	);
 	const reportUnsupportedImages = useCallback(() => {
 		toast({
-			title: "This model doesnвЂ™t support image input",
+			title: "This model doesn’t support image input",
 			description:
 				"Choose a model that supports images or remove the images before sending." +
 				(executionTarget === "cloud"
@@ -724,7 +701,7 @@ function ChatInputBarImpl({
 		? `${activeSlash.slashIndex}:${activeSlash.query}`
 		: null;
 	// Slash commands resolve against locally installed skills/workflows, which
-	// the cloud sandbox cannot run вЂ” gate them like @-mentions.
+	// the cloud sandbox cannot run — gate them like @-mentions.
 	const slashOpen =
 		executionTarget === "local" &&
 		slashKey !== null &&
@@ -883,32 +860,6 @@ function ChatInputBarImpl({
 		streamingTranscriptRangeRef.current = null;
 	}, []);
 
-	const speechActiveRef = useRef(false);
-	const handleSpeechInputActiveChange = useCallback(
-		(active: boolean) => {
-			if (!transcriptionTarget?.supportsStreaming) {
-				if (active && !speechActiveRef.current)
-					handleStreamingTranscriptionStart();
-				if (!active) handleStreamingTranscriptionEnd();
-			}
-			speechActiveRef.current = active;
-			setSpeechInputActive(active);
-		},
-		[
-			transcriptionTarget?.supportsStreaming,
-			handleStreamingTranscriptionStart,
-			handleStreamingTranscriptionEnd,
-		],
-	);
-
-	const handleVoiceTranscriptionChange = useCallback(
-		(text: string, source?: "speech-recognition" | "media-recorder") => {
-			handleStreamingTranscriptionChange(text);
-			if (source === "media-recorder") handleStreamingTranscriptionEnd();
-		},
-		[handleStreamingTranscriptionChange, handleStreamingTranscriptionEnd],
-	);
-
 	const handleStartStreamingTranscription = useCallback(() => {
 		const generation = transcriptionGenerationRef.current;
 		return startStreamingTranscription({
@@ -945,31 +896,6 @@ function ChatInputBarImpl({
 		});
 	}, []);
 
-	const authorModesSupported =
-		isQwen38NextAuthorModel(model) &&
-		executionTarget === "local" &&
-		environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID &&
-		reasoningCapability?.provider === provider &&
-		reasoningCapability?.model === model &&
-		reasoningCapability.authorModesSupported === true;
-	const declaredEfforts =
-		reasoningCapability?.provider === provider &&
-		reasoningCapability.model === model
-			? modelReasoningChoices(reasoningCapability.reasoningOptions)
-			: undefined;
-	const availableEfforts = EFFORT_LEVELS.filter(
-		(option) =>
-			(!["ultra", "adaptive"].includes(option.value) || authorModesSupported) &&
-			(!declaredEfforts || declaredEfforts.includes(option.value)),
-	);
-
-	const declaredEffortKey = declaredEfforts?.join(",");
-	useEffect(() => {
-		if (!declaredEfforts || !availableEfforts.length) return;
-		const selected = thinking === false ? "none" : (reasoningEffort ?? "low");
-		if (!availableEfforts.some((option) => option.value === selected))
-			onReasoningChange(buildReasoningConfig(availableEfforts[0]));
-	}, [declaredEffortKey, thinking, reasoningEffort, onReasoningChange]);
 	const effortIndex = useMemo(
 		() => resolveEffortIndex(thinking, reasoningEffort),
 		[reasoningEffort, thinking],
@@ -985,11 +911,11 @@ function ChatInputBarImpl({
 	const hasExplicitReasoningSelection =
 		thinking !== undefined || reasoningEffort !== undefined;
 	const effortLabel =
-		!hasExplicitReasoningSelection && modelSupportsReasoning === null
-			? "Reasoning"
-			: !hasExplicitReasoningSelection && modelSupportsReasoning === false
-				? "None"
-				: (EFFORT_LEVELS[effortIndex]?.label ?? "Reasoning");
+		modelSupportsReasoning === false
+			? t("None")
+			: !hasExplicitReasoningSelection && modelSupportsReasoning === null
+				? t("Reasoning")
+				: t(EFFORT_LEVELS[effortIndex]?.label ?? "Reasoning");
 	const promptInputRows =
 		variant === "welcome" || promptInputFocused
 			? PROMPT_INPUT_EXPANDED_ROWS
@@ -999,11 +925,7 @@ function ChatInputBarImpl({
 			if (modelSupportsReasoning !== true) {
 				return;
 			}
-			if (["ultra", "adaptive"].includes(value) && !authorModesSupported)
-				return;
-			const nextOption = availableEfforts.find(
-				(option) => option.value === value,
-			);
+			const nextOption = EFFORT_LEVELS.find((option) => option.value === value);
 			if (nextOption) {
 				onReasoningChange(buildReasoningConfig(nextOption));
 				try {
@@ -1016,13 +938,7 @@ function ChatInputBarImpl({
 				}
 			}
 		},
-		[
-			modelSupportsReasoning,
-			onReasoningChange,
-			provider,
-			authorModesSupported,
-			availableEfforts,
-		],
+		[modelSupportsReasoning, onReasoningChange, provider],
 	);
 
 	const seededReasoningProviderRef = useRef<string | null>(null);
@@ -1035,7 +951,7 @@ function ChatInputBarImpl({
 		if (!unset && seededReasoningProviderRef.current === normalizedId) {
 			return;
 		}
-
+		seededReasoningProviderRef.current = normalizedId;
 		// The thread's config is rebuilt on every mount (and session hydration
 		// only restores provider/model), so seed the effort from the last value
 		// the user picked for this provider before falling back to the default.
@@ -1049,54 +965,15 @@ function ChatInputBarImpl({
 		if (!unset && !remembered) {
 			return;
 		}
-		if (
-			remembered &&
-			["ultra", "adaptive"].includes(remembered.value) &&
-			reasoningCapability?.authorModesSupported == null
-		)
-			return;
-		seededReasoningProviderRef.current = normalizedId;
-		const selected =
-			remembered &&
-			["ultra", "adaptive"].includes(remembered.value) &&
-			!authorModesSupported
-				? EFFORT_LEVELS.find((v) => v.value === "xhigh")
-				: remembered;
 		onReasoningChange(
-			buildReasoningConfig(
-				availableEfforts.find(
-					(option) =>
-						option.value === (selected ?? DEFAULT_REASONING_EFFORT).value,
-				) ??
-					availableEfforts[0] ??
-					DEFAULT_REASONING_EFFORT,
-			),
+			buildReasoningConfig(remembered ?? DEFAULT_REASONING_EFFORT),
 		);
 	}, [
-		authorModesSupported,
-		reasoningCapability?.authorModesSupported,
 		modelSupportsReasoning,
 		onReasoningChange,
 		provider,
 		reasoningEffort,
 		thinking,
-	]);
-
-	useEffect(() => {
-		if (
-			reasoningCapability?.provider === provider &&
-			reasoningCapability?.model === model &&
-			(reasoningCapability.authorModesSupported === false ||
-				!isQwen38NextAuthorModel(model)) &&
-			["ultra", "adaptive"].includes(reasoningEffort ?? "")
-		)
-			onReasoningChange({ thinking: true, reasoningEffort: "xhigh" });
-	}, [
-		reasoningCapability,
-		provider,
-		model,
-		reasoningEffort,
-		onReasoningChange,
 	]);
 
 	// Focus the composer on mount/variant change and when text is injected
@@ -1693,14 +1570,14 @@ function ChatInputBarImpl({
 								</AgentComposerStopButton>
 							)}
 							{/* The mic button only appears once a voice model is
-							    configured in Settings в†’ Voice; unconfigured users
+							    configured in Settings → Voice; unconfigured users
 							    don't get a dead control. Start with the configured provider;
 							    browser recognition is only a fallback for network failures. */}
 							{transcriptionTarget ? (
 								<SpeechInput
-									fallbackOnNetworkError={transcriptionTarget.supportsStreaming}
+									fallbackOnNetworkError
 									key={`${transcriptionTarget.providerId}:${transcriptionTarget.modelId}`}
-									onActiveChange={handleSpeechInputActiveChange}
+									onActiveChange={setSpeechInputActive}
 									onError={handleSpeechInputError}
 									onNetworkFallback={() =>
 										toast({
@@ -1713,17 +1590,8 @@ function ChatInputBarImpl({
 									onStartStreaming={handleStartStreamingTranscription}
 									onStreamingEnd={handleStreamingTranscriptionEnd}
 									onStreamingStart={handleStreamingTranscriptionStart}
-									onTranscriptionChange={handleVoiceTranscriptionChange}
-									onAudioRecorded={
-										transcriptionTarget.supportsStreaming
-											? undefined
-											: transcribeRecordedAudio
-									}
-									recordingMode={
-										transcriptionTarget.supportsStreaming
-											? "streaming"
-											: "media-recorder"
-									}
+									onTranscriptionChange={handleStreamingTranscriptionChange}
+									recordingMode="streaming"
 									title={`${t("Voice input")}: ${transcriptionTarget.providerName} / ${transcriptionTarget.modelName}`}
 								/>
 							) : null}
@@ -1846,7 +1714,6 @@ function ChatInputBarImpl({
 						<ModelSelector
 							key={executionTarget}
 							autoCorrectModel={!cloudSettingsLocked}
-							preserveUnavailableProvider={variant !== "welcome"}
 							includeCloudModels={executionTarget === "cloud"}
 							isBusy={isBusy}
 							model={model}
@@ -1863,70 +1730,36 @@ function ChatInputBarImpl({
 							provider={provider}
 						/>
 					</div>
-					{provider === "dsw2api" ? (
-						<DeepSeekControls
-							thinking={thinking === true}
-							disabled={cloudSettingsLocked || isBusy}
-							onThinkingChange={(enabled) =>
-								onReasoningChange(
-									enabled
-										? { thinking: true, reasoningEffort: "high" }
-										: { thinking: false, reasoningEffort: undefined },
-								)
+					<Select
+						disabled={cloudSettingsLocked || modelSupportsReasoning !== true}
+						onValueChange={handleEffortChange}
+						value={EFFORT_LEVELS[effortIndex]?.value ?? "low"}
+					>
+						<SelectTrigger
+							aria-label={t("Thinking level")}
+							className="gap-1.5 border-0 px-2 text-sm shadow-none data-[size=sm]:h-7 [&>svg:last-child]:hidden group-data-[compact]/composer:size-7 group-data-[compact]/composer:shrink-0 group-data-[compact]/composer:justify-center group-data-[compact]/composer:p-0 bg-transparent! hover:bg-surface-hover!"
+							size="sm"
+							title={
+								cloudSettingsLocked
+									? "Thinking level is fixed when a cloud session starts"
+									: modelSupportsReasoning === false
+										? "The selected model does not report reasoning support"
+										: undefined
 							}
-						/>
-					) : (
-						<Select
-							disabled={cloudSettingsLocked || modelSupportsReasoning !== true}
-							onValueChange={handleEffortChange}
-							value={EFFORT_LEVELS[effortIndex]?.value ?? "low"}
 						>
-							<SelectTrigger
-								aria-label={t("Thinking level")}
-								className="gap-1.5 border-0 px-2 text-sm shadow-none data-[size=sm]:h-7 [&>svg:last-child]:hidden group-data-[compact]/composer:size-7 group-data-[compact]/composer:shrink-0 group-data-[compact]/composer:justify-center group-data-[compact]/composer:p-0 bg-transparent! hover:bg-surface-hover!"
-								size="sm"
-								title={
-									cloudSettingsLocked
-										? t("Thinking level is fixed when a cloud session starts")
-										: modelSupportsReasoning === false
-											? t(
-													"The selected model does not report reasoning support",
-												)
-											: undefined
-								}
-							>
-								<Brain className="size-3" />
-								<span className="group-data-[compact]/composer:sr-only">
-									<SelectValue>{t(effortLabel)}</SelectValue>
-								</span>
-							</SelectTrigger>
-							<SelectContent align="start">
-								{availableEfforts.map((option) => (
-									<SelectItem
-										key={option.value}
-										value={option.value}
-										title={
-											option.value === "adaptive"
-												? t(
-														"Adaptive requires backend support for reason_mode=auto; no client routing or memory.",
-													)
-												: option.value === "ultra"
-													? t(
-															"Author mode for compatible DavidAU models; stock High and XHigh stay unchanged.",
-														)
-													: undefined
-										}
-									>
-										{t(option.label)}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-					)}
-					{executionTarget !== "cloud" &&
-					environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID ? (
-						<SamplingSettings provider={provider} disabled={isBusy} />
-					) : null}
+							<Brain className="size-3" />
+							<span className="group-data-[compact]/composer:sr-only">
+								<SelectValue>{effortLabel}</SelectValue>
+							</span>
+						</SelectTrigger>
+						<SelectContent align="start">
+							{EFFORT_LEVELS.map((option) => (
+								<SelectItem key={option.value} value={option.value}>
+									{t(option.label)}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 					{/* The chip controls this computer's runtime, which SSH sessions don't use. */}
 					{executionTarget !== "cloud" &&
 					environmentId === LOCAL_WORKSPACE_ENVIRONMENT_ID &&
@@ -1969,7 +1802,6 @@ function ChatInputBarImpl({
 								)}
 							</div>
 							<TokenUsageRing
-								compacted={summary.contextCompacted}
 								usage={{
 									contextWindow: modelContextWindow,
 									tokensIn: summary.tokensIn,
@@ -1993,13 +1825,12 @@ export const ChatInputBar = memo(ChatInputBarImpl);
 
 // Memoized: the selectors load/hold the full provider-model catalog, so they
 // should not re-render for every keystroke in the composer textarea.
-/** Sentinel provider-picker row that opens Settings в†’ Providers instead of selecting. */
+/** Sentinel provider-picker row that opens Settings → Providers instead of selecting. */
 const ADD_PROVIDER_OPTION_VALUE = "__add-provider__";
 
 const ModelSelector = memo(function ModelSelector({
 	allowedProviderIds,
 	autoCorrectModel = true,
-	preserveUnavailableProvider = true,
 	includeCloudModels = false,
 	provider,
 	model,
@@ -2013,8 +1844,6 @@ const ModelSelector = memo(function ModelSelector({
 }: {
 	allowedProviderIds?: string[];
 	autoCorrectModel?: boolean;
-	/** Existing sessions retain their route; new drafts use configured providers. */
-	preserveUnavailableProvider?: boolean;
 	includeCloudModels?: boolean;
 	provider: string;
 	model: string;
@@ -2022,13 +1851,9 @@ const ModelSelector = memo(function ModelSelector({
 	onProviderChange: (provider: string) => void;
 	onModelChange: (model: string) => void;
 	onModelReadyChange: (ready: boolean) => void;
-	onModelSupportsReasoningChange: (
-		supportsReasoning: boolean | null,
-		supportsAuthorModes?: boolean | null,
-		reasoningOptions?: ProviderModel["reasoningOptions"],
-	) => void;
+	onModelSupportsReasoningChange: (supportsReasoning: boolean | null) => void;
 	onModelSupportsImagesChange: (supported: boolean | null) => void;
-	/** Opens Settings в†’ Providers; adds a "set up another provider" row when set. */
+	/** Opens Settings → Providers; adds a "set up another provider" row when set. */
 	onOpenModelSettings?: () => void;
 }) {
 	const t = useTranslation();
@@ -2105,12 +1930,10 @@ const ModelSelector = memo(function ModelSelector({
 				[providerId]: models,
 			}));
 			setEnabledProviderIds((current) =>
-				current.includes(providerId) || !preserveUnavailableProvider
-					? current
-					: [...current, providerId],
+				current.includes(providerId) ? current : [...current, providerId],
 			);
 		},
-		[preserveUnavailableProvider],
+		[],
 	);
 	// Re-fetch only the live list on picker open so the Recommended/Free tiers
 	// stay current. Re-running the full load would first re-apply the bundled
@@ -2132,19 +1955,6 @@ const ModelSelector = memo(function ModelSelector({
 				// Keep the current list when the refresh fails.
 			});
 	}, [applyProviderModels, includeCloudModels, normalizedProvider]);
-	useEffect(() => {
-		if (includeCloudModels || !normalizedProvider) return;
-		const refresh = () => {
-			if (document.visibilityState !== "hidden") refreshActiveProviderModels();
-		};
-		window.addEventListener("focus", refresh);
-		const timer = window.setInterval(refresh, 60_000);
-		return () => {
-			window.removeEventListener("focus", refresh);
-			window.clearInterval(timer);
-		};
-	}, [includeCloudModels, normalizedProvider, refreshActiveProviderModels]);
-
 	const visibleProviderModels = useMemo(() => {
 		const next: Record<string, string[]> = {};
 		for (const providerId of enabledProviderIds) {
@@ -2292,7 +2102,7 @@ const ModelSelector = memo(function ModelSelector({
 	]);
 	// The picker can intentionally hide catalog models (the ClinePass offer
 	// is exactly its subscribed/free tiers), but the active model must stay
-	// visible and selectable вЂ” e.g. a hydrated session configured with a
+	// visible and selectable — e.g. a hydrated session configured with a
 	// model outside the current offer or missing from the catalog. Surface it
 	// under its own section so the selected value always exists in the list.
 	const visibleModelPicker = useMemo((): ModelPickerData => {
@@ -2335,7 +2145,6 @@ const ModelSelector = memo(function ModelSelector({
 		setReasoningCapabilitySource("loading");
 
 		async function loadCatalogAndActiveModels() {
-			let activeProviderEnabled = true;
 			try {
 				const payload = await loadProviderModelCatalog(
 					includeCloudModels ? { includeCloudModels: true } : undefined,
@@ -2354,23 +2163,16 @@ const ModelSelector = memo(function ModelSelector({
 					...(payload.providerModelDetails ?? {}),
 				}));
 				setReasoningCapabilitySource("catalog");
-				activeProviderEnabled =
-					payload.enabledProviderIds.includes(normalizedProvider);
 				setEnabledProviderIds((current) => {
 					const nextProviderIds = new Set(payload.enabledProviderIds);
 					if (
 						normalizedProvider &&
-						preserveUnavailableProvider &&
 						(!includeCloudModels || !autoCorrectModel)
 					) {
 						nextProviderIds.add(normalizedProvider);
 					}
 					for (const providerId of current) {
-						if (
-							preserveUnavailableProvider &&
-							!includeCloudModels &&
-							providerId in payload.providerModels
-						) {
+						if (!includeCloudModels && providerId in payload.providerModels) {
 							nextProviderIds.add(providerId);
 						}
 					}
@@ -2380,12 +2182,7 @@ const ModelSelector = memo(function ModelSelector({
 				if (!cancelled) setReasoningCapabilitySource("fallback");
 			}
 
-			if (
-				includeCloudModels ||
-				!normalizedProvider ||
-				cancelled ||
-				(!preserveUnavailableProvider && !activeProviderEnabled)
-			) {
+			if (includeCloudModels || !normalizedProvider || cancelled) {
 				return;
 			}
 			try {
@@ -2408,7 +2205,6 @@ const ModelSelector = memo(function ModelSelector({
 		applyProviderModels,
 		autoCorrectModel,
 		catalogRevision,
-		preserveUnavailableProvider,
 		includeCloudModels,
 		normalizedProvider,
 	]);
@@ -2423,8 +2219,8 @@ const ModelSelector = memo(function ModelSelector({
 
 	// The remembered selection (what new sessions default to) is only written
 	// from the explicit picker handlers below. Mirroring every provider/model
-	// prop change here would also capture passive changes вЂ” most notably
-	// opening an existing session, whose config drives these props вЂ” silently
+	// prop change here would also capture passive changes — most notably
+	// opening an existing session, whose config drives these props — silently
 	// replacing the user's chosen default with whatever model that session
 	// happened to use. It also skips automatic Cloud fallbacks, so the Cloud
 	// default keeps following the local model and ClinePass subscription.
@@ -2517,14 +2313,6 @@ const ModelSelector = memo(function ModelSelector({
 			resolvedProvider !== normalizedProvider
 		) {
 			onProviderChange(resolvedProvider);
-			// Repair stale new-chat defaults after a provider was removed. Do not
-			// write a historical session's provider into the remembered selection.
-			if (
-				!preserveUnavailableProvider &&
-				reasoningCapabilitySource === "catalog"
-			) {
-				rememberSelection(resolvedProvider, resolvedModel || undefined);
-			}
 		}
 		if (autoCorrectModel && resolvedModel && resolvedModel !== model) {
 			onModelChange(resolvedModel);
@@ -2540,9 +2328,6 @@ const ModelSelector = memo(function ModelSelector({
 		providers,
 		resolvedModel,
 		resolvedProvider,
-		preserveUnavailableProvider,
-		reasoningCapabilitySource,
-		rememberSelection,
 	]);
 
 	useEffect(() => {
@@ -2556,24 +2341,20 @@ const ModelSelector = memo(function ModelSelector({
 			onModelSupportsReasoningChange(null);
 			return;
 		}
+		const selected = modelDetails[normalizedProvider]?.find((entry) => entry.id === model);
 		onModelSupportsReasoningChange(
-			hasReasoningCapability(
+			selected?.supportsReasoning ??
+			(selected && ["openai-compatible", "ollama", "lmstudio", "litellm"].includes(normalizedProvider)
+				? true
+				: hasReasoningCapability(
 				providerReasoningModels,
 				normalizedProvider,
 				model,
-			),
-			modelDetails[normalizedProvider]?.some((v) => v.id === model)
-				? modelDetails[normalizedProvider]?.find((v) => v.id === model)
-						?.supportsAuthorModes === true
-				: reasoningCapabilitySource === "fallback"
-					? false
-					: null,
-			modelDetails[normalizedProvider]?.find((v) => v.id === model)
-				?.reasoningOptions,
+			)),
 		);
 	}, [
-		modelDetails,
 		model,
+		modelDetails,
 		onModelSupportsReasoningChange,
 		normalizedProvider,
 		providerReasoningModels,

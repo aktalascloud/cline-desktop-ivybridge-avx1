@@ -49,12 +49,6 @@ export function loadLiveClineDefaultModelId(): Promise<string | undefined> {
  * default may replace it without overriding anything the user chose.
  */
 export function isUntouchedDefaultModel(config: ChatSessionConfig): boolean {
-	const local = readModelSelectionStorageFromWindow();
-	if (
-		config.executionTarget === "cloud" &&
-		(local.lastModelByProvider.cline || local.lastModelByProvider["cline-pass"])
-	)
-		return false;
 	return (
 		config.provider === DEFAULT_CHAT_CONFIG.provider &&
 		config.model === BUNDLED_DEFAULT_MODEL_ID &&

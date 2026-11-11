@@ -279,7 +279,7 @@ function readSkillDefinitions(baseCwd: string): SkillDefinition[] {
 }
 
 function parentSessionId(ctx: AgentToolContext): string | undefined {
-	const id = ctx.sessionId ?? ctx.metadata?.sessionId;
+	const id = ctx.metadata?.sessionId;
 	return typeof id === "string" && id.trim() ? id.trim() : undefined;
 }
 
@@ -431,15 +431,11 @@ async function runSubagentTurn(
 			prompt: message,
 		});
 		const messages = await mgr.readMessages(subagent.sessionId);
-		subagent.status =
-			result?.finishReason === "completed" ? "completed" : "failed";
+		subagent.status = "completed";
 		subagent.finishReason = result?.finishReason;
 		subagent.resultText =
 			result?.text?.trim() || extractLastAssistantText(messages) || "";
-		subagent.error =
-			subagent.status === "failed"
-				? result?.text?.trim() || `Subagent stopped: ${result?.finishReason}`
-				: undefined;
+		subagent.error = undefined;
 		subagent.completedAt = Date.now();
 	} catch (err) {
 		subagent.status = "failed";
@@ -494,10 +490,10 @@ const StartSubagentInput = z
 			"Extra system instructions appended after the preset prompt. Optional when using a preset.",
 		),
 		providerId: NonEmptyText.optional().describe(
-			"Optional provider override. Defaults to the preset or parent session.",
+			"Optional provider override. Defaults to the preset or plugin default.",
 		),
 		modelId: NonEmptyText.optional().describe(
-			"Optional model override. Defaults to the preset or parent session.",
+			"Optional model override. Defaults to the preset or plugin default.",
 		),
 		workingDirectory: NonEmptyText.optional().describe(
 			"Optional working directory, resolved from the plugin base cwd.",
@@ -596,48 +592,27 @@ const plugin: AgentPlugin = {
 			toRegisteredTool(
 				createTool({
 					name: "start_subagent",
-					description: `Start a background subagent run and return its session ID immediately. Available bundled presets: phantom, oracle, anvil, inquisitor. Never invent a preset name; call list_agent_presets for project presets; when omitted, this tool uses the bundled "${DEFAULT_AGENT_PRESET}" preset automatically. Use get_subagent to poll, or keep notifyParent enabled to have the result pushed back into the parent session.`,
+					description: `Start a background subagent run and return its session ID immediately. Prefer a preset from list_agent_presets; when omitted, this tool uses the bundled "${DEFAULT_AGENT_PRESET}" preset automatically. Use get_subagent to poll, or keep notifyParent enabled to have the result pushed back into the parent session.`,
 					inputSchema: StartSubagentInput,
 					timeoutMs: 60_000,
 					retryable: false,
 					async execute(input, ctx) {
-						const baseCwd = envOr(
-							"CLINE_SUBAGENT_CWD",
-							ctx.cwd ?? process.cwd(),
-						);
+						const mgr = await getSessionManager();
+						const baseCwd = envOr("CLINE_SUBAGENT_CWD", process.cwd());
 						const defs = readAgentDefinitions(baseCwd);
 						const presetName = input.preset ?? DEFAULT_AGENT_PRESET;
 						const def = defs.find((d) => d.name === presetName);
 						if (presetName && !def && !input.instructions?.trim()) {
-							return {
-								status: "invalid_preset",
-								error: `Unknown agent preset: ${presetName}`,
-								availablePresets: defs.map((d) => d.name),
-								recovery:
-									"Choose a listed preset or supply explicit instructions. No subagent was started.",
-							};
+							throw new Error(`Unknown agent preset: ${presetName}`);
 						}
-
-						const mgr = await getSessionManager();
-						const parentId = parentSessionId(ctx);
-						const parent = parentId ? await mgr.get(parentId) : undefined;
 
 						const cwd = resolve(
 							baseCwd,
 							input.workingDirectory ?? def?.cwd ?? ".",
 						);
 						const providerId =
-							input.providerId ??
-							def?.providerId ??
-							optStr(process.env.CLINE_SUBAGENT_PROVIDER_ID) ??
-							parent?.provider ??
-							DEFAULT_PROVIDER_ID;
-						const modelId =
-							input.modelId ??
-							def?.modelId ??
-							optStr(process.env.CLINE_SUBAGENT_MODEL_ID) ??
-							(providerId === parent?.provider ? parent?.model : undefined) ??
-							DEFAULT_MODEL_ID;
+							input.providerId ?? def?.providerId ?? DEFAULT_PROVIDER_ID;
+						const modelId = input.modelId ?? def?.modelId ?? DEFAULT_MODEL_ID;
 						const prompt = [
 							def?.systemPrompt?.trim(),
 							input.instructions?.trim(),
@@ -714,20 +689,13 @@ const plugin: AgentPlugin = {
 					description:
 						"List the available subagent presets, including bundled, global, and project-level definitions.",
 					inputSchema: z.object({}).strict(),
-					async execute(_input, ctx) {
-						const mgr = await getSessionManager();
-						const parentId = parentSessionId(ctx);
-						const parent = parentId ? await mgr.get(parentId) : undefined;
-						const baseCwd = envOr(
-							"CLINE_SUBAGENT_CWD",
-							ctx.cwd ?? parent?.cwd ?? process.cwd(),
-						);
+					async execute(_input, _ctx) {
+						const baseCwd = envOr("CLINE_SUBAGENT_CWD", process.cwd());
 						const agents = readAgentDefinitions(baseCwd).map((a) => ({
 							name: a.name,
 							description: a.description,
-							providerId:
-								a.providerId ?? parent?.provider ?? DEFAULT_PROVIDER_ID,
-							modelId: a.modelId ?? parent?.model ?? DEFAULT_MODEL_ID,
+							providerId: a.providerId ?? DEFAULT_PROVIDER_ID,
+							modelId: a.modelId ?? DEFAULT_MODEL_ID,
 							source: a.source,
 						}));
 						return {

@@ -1,5 +1,4 @@
 export * from "./agent";
-export { isQwen38NextAuthorModel } from "./author-model";
 export * from "./agents";
 export type {
 	ConnectorAuthorizationDecision,
@@ -288,6 +287,12 @@ export {
 	noopBasicLogger,
 } from "./logging/logger";
 export * from "./mcp";
+export type {
+	McpServerConfigInput,
+	McpServerConfigView,
+	McpServerInspection,
+	McpServersResponse,
+} from "./mcp-management";
 export { getErrorCode, getErrorMessage } from "./parse/error";
 export {
 	normalizeJsonLikeStringsForSchema,
@@ -310,7 +315,6 @@ export {
 export {
 	maskSecret,
 	sanitizeFileName,
-	sliceUtf16,
 	stripUtf8Bom,
 	trimNonEmpty,
 	truncateSplit,

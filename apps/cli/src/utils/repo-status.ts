@@ -85,28 +85,8 @@ export async function readGitOriginUrl(
 export function parseGitHubRepoFullName(
 	remoteUrl: string | undefined,
 ): string | undefined {
-	if (!remoteUrl) return undefined;
-	const input = remoteUrl.trim();
-	const scp = /^(?:git@)?github\.com:([^\s?#]+)$/i.exec(input);
-	let pathname: string;
-	if (scp) pathname = scp[1]!;
-	else {
-		try {
-			const url = new URL(input);
-			if (
-				url.hostname.toLowerCase() !== "github.com" ||
-				url.search ||
-				url.hash ||
-				!["https:", "http:", "ssh:", "git:"].includes(url.protocol)
-			)
-				return undefined;
-			pathname = url.pathname.replace(/^\//, "");
-		} catch {
-			return undefined;
-		}
-	}
-	const match = /^([A-Za-z0-9-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/.exec(
-		pathname,
-	);
+	const match = remoteUrl
+		?.trim()
+		.match(/github\.com[:/]([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/i);
 	return match ? `${match[1]}/${match[2]}`.toLowerCase() : undefined;
 }

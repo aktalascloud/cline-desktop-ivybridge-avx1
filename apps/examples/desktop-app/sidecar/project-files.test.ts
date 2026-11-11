@@ -102,18 +102,10 @@ describe("parseRemoteListing", () => {
 });
 
 describe("REMOTE_LIST_SCRIPT", () => {
-	it("marks folders, follows folder links, and keeps dotfiles and broken links", (context) => {
+	it("marks folders, follows folder links, and keeps dotfiles and broken links", () => {
 		const outside = mkdtempSync(join(tmpdir(), "cline-linked-folder-"));
 		try {
-			try {
-				symlinkSync(outside, join(root, "linked"));
-			} catch (error) {
-				if ((error as NodeJS.ErrnoException).code === "EPERM") {
-					context.skip();
-					return;
-				}
-				throw error;
-			}
+			symlinkSync(outside, join(root, "linked"));
 			symlinkSync(join(root, "missing-target"), join(root, "dangling"));
 			writeFileSync(join(root, ".env"), "X=1\n");
 			const output = execFileSync(

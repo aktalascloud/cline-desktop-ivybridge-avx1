@@ -48,7 +48,6 @@ import {
 	createStreamErrorTelemetry,
 	isTimeoutReason,
 } from "../services/stream-error-telemetry";
-import { wrapFetchForAimlapiAttribution } from "./aimlapi/attribution";
 import {
 	classifyProviderError,
 	isRetryableBeyondSdkRetries,
@@ -2186,9 +2185,8 @@ function createAiSdkProvider(
 			// Multi-protocol HTTP gateways declare model adapters in models.dev.
 			// Keep native and local CLI transports authoritative for their models.
 			const kind = resolveModelProviderKind(defaultKind, context);
-			// Browser sessions are not replay-safe. Do not multiply gateway requests after a rejection or uncertain stream.
-			const noAutomaticReplay =
-				context.provider.id === "dsw2api" || context.provider.id === "freellm";
+			// A shared FreeLLM quota is not helped by replaying a rejected request.
+			const freeLlm = context.provider.id === "freellm";
 			const log = context.logger;
 			let stream: AiSdkStreamResult | undefined;
 			const capturedError: { current: CapturedStreamError | undefined } = {
@@ -2263,10 +2261,7 @@ function createAiSdkProvider(
 					kind,
 					{
 						...config,
-						fetch: wrapFetchForAimlapiAttribution(
-							wrapFetchForStickySession(config.fetch, request, context),
-							request.providerId,
-						),
+						fetch: wrapFetchForStickySession(config.fetch, request, context),
 					},
 					context,
 				);
@@ -2424,14 +2419,14 @@ function createAiSdkProvider(
 						streamText({
 							model: withEmptyResponseRetry(
 								provider.operations.language(context.model.id),
-								noAutomaticReplay ? false : provider.retryEmptyResponses,
+								freeLlm ? false : provider.retryEmptyResponses,
 								context.logger,
 							) as never,
 							messages: messages as never,
 							...(useSystemOption ? { system: systemPrompt } : {}),
 							...(tools ? { tools } : {}),
 							abortSignal: request.signal,
-							maxRetries: noAutomaticReplay ? 0 : MODEL_REQUEST_MAX_RETRIES,
+							maxRetries: freeLlm ? 0 : MODEL_REQUEST_MAX_RETRIES,
 							experimental_repairToolCall: repairMalformedToolCall as never,
 							telemetry: {
 								...aiSdkTelemetry,
@@ -2460,7 +2455,7 @@ function createAiSdkProvider(
 								? { stopWhen: stepCountIs(8) }
 								: {}),
 							...requestConfig,
-							streamRetries: noAutomaticReplay ? 0 : MODEL_STREAM_MAX_RETRIES,
+							streamRetries: freeLlm ? 0 : MODEL_STREAM_MAX_RETRIES,
 							...(portableReasoning ? { reasoning: portableReasoning } : {}),
 							onLanguageModelCallStart: () => {
 								capturedError.current = undefined;
@@ -2494,9 +2489,7 @@ function createAiSdkProvider(
 					modelToolAdapters,
 					reportError,
 				)) {
-					yield noAutomaticReplay &&
-					event.type === "finish" &&
-					event.reason === "error"
+					yield freeLlm && event.type === "finish" && event.reason === "error"
 						? { ...event, errorRetryable: false }
 						: event;
 				}
@@ -2512,7 +2505,7 @@ function createAiSdkProvider(
 					reason: "error",
 					error: captured.message,
 					errorClass: captured.errorClass,
-					errorRetryable: noAutomaticReplay ? false : captured.retryable,
+					errorRetryable: freeLlm ? false : captured.retryable,
 					errorReported: captured.reported,
 				};
 			}

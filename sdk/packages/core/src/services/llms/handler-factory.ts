@@ -39,8 +39,6 @@ function buildGatewayProviderOptions(
 ): Record<string, unknown> | undefined {
 	const options: Record<string, unknown> = {
 		region: config.region,
-		sampling: config.sampling,
-		authorReasoningMode: config.authorReasoningMode,
 		apiLine: config.apiLine,
 		openRouterProviderSorting: config.openRouterProviderSorting,
 		modelCatalog: config.modelCatalog,
@@ -119,9 +117,7 @@ export function resolveKnownModelsFromConfig(
 	//    `toProviderConfig` (the providers.json path used by CLI/Core hosts).
 	//  - `modelInfo` is an explicit per-model override (the VS Code path);
 	//    it wins over the generic limit.
-	const configuredContextWindow = readPositiveInteger(
-		pc?.contextWindow ?? pc?.maxInputTokens,
-	);
+	const configuredContextWindow = readPositiveInteger(pc?.maxInputTokens);
 	const modelInfo =
 		pc?.modelInfo && pc.modelInfo.id === config.modelId
 			? pc.modelInfo

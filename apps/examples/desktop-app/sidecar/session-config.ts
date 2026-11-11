@@ -54,7 +54,6 @@ export function workspacePathKey(
 export function readReasoningEffort(
 	value: unknown,
 ): "low" | "medium" | "high" | "xhigh" | "max" | undefined {
-	if (value === "ultra" || value === "adaptive") return "xhigh";
 	if (
 		value === "low" ||
 		value === "medium" ||

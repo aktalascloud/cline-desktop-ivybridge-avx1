@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import { LOCAL_WORKSPACE_ENVIRONMENT_ID } from "@/lib/workspace-paths";
 
 import { CLINE_DEFAULT_MODEL_ID } from "@cline/shared/browser";
 import {
@@ -7,7 +6,6 @@ import {
 	Fragment,
 	type MouseEvent as ReactMouseEvent,
 	StrictMode,
-	useState,
 } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -58,7 +56,6 @@ const {
 }));
 
 type MockSpeechInputProps = {
-	fallbackOnNetworkError?: boolean;
 	title?: string;
 	disabled?: boolean;
 	onAudioRecorded?: (audioBlob: Blob) => Promise<string>;
@@ -189,141 +186,6 @@ function providerCatalog(
 		voiceInput,
 	};
 }
-
-function StaleProviderComposer({
-	variant,
-	initialModel = "private-model",
-}: {
-	variant: "welcome" | "conversation";
-	initialModel?: string;
-}) {
-	const [provider, setProvider] = useState("openai-compatible");
-	const [model, setModel] = useState(initialModel);
-	const [reasoning, setReasoning] = useState({
-		thinking: false,
-		reasoningEffort: undefined,
-	} as Pick<
-		Parameters<typeof ChatInputBar>[0],
-		"thinking" | "reasoningEffort"
-	>);
-	return (
-		<WorkspaceProvider value={workspaceValue}>
-			<ChatInputBar
-				environmentId={LOCAL_WORKSPACE_ENVIRONMENT_ID}
-				attachments={[]}
-				gitBranch="main"
-				mode="act"
-				variant={variant}
-				provider={provider}
-				model={model}
-				{...reasoning}
-				onProviderChange={setProvider}
-				onModelChange={setModel}
-				onReasoningChange={setReasoning}
-				onAbort={vi.fn()}
-				onAttachFiles={vi.fn()}
-				onEditPromptInQueue={vi.fn()}
-				onListGitBranches={vi.fn(async () => ({
-					current: "main",
-					branches: ["main"],
-				}))}
-				onModeToggle={vi.fn()}
-				onPromptInputChange={vi.fn()}
-				onRemoveAttachment={vi.fn()}
-				onRemovePromptInQueue={vi.fn()}
-				onSend={vi.fn()}
-				onSteerPromptInQueue={vi.fn()}
-				onSwitchGitBranch={vi.fn(async () => true)}
-				promptDraft={{ version: 0, value: "" }}
-				promptsInQueue={[]}
-				status="idle"
-				summary={{ toolCalls: 0, tokensIn: 0, tokensOut: 0 }}
-			/>
-		</WorkspaceProvider>
-	);
-}
-
-it.each([
-	{ variant: "welcome", level: "high", label: "High" },
-	{ variant: "welcome", level: "xhigh", label: "XHigh" },
-	{ variant: "conversation", level: "high", label: "High" },
-	{ variant: "conversation", level: "xhigh", label: "XHigh" },
-] as const)("handles a removed provider in the $variant composer at $level", async ({
-	variant,
-	level,
-	label,
-}) => {
-	window.localStorage.setItem(
-		MODEL_SELECTION_STORAGE_KEY,
-		JSON.stringify({
-			lastProvider: "openai-compatible",
-			lastModelByProvider: { "openai-compatible": "private-model" },
-		}),
-	);
-	loadProviderModelCatalogMock.mockResolvedValue({
-		providers: [],
-		enabledProviderIds: ["local-lab"],
-		providerModels: {
-			"openai-compatible": ["gpt-4o"],
-			"local-lab": ["private-model"],
-		},
-		providerNames: { "local-lab": "Local lab" },
-		providerReasoningModels: { "local-lab": ["private-model"] },
-	});
-	loadProviderModelsMock.mockImplementation(async (provider) =>
-		provider === "local-lab"
-			? [
-					{
-						id: "private-model",
-						name: "Private model",
-						supportsReasoning: true,
-					},
-				]
-			: [{ id: "gpt-4o", name: "gpt-4o", supportsReasoning: false }],
-	);
-	await act(async () =>
-		root.render(<StaleProviderComposer variant={variant} />),
-	);
-	await vi.waitFor(() => {
-		const trigger = container.querySelector<HTMLButtonElement>(
-			'[aria-label="Thinking level"]',
-		);
-		expect(trigger?.disabled).toBe(variant === "conversation");
-	});
-	if (variant === "welcome") {
-		expect(container.textContent).toContain("Local lab");
-		expect(loadProviderModelsMock).not.toHaveBeenCalledWith(
-			"openai-compatible",
-		);
-		expect(readModelSelectionStorageFromWindow().lastProvider).toBe(
-			"local-lab",
-		);
-		await act(async () =>
-			container
-				.querySelector<HTMLButtonElement>('[aria-label="Thinking level"]')
-				?.click(),
-		);
-		const high = Array.from(
-			document.querySelectorAll<HTMLElement>('[role="option"]'),
-		).find((option) => option.textContent === label);
-		expect(high).toBeDefined();
-		await act(async () => high?.click());
-		expect(
-			container.querySelector('[aria-label="Thinking level"]')?.textContent,
-		).toContain(label);
-		expect(
-			JSON.parse(
-				window.localStorage.getItem(REASONING_SELECTION_STORAGE_KEY) ?? "{}",
-			)["local-lab"],
-		).toBe(level);
-	} else {
-		expect(readModelSelectionStorageFromWindow().lastProvider).toBe(
-			"openai-compatible",
-		);
-		expect(container.textContent).toContain("private-model");
-	}
-	window.localStorage.removeItem(MODEL_SELECTION_STORAGE_KEY);
-});
 
 function deferred<T>() {
 	let resolve: (value: T) => void = () => {};
@@ -840,7 +702,7 @@ describe("ChatInputBar", () => {
 			]);
 		});
 		expect(container.querySelector("output")?.textContent).toContain(
-			"doesnвЂ™t support",
+			"doesn’t support",
 		);
 		const textarea = container.querySelector("textarea");
 		await act(async () => {
@@ -892,7 +754,7 @@ describe("ChatInputBar", () => {
 
 	it("does not send when Enter commits an IME composition", async () => {
 		const onSend = vi.fn();
-		await renderVoiceComposer({ onSend, prompt: "дЅ еҐЅ" });
+		await renderVoiceComposer({ onSend, prompt: "你好" });
 		const textarea = container.querySelector("textarea");
 		await act(async () => {
 			textarea?.dispatchEvent(
@@ -921,7 +783,7 @@ describe("ChatInputBar", () => {
 				new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
 			);
 		});
-		expect(onSend).toHaveBeenCalledWith("дЅ еҐЅ");
+		expect(onSend).toHaveBeenCalledWith("你好");
 	});
 
 	it("allows a parent session with a running child agent to be stopped", async () => {
@@ -1013,7 +875,7 @@ describe("ChatInputBar", () => {
 		expect(onAttachFiles).not.toHaveBeenCalled();
 		expect(toastMock).toHaveBeenCalledWith(
 			expect.objectContaining({
-				title: "This model doesnвЂ™t support image input",
+				title: "This model doesn’t support image input",
 			}),
 		);
 		expect(toastMock.mock.calls.at(-1)?.[0]?.description).not.toContain(
@@ -1723,7 +1585,7 @@ describe("ChatInputBar", () => {
 		expect(
 			container.querySelector('output[aria-live="polite"]'),
 		).not.toBeNull();
-		expect(textarea?.placeholder).toBe("Transcribing voice inputвЂ¦");
+		expect(textarea?.placeholder).toBe("Transcribing voice input…");
 
 		await act(async () => {
 			speechInputMockState.current?.onStreamingEnd?.();
@@ -1830,53 +1692,6 @@ describe("ChatInputBar", () => {
 		expect(speechInputMockState.current?.onStartStreaming).toEqual(
 			expect.any(Function),
 		);
-	});
-
-	it("records batch voice locally and inserts text only after recognition", async () => {
-		loadProviderModelCatalogMock.mockResolvedValue(
-			providerCatalog({
-				providerId: "local-recording",
-				providerName: "Local speech",
-				modelId: "whisper-1",
-				modelName: "Whisper",
-				supportsStreaming: false,
-			}),
-		);
-		const onSend = vi.fn();
-		await renderVoiceComposer({ prompt: "alpha omega", onSend });
-		await vi.waitFor(() =>
-			expect(speechInputMockState.current?.recordingMode).toBe(
-				"media-recorder",
-			),
-		);
-		expect(speechInputMockState.current?.onAudioRecorded).toEqual(
-			expect.any(Function),
-		);
-		expect(speechInputMockState.current?.fallbackOnNetworkError).toBe(false);
-		const textarea = container.querySelector<HTMLTextAreaElement>(
-			'textarea[role="combobox"]',
-		);
-		textarea?.setSelectionRange(6, 6);
-		await act(async () => speechInputMockState.current?.onActiveChange?.(true));
-		expect(textarea?.readOnly).toBe(true);
-		await act(async () => {
-			speechInputMockState.current?.onProcessingChange?.(true);
-			speechInputMockState.current?.onActiveChange?.(true);
-		});
-		await act(async () =>
-			speechInputMockState.current?.onTranscriptionChange?.(
-				"hello",
-				"media-recorder",
-			),
-		);
-		expect(textarea?.value).toBe("alpha hello omega");
-		await act(async () => {
-			speechInputMockState.current?.onProcessingChange?.(false);
-			speechInputMockState.current?.onActiveChange?.(false);
-		});
-		expect(textarea?.readOnly).toBe(false);
-		expect(onSend).not.toHaveBeenCalled();
-		expect(startStreamingTranscriptionMock).not.toHaveBeenCalled();
 	});
 
 	it.each([
@@ -3384,7 +3199,7 @@ describe("ChatInputBar", () => {
 				provider: "cline-pass",
 			});
 
-			// The session's configured model stays activeвЂ¦
+			// The session's configured model stays active…
 			expect(onModelChange).not.toHaveBeenCalled();
 			const modelTrigger = container.querySelector<HTMLButtonElement>(
 				'[aria-label^="Model:"]',
@@ -3393,7 +3208,7 @@ describe("ChatInputBar", () => {
 				expect(modelTrigger?.textContent).toContain("Stale Legacy");
 			});
 
-			// вЂ¦and the picker surfaces it under its own section instead of
+			// …and the picker surfaces it under its own section instead of
 			// selecting a value that does not exist in the list.
 			await act(async () => modelTrigger?.click());
 			const panel = document.querySelector('[role="dialog"]');
@@ -3947,177 +3762,4 @@ describe("ChatInputBar compact layout", () => {
 			vi.unstubAllGlobals();
 		}
 	});
-});
-
-it.each([
-	{
-		modelId: "reflection/beam-free",
-		reasoningOptions: [
-			{
-				type: "effort" as const,
-				values: [
-					"low" as const,
-					"medium" as const,
-					"high" as const,
-					"xhigh" as const,
-				],
-			},
-		],
-		present: ["Low", "Medium", "High", "XHigh"],
-		absent: ["None", "Ultra · DavidAU", "Adaptive"],
-	},
-	{
-		modelId: "nvidia/nemotron-3.5-super-vl:free",
-		reasoningOptions: [{ type: "toggle" as const }],
-		present: ["None", "High"],
-		absent: ["Low", "Medium", "XHigh", "Ultra · DavidAU", "Adaptive"],
-	},
-])("uses server reasoning choices on $modelId without exposing unsupported modes", async ({
-	modelId,
-	reasoningOptions,
-	present,
-	absent,
-}) => {
-	const detail = {
-		id: modelId,
-		name: modelId,
-		supportsReasoning: true,
-		reasoningOptions,
-	};
-	loadProviderModelCatalogMock.mockResolvedValue({
-		providers: [],
-		enabledProviderIds: ["local-lab"],
-		providerModels: { "local-lab": [modelId] },
-		providerNames: { "local-lab": "FreeLLM fixture" },
-		providerReasoningModels: { "local-lab": [modelId] },
-		providerModelDetails: { "local-lab": [detail] },
-	});
-	loadProviderModelsMock.mockResolvedValue([detail]);
-	await act(async () =>
-		root.render(
-			<StaleProviderComposer variant="welcome" initialModel={modelId} />,
-		),
-	);
-	await vi.waitFor(() =>
-		expect(
-			container.querySelector<HTMLButtonElement>(
-				'[aria-label="Thinking level"]',
-			)?.disabled,
-		).toBe(false),
-	);
-	await act(async () =>
-		container
-			.querySelector<HTMLButtonElement>('[aria-label="Thinking level"]')
-			?.click(),
-	);
-	const choices = [...document.querySelectorAll('[role="option"]')].map(
-		(x) => x.textContent,
-	);
-	for (const label of present) expect(choices).toContain(label);
-	for (const label of absent) expect(choices).not.toContain(label);
-});
-
-it("offers separate author modes only for an opted-in model and returns to stock levels", async () => {
-	const detail = {
-		id: "DavidAU/Qwen3.8-Flash-Next-fixture",
-		name: "Private model",
-		supportsReasoning: true,
-		supportsAuthorModes: true,
-	};
-	loadProviderModelCatalogMock.mockResolvedValue({
-		providers: [],
-		enabledProviderIds: ["local-lab"],
-		providerModels: { "local-lab": ["DavidAU/Qwen3.8-Flash-Next-fixture"] },
-		providerNames: { "local-lab": "Local lab" },
-		providerReasoningModels: {
-			"local-lab": ["DavidAU/Qwen3.8-Flash-Next-fixture"],
-		},
-		providerModelDetails: { "local-lab": [detail] },
-	});
-	loadProviderModelsMock.mockResolvedValue([detail]);
-	await act(async () =>
-		root.render(
-			<StaleProviderComposer
-				variant="welcome"
-				initialModel="DavidAU/Qwen3.8-Flash-Next-fixture"
-			/>,
-		),
-	);
-	await vi.waitFor(() =>
-		expect(
-			container.querySelector<HTMLButtonElement>(
-				'[aria-label="Thinking level"]',
-			)?.disabled,
-		).toBe(false),
-	);
-	for (const [label, value] of [
-		["Ultra · DavidAU", "ultra"],
-		["XHigh", "xhigh"],
-		["Adaptive", "adaptive"],
-		["High", "high"],
-	]) {
-		await act(async () =>
-			container
-				.querySelector<HTMLButtonElement>('[aria-label="Thinking level"]')
-				?.click(),
-		);
-		const option = Array.from(
-			document.querySelectorAll<HTMLElement>('[role="option"]'),
-		).find((v) => v.textContent === label);
-		expect(option).toBeDefined();
-		await act(async () => option?.click());
-		expect(
-			container.querySelector('[aria-label="Thinking level"]')?.textContent,
-		).toContain(label);
-		expect(
-			JSON.parse(
-				window.localStorage.getItem(REASONING_SELECTION_STORAGE_KEY) ?? "{}",
-			)["local-lab"],
-		).toBe(value);
-	}
-});
-
-it.each([
-	"private-model",
-	"Qwen3.8-Coder",
-	"deepseek-web",
-])("hides Ultra/Adaptive on %s even with stale metadata", async (modelId) => {
-	const detail = {
-		id: modelId,
-		name: modelId,
-		supportsReasoning: true,
-		supportsAuthorModes: true,
-	};
-	loadProviderModelCatalogMock.mockResolvedValue({
-		providers: [],
-		enabledProviderIds: ["local-lab"],
-		providerModels: { "local-lab": [modelId] },
-		providerNames: { "local-lab": "Local lab" },
-		providerReasoningModels: { "local-lab": [modelId] },
-		providerModelDetails: { "local-lab": [detail] },
-	});
-	loadProviderModelsMock.mockResolvedValue([detail]);
-	await act(async () =>
-		root.render(
-			<StaleProviderComposer variant="welcome" initialModel={modelId} />,
-		),
-	);
-	await vi.waitFor(() =>
-		expect(
-			container.querySelector<HTMLButtonElement>(
-				'[aria-label="Thinking level"]',
-			)?.disabled,
-		).toBe(false),
-	);
-	await act(async () =>
-		container
-			.querySelector<HTMLButtonElement>('[aria-label="Thinking level"]')
-			?.click(),
-	);
-	const options = [...document.querySelectorAll('[role="option"]')].map(
-		(element) => element.textContent,
-	);
-	expect(options).not.toContain("Ultra · DavidAU");
-	expect(options).not.toContain("Adaptive");
-	expect(options).toContain("High");
 });

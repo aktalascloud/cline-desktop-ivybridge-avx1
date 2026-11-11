@@ -1,10 +1,4 @@
-import {
-	mkdirSync,
-	mkdtempSync,
-	rmSync,
-	writeFileSync,
-	readFileSync,
-} from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import * as LlmsModels from "@cline/llms";
@@ -38,7 +32,6 @@ import {
 	isDedicatedTranscriptionModel,
 	listLocalProviders,
 	markLocalProviderEnabled,
-	ensureCustomProvidersLoaded,
 	normalizeOAuthProvider,
 	refreshProviderModelsFromSource,
 	resolveLocalClineAuthToken,
@@ -1756,15 +1749,14 @@ describe("audio transcription", () => {
 		});
 	});
 
-	it("saves batch-only transcription for recorded voice input", async () => {
-		await saveVoiceInputSettings(manager, {
-			providerId: "groq",
-			modelId: "whisper-large-v3",
-		});
-		expect(manager.getVoiceInputSettings()).toMatchObject({
-			providerId: "groq",
-			modelId: "whisper-large-v3",
-		});
+	it("rejects batch-only models for voice input", async () => {
+		await expect(
+			saveVoiceInputSettings(manager, {
+				providerId: "groq",
+				modelId: "whisper-large-v3",
+			}),
+		).rejects.toThrow("does not support streaming transcription");
+		expect(manager.getVoiceInputSettings()).toBeUndefined();
 	});
 
 	it.each([
@@ -1790,34 +1782,6 @@ describe("audio transcription", () => {
 		await expect(
 			createConfiguredStreamingTranscriptionSession(manager),
 		).rejects.toThrow("does not support streaming transcription");
-	});
-
-	it("does not invent builtin realtime models for a custom speech endpoint", async () => {
-		LlmsModels.registerProvider({
-			provider: {
-				id: "local-recording",
-				source: "file",
-				name: "Local speech",
-				defaultModelId: "whisper-1",
-				protocol: "openai-chat",
-				client: "openai-compatible",
-				capabilities: [],
-			},
-			models: {
-				"whisper-1": {
-					id: "whisper-1",
-					name: "Whisper",
-					operation: "transcription",
-					modalities: { input: ["audio"], output: ["text"] },
-				},
-			},
-		});
-		const result = await getLocalTranscriptionModels("local-recording", {
-			providerId: "local-recording",
-			routingProviderId: "openai-native",
-			modelId: "whisper-1",
-		});
-		expect(result.models.map((model) => model.id)).toEqual(["whisper-1"]);
 	});
 
 	it("rejects a voice input selection that is not an audio-to-text model", async () => {
@@ -2566,37 +2530,6 @@ describe("updateLocalProvider", () => {
 
 	afterEach(() => cleanup());
 
-	it("replaces a stale window with endpoint metadata without losing model customizations", async () => {
-		const modelsPath = resolveModelsRegistryPath(manager),
-			state = await readModelsFile(modelsPath);
-		state.providers["editable-provider"]!.models!["model-a"] = {
-			id: "model-a",
-			name: "Personal label",
-			contextWindow: 131072,
-			capabilities: ["tools"],
-		};
-		await LocalProviderRegistry.writeModelsFile(modelsPath, state);
-		vi.stubGlobal(
-			"fetch",
-			vi.fn(async () =>
-				Response.json({ data: [{ id: "model-a", context_length: 256000 }] }),
-			),
-		);
-		await updateLocalProvider(manager, {
-			providerId: "editable-provider",
-			modelsSourceUrl: "https://example.invalid/v1/models",
-			models: [],
-		});
-		const result = (await readModelsFile(modelsPath)).providers[
-			"editable-provider"
-		]?.models?.["model-a"];
-		expect(result).toMatchObject({
-			name: "Personal label",
-			contextWindow: 256000,
-			capabilities: ["tools"],
-		});
-	});
-
 	it("updates provider metadata and model registry", async () => {
 		await updateLocalProvider(manager, {
 			providerId: "editable-provider",
@@ -2824,71 +2757,6 @@ describe("listLocalProviders", () => {
 	});
 
 	afterEach(() => cleanup());
-
-	it.each([false, true])("loads the two-vendor FreeLLM catalog without a key or default switch (stale=%s)", async (stale) => {
-		const install = mkdtempSync(path.join(os.tmpdir(), "freellm-bundle-"));
-		const previous = process.env.CLINE_DESKTOP_CLI_PATH;
-		try {
-			const folder = path.join(install, "bin/defaults");
-			mkdirSync(folder, { recursive: true });
-			writeFileSync(
-				path.join(folder, "freellm.json"),
-				readFileSync(
-					new URL(
-						"../../../../../../fork/defaults/freellm.json",
-						import.meta.url,
-					),
-				),
-			);
-			process.env.CLINE_DESKTOP_CLI_PATH = path.join(install, "cline-cli.exe");
-			const bundledManager = new ProviderSettingsManager({
-				filePath: path.join(install, "fixture.json"),
-			});
-			if (stale) {
-				const catalog = JSON.parse(readFileSync(path.join(folder, "freellm.json"), "utf8"));
-				catalog.providers.freellm.models["retired/fixture"] = { id: "retired/fixture" };
-				writeFileSync(path.join(install, "models.json"), JSON.stringify(catalog));
-			}
-			const before = bundledManager.read().lastUsedProvider;
-			await ensureCustomProvidersLoaded(bundledManager);
-			const collection = LlmsModels.getProviderCollectionSync("freellm")!;
-			expect(Object.keys(collection.models)).toHaveLength(2);
-			expect(
-				new Set(Object.keys(collection.models).map((id) => id.split("/")[0]))
-					.size,
-			).toBe(2);
-			expect(collection.provider.metadata?.apiKeyOptional).toBe(true);
-			markLocalProviderEnabled(bundledManager, "freellm");
-			const saved = bundledManager.getProviderSettings("freellm")!;
-			expect(saved.apiKey).toBeUndefined();
-			expect(saved.baseUrl).toBe("https://ai-gateway.kilo.ai/api/v1");
-			expect(bundledManager.read().lastUsedProvider).toBe(before);
-			const { providers } = await listLocalProviders(bundledManager);
-			expect(providers.find((p) => p.id === "freellm")).toMatchObject({
-				enabled: true,
-				configured: true,
-				models: 2,
-			});
-			expect(
-				providers
-					.find((p) => p.id === "freellm")!
-					.modelList?.every((m) => m.supportsAuthorModes !== true),
-			).toBe(true);
-			expect(
-				providers
-					.find((p) => p.id === "freellm")!
-					.modelList?.find((m) => m.id === "reflection/beam-free")
-					?.reasoningOptions,
-			).toEqual([
-				{ type: "effort", values: ["low", "medium", "high", "xhigh", "max"] },
-			]);
-		} finally {
-			if (previous === undefined) delete process.env.CLINE_DESKTOP_CLI_PATH;
-			else process.env.CLINE_DESKTOP_CLI_PATH = previous;
-			LlmsModels.unregisterProvider("freellm");
-			rmSync(install, { recursive: true, force: true });
-		}
-	});
 
 	it("sends authentication facts for builtins and registered providers", async () => {
 		LlmsModels.registerProvider({
@@ -3483,86 +3351,4 @@ describe("refreshProviderModelsFromSource", () => {
 			modelsState,
 		);
 	});
-});
-
-describe("provider-local sampling persistence", () => {
-	it("merges, clears and validates sampling without losing credentials or speech settings", async () => {
-		const { manager, cleanup } = makeTempManager();
-		try {
-			manager.saveProviderSettings({
-				provider: "local-test",
-				apiKey: "test-only",
-				client: "openai-compatible",
-				protocol: "openai-chat",
-				sampling: { top_k: 20, temperature: 1 },
-			});
-			manager.saveProviderSettings({
-				provider: "speech-test",
-				apiKey: "speech-test-only",
-			});
-			await saveLocalProviderSettings(manager, {
-				providerId: "local-test",
-				sampling: { temperature: 0, seed: 0 },
-			});
-			expect(manager.getProviderSettings("local-test")).toMatchObject({
-				apiKey: "test-only",
-				sampling: { temperature: 0, top_k: 20, seed: 0 },
-			});
-			await saveLocalProviderSettings(manager, {
-				providerId: "local-test",
-				sampling: { top_k: null },
-			});
-			expect(manager.getProviderSettings("local-test")?.sampling).toEqual({
-				temperature: 0,
-				seed: 0,
-			});
-			await expect(
-				saveLocalProviderSettings(manager, {
-					providerId: "local-test",
-					sampling: { top_p: 2 },
-				}),
-			).rejects.toThrow();
-			expect(manager.getProviderSettings("local-test")?.sampling).toEqual({
-				temperature: 0,
-				seed: 0,
-			});
-			expect(manager.getProviderSettings("speech-test")?.apiKey).toBe(
-				"speech-test-only",
-			);
-		} finally {
-			cleanup();
-		}
-	});
-});
-
-it("persists and clears the author mode without altering sampling or credentials", async () => {
-	const { manager, cleanup } = makeTempManager();
-	try {
-		manager.saveProviderSettings({
-			provider: "local-test",
-			apiKey: "test-only",
-			sampling: { max_tokens: 0 },
-		});
-		await saveLocalProviderSettings(manager, {
-			providerId: "local-test",
-			authorReasoningMode: "ultra",
-		});
-		expect(manager.getProviderSettings("local-test")).toMatchObject({
-			apiKey: "test-only",
-			sampling: { max_tokens: 0 },
-			authorReasoningMode: "ultra",
-		});
-		await saveLocalProviderSettings(manager, {
-			providerId: "local-test",
-			authorReasoningMode: null,
-		});
-		expect(
-			manager.getProviderSettings("local-test")?.authorReasoningMode,
-		).toBeUndefined();
-		expect(manager.getProviderSettings("local-test")?.sampling).toEqual({
-			max_tokens: 0,
-		});
-	} finally {
-		cleanup();
-	}
 });

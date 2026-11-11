@@ -40,8 +40,6 @@ async function wireBody(input: {
 	reasoning: GatewayStreamRequest["reasoning"];
 	reasoningOptions: readonly ModelReasoningOption[] | undefined;
 	capabilities?: ModelInfo["capabilities"];
-	sampling?: Record<string, number | boolean>;
-	authorReasoningMode?: "ultra" | "adaptive";
 }): Promise<Record<string, unknown>> {
 	const providerId = input.providerId ?? PROVIDER_ID;
 	const configuredModel = input.reasoningOptions || input.capabilities;
@@ -59,10 +57,6 @@ async function wireBody(input: {
 				providerId,
 				apiKey: "test-key",
 				fetch: fetchStub,
-				options: {
-					sampling: input.sampling,
-					authorReasoningMode: input.authorReasoningMode,
-				},
 				// A config model overrides a builtin of the same id, so these
 				// definitions decide what the gateway sees regardless of the catalog.
 				...(configuredModel
@@ -188,132 +182,60 @@ describe("OpenAI-compatible reasoning disable wire contract", () => {
 		});
 		expect(body).not.toHaveProperty("reasoning_effort");
 	});
-});
 
-describe("OpenAI-compatible local sampling wire", () => {
-	it.each([
-		true,
-		false,
-	])("forwards DeepSeek smart-search=%s independently of thinking", async (search) => {
-		const body = await wireBody({
-			modelId: "deepseek-web",
-			reasoning: { effort: "high" },
-			reasoningOptions: undefined,
-			sampling: { search_enabled: search, max_tokens: 0 },
+	describe("OpenAI-compatible reasoning-off preference wire contract", () => {
+		it("sends nothing about reasoning to a model the catalog does not list", async () => {
+			const body = await wireBody({
+				modelId: "gpt-6-astra",
+				reasoning: { preferOff: true },
+				reasoningOptions: undefined,
+			});
+			expect(body).not.toHaveProperty("reasoning_effort");
 		});
-		expect(body.search_enabled).toBe(search);
+
+		it("keeps the caller's level for a model the catalog does not list", async () => {
+			const body = await wireBody({
+				modelId: "gpt-6-astra",
+				reasoning: { effort: "high", preferOff: true },
+				reasoningOptions: undefined,
+			});
+			expect(body.reasoning_effort).toBe("high");
+		});
+
+		it("sends none to a model that advertises it", async () => {
+			const body = await wireBody({
+				modelId: "gpt-6-astra",
+				reasoning: { effort: "high", preferOff: true },
+				reasoningOptions: [{ type: "effort", values: ["none", "low", "high"] }],
+			});
+			expect(body.reasoning_effort).toBe("none");
+		});
+
+		it("sends nothing about reasoning to a model with no off option", async () => {
+			const body = await wireBody({
+				modelId: KIMI_K3_ID,
+				reasoning: { preferOff: true },
+				reasoningOptions: KIMI_K3_EFFORTS,
+			});
+			expect(body).not.toHaveProperty("reasoning_effort");
+		});
+
+		it("still sends an explicit disable to a model the catalog does not list", async () => {
+			const body = await wireBody({
+				modelId: "gpt-6-astra",
+				reasoning: { enabled: false, preferOff: true },
+				reasoningOptions: undefined,
+			});
+			expect(body.reasoning_effort).toBe("none");
+		});
+	});
+
+	it("keeps the caller's level for a model with no off option", async () => {
+		const body = await wireBody({
+			modelId: KIMI_K3_ID,
+			reasoning: { effort: "high", preferOff: true },
+			reasoningOptions: KIMI_K3_EFFORTS,
+		});
 		expect(body.reasoning_effort).toBe("high");
-		expect(body.max_tokens).toBe(-1);
 	});
-	it("forwards all sampling defaults through the real adapter, retaining explicit request max_tokens", async () => {
-		const body = await wireBody({
-			modelId: "fixture-unlisted",
-			reasoning: { effort: "xhigh" },
-			reasoningOptions: undefined,
-			sampling: {
-				temperature: 0.7,
-				top_p: 0.9,
-				top_k: 20,
-				min_p: 0.05,
-				max_tokens: 4096,
-				seed: 0,
-				reasoning_budget_tokens: 1024,
-				repetition_penalty: 1,
-				presence_penalty: 0,
-			},
-		});
-		expect(body).toMatchObject({
-			temperature: 0.7,
-			top_p: 0.9,
-			top_k: 20,
-			min_p: 0.05,
-			max_tokens: 16,
-			seed: 0,
-			reasoning_budget_tokens: 1024,
-			repetition_penalty: 1,
-			presence_penalty: 0,
-			reasoning_effort: "xhigh",
-			stream: true,
-		});
-	});
-	it("does not add sampling fields when unset", async () => {
-		const body = await wireBody({
-			modelId: "fixture-unlisted",
-			reasoning: { enabled: false },
-			reasoningOptions: undefined,
-		});
-		expect(body.reasoning_effort).toBe("none");
-		expect(body).not.toHaveProperty("min_p");
-		expect(body).not.toHaveProperty("reasoning_budget_tokens");
-	});
-});
-
-it("forwards until-done mode to a compatible endpoint without an automatic client budget", async () => {
-	const body = await wireBody({
-		modelId: "fixture-unlisted",
-		reasoning: { effort: "xhigh" },
-		reasoningOptions: undefined,
-		sampling: { max_tokens: 0 },
-	});
-	expect(body.max_tokens).toBe(-1);
-	expect(body.reasoning_effort).toBe("xhigh");
-});
-
-it.each([
-	"none",
-	"low",
-	"medium",
-	"high",
-	"xhigh",
-] as const)("author Ultra preserves the API effort %s and activates only for High/XHigh", async (effort) => {
-	const body = await wireBody({
-		modelId: "DavidAU/Qwen3.8-Flash-Next-fixture",
-		reasoning: effort === "none" ? { enabled: false } : { effort },
-		reasoningOptions: undefined,
-		authorReasoningMode: "ultra",
-	});
-	expect(body.reasoning_effort).toBe(effort);
-	const messages = body.messages as Array<{ content: unknown }>;
-	expect(messages.filter((m) => m.content === "{REASON:ultra}")).toHaveLength(
-		effort === "xhigh" ? 1 : 0,
-	);
-});
-
-it("sends Adaptive as backend reason_mode=auto without an Ultra tag or client picker", async () => {
-	const body = await wireBody({
-		modelId: "DavidAU/Qwen3.8-Flash-Next-fixture",
-		reasoning: { effort: "xhigh" },
-		reasoningOptions: undefined,
-		authorReasoningMode: "adaptive",
-	});
-	expect(body.reasoning_effort).toBe("xhigh");
-	expect(body.reason_mode).toBe("auto");
-	expect(
-		(body.messages as Array<{ content: unknown }>).some(
-			(m) => m.content === "{REASON:ultra}",
-		),
-	).toBe(false);
-});
-
-it.each([
-	"ultra",
-	"adaptive",
-] as const)("does not send stale %s to another model and retains sampling", async (mode) => {
-	const body = await wireBody({
-		modelId: "fixture-other-model",
-		reasoning: { effort: "xhigh" },
-		reasoningOptions: undefined,
-		authorReasoningMode: mode,
-		sampling: { temperature: 0.7, top_p: 0.95, top_k: 20 },
-	});
-	expect(body.temperature).toBe(0.7);
-	expect(body.top_p).toBe(0.95);
-	expect(body.top_k).toBe(20);
-	expect(body.reasoning_effort).toBe("xhigh");
-	expect(body).not.toHaveProperty("reason_mode");
-	expect(
-		(body.messages as Array<{ content: unknown }>).some(
-			(message) => message.content === "{REASON:ultra}",
-		),
-	).toBe(false);
 });

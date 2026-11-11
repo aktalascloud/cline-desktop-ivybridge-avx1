@@ -17,11 +17,9 @@ import {
 	ensureCustomProvidersLoaded,
 	getLocalProviderModels,
 	listLocalProviders,
-	refreshProviderModelsFromSource,
 	saveLocalProviderSettings,
 	updateLocalProvider,
 } from "../../../services/providers/local-provider-service";
-import { refreshLocalModelMetadata } from "../../../services/providers/live-model-metadata";
 import { ProviderSettingsManager } from "../../../services/storage/provider-settings-manager";
 import { errorReply, okReply } from "./context";
 
@@ -121,7 +119,6 @@ export async function handleProviderCommand(
 			case "providers.models.list": {
 				const input = modelsSchema.parse(payload);
 				await ensureCustomProvidersLoaded(manager);
-				await refreshLocalModelMetadata(manager, input.providerId);
 				return okReply(
 					envelope,
 					await getLocalProviderModels(
@@ -209,12 +206,7 @@ export async function handleProviderCommand(
 			case "providers.models.update": {
 				const input = updateModelsSchema.parse(payload);
 				await ensureCustomProvidersLoaded(manager);
-				return okReply(
-					envelope,
-					input.models === undefined
-						? await refreshProviderModelsFromSource(manager, input.providerId)
-						: await updateLocalProvider(manager, input),
-				);
+				return okReply(envelope, await updateLocalProvider(manager, input));
 			}
 			default:
 				return errorReply(

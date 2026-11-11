@@ -311,11 +311,9 @@ export function ProviderListContent({
 			)
 		: providers;
 
-	const connectedProviders = filteredProviders.filter(
-		(provider) => isProviderConnected(provider) || provider.id === "dsw2api",
-	);
+	const connectedProviders = filteredProviders.filter(isProviderConnected);
 	const availableProviders = filteredProviders.filter(
-		(provider) => !isProviderConnected(provider) && provider.id !== "dsw2api",
+		(provider) => !isProviderConnected(provider),
 	);
 	// The catalog arrives sorted by popular rank, then name; "popular" entries
 	// surface first so the common providers don't drown in the long tail.

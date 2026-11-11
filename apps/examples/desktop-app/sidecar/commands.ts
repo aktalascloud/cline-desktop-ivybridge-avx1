@@ -7,7 +7,6 @@ import {
 	readdirSync,
 	readlinkSync,
 	realpathSync,
-	rmdirSync,
 	rmSync,
 	statSync,
 } from "node:fs";
@@ -19,7 +18,6 @@ import {
 	isAbsolute,
 	join,
 	posix,
-	resolve,
 	sep,
 } from "node:path";
 import { promisify } from "node:util";
@@ -39,6 +37,7 @@ import {
 	type ClineAccountUser,
 	clearAccountTelemetryIdentity,
 	createConfiguredStreamingTranscriptionSession,
+	createHubMcpApi,
 	createHubProvidersApi,
 	createUserInstructionConfigService,
 	executeClineAccountAction,
@@ -50,16 +49,13 @@ import {
 	listHookConfigFiles,
 	normalizeOAuthProvider,
 	ProviderSettingsManager,
-	parseMcpServerRegistration,
 	persistClineAccountTelemetryIdentity,
-	probeMcpServerConnection,
 	RemoteEnvironmentService,
 	readGlobalSettings,
 	readCompactionPreferencesGlobally,
 	setCompactionPreferencesGlobally,
 	readSessionCheckpointHistory,
 	resolveClineAccountTelemetryIdentity,
-	resolveMcpServerRegistration,
 	resolveSessionBackend,
 	resolveAgentConfigSearchPaths as resolveSharedAgentConfigSearchPaths,
 	SESSION_IMPORT_TOOLS,
@@ -69,10 +65,8 @@ import {
 	SqliteSessionStore,
 	saveVoiceInputSettings,
 	setAutoUpdateEnabledGlobally,
-	setMcpServerDisabled,
 	setTelemetryOptOutGlobally,
 	transcribeConfiguredVoiceInput,
-	updateMcpSettingsFileSync,
 	upgradeManagedHub,
 } from "@cline/core";
 import { CloudSessionApi } from "@cline/core/cloud";
@@ -88,7 +82,7 @@ import {
 	readHubScheduleMode,
 } from "@cline/shared";
 import { readFileSyncStrippingUtf8Bom } from "@cline/shared/node";
-import { resolveClineDir, resolveMcpSettingsPath } from "@cline/shared/storage";
+import { resolveClineDir } from "@cline/shared/storage";
 import { z } from "zod";
 import packageJson from "../package.json";
 import { CLINE_ACCOUNT_NOT_AUTHENTICATED_RESULT } from "../webview/lib/cline-account-state";
@@ -156,16 +150,10 @@ import {
 	uninstallLocalPrimitive,
 	uninstallMarketplaceEntryForDesktopCommand,
 } from "./marketplace";
+
 import {
-	ensureMcpSettingsFile,
-	readMcpServersResponse,
-	shouldProbeMcpServerAfterUpsert,
-} from "./mcp";
-import {
-	cancelMcpOAuthAuthorizationForReason,
-	McpOAuthAuthorizationCancelledError,
-	runCancellableMcpOAuthAuthorization,
-	shouldRestoreEnabledStateAfterOAuthCancellation,
+	cancelMcpOAuthAuthorization,
+	runMcpOAuthAuthorization,
 } from "./mcp-oauth";
 import {
 	cancelProviderOAuthLogin,
@@ -423,12 +411,9 @@ async function readSessionCheckpoints(
 	const fromHub = readSessionCheckpointHistory(record);
 	if (fromHub.length > 0) return fromHub;
 	try {
-		const store = new SqliteSessionStore();
-		try {
-			return readSessionCheckpointHistory(store.get(sessionId) ?? undefined);
-		} finally {
-			store.close();
-		}
+		return readSessionCheckpointHistory(
+			new SqliteSessionStore().get(sessionId) ?? undefined,
+		);
 	} catch {
 		return [];
 	}
@@ -506,40 +491,6 @@ function readProviderSettingsUpdate(
 				Omit<SaveProviderSettingsActionRequest, "action" | "providerId">
 			>)
 		: {};
-}
-
-/**
- * Transport type + URL a server record actually points at, tolerating both
- * the nested `transport` shape and legacy flat fields (mirrors
- * readMcpServersResponse).
- */
-function mcpTransportIdentity(name: string, record: JsonRecord): string {
-	try {
-		const resolved = parseMcpServerRegistration(name, record).transport;
-		return resolved.type === "stdio"
-			? "stdio\u0000"
-			: `${resolved.type}\u0000${resolved.url}`;
-	} catch {
-		// Preserve a best-effort identity for malformed entries so the editor can
-		// still repair them without requiring the entire settings file to parse.
-	}
-	const transport =
-		record.transport && typeof record.transport === "object"
-			? (record.transport as JsonRecord)
-			: undefined;
-	const url =
-		typeof transport?.url === "string"
-			? transport.url
-			: typeof record.url === "string"
-				? record.url
-				: "";
-	// Core's config-loader defaults a URL-based legacy record with no explicit
-	// type to SSE and maps the legacy "http" alias to streamableHttp; mirror
-	// both so an unchanged endpoint keeps the same identity.
-	const rawType = transport?.type ?? record.transportType ?? record.type;
-	const type = String(rawType ?? (url ? "sse" : "stdio")).trim();
-	const normalizedType = type === "http" ? "streamableHttp" : type;
-	return `${normalizedType}\u0000${url}`;
 }
 
 function removePathIfExists(
@@ -669,48 +620,44 @@ async function getSessionFromSidecarManager(
 	environmentId?: string,
 ): Promise<JsonRecord | undefined> {
 	const store = new SqliteSessionStore();
-	try {
-		const binding = environmentId
-			? getRuntimeBinding(ctx, environmentId)
-			: await findSessionRuntimeBinding(ctx, sessionId);
-		if (binding) {
-			const session = await binding.sessionManager.get(sessionId);
-			if (session) {
-				const merged = mergePersistedSessionRecord(
-					sessionId,
-					session as unknown as JsonRecord,
-					binding.kind === "local"
-						? (store.get(sessionId) as unknown as JsonRecord | undefined)
+	const binding = environmentId
+		? getRuntimeBinding(ctx, environmentId)
+		: await findSessionRuntimeBinding(ctx, sessionId);
+	if (binding) {
+		const session = await binding.sessionManager.get(sessionId);
+		if (session) {
+			const merged = mergePersistedSessionRecord(
+				sessionId,
+				session as unknown as JsonRecord,
+				binding.kind === "local"
+					? (store.get(sessionId) as unknown as JsonRecord | undefined)
+					: undefined,
+			);
+			return {
+				...merged,
+				environmentId: binding.environmentId,
+				remoteEnvironment:
+					binding.kind === "ssh"
+						? {
+								id: binding.environmentId,
+								name: binding.remote?.profile.name,
+								host: binding.remote?.profile.host,
+							}
 						: undefined,
-				);
-				return {
-					...merged,
-					environmentId: binding.environmentId,
-					remoteEnvironment:
-						binding.kind === "ssh"
-							? {
-									id: binding.environmentId,
-									name: binding.remote?.profile.name,
-									host: binding.remote?.profile.host,
-								}
-							: undefined,
-				};
-			}
+			};
 		}
-
-		const persisted =
-			!environmentId || environmentId === LOCAL_ENVIRONMENT_ID
-				? (store.get(sessionId) as unknown as JsonRecord | undefined)
-				: undefined;
-		return persisted
-			? {
-					...mergePersistedSessionRecord(sessionId, persisted, persisted),
-					environmentId: LOCAL_ENVIRONMENT_ID,
-				}
-			: undefined;
-	} finally {
-		store.close();
 	}
+
+	const persisted =
+		!environmentId || environmentId === LOCAL_ENVIRONMENT_ID
+			? (store.get(sessionId) as unknown as JsonRecord | undefined)
+			: undefined;
+	return persisted
+		? {
+				...mergePersistedSessionRecord(sessionId, persisted, persisted),
+				environmentId: LOCAL_ENVIRONMENT_ID,
+			}
+		: undefined;
 }
 
 function isSidebarSessionWithPrompt(session: JsonRecord): boolean {
@@ -724,128 +671,125 @@ async function listSessionsFromSidecarManager(
 	const max = Math.max(1, Math.floor(limit));
 	const byId = new Map<string, JsonRecord>();
 	const store = new SqliteSessionStore();
-	try {
-		for (const binding of ctx.runtimeBindings.values()) {
-			try {
-				const sessions = await binding.sessionManager.list(max, {
-					hydrate: false,
-				});
-				for (const item of sessions) {
-					if (!item || typeof item !== "object") continue;
-					const record = item as unknown as JsonRecord;
-					const sessionId = String(record.sessionId ?? "").trim();
-					if (!sessionId) continue;
-					getEnvironmentContext(
-						ctx,
-						binding.environmentId,
-					).sessionEnvironmentIds.set(sessionId, binding.environmentId);
-					const merged = mergePersistedSessionRecord(
-						sessionId,
-						record,
-						binding.kind === "local"
-							? (store.get(sessionId) as unknown as JsonRecord | undefined)
-							: undefined,
-					);
-					if (!isSidebarSessionWithPrompt(merged)) {
-						// Attachment-only sessions may have no textual prompt metadata.
-						const messages =
-							binding.kind === "local"
-								? readPersistedChatMessages(sessionId)
-								: await binding.sessionManager
-										.readMessages(sessionId)
-										.catch(() => []);
-						merged.prompt = derivePromptFromMessages(messages ?? []);
-					}
-					if (!isSidebarSessionWithPrompt(merged)) continue;
-					byId.set(JSON.stringify([binding.environmentId, sessionId]), {
-						...merged,
-						environmentId: binding.environmentId,
-						remoteEnvironment:
-							binding.kind === "ssh"
-								? {
-										id: binding.environmentId,
-										name: binding.remote?.profile.name,
-										host: binding.remote?.profile.host,
-									}
-								: undefined,
-					});
-				}
-			} catch {
-				// Keep history available from the other connected environments.
-			}
-		}
 
-		if (byId.size === 0) {
-			for (const session of store.list(max)) {
-				session.prompt =
-					session.prompt?.trim() ||
-					derivePromptFromMessages(
-						readPersistedChatMessages(session.sessionId) ?? [],
-					);
-				if (!isSidebarSessionWithPrompt(session as unknown as JsonRecord)) {
-					continue;
-				}
-				byId.set(JSON.stringify([LOCAL_ENVIRONMENT_ID, session.sessionId]), {
-					...(session as unknown as JsonRecord),
-					environmentId: LOCAL_ENVIRONMENT_ID,
-				});
-			}
-		}
-
-		for (const scoped of getEnvironmentContexts(ctx)) {
-			for (const [sessionId, session] of scoped.liveSessions.entries()) {
-				if (session.config.executionTarget === "cloud") continue;
-				const prompt =
-					session.prompt?.trim() || derivePromptFromMessages(session.messages);
-				if (!prompt) continue;
-				const key = JSON.stringify([scoped.activeEnvironmentId, sessionId]);
-				const existing = byId.get(key);
-				byId.set(key, {
-					...(existing ?? {}),
+	for (const binding of ctx.runtimeBindings.values()) {
+		try {
+			const sessions = await binding.sessionManager.list(max, {
+				hydrate: false,
+			});
+			for (const item of sessions) {
+				if (!item || typeof item !== "object") continue;
+				const record = item as unknown as JsonRecord;
+				const sessionId = String(record.sessionId ?? "").trim();
+				if (!sessionId) continue;
+				getEnvironmentContext(
+					ctx,
+					binding.environmentId,
+				).sessionEnvironmentIds.set(sessionId, binding.environmentId);
+				const merged = mergePersistedSessionRecord(
 					sessionId,
-					environmentId: scoped.activeEnvironmentId,
-					status: session.status,
-					provider: session.config.provider ?? existing?.provider ?? "",
-					model: session.config.model ?? existing?.model ?? "",
-					cwd: session.config.cwd ?? existing?.cwd ?? "",
-					workspaceRoot:
-						session.config.workspaceRoot ??
-						existing?.workspaceRoot ??
-						existing?.cwd ??
-						"",
-					prompt,
-					startedAt:
-						existing?.startedAt ?? new Date(session.startedAt).toISOString(),
-					endedAt:
-						session.endedAt !== undefined
-							? new Date(session.endedAt).toISOString()
-							: existing?.endedAt,
-					metadata: {
-						...((existing?.metadata && typeof existing.metadata === "object"
-							? existing.metadata
-							: {}) as JsonRecord),
-						...(session.title ? { title: session.title } : {}),
-					},
+					record,
+					binding.kind === "local"
+						? (store.get(sessionId) as unknown as JsonRecord | undefined)
+						: undefined,
+				);
+				if (!isSidebarSessionWithPrompt(merged)) {
+					// Attachment-only sessions may have no textual prompt metadata.
+					const messages =
+						binding.kind === "local"
+							? readPersistedChatMessages(sessionId)
+							: await binding.sessionManager
+									.readMessages(sessionId)
+									.catch(() => []);
+					merged.prompt = derivePromptFromMessages(messages ?? []);
+				}
+				if (!isSidebarSessionWithPrompt(merged)) continue;
+				byId.set(JSON.stringify([binding.environmentId, sessionId]), {
+					...merged,
+					environmentId: binding.environmentId,
+					remoteEnvironment:
+						binding.kind === "ssh"
+							? {
+									id: binding.environmentId,
+									name: binding.remote?.profile.name,
+									host: binding.remote?.profile.host,
+								}
+							: undefined,
 				});
 			}
+		} catch {
+			// Keep history available from the other connected environments.
 		}
-		return Array.from(byId.values())
-			.sort((left, right) => {
-				const leftTime = Date.parse(
-					String(left.updatedAt ?? left.startedAt ?? ""),
-				);
-				const rightTime = Date.parse(
-					String(right.updatedAt ?? right.startedAt ?? ""),
-				);
-				return (
-					(Number.isNaN(rightTime) ? 0 : rightTime) -
-					(Number.isNaN(leftTime) ? 0 : leftTime)
-				);
-			})
-			.slice(0, max);
-	} finally {
-		store.close();
 	}
+
+	if (byId.size === 0) {
+		for (const session of store.list(max)) {
+			session.prompt =
+				session.prompt?.trim() ||
+				derivePromptFromMessages(
+					readPersistedChatMessages(session.sessionId) ?? [],
+				);
+			if (!isSidebarSessionWithPrompt(session as unknown as JsonRecord)) {
+				continue;
+			}
+			byId.set(JSON.stringify([LOCAL_ENVIRONMENT_ID, session.sessionId]), {
+				...(session as unknown as JsonRecord),
+				environmentId: LOCAL_ENVIRONMENT_ID,
+			});
+		}
+	}
+
+	for (const scoped of getEnvironmentContexts(ctx)) {
+		for (const [sessionId, session] of scoped.liveSessions.entries()) {
+			if (session.config.executionTarget === "cloud") continue;
+			const prompt =
+				session.prompt?.trim() || derivePromptFromMessages(session.messages);
+			if (!prompt) continue;
+			const key = JSON.stringify([scoped.activeEnvironmentId, sessionId]);
+			const existing = byId.get(key);
+			byId.set(key, {
+				...(existing ?? {}),
+				sessionId,
+				environmentId: scoped.activeEnvironmentId,
+				status: session.status,
+				provider: session.config.provider ?? existing?.provider ?? "",
+				model: session.config.model ?? existing?.model ?? "",
+				cwd: session.config.cwd ?? existing?.cwd ?? "",
+				workspaceRoot:
+					session.config.workspaceRoot ??
+					existing?.workspaceRoot ??
+					existing?.cwd ??
+					"",
+				prompt,
+				startedAt:
+					existing?.startedAt ?? new Date(session.startedAt).toISOString(),
+				endedAt:
+					session.endedAt !== undefined
+						? new Date(session.endedAt).toISOString()
+						: existing?.endedAt,
+				metadata: {
+					...((existing?.metadata && typeof existing.metadata === "object"
+						? existing.metadata
+						: {}) as JsonRecord),
+					...(session.title ? { title: session.title } : {}),
+				},
+			});
+		}
+	}
+	return Array.from(byId.values())
+		.sort((left, right) => {
+			const leftTime = Date.parse(
+				String(left.updatedAt ?? left.startedAt ?? ""),
+			);
+			const rightTime = Date.parse(
+				String(right.updatedAt ?? right.startedAt ?? ""),
+			);
+			return (
+				(Number.isNaN(rightTime) ? 0 : rightTime) -
+				(Number.isNaN(leftTime) ? 0 : leftTime)
+			);
+		})
+		.slice(0, max);
 }
 
 async function withSearchDeadline<T>(
@@ -1027,12 +971,7 @@ async function listGitBranches(
 
 /** Where task worktrees live; honors `CLINE_DIR` like the rest of the Cline dir. */
 function taskWorktreesRoot(): string {
-	const path = join(resolveClineDir(), "worktrees");
-	try {
-		return realpathSync.native(path);
-	} catch {
-		return resolve(path);
-	}
+	return join(resolveClineDir(), "worktrees");
 }
 
 /**
@@ -1050,7 +989,7 @@ async function createGitWorktree(
 	).catch(() => {
 		throw new Error(`Not a git repository: ${cwd}`);
 	});
-	const repoRoot = resolve(stdout.trim());
+	const repoRoot = stdout.trim();
 	const id = randomUUID().replaceAll("-", "").slice(0, 5);
 	const branch = `cline/${id}`;
 	const worktreePath = join(
@@ -1064,29 +1003,12 @@ async function createGitWorktree(
 		["-C", repoRoot, "worktree", "add", "-b", branch, worktreePath, "HEAD"],
 		{ encoding: "utf8" },
 	);
-	return { path: realpathSync.native(worktreePath), branch };
+	return { path: worktreePath, branch };
 }
 
 /** True for paths of the exact `~/.cline/worktrees/<id>/<repo>` shape. */
 function isTaskWorktreePath(path: string): boolean {
-	if (!path.trim()) return false;
-	const inputPath = resolve(path);
-	let normalized: string;
-	try {
-		if (lstatSync(inputPath).isSymbolicLink()) return false;
-		normalized = realpathSync.native(inputPath);
-	} catch {
-		return false;
-	}
-	const key = (value: string) =>
-		process.platform === "win32" ? value.toLowerCase() : value;
-	if (key(dirname(dirname(normalized))) !== key(resolve(taskWorktreesRoot())))
-		return false;
-	try {
-		return !lstatSync(normalized).isSymbolicLink();
-	} catch {
-		return false;
-	}
+	return path.length > 0 && dirname(dirname(path)) === taskWorktreesRoot();
 }
 
 /**
@@ -1112,14 +1034,8 @@ async function removeTaskWorktree(
 			"--path-format=absolute",
 			"--git-common-dir",
 		]);
-		repoRoot = dirname(resolve(commonDir));
-		// Windows cannot remove the current directory of the git process.
-		// Run removal from the main repository, outside the task worktree.
-		await execFileAsync(
-			"git",
-			["-C", repoRoot, "worktree", "remove", "--force", worktreePath],
-			{ encoding: "utf8" },
-		);
+		repoRoot = dirname(commonDir);
+		await git(["worktree", "remove", "--force", worktreePath]);
 		await execFileAsync("git", ["-C", repoRoot, "branch", "-D", branch], {
 			encoding: "utf8",
 		}).catch(() => undefined);
@@ -1128,14 +1044,9 @@ async function removeTaskWorktree(
 			worktreePath,
 			error,
 		});
-		throw error;
 	}
-	// Remove only an empty generated parent; unrelated siblings must survive.
-	try {
-		rmdirSync(dirname(worktreePath));
-	} catch {
-		/* Nonempty parent is retained. */
-	}
+	// The `<id>` directory that held the worktree.
+	removePathIfExists(dirname(worktreePath), { recursive: true });
 	return { path: worktreePath, repoRoot };
 }
 
@@ -1815,7 +1726,7 @@ async function listUserInstructionConfigs(
 			})),
 		],
 		hooks: loadHooks(),
-		mcp: readMcpServersResponse(),
+		mcp: await createHubMcpApi(await ensureSharedHubClient(ctx)).list(),
 		warnings,
 	};
 }
@@ -2841,42 +2752,38 @@ export async function handleCommand(
 		const binding = await getCommandSessionBinding(ctx, sessionId, args);
 		if (!binding) throw new Error(`Session ${sessionId} not found`);
 		const store = new SqliteSessionStore();
-		try {
-			const asRecord = (value: unknown): JsonRecord =>
-				value && typeof value === "object" && !Array.isArray(value)
-					? (value as JsonRecord)
-					: {};
-			const existingSession = await binding.sessionManager.get(sessionId);
-			const existing =
-				binding.kind === "local" ? store.get(sessionId) : undefined;
-			const merged: JsonRecord = {
-				...(binding.kind === "local"
-					? asRecord(readSessionManifest(sessionId)?.metadata)
-					: {}),
-				...asRecord(existingSession?.metadata),
-				...asRecord(existing?.metadata),
-			};
-			for (const [key, value] of Object.entries(patch as JsonRecord)) {
-				if (value === null) delete merged[key];
-				else merged[key] = value;
-			}
-			const result = await binding.sessionManager.update(sessionId, {
-				metadata: merged,
-			});
-			if (!result.updated) throw new Error(`Session ${sessionId} not found`);
-			// Annotating a session is not session activity. updateSession stamps
-			// updated_at, which clients sort and label rows by, so a pin would
-			// otherwise make an old session look like it just ran.
-			if (binding.kind === "local" && existing?.updatedAt) {
-				store.run("UPDATE sessions SET updated_at = ? WHERE session_id = ?", [
-					existing.updatedAt,
-					sessionId,
-				]);
-			}
-			return merged;
-		} finally {
-			store.close();
+		const asRecord = (value: unknown): JsonRecord =>
+			value && typeof value === "object" && !Array.isArray(value)
+				? (value as JsonRecord)
+				: {};
+		const existingSession = await binding.sessionManager.get(sessionId);
+		const existing =
+			binding.kind === "local" ? store.get(sessionId) : undefined;
+		const merged: JsonRecord = {
+			...(binding.kind === "local"
+				? asRecord(readSessionManifest(sessionId)?.metadata)
+				: {}),
+			...asRecord(existingSession?.metadata),
+			...asRecord(existing?.metadata),
+		};
+		for (const [key, value] of Object.entries(patch as JsonRecord)) {
+			if (value === null) delete merged[key];
+			else merged[key] = value;
 		}
+		const result = await binding.sessionManager.update(sessionId, {
+			metadata: merged,
+		});
+		if (!result.updated) throw new Error(`Session ${sessionId} not found`);
+		// Annotating a session is not session activity. updateSession stamps
+		// updated_at, which clients sort and label rows by, so a pin would
+		// otherwise make an old session look like it just ran.
+		if (binding.kind === "local" && existing?.updatedAt) {
+			store.run("UPDATE sessions SET updated_at = ? WHERE session_id = ?", [
+				existing.updatedAt,
+				sessionId,
+			]);
+		}
+		return merged;
 	}
 	if (command === "delete_chat_session" || command === "delete_cli_session") {
 		const sessionId = String(args?.sessionId ?? args?.session_id ?? "").trim();
@@ -2888,134 +2795,130 @@ export async function handleCommand(
 		}
 		ctx.logger?.log("Deleting desktop chat session", { command, sessionId });
 		const store = new SqliteSessionStore();
+		const row = store.get(sessionId);
+		const manifest = readSessionManifest(sessionId);
+		const sessionCwd =
+			row?.cwd?.trim() ||
+			(typeof manifest?.cwd === "string" ? manifest.cwd.trim() : "");
+		const binding = await getCommandSessionBinding(ctx, sessionId, args);
+		let deleted = false;
+		let deleteError: Error | null = null;
 		try {
-			const row = store.get(sessionId);
-			const manifest = readSessionManifest(sessionId);
-			const sessionCwd =
-				row?.cwd?.trim() ||
-				(typeof manifest?.cwd === "string" ? manifest.cwd.trim() : "");
-			const binding = await getCommandSessionBinding(ctx, sessionId, args);
-			let deleted = false;
-			let deleteError: Error | null = null;
-			try {
-				if (binding) {
-					deleted = await binding.sessionManager.delete(sessionId);
-				} else {
-					const backend = await resolveSessionBackend({ backendMode: "local" });
-					const deleteSession = (
-						backend as {
-							deleteSession: (
-								sessionId: string,
-								cascade?: boolean,
-							) => Promise<boolean | { deleted: boolean }>;
-						}
-					).deleteSession.bind(backend);
-					const deleteResult = await deleteSession(sessionId, true);
-					deleted =
-						typeof deleteResult === "boolean"
-							? deleteResult
-							: deleteResult.deleted;
-				}
-			} catch (error) {
-				deleteError = error instanceof Error ? error : new Error(String(error));
+			if (binding) {
+				deleted = await binding.sessionManager.delete(sessionId);
+			} else {
+				const backend = await resolveSessionBackend({ backendMode: "local" });
+				const deleteSession = (
+					backend as {
+						deleteSession: (
+							sessionId: string,
+							cascade?: boolean,
+						) => Promise<boolean | { deleted: boolean }>;
+					}
+				).deleteSession.bind(backend);
+				const deleteResult = await deleteSession(sessionId, true);
+				deleted =
+					typeof deleteResult === "boolean"
+						? deleteResult
+						: deleteResult.deleted;
 			}
-			if (binding?.kind !== "ssh" && store.delete(sessionId, true)) {
-				deleted = true;
-			}
-			ctx.liveSessions.delete(sessionId);
-			ctx.sessionEnvironmentIds.delete(sessionId);
-			if (binding?.kind === "ssh") {
-				if (!deleted && deleteError) throw deleteError;
-				if (deleted) {
-					broadcastEvent(ctx, "session_deleted", {
-						sessionId,
-						command,
-						deleted: true,
-					});
-				}
-				return deleted;
-			}
-			const directoryCandidates = new Set<string>([
-				join(sharedSessionDataDir(), sessionId),
-			]);
-			for (const path of [
-				row?.messagesPath,
-				typeof manifest?.messages_path === "string"
-					? manifest.messages_path
-					: null,
-			]) {
-				if (typeof path === "string" && path.trim().length > 0) {
-					directoryCandidates.add(dirname(path));
-				}
-			}
-			for (const path of [sessionLogPath(sessionId)]) {
-				if (removePathIfExists(path, { recursive: true })) {
-					deleted = true;
-				}
-			}
-			for (const dir of directoryCandidates) {
-				if (removePathIfExists(dir, { recursive: true })) {
-					deleted = true;
-				}
-			}
-			for (const path of [
-				row?.messagesPath,
-				typeof manifest?.messages_path === "string"
-					? manifest.messages_path
-					: null,
-				join(sharedSessionDataDir(), sessionId, `${sessionId}.json`),
-			].filter((v): v is string => typeof v === "string" && v.length > 0)) {
-				if (removePathIfExists(path)) {
-					deleted = true;
-				}
-			}
-			for (const suffix of ["messages.json"]) {
-				const fileName = `${sessionId}.${suffix}`;
-				const found = findArtifactUnderDir(
-					join(sharedSessionDataDir(), rootSessionIdFrom(sessionId)),
-					fileName,
-					4,
-				);
-				if (found && removePathIfExists(found)) {
-					deleted = true;
-				}
-			}
-			if (!deleted && deleteError) {
-				ctx.logger?.error?.("Failed to delete desktop chat session", {
-					sessionId,
-					error: deleteError,
-				});
-				throw deleteError;
-			}
-			ctx.logger?.log("Desktop chat session delete completed", {
-				sessionId,
-				deleted,
-			});
-			// A task worktree goes with its task, unless another session still
-			// lives in (or under) it, e.g. a second thread started while it was
-			// the workspace. Only the exact `<home>/<id>/<repo>` shape qualifies,
-			// since removal also deletes the `<id>` parent directory.
-			const removedWorktree =
-				deleted &&
-				isTaskWorktreePath(sessionCwd) &&
-				!store.list(10_000).some((other) => {
-					const cwd = other.cwd?.trim() ?? "";
-					return cwd === sessionCwd || cwd.startsWith(sessionCwd + sep);
-				})
-					? await removeTaskWorktree(ctx, sessionCwd)
-					: undefined;
+		} catch (error) {
+			deleteError = error instanceof Error ? error : new Error(String(error));
+		}
+		if (binding?.kind !== "ssh" && store.delete(sessionId, true)) {
+			deleted = true;
+		}
+		ctx.liveSessions.delete(sessionId);
+		ctx.sessionEnvironmentIds.delete(sessionId);
+		if (binding?.kind === "ssh") {
+			if (!deleted && deleteError) throw deleteError;
 			if (deleted) {
 				broadcastEvent(ctx, "session_deleted", {
 					sessionId,
 					command,
 					deleted: true,
-					removedWorktree,
 				});
 			}
 			return deleted;
-		} finally {
-			store.close();
 		}
+		const directoryCandidates = new Set<string>([
+			join(sharedSessionDataDir(), sessionId),
+		]);
+		for (const path of [
+			row?.messagesPath,
+			typeof manifest?.messages_path === "string"
+				? manifest.messages_path
+				: null,
+		]) {
+			if (typeof path === "string" && path.trim().length > 0) {
+				directoryCandidates.add(dirname(path));
+			}
+		}
+		for (const path of [sessionLogPath(sessionId)]) {
+			if (removePathIfExists(path, { recursive: true })) {
+				deleted = true;
+			}
+		}
+		for (const dir of directoryCandidates) {
+			if (removePathIfExists(dir, { recursive: true })) {
+				deleted = true;
+			}
+		}
+		for (const path of [
+			row?.messagesPath,
+			typeof manifest?.messages_path === "string"
+				? manifest.messages_path
+				: null,
+			join(sharedSessionDataDir(), sessionId, `${sessionId}.json`),
+		].filter((v): v is string => typeof v === "string" && v.length > 0)) {
+			if (removePathIfExists(path)) {
+				deleted = true;
+			}
+		}
+		for (const suffix of ["messages.json"]) {
+			const fileName = `${sessionId}.${suffix}`;
+			const found = findArtifactUnderDir(
+				join(sharedSessionDataDir(), rootSessionIdFrom(sessionId)),
+				fileName,
+				4,
+			);
+			if (found && removePathIfExists(found)) {
+				deleted = true;
+			}
+		}
+		if (!deleted && deleteError) {
+			ctx.logger?.error?.("Failed to delete desktop chat session", {
+				sessionId,
+				error: deleteError,
+			});
+			throw deleteError;
+		}
+		ctx.logger?.log("Desktop chat session delete completed", {
+			sessionId,
+			deleted,
+		});
+		// A task worktree goes with its task, unless another session still
+		// lives in (or under) it, e.g. a second thread started while it was
+		// the workspace. Only the exact `<home>/<id>/<repo>` shape qualifies,
+		// since removal also deletes the `<id>` parent directory.
+		const removedWorktree =
+			deleted &&
+			isTaskWorktreePath(sessionCwd) &&
+			!store.list(10_000).some((other) => {
+				const cwd = other.cwd?.trim() ?? "";
+				return cwd === sessionCwd || cwd.startsWith(sessionCwd + sep);
+			})
+				? await removeTaskWorktree(ctx, sessionCwd)
+				: undefined;
+		if (deleted) {
+			broadcastEvent(ctx, "session_deleted", {
+				sessionId,
+				command,
+				deleted: true,
+				removedWorktree,
+			});
+		}
+		return deleted;
 	}
 
 	// ── Workspace file search ─────────────────────────────────────────
@@ -3162,25 +3065,13 @@ export async function handleCommand(
 
 	// ── Local models (Ollama, LM Studio) ───────────────────────────────
 	if (LOCAL_MODELS_COMMANDS.has(command)) {
-		if (!options?.connection?.data?.canApproveTools) {
-			throw new Error(
-				"local model management requires a trusted desktop connection",
-			);
-		}
 		return await handleLocalModelsCommand(ctx, command, args);
 	}
 
 	// ── Provider management ────────────────────────────────────────────
-	if (command.startsWith("dsw2api_")) {
-		throw new Error("DSW2API has been removed from this build.");
-	}
-	if (command === "list_provider_catalog" || command === "list_providers") {
+	if (command === "list_provider_catalog") {
 		const providers = createHubProvidersApi(await ensureSharedHubClient(ctx));
-		const catalog = await providers.list({ isClinePassEnabled: true });
-		catalog.providers = catalog.providers.filter(
-			(provider) => provider.id !== "dsw2api",
-		);
-		return catalog;
+		return await providers.list({ isClinePassEnabled: true });
 	}
 	if (command === "list_transcription_models") {
 		const manager = new ProviderSettingsManager();
@@ -3445,11 +3336,13 @@ export async function handleCommand(
 	}
 
 	// ── Global settings ────────────────────────────────────────────────
-	if (command === "get_compaction_settings")
+	if (command === "get_compaction_settings") {
 		return readCompactionPreferencesGlobally();
+	}
 	if (command === "set_compaction_settings") {
-		if (!options?.connection?.data?.canApproveTools)
+		if (!options?.connection?.data?.canApproveTools) {
 			throw new Error("Compaction settings require a trusted connection");
+		}
 		return setCompactionPreferencesGlobally(args?.settings);
 	}
 	if (command === "get_global_settings") {
@@ -3512,202 +3405,53 @@ export async function handleCommand(
 
 	// ── MCP server management ─────────────────────────────────────────
 	if (command === "list_mcp_servers") {
-		return readMcpServersResponse();
+		return await createHubMcpApi(await ensureSharedHubClient(ctx)).list();
 	}
+
 	if (command === "authorize_mcp_server_oauth") {
-		const name = String(args?.name ?? "").trim();
-		if (!name) throw new Error("server name is required");
-		const settingsPath = resolveMcpSettingsPath();
-		const registration = resolveMcpServerRegistration(name, {
-			filePath: settingsPath,
-		});
-		if (!registration) {
-			throw new Error(`unknown MCP server: ${name}`);
-		}
-		const wasDisabled = registration.disabled === true;
-		setMcpServerDisabled({ filePath: settingsPath, name, disabled: true });
-		try {
-			await runCancellableMcpOAuthAuthorization(
-				{
-					serverName: name,
-					filePath: settingsPath,
-					openUrl: openUrlInDefaultBrowser,
-				},
-				options?.connection,
-			);
-		} catch (error) {
-			if (!(error instanceof McpOAuthAuthorizationCancelledError)) {
-				throw error;
-			}
-			if (
-				shouldRestoreEnabledStateAfterOAuthCancellation(
-					wasDisabled,
-					error.reason,
-				)
-			) {
-				setMcpServerDisabled({
-					filePath: settingsPath,
-					name,
-					disabled: false,
-				});
-			}
-			return readMcpServersResponse();
-		}
-		setMcpServerDisabled({ filePath: settingsPath, name, disabled: false });
-		return readMcpServersResponse();
+		return runMcpOAuthAuthorization(
+			ctx,
+			String(args?.name ?? "").trim(),
+			options?.connection ?? ctx,
+			openUrlInDefaultBrowser,
+		);
 	}
 	if (command === "cancel_mcp_server_oauth") {
-		const name = String(args?.name ?? "").trim();
-		if (!name) throw new Error("server name is required");
-		cancelMcpOAuthAuthorizationForReason(name, "user");
-		return readMcpServersResponse();
+		cancelMcpOAuthAuthorization(
+			String(args?.name ?? "").trim(),
+			options?.connection ?? ctx,
+		);
+		return createHubMcpApi(await ensureSharedHubClient(ctx)).list();
 	}
+
 	if (command === "set_mcp_server_disabled") {
-		const name = String(args?.name ?? "").trim();
-		const disabled = Boolean(args?.disabled);
-		const path = ensureMcpSettingsFile();
-		if (disabled) {
-			cancelMcpOAuthAuthorizationForReason(name, "server-disabled");
-			setMcpServerDisabled({ filePath: path, name, disabled: true });
-			return readMcpServersResponse();
-		}
-		const registration = resolveMcpServerRegistration(name, { filePath: path });
-		if (!registration) {
-			throw new Error(`unknown MCP server: ${name}`);
-		}
-		if (registration.transport.type !== "stdio") {
-			setMcpServerDisabled({ filePath: path, name, disabled: true });
-			const probe = await probeMcpServerConnection({
-				serverName: name,
-				filePath: path,
-			});
-			if (!probe.connected) {
-				return readMcpServersResponse();
-			}
-		}
-		setMcpServerDisabled({ filePath: path, name, disabled: false });
-		return readMcpServersResponse();
+		const name = args?.name;
+		if (typeof name !== "string") throw new Error("server name is required");
+		return createHubMcpApi(await ensureSharedHubClient(ctx)).setDisabled(
+			name,
+			args?.disabled as boolean,
+		);
 	}
 	if (command === "upsert_mcp_server") {
-		const input =
-			args?.input && typeof args.input === "object"
-				? (args.input as JsonRecord)
-				: (args as JsonRecord);
-		const name = String(input.name ?? "").trim();
-		if (!name) throw new Error("server name is required");
-		const previousName = String(
-			input.previousName ?? input.previous_name ?? "",
-		).trim();
-		const transportType = String(
-			input.transportType ?? input.transport_type ?? "",
-		).trim();
-		const requestedDisabled = Boolean(input.disabled);
-		const isRemote = transportType !== "stdio";
-		const next: JsonRecord =
-			transportType === "stdio"
-				? {
-						transport: {
-							type: "stdio",
-							command: input.command,
-							args: input.args,
-							cwd: input.cwd,
-							env: input.env,
-						},
-						disabled: requestedDisabled,
-						metadata: input.metadata,
-					}
-				: {
-						transport: {
-							type: transportType,
-							url: input.url,
-							headers: input.headers,
-						},
-						disabled: requestedDisabled,
-						metadata: input.metadata,
-					};
-		const path = ensureMcpSettingsFile();
-		const { shouldProbeAfterSave } = updateMcpSettingsFileSync(
-			path,
-			(settings) => {
-				const servers = ((settings.mcpServers as JsonRecord | undefined) ??
-					{}) as JsonRecord;
-				// Preserve machine-managed fields the editor dialog doesn't expose:
-				// oauth tokens for remote servers and plugin-ownership metadata.
-				const existingName =
-					previousName && servers[previousName] ? previousName : name;
-				const existing = servers[existingName];
-				let existingTransportIdentity: string | undefined;
-				let existingWasEnabled = false;
-				if (existing && typeof existing === "object") {
-					const record = existing as JsonRecord;
-					existingTransportIdentity = mcpTransportIdentity(
-						existingName,
-						record,
-					);
-					existingWasEnabled = record.disabled !== true;
-				}
-				const nextTransportIdentity = mcpTransportIdentity(name, next);
-				const transportIdentityUnchanged =
-					existingTransportIdentity === nextTransportIdentity;
-				const shouldProbe = shouldProbeMcpServerAfterUpsert({
-					isRemote,
-					requestedDisabled,
-					existingWasEnabled,
-					transportIdentityUnchanged,
-				});
-				const upserted: JsonRecord = {
-					...next,
-					disabled: requestedDisabled || shouldProbe,
-				};
-				if (existing && typeof existing === "object") {
-					const record = existing as JsonRecord;
-					if (
-						upserted.metadata === undefined &&
-						record.metadata !== undefined
-					) {
-						upserted.metadata = record.metadata;
-					}
-					// OAuth tokens were issued for a specific endpoint; carrying them
-					// onto an edited transport or URL would send the old server's
-					// credentials to a different endpoint.
-					if (record.oauth !== undefined && transportIdentityUnchanged) {
-						upserted.oauth = record.oauth;
-					}
-					if (record.oauthClient !== undefined && transportIdentityUnchanged) {
-						upserted.oauthClient = record.oauthClient;
-					}
-				}
-				if (previousName && previousName !== name) {
-					delete servers[previousName];
-				}
-				servers[name] = upserted;
-				settings.mcpServers = servers;
-				return { shouldProbeAfterSave: shouldProbe };
-			},
+		const input = args?.input ?? args;
+		return createHubMcpApi(await ensureSharedHubClient(ctx)).upsert(
+			input as import("@cline/shared").McpServerConfigInput,
 		);
-		if (shouldProbeAfterSave) {
-			const probe = await probeMcpServerConnection({
-				serverName: name,
-				filePath: path,
-			});
-			if (probe.connected) {
-				setMcpServerDisabled({ filePath: path, name, disabled: false });
-			}
-		}
-		return readMcpServersResponse();
 	}
 	if (command === "delete_mcp_server") {
-		const path = ensureMcpSettingsFile();
-		updateMcpSettingsFileSync(path, (settings) => {
-			const servers = ((settings.mcpServers as JsonRecord | undefined) ??
-				{}) as JsonRecord;
-			delete servers[String(args?.name ?? "")];
-			settings.mcpServers = servers;
-		});
-		return readMcpServersResponse();
+		const name = args?.name;
+		if (typeof name !== "string") throw new Error("server name is required");
+		return createHubMcpApi(await ensureSharedHubClient(ctx)).delete(name);
 	}
 	if (command === "ensure_mcp_settings_file") {
-		return ensureMcpSettingsFile();
+		return (
+			await createHubMcpApi(await ensureSharedHubClient(ctx)).ensureSettings()
+		).settingsPath;
+	}
+	if (command === "inspect_mcp_server") {
+		const name = args?.name;
+		if (typeof name !== "string") throw new Error("server name is required");
+		return createHubMcpApi(await ensureSharedHubClient(ctx)).inspect(name);
 	}
 
 	// ── Git operations ─────────────────────────────────────────────────
@@ -4006,15 +3750,20 @@ export async function handleCommand(
 		);
 	}
 	if (command === "install_marketplace_entry") {
-		const result = await installMarketplaceEntryForDesktopCommand(args);
+		const result = await installMarketplaceEntryForDesktopCommand(args, {
+			mcp: createHubMcpApi(await ensureSharedHubClient(ctx)),
+		});
 		return result;
 	}
 	if (command === "uninstall_marketplace_entry") {
-		const result = await uninstallMarketplaceEntryForDesktopCommand(args);
+		const result = await uninstallMarketplaceEntryForDesktopCommand(args, {
+			mcp: createHubMcpApi(await ensureSharedHubClient(ctx)),
+		});
 		return result;
 	}
 	if (command === "uninstall_local_primitive") {
 		const result = await uninstallLocalPrimitive(args, {
+			mcp: createHubMcpApi(await ensureSharedHubClient(ctx)),
 			workspaceRoot: ctx.localWorkspaceRoot,
 		});
 		return result;
@@ -4121,7 +3870,9 @@ export async function handleCommand(
 		return await pickWorkspaceDirectory();
 	}
 	if (command === "open_mcp_settings_file") {
-		const path = ensureMcpSettingsFile();
+		const path = (
+			await createHubMcpApi(await ensureSharedHubClient(ctx)).ensureSettings()
+		).settingsPath;
 		openFileInEditor(path);
 		return path;
 	}

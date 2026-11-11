@@ -1,43 +1,11 @@
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createSessionCompactionState } from "@cline/core";
 import { describe, expect, it } from "vitest";
 import { writeSessionManifest } from "../paths";
-import { hasUnmeasuredCompaction, readSessionMessages } from "./messages";
+import { readSessionMessages } from "./messages";
 
 describe("readSessionMessages", () => {
-	it("retains matching model time, output usage and cache counters for history rendering", async () => {
-		const sessionId = "request-metrics";
-		const messages = [
-			{
-				role: "assistant",
-				content: [
-					{ type: "reasoning", text: "thinking" },
-					{ type: "text", text: "done" },
-				],
-				metadata: { providerRequestDurationMs: 6000 },
-				metrics: { inputTokens: 1000, outputTokens: 120, cacheReadTokens: 750 },
-			},
-		];
-		const rows = await readSessionMessages(
-			{
-				liveSessions: new Map([[sessionId, { messages }]]),
-			} as unknown as Parameters<typeof readSessionMessages>[0],
-			sessionId,
-		);
-		expect(rows).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					meta: expect.objectContaining({
-						requestDurationMs: 6000,
-						outputTokens: 120,
-						cacheReadTokens: 750,
-					}),
-				}),
-			]),
-		);
-	});
 	it("restores persisted errors with the error display role", async () => {
 		const sessionId = "persisted-error";
 		const messages = JSON.parse(
@@ -744,67 +712,5 @@ describe("readSessionMessages", () => {
 				hookEventName: "history_tool_result",
 			},
 		});
-	});
-});
-
-describe("compacted context usage", () => {
-	it("keeps old request metrics historical until a new compacted request reports usage", async () => {
-		const folder = mkdtempSync(join(tmpdir(), "compact-meter-"));
-		const previous = process.env.CLINE_SESSION_DATA_DIR;
-		process.env.CLINE_SESSION_DATA_DIR = folder;
-		const sid = "context-meter";
-		const messages = [
-			{ role: "user" as const, content: "task" },
-			{
-				role: "assistant" as const,
-				content: "work",
-				metrics: { inputTokens: 128443, outputTokens: 2189 },
-			},
-			{
-				role: "assistant" as const,
-				content: "old context error",
-				metadata: { displayOnly: true, displayRole: "error" },
-			},
-		];
-		try {
-			mkdirSync(join(folder, sid));
-			const state = createSessionCompactionState({
-				sourceMessages: messages,
-				compactedMessages: [{ role: "user", content: "summary" }],
-				conversationId: sid,
-			});
-			writeFileSync(
-				join(folder, sid, sid + ".compaction.json"),
-				JSON.stringify(state),
-			);
-			expect(hasUnmeasuredCompaction(sid, messages)).toBe(true);
-			const ctx = {
-				liveSessions: new Map([[sid, { messages }]]),
-			} as Parameters<typeof readSessionMessages>[0];
-			const rows = await readSessionMessages(ctx, sid);
-			expect(rows.at(-1)).toMatchObject({ meta: { contextCompacted: true } });
-			expect(await readSessionMessages(ctx, sid, 800, messages)).not.toEqual(
-				expect.arrayContaining([
-					expect.objectContaining({
-						meta: expect.objectContaining({ contextCompacted: true }),
-					}),
-				]),
-			);
-			expect(
-				hasUnmeasuredCompaction(sid, [
-					...messages,
-					{ role: "assistant", content: "new", metrics: { inputTokens: 2000 } },
-				]),
-			).toBe(false);
-			expect(
-				hasUnmeasuredCompaction(sid, [
-					{ role: "user", content: "changed source" },
-				]),
-			).toBe(false);
-		} finally {
-			if (previous === undefined) delete process.env.CLINE_SESSION_DATA_DIR;
-			else process.env.CLINE_SESSION_DATA_DIR = previous;
-			rmSync(folder, { recursive: true, force: true });
-		}
 	});
 });

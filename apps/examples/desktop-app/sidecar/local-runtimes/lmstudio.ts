@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { lstat, readFile, rm } from "node:fs/promises";
+import { readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -137,29 +137,6 @@ export function isNestedDir(parent: string, dir: string, depth: number) {
 }
 
 const hubModelsDir = (home: string) => path.join(home, "hub", "models");
-
-/** Validate every ancestor before any unload or recursive filesystem deletion. */
-export async function assertSafeModelDirectory(
-	root: string,
-	directory: string,
-): Promise<void> {
-	if (!isNestedDir(root, directory, 2)) {
-		throw new Error(
-			"Refusing to delete files outside the configured model directory.",
-		);
-	}
-	let current = path.resolve(directory);
-	while (true) {
-		if ((await lstat(current)).isSymbolicLink()) {
-			throw new Error(
-				"Refusing to delete a model through a symlink or junction. Remove it in LM Studio.",
-			);
-		}
-		const parent = path.dirname(current);
-		if (parent === current) break;
-		current = parent;
-	}
-}
 
 /**
  * Deleting removes the model's whole source repos, which also hold any other
@@ -374,9 +351,6 @@ export const lmstudioBackend: LocalRuntimeBackend = {
 		) {
 			throw new Error(`Refusing to delete files outside ${modelsDir}.`);
 		}
-		await assertSafeModelDirectory(hubModelsDir(home), hubDir);
-		for (const dir of sourceDirs)
-			await assertSafeModelDirectory(modelsDir, dir);
 		await lmstudioBackend.unload(model);
 		for (const dir of [...sourceDirs, hubDir]) {
 			await rm(dir, { recursive: true, force: true });

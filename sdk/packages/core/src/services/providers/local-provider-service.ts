@@ -277,19 +277,6 @@ function readProviderConfigFields(
 	return fields.filter(isProviderConfigField);
 }
 
-const LOCAL_SAMPLING_FIELDS: ProviderConfigField[] = [
-	["temperature", "Temperature"],
-	["top_p", "Top-p"],
-	["top_k", "Top-k"],
-	["min_p", "Min-p"],
-].map(([key, label]) => ({
-	path: `sampling.${key}`,
-	label: label!,
-	type: "number",
-	description: "Empty: inherit server settings. Applies to the next request.",
-	placeholder: "Server default",
-}));
-
 const API_KEY_CONFIG_FIELD: ProviderConfigField = {
 	path: "apiKey",
 	label: "API Key",
@@ -454,12 +441,7 @@ async function resolveModelIds(params: {
 		}
 	}
 	return {
-		modelIds: [
-			...new Set([
-				...(params.explicitModels ?? []),
-				...fetchedModels.map((model) => model.id),
-			]),
-		],
+		modelIds: [...new Set([...(params.explicitModels ?? []), ...fetchedModels.map((model) => model.id)])],
 		discovered: fetchedModels,
 	};
 }
@@ -999,7 +981,7 @@ export async function listLocalProviders(
 	voiceInput?: VoiceInputSelection;
 }> {
 	const state = manager.read();
-	const ids = LlmsModels.getProviderIds().filter((id) => id !== "dsw2api");
+	const ids = LlmsModels.getProviderIds();
 
 	// The catalog is built for every provider at startup and must not wait on
 	// the network, so featured tiers come from a synchronous peek (cached live
@@ -1036,26 +1018,9 @@ export async function listLocalProviders(
 					info?.capabilities,
 					persistedSettings?.capabilities,
 				);
-				const configFields = [
-					...(readProviderConfigFields(info?.metadata) ??
-						fallbackProviderConfigFields(info)),
-					...((persistedSettings?.client ?? info?.client) ===
-						"openai-compatible" &&
-					(persistedSettings?.protocol ?? info?.protocol) === "openai-chat"
-						? [
-								...LOCAL_SAMPLING_FIELDS,
-								...(id === "dsw2api"
-									? [
-											{
-												path: "sampling.search_enabled",
-												label: "Smart search",
-												type: "boolean" as const,
-											},
-										]
-									: []),
-							]
-						: []),
-				];
+				const configFields =
+					readProviderConfigFields(info?.metadata) ??
+					fallbackProviderConfigFields(info);
 				return {
 					provider: {
 						id,
@@ -1099,10 +1064,9 @@ export async function listLocalProviders(
 								? { apiKeyOptional: true }
 								: {}),
 						},
-						authDescription:
-							id === "freellm"
-								? "No account or key. Shared limit: 200 requests/hour/IP. Cloud providers may retain prompts."
-								: "This provider uses API keys for authentication.",
+						authDescription: id === "freellm"
+							? "No account or key. Shared limit: 200 requests/hour/IP."
+							: "This provider uses API keys for authentication.",
 						baseUrlDescription:
 							"The base endpoint to use for provider requests.",
 						configFields,
@@ -1200,10 +1164,9 @@ export async function getLocalTranscriptionModels(
 	const modelMap = await resolveProviderModelMap(id, config);
 	const models = toSortedProviderModels({
 		...modelMap,
-		...(providerConfig.routingProviderId &&
-		providerConfig.routingProviderId !== id
-			? {}
-			: LlmsModels.getBuiltinStreamingTranscriptionModels(id)),
+		...LlmsModels.getBuiltinStreamingTranscriptionModels(
+			providerConfig.routingProviderId ?? id,
+		),
 	});
 	return {
 		providerId: id,
@@ -1288,6 +1251,12 @@ export async function saveVoiceInputSettings(
 	if (!model || !isDedicatedTranscriptionModel(model)) {
 		throw new Error(
 			`Model "${modelId}" is not a dedicated audio-to-text transcription model`,
+		);
+	}
+
+	if (!model.operationModes?.includes("streaming")) {
+		throw new Error(
+			`Model "${modelId}" does not support streaming transcription. Choose a streaming model for voice input.`,
 		);
 	}
 
@@ -1423,11 +1392,6 @@ async function saveLocalProviderSettingsUnlocked(
 		}
 	}
 
-	if (Object.hasOwn(request, "authorReasoningMode")) {
-		if (request.authorReasoningMode === null) delete next.authorReasoningMode;
-		else next.authorReasoningMode = request.authorReasoningMode;
-	}
-
 	// Scalar passthrough fields
 	for (const key of [
 		"maxTokens",
@@ -1447,7 +1411,6 @@ async function saveLocalProviderSettingsUnlocked(
 		"auth",
 		"headers",
 		"reasoning",
-		"sampling",
 		"aws",
 		"gcp",
 		"azure",

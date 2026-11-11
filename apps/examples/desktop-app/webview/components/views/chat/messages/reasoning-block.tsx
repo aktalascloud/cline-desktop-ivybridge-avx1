@@ -1,9 +1,7 @@
 "use client";
 
 import { ThinkingBlock } from "@cline/ui/components/agent-chat";
-import type { ChatMessage } from "@/lib/chat-schema";
 import { useTranslation } from "@/lib/i18n";
-import { formatRequestMetrics } from "./request-metrics";
 import { MemoizedMarkdown } from "../../../ui/markdown";
 
 /** The shared ThinkingBlock with the app's Markdown pipeline as its body. */
@@ -12,13 +10,11 @@ export function ReasoningBlock({
 	durationMilliseconds,
 	redacted,
 	streaming = false,
-	metrics,
 }: {
 	content: string;
 	durationMilliseconds?: number;
 	redacted: boolean;
 	streaming?: boolean;
-	metrics?: ChatMessage["meta"];
 }) {
 	const t = useTranslation();
 	const seconds =
@@ -31,7 +27,6 @@ export function ReasoningBlock({
 		streaming || seconds === undefined
 			? t("Thinking")
 			: t("Thought for {seconds}s", { seconds });
-	const stats = streaming ? "" : formatRequestMetrics(metrics, t);
 	const displayContent = content || (redacted ? "[redacted]" : "");
 	if (!displayContent) {
 		return null;
@@ -42,14 +37,7 @@ export function ReasoningBlock({
 			className="my-0"
 			durationMilliseconds={durationMilliseconds}
 			isStreaming={streaming}
-			label={stats ? `${label} · ${stats}` : label}
-			title={
-				stats
-					? t(
-							"Average output tokens per second over the model request, including prefill and waiting; cache is the cached share of input tokens.",
-						)
-					: undefined
-			}
+			label={label}
 			redacted={redacted}
 		>
 			<MemoizedMarkdown

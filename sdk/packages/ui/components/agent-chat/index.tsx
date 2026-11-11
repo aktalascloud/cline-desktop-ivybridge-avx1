@@ -18,7 +18,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { IconButton } from "../button.js";
+import { IconButton, type IconButtonProps } from "../button.js";
 import {
 	DisclosureContent,
 	type DisclosureContentPresentation,
@@ -428,10 +428,11 @@ export const MessageActions = ({
 );
 
 export type MessageActionProps = Omit<
-	ButtonHTMLAttributes<HTMLButtonElement>,
-	"type"
+	IconButtonProps,
+	"type" | "aria-label" | "variant" | "tone" | "size"
 > & {
 	label: string;
+	"aria-label"?: string;
 };
 
 export const MessageAction = ({

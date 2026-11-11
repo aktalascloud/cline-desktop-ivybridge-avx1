@@ -1926,26 +1926,6 @@ describe("AgentRuntime", () => {
 		expect(model.requests).toHaveLength(1);
 	});
 
-	it("recovers distinct context overflows separated by completed tool steps", async () => {
-		const overflow = (): AgentModelEvent[] => [{ type: "finish", reason: "error", error: "prompt is too long", errorClass: "context_window_exceeded" }];
-		const step = (id: string): AgentModelEvent[] => [
-			{ type: "tool-call-delta", toolCallId: id, toolName: "echo", input: { text: "completed tool data ".repeat(200) } },
-			{ type: "finish", reason: "tool-calls" },
-		];
-		const model = new ScriptedModel([overflow, () => step("first"), overflow, () => step("second"), () => [{ type: "text-delta", text: "finished long task" }, { type: "finish", reason: "stop" }]]);
-		let recoveries = 0;
-		const runtime = new AgentRuntime({ model, tools: [createEchoTool()], prepareTurn: async (context) => {
-			if (!context.overflowRecovery) return;
-			recoveries++;
-			return { messages: [{ role: "user", content: [{ type: "text", text: `checkpoint ${recoveries}` }] }] };
-		} });
-		const result = await runtime.run("Large original task ".repeat(200));
-		expect(result.status).toBe("completed");
-		expect(result.outputText).toBe("finished long task");
-		expect(recoveries).toBe(2);
-		expect(model.requests).toHaveLength(5);
-	});
-
 	it("does not retry a second consecutive overflow in the same run", async () => {
 		const overflow = (): AgentModelEvent[] => [
 			{
@@ -1988,195 +1968,6 @@ describe("AgentRuntime", () => {
 		expect(result.error?.message).toBe("Model returned empty response");
 		expect(result.messages).toHaveLength(1);
 		expect(result.messages[0]?.role).toBe("user");
-	});
-
-	it("continues a reasoning-only completion and retains the original instructions", async () => {
-		const model = new ScriptedModel([
-			() => [
-				{ type: "reasoning-delta", text: "</br>" },
-				{ type: "finish", reason: "stop" },
-			],
-			(request) => {
-				expect(request.systemPrompt).toBe("Original instructions");
-				expect(request.messages.at(-1)?.metadata?.displayRole).toBe("system");
-				expect(
-					request.messages.some((m) =>
-						m.content.some((p) => p.type === "reasoning"),
-					),
-				).toBe(true);
-				return [
-					{ type: "text-delta", text: "Actual result" },
-					{ type: "finish", reason: "stop" },
-				];
-			},
-		]);
-		const runtime = new AgentRuntime({
-			model,
-			systemPrompt: "Original instructions",
-		});
-		const result = await runtime.run("Inspect and report");
-		expect(result.status).toBe("completed");
-		expect(result.outputText).toBe("Actual result");
-		expect(model.requests).toHaveLength(2);
-	});
-
-	it("fails explicitly after bounded reasoning-only replies instead of completing empty", async () => {
-		const reasoning = (): AgentModelEvent[] => [
-			{ type: "reasoning-delta", text: "</br>" },
-			{ type: "finish", reason: "stop" },
-		];
-		const model = new ScriptedModel([reasoning, reasoning, reasoning]);
-		const runtime = new AgentRuntime({ model });
-		const result = await runtime.run("Finish the task");
-		expect(result.status).toBe("failed");
-		expect(result.error?.message).toContain("The task was not completed");
-		expect(model.requests).toHaveLength(3);
-	});
-
-	it("does not replay successful tools when reasoning has no final answer", async () => {
-		const execute = vi.fn(async () => ({ value: "observed" }));
-		const tool = { ...createEchoTool(), execute };
-		const model = new ScriptedModel([
-			() => [
-				{
-					type: "tool-call-delta",
-					toolCallId: "once",
-					toolName: "echo",
-					input: { text: "inspect" },
-				},
-				{ type: "finish", reason: "tool-use" },
-			],
-			() => [
-				{ type: "reasoning-delta", text: "</br>" },
-				{ type: "finish", reason: "stop" },
-			],
-			(request) => {
-				expect(
-					request.messages.some((m) =>
-						m.content.some((p) => p.type === "tool-result"),
-					),
-				).toBe(true);
-				return [
-					{ type: "text-delta", text: "Observed result" },
-					{ type: "finish", reason: "stop" },
-				];
-			},
-		]);
-		const result = await new AgentRuntime({ model, tools: [tool] }).run(
-			"Inspect and report",
-		);
-		expect(result.status).toBe("completed");
-		expect(execute).toHaveBeenCalledTimes(1);
-		expect(result.outputText).toBe("Observed result");
-	});
-
-	it("does not retry filtered reasoning-only output", async () => {
-		const model = new ScriptedModel([
-			() => [
-				{ type: "reasoning-delta", text: "hidden" },
-				{ type: "finish", reason: "content-filter" },
-			],
-		]);
-		const result = await new AgentRuntime({ model }).run("Hi");
-		expect(result.status).toBe("failed");
-		expect(result.error?.message).toContain("content filter");
-		expect(model.requests).toHaveLength(1);
-	});
-
-	it("honors cancellation before reasoning-only continuation", async () => {
-		const model = new ScriptedModel([
-			() => [
-				{ type: "reasoning-delta", text: "hidden" },
-				{ type: "finish", reason: "stop" },
-			],
-		]);
-		const runtime = new AgentRuntime({ model });
-		runtime.subscribe((event) => {
-			if (
-				event.type === "status-notice" &&
-				event.metadata?.kind === "reasoning_only_recovery"
-			)
-				runtime.abort("user cancelled");
-		});
-		const result = await runtime.run("Hi");
-		expect(result.status).toBe("aborted");
-		expect(model.requests).toHaveLength(1);
-	});
-
-	it("treats whitespace beside reasoning as an incomplete response", async () => {
-		const model = new ScriptedModel([
-			() => [
-				{ type: "reasoning-delta", text: "hidden" },
-				{ type: "text-delta", text: " \n " },
-				{ type: "finish", reason: "stop" },
-			],
-			() => [
-				{ type: "text-delta", text: "Done" },
-				{ type: "finish", reason: "stop" },
-			],
-		]);
-		const result = await new AgentRuntime({ model }).run("Hi");
-		expect(result.status).toBe("completed");
-		expect(result.outputText).toBe("Done");
-		expect(model.requests).toHaveLength(2);
-	});
-
-	it("resets reasoning-only recovery after real tool progress", async () => {
-		const thinking = (): AgentModelEvent[] => [
-			{ type: "reasoning-delta", text: "hidden" },
-			{ type: "finish", reason: "stop" },
-		];
-		const model = new ScriptedModel([
-			thinking,
-			thinking,
-			() => [
-				{
-					type: "tool-call-delta",
-					toolCallId: "progress",
-					toolName: "echo",
-					input: { text: "progress" },
-				},
-				{ type: "finish", reason: "tool-use" },
-			],
-			thinking,
-			() => [
-				{ type: "text-delta", text: "Done" },
-				{ type: "finish", reason: "stop" },
-			],
-		]);
-		const result = await new AgentRuntime({
-			model,
-			tools: [createEchoTool()],
-		}).run("Finish");
-		expect(result.status).toBe("completed");
-		expect(result.outputText).toBe("Done");
-		expect(model.requests).toHaveLength(5);
-	});
-
-	it("does not replay provider-executed work alongside reasoning", async () => {
-		const model = new ScriptedModel([
-			() => [
-				{ type: "reasoning-delta", text: "hidden" },
-				{
-					type: "tool-call-delta",
-					toolCallId: "external",
-					toolName: "Read",
-					execution: "provider",
-					input: { file_path: "/fixture.txt" },
-				},
-				{
-					type: "tool-result",
-					toolCallId: "external",
-					toolName: "Read",
-					execution: "provider",
-					output: { content: "observed" },
-				},
-				{ type: "finish", reason: "stop" },
-			],
-		]);
-		const result = await new AgentRuntime({ model }).run("Read");
-		expect(result.status).toBe("completed");
-		expect(model.requests).toHaveLength(1);
 	});
 
 	it("treats a media-only model turn as content", async () => {
@@ -3429,38 +3220,6 @@ describe("AgentRuntime", () => {
 		expect(runtime.snapshot().status).toBe("completed");
 	});
 
-	it("persists per-request model time alongside the provider's token usage", async () => {
-		const clock = vi
-			.spyOn(performance, "now")
-			.mockReturnValueOnce(100)
-			.mockReturnValue(6100);
-		try {
-			const runtime = new AgentRuntime({
-				model: new ScriptedModel([
-					() => [
-						{ type: "text-delta", text: "done" },
-						{
-							type: "usage",
-							usage: {
-								inputTokens: 1000,
-								outputTokens: 120,
-								cacheReadTokens: 750,
-							},
-						},
-						{ type: "finish", reason: "stop" },
-					],
-				]),
-			});
-			const result = await runtime.run("synthetic request");
-			expect(result.messages.at(-1)?.metadata?.providerRequestDurationMs).toBe(
-				6000,
-			);
-			expect(result.messages.at(-1)?.metrics?.outputTokens).toBe(120);
-		} finally {
-			clock.mockRestore();
-		}
-	});
-
 	it("annotates assistant messages with per-turn metrics and model info", async () => {
 		const model = new ScriptedModel([
 			() => [
@@ -3632,13 +3391,13 @@ describe("AgentRuntime", () => {
 		await runtime.run("Hi");
 
 		// Two chunks within a second report progress once.
-		expect(
-			eventTypes.filter((type) => type === "tool-call-delta"),
-		).toHaveLength(1);
+		expect(eventTypes.filter((type) => type === "tool-call-delta")).toHaveLength(
+			1,
+		);
 		const events = capture.mock.calls.map(([input]) => input);
-		expect(
-			events.some((input) => input.event === "agent.tool-call-delta"),
-		).toBe(false);
+		expect(events.some((input) => input.event === "agent.tool-call-delta")).toBe(
+			false,
+		);
 		expect(
 			events.find((input) => input.event === "agent.run-finished")?.properties,
 		).toEqual(expect.objectContaining({ maxIdleMs: 42, status: "completed" }));

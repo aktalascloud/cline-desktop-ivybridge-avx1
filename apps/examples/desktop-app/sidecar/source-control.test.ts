@@ -197,7 +197,6 @@ describe("against a real repository", () => {
 		await git(["config", "user.email", "test@example.com"]);
 		await git(["config", "user.name", "Test"]);
 		await git(["config", "commit.gpgsign", "false"]);
-		await git(["config", "core.autocrlf", "false"]);
 		writeFileSync(join(root, "a.ts"), "one\ntwo\n");
 		writeFileSync(join(root, "b.ts"), "keep\n");
 		await git(["add", "."]);
@@ -329,29 +328,26 @@ describe("against a real repository", () => {
 	});
 
 	it("treats filenames literally when staging and discarding", async () => {
-		writeFileSync(join(root, "draft[1].txt"), "glob\n");
+		writeFileSync(join(root, "draft*.txt"), "glob\n");
 		writeFileSync(join(root, "draft1.txt"), "keep me\n");
-		await runSourceControlAction(git, {
-			type: "stage",
-			paths: ["draft[1].txt"],
-		});
+		await runSourceControlAction(git, { type: "stage", paths: ["draft*.txt"] });
 		let state = await getSourceControlState(git, "local");
 		expect(state.staged.map((file) => file.path)).toEqual([
 			"b.ts",
-			"draft[1].txt",
+			"draft*.txt",
 		]);
 		expect(state.untracked.map((file) => file.path)).toContain("draft1.txt");
 		await runSourceControlAction(git, {
 			type: "unstage",
-			paths: ["draft[1].txt"],
+			paths: ["draft*.txt"],
 		});
 		await runSourceControlAction(git, {
 			type: "discard",
 			paths: [],
-			untrackedPaths: ["draft[1].txt"],
+			untrackedPaths: ["draft*.txt"],
 		});
 		state = await getSourceControlState(git, "local");
-		expect(existsSync(join(root, "draft[1].txt"))).toBe(false);
+		expect(existsSync(join(root, "draft*.txt"))).toBe(false);
 		expect(existsSync(join(root, "draft1.txt"))).toBe(true);
 	});
 
@@ -439,16 +435,8 @@ describe("against a real repository", () => {
 		).rejects.toThrow(/maxBuffer/);
 	});
 
-	it("reads a changed symlink as its link text", async (context) => {
-		try {
-			symlinkSync("a.ts", join(root, "link"));
-		} catch (error) {
-			if ((error as NodeJS.ErrnoException).code === "EPERM") {
-				context.skip();
-				return;
-			}
-			throw error;
-		}
+	it("reads a changed symlink as its link text", async () => {
+		symlinkSync("a.ts", join(root, "link"));
 		await git(["add", "link"]);
 		await git(["commit", "-q", "-m", "add link"]);
 		rmSync(join(root, "link"));

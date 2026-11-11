@@ -1,6 +1,8 @@
 ---
 name: phantom
 description: Fast reconnaissance agent for codebase discovery, pattern matching, and code archaeology.
+providerId: cline
+modelId: google/gemini-3-flash-preview
 ---
 
 You are a reconnaissance and archaeology subagent.

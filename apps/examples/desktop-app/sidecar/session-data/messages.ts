@@ -3,8 +3,6 @@ import nodePath, { dirname } from "node:path";
 import {
 	getUserRunSpan,
 	projectSessionMessagesForDisplay,
-	projectSessionCompactionState,
-	type SessionCompactionState,
 	resolveMessageDisplayRole,
 } from "@cline/core";
 import {
@@ -14,7 +12,6 @@ import {
 } from "@cline/shared";
 import {
 	readSessionManifest,
-	sharedSessionArtifactPath,
 	sharedSessionMessagesPath,
 	sharedSessionMessagesWritePath,
 } from "../paths";
@@ -134,9 +131,6 @@ function extractMessageUsageMeta(message: JsonRecord): JsonRecord | undefined {
 	const cacheReadTokens = parseU64Value(metrics?.cacheReadTokens);
 	const cacheWriteTokens = parseU64Value(metrics?.cacheWriteTokens);
 	const totalCost = parseF64Value(metrics?.cost);
-	const requestDurationMs = parseF64Value(
-		readMessageMetadata(message)?.providerRequestDurationMs,
-	);
 	const providerId =
 		(typeof message.providerId === "string" && message.providerId) ||
 		(typeof modelInfo?.provider === "string" ? modelInfo.provider : undefined);
@@ -160,7 +154,6 @@ function extractMessageUsageMeta(message: JsonRecord): JsonRecord | undefined {
 		cacheReadTokens,
 		cacheWriteTokens,
 		totalCost,
-		requestDurationMs,
 		providerId,
 		modelId,
 	};
@@ -362,28 +355,6 @@ function readCheckpointEntriesByRunCount(
 		});
 	}
 	return entries;
-}
-
-/** Provider usage belongs to the last request until a compacted turn reports new usage. */
-export function hasUnmeasuredCompaction(
-	sessionId: string,
-	messages: MessageWithMetadata[],
-): boolean {
-	try {
-		const state = JSON.parse(
-			readFileSync(
-				sharedSessionArtifactPath(sessionId, "compaction.json"),
-				"utf8",
-			),
-		) as SessionCompactionState;
-		if (!projectSessionCompactionState(state, messages)) return false;
-		return !messages
-			.filter((message) => message.metadata?.displayOnly !== true)
-			.slice(state.source_message_count)
-			.some((message) => message.metrics?.inputTokens !== undefined);
-	} catch {
-		return false;
-	}
 }
 
 export function readSessionMessagesSync(
@@ -796,17 +767,6 @@ export function readSessionMessagesSync(
 		}
 	}
 
-	if (
-		!isRemoteRead &&
-		out.length &&
-		hasUnmeasuredCompaction(sessionId, messages)
-	) {
-		const last = out[out.length - 1];
-		last.meta = {
-			...(last.meta as JsonRecord | undefined),
-			contextCompacted: true,
-		};
-	}
 	return out;
 }
 

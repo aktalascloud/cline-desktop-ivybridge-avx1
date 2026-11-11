@@ -367,17 +367,7 @@ export function useModelSelector(opts: {
 					? buildModelOptions(
 							Object.fromEntries(
 								(await fetchOpenAiCompatibleModelIds(config.providerId)).map(
-									(id) => {
-										const knownModel = config.knownModels?.[id];
-										return [
-											id,
-											{
-												...knownModel,
-												id,
-												name: knownModel?.name ?? id,
-											},
-										];
-									},
+									(id) => [id, { id, name: id }],
 								),
 							),
 						)

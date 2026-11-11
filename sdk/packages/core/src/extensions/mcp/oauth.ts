@@ -3,11 +3,7 @@ import type {
 	OAuthClientProvider,
 	OAuthDiscoveryState,
 } from "@modelcontextprotocol/sdk/client/auth.js";
-import {
-	auth,
-	extractWWWAuthenticateParams,
-	UnauthorizedError,
-} from "@modelcontextprotocol/sdk/client/auth.js";
+import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
 	SSEClientTransport,
@@ -33,7 +29,6 @@ import {
 	updateMcpServerOAuthStateAsync,
 } from "./config-loader";
 import { augmentMcpTimeoutError, resolveMcpRequestTimeoutMs } from "./timeout";
-import { sameOAuthIssuer } from "./issuer";
 import type {
 	McpServerOAuthClientConfig,
 	McpServerOAuthState,
@@ -129,17 +124,8 @@ export function createOriginBoundMcpHeadersFetch(input: {
 				redirect: "manual",
 				signal: initialRequest.signal,
 			});
-			if (
-				initialRequest.redirect === "manual" ||
-				!MCP_REDIRECT_STATUS_CODES.has(response.status)
-			) {
+			if (!MCP_REDIRECT_STATUS_CODES.has(response.status)) {
 				return response;
-			}
-			if (initialRequest.redirect === "error") {
-				await response.body?.cancel().catch(() => undefined);
-				throw new TypeError(
-					"MCP request encountered a redirect with redirect mode error.",
-				);
 			}
 			if (redirectCount >= MAX_MCP_REDIRECTS) {
 				await response.body?.cancel().catch(() => undefined);
@@ -172,6 +158,8 @@ export function createOriginBoundMcpHeadersFetch(input: {
 }
 
 export interface CreateMcpOAuthProviderContextOptions {
+	signal?: AbortSignal;
+	expectedTransport?: McpServerRegistration["transport"];
 	settingsPath?: string;
 	serverName: string;
 	redirectUrl: string;
@@ -236,16 +224,10 @@ function createOAuthClientMetadata(redirectUrl: string): OAuthClientMetadata {
 export function createMcpOAuthClientInformation(
 	config: McpServerOAuthClientConfig | undefined,
 ): OAuthClientInformationMixed | undefined {
-	if (config?.clientSecret && !config.issuer) {
-		throw new Error(
-			"MCP OAuth client secrets require oauthClient.issuer. Configure the trusted authorization-server issuer before signing in.",
-		);
-	}
 	return config
 		? {
 				client_id: config.clientId,
 				...(config.clientSecret ? { client_secret: config.clientSecret } : {}),
-				...(config.issuer ? { issuer: config.issuer } : {}),
 			}
 		: undefined;
 }
@@ -278,12 +260,6 @@ function assertOAuthClientUnchanged(
 export function createMcpOAuthProviderContext(
 	options: CreateMcpOAuthProviderContextOptions,
 ): McpOAuthProviderContext {
-	if (
-		options.clientInformation?.client_secret &&
-		!options.clientInformation.issuer
-	) {
-		throw new Error("MCP OAuth client secrets require a trusted issuer.");
-	}
 	let state: McpServerOAuthState = {};
 	try {
 		state =
@@ -295,33 +271,14 @@ export function createMcpOAuthProviderContext(
 	}
 	let lastAuthorizationUrl: string | undefined;
 	let lastOAuthState: string | undefined;
-	const currentClientInformation = ():
-		| OAuthClientInformationMixed
-		| undefined => {
-		const stored = state.clientInformation as
-			| OAuthClientInformationMixed
-			| undefined;
-		const configured = options.clientInformation;
-		if (configured) {
-			if (
-				!configured.issuer &&
-				stored?.issuer &&
-				isSameOAuthClient(stored, configured)
-			)
-				return { ...configured, issuer: stored.issuer };
-			return configured;
-		}
-		// Preserve legacy records on disk, but never refresh an unbound secret.
-		return stored?.issuer ? stored : undefined;
-	};
+	const currentClientInformation = () =>
+		options.clientInformation ??
+		(state.clientInformation as OAuthClientInformationMixed | undefined);
 	const expectedOAuthClient = options.clientInformation
 		? {
 				clientId: options.clientInformation.client_id,
 				...(options.clientInformation.client_secret
 					? { clientSecret: options.clientInformation.client_secret }
-					: {}),
-				...(options.clientInformation.issuer
-					? { issuer: options.clientInformation.issuer }
 					: {}),
 			}
 		: null;
@@ -336,10 +293,17 @@ export function createMcpOAuthProviderContext(
 				{
 					filePath: options.settingsPath,
 					expectedOAuthClient,
+					signal: options.signal,
+					expectedTransport: options.expectedTransport,
 				},
 			);
 		} catch (error) {
-			if (options.settingsPath || error instanceof McpOAuthClientChangedError) {
+			if (
+				options.signal?.aborted ||
+				options.expectedTransport ||
+				options.settingsPath ||
+				error instanceof McpOAuthClientChangedError
+			) {
 				throw error;
 			}
 			// Programmatically supplied registrations may not have a settings file.
@@ -389,11 +353,6 @@ export function createMcpOAuthProviderContext(
 		},
 		tokens: () =>
 			currentClientInformation()?.client_id &&
-			typeof state.tokens?.issuer === "string" &&
-			sameOAuthIssuer(
-				state.tokens.issuer,
-				currentClientInformation()?.issuer,
-			) &&
 			isSameOAuthClient(
 				state.clientInformation as OAuthClientInformationMixed | undefined,
 				currentClientInformation(),
@@ -402,19 +361,9 @@ export function createMcpOAuthProviderContext(
 				: undefined,
 		saveTokens: async (tokens) => {
 			const lastAuthenticatedAt = Date.now();
-			let clientInformation = currentClientInformation();
+			const clientInformation = currentClientInformation();
 			if (!clientInformation?.client_id) {
 				throw new Error("Cannot save MCP OAuth tokens without a client ID.");
-			}
-			if (typeof tokens.issuer === "string") {
-				if (
-					clientInformation.issuer &&
-					!sameOAuthIssuer(clientInformation.issuer, tokens.issuer)
-				)
-					throw new Error(
-						"MCP OAuth token issuer does not match the configured client issuer.",
-					);
-				clientInformation = { ...clientInformation, issuer: tokens.issuer };
 			}
 			await patch((current) => {
 				// A pre-registered client is already bound by the guarded oauthClient
@@ -709,51 +658,21 @@ export async function authorizeMcpServerOAuth(
 		registration.timeoutSeconds,
 	);
 
-	const endpointUrl = registration.transport.url;
-	const configuredOrigin = new URL(endpointUrl).origin;
-	const configuredHeaders = resolveConfiguredMcpHeaders({
-		headers: registration.transport.headers,
-		restrictConfiguredHeadersToOrigin: true,
-	});
-	// SDK transport base headers also reach OAuth endpoints; authFetch owns their origin scope.
-	const authorizationRegistration = {
-		...registration,
-		transport: { ...registration.transport, headers: undefined },
-	};
-
-	const authFetch: FetchLike = (input, init) => {
-		const signals = [AbortSignal.timeout(requestTimeoutMs)];
-		if (options.signal) signals.push(options.signal);
-		if (init?.signal) signals.push(init.signal);
-		if (input instanceof Request) signals.push(input.signal);
-		const requestUrl = new URL(
-			input instanceof Request ? input.url : input.toString(),
-		);
-		const headers = new Headers(
-			requestUrl.origin === configuredOrigin ? configuredHeaders : undefined,
-		);
-		const requestHeaders = new Headers(
-			init?.headers ?? (input instanceof Request ? input.headers : undefined),
-		);
-		requestHeaders.forEach((value, name) => {
-			headers.set(name, value);
-		});
-		// Issuer requests contain SDK headers only; their redirect policy still applies.
-		return createOriginBoundMcpHeadersFetch({
-			endpointUrl:
-				requestUrl.origin === configuredOrigin
-					? endpointUrl
-					: requestUrl.toString(),
-			configuredHeaders:
-				requestUrl.origin === configuredOrigin ? (configuredHeaders ?? {}) : {},
-			baseFetch: options.fetch,
-		})(input, {
-			...init,
-			headers,
-			signal: AbortSignal.any(signals),
-		});
-	};
-
+	const flowSignal = options.signal;
+	const flowFetch: FetchLike | undefined = flowSignal
+		? (input, init) => {
+				options.signal?.throwIfAborted();
+				const requestSignal =
+					init?.signal ?? (input instanceof Request ? input.signal : undefined);
+				return (options.fetch ?? globalThis.fetch)(input, {
+					...init,
+					signal: AbortSignal.any([
+						flowSignal,
+						...(requestSignal ? [requestSignal] : []),
+					]),
+				});
+			}
+		: options.fetch;
 	const callbackServer = await startLocalOAuthServer({
 		host: options.callbackHost,
 		ports: options.callbackPorts?.length
@@ -777,6 +696,8 @@ export async function authorizeMcpServerOAuth(
 	const oauthContext = createMcpOAuthProviderContext({
 		settingsPath,
 		serverName,
+		signal: options.signal,
+		expectedTransport: registration.transport,
 		redirectUrl: callbackServer.callbackUrl,
 		clientInformation: createMcpOAuthClientInformation(
 			registration.oauthClient,
@@ -785,76 +706,17 @@ export async function authorizeMcpServerOAuth(
 			await options.openUrl?.(url);
 		},
 	});
-	await oauthContext.resetInteractiveState();
 
 	const client = buildClient(options);
 	let retryClient: Client | undefined;
-	let probeClient: Client | undefined;
 	try {
-		let challenge: ReturnType<typeof extractWWWAuthenticateParams> = {};
-		const tokens = await oauthContext.provider.tokens();
-		const probeFetch: FetchLike = async (input, init) => {
-			const response = await authFetch(input, init);
-			if (response.status === 401)
-				challenge = extractWWWAuthenticateParams(response);
-			return response;
-		};
-		probeClient = buildClient(options);
-		const probeTransport = createMcpSdkTransport({
-			registration: {
-				...authorizationRegistration,
-				transport: {
-					...authorizationRegistration.transport,
-					headers: tokens?.access_token
-						? { Authorization: `Bearer ${tokens.access_token}` }
-						: undefined,
-				},
-			},
-			fetch: probeFetch,
-			restrictConfiguredHeadersToOrigin: true,
+		await oauthContext.resetInteractiveState();
+		const transport = createMcpSdkTransport({
+			registration,
+			oauthProvider: oauthContext.provider,
+			fetch: flowFetch,
 		});
 		try {
-			await probeClient.connect(probeTransport, {
-				timeout: requestTimeoutMs,
-				signal: options.signal,
-			});
-			await probeClient.listTools(undefined, {
-				timeout: requestTimeoutMs,
-				signal: options.signal,
-			});
-			// Public discovery alone does not authorize a tokenless server.
-			if (tokens?.access_token) {
-				await oauthContext.clearError();
-				return {
-					serverName,
-					authorized: true,
-					message: `MCP server "${serverName}" is already authorized.`,
-				};
-			}
-		} catch (error) {
-			if (!isMcpUnauthorizedError(error)) throw error;
-		} finally {
-			await probeClient.close().catch(() => undefined);
-			probeClient = undefined;
-		}
-		// Lazy servers may expose their challenge on GET after public initialization.
-		if (!challenge.resourceMetadataUrl && !challenge.scope) {
-			const response = await probeFetch(endpointUrl, {
-				method: "GET",
-			});
-			await response.body?.cancel().catch(() => undefined);
-		}
-		const transport = createMcpSdkTransport({
-			registration: authorizationRegistration,
-			oauthProvider: oauthContext.provider,
-			fetch: authFetch,
-		});
-		const authResult = await auth(oauthContext.provider, {
-			serverUrl: endpointUrl,
-			...challenge,
-			fetchFn: authFetch,
-		});
-		if (authResult === "AUTHORIZED") {
 			await client.connect(transport, {
 				timeout: requestTimeoutMs,
 				signal: options.signal,
@@ -863,77 +725,76 @@ export async function authorizeMcpServerOAuth(
 				timeout: requestTimeoutMs,
 				signal: options.signal,
 			});
-			if (!(await oauthContext.provider.tokens())) {
-				throw new Error("OAuth authorization completed without saved tokens.");
-			}
 			await oauthContext.clearError();
 			return {
 				serverName,
 				authorized: true,
 				message: `MCP server "${serverName}" is already authorized.`,
 			};
-		}
-		const authUrl = oauthContext.getLastAuthorizationUrl();
-		if (!authUrl) {
-			throw new Error(
-				`MCP server "${serverName}" did not provide an authorization URL.`,
+		} catch (error) {
+			if (!isMcpUnauthorizedError(error)) {
+				throw error;
+			}
+			await oauthContext.markAuthorizationRequired(
+				`MCP server "${serverName}" requires OAuth authorization.`,
 			);
-		}
-		const callback = await callbackServer.waitForCallback();
-		if (!callback) {
-			if (options.signal?.aborted) {
+			const authUrl = oauthContext.getLastAuthorizationUrl();
+			if (!authUrl) {
 				throw new Error(
-					`MCP server "${serverName}" OAuth authorization was cancelled.`,
+					`MCP server "${serverName}" did not provide an authorization URL.`,
 				);
 			}
-			throw new Error(
-				"Timed out waiting for MCP OAuth authorization callback.",
-			);
-		}
-		if (callback.error) {
-			throw new Error(`OAuth authorization failed: ${callback.error}`);
-		}
-		if (!callback.code) {
-			throw new Error("OAuth callback did not include an authorization code.");
-		}
-		const expectedState = oauthContext.getLastOAuthState();
-		if (!expectedState) {
-			throw new Error(
-				`MCP server "${serverName}" did not start an OAuth stateful authorization flow.`,
-			);
-		}
-		if (callback.state !== expectedState) {
-			throw new Error("OAuth authorization failed: state mismatch.");
-		}
+			const callback = await callbackServer.waitForCallback();
+			if (!callback) {
+				if (options.signal?.aborted) {
+					throw new Error(
+						`MCP server "${serverName}" OAuth authorization was cancelled.`,
+					);
+				}
+				throw new Error(
+					"Timed out waiting for MCP OAuth authorization callback.",
+				);
+			}
+			if (callback.error) {
+				throw new Error(`OAuth authorization failed: ${callback.error}`);
+			}
+			if (!callback.code) {
+				throw new Error(
+					"OAuth callback did not include an authorization code.",
+				);
+			}
+			const expectedState = oauthContext.getLastOAuthState();
+			if (!expectedState) {
+				throw new Error(
+					`MCP server "${serverName}" did not start an OAuth stateful authorization flow.`,
+				);
+			}
+			if (callback.state !== expectedState) {
+				throw new Error("OAuth authorization failed: state mismatch.");
+			}
 
-		const completedAuth = await auth(oauthContext.provider, {
-			serverUrl: endpointUrl,
-			authorizationCode: callback.code,
-			...challenge,
-			fetchFn: authFetch,
-		});
-		if (completedAuth !== "AUTHORIZED")
-			throw new Error("OAuth code exchange did not complete authorization.");
-		retryClient = buildClient(options);
-		const retryTransport = createMcpSdkTransport({
-			registration: authorizationRegistration,
-			oauthProvider: oauthContext.provider,
-			fetch: authFetch,
-		});
-		await retryClient.connect(retryTransport, {
-			timeout: requestTimeoutMs,
-			signal: options.signal,
-		});
-		await retryClient.listTools(undefined, {
-			timeout: requestTimeoutMs,
-			signal: options.signal,
-		});
-		await oauthContext.clearError();
-		return {
-			serverName,
-			authorized: true,
-			message: `MCP server "${serverName}" OAuth authorization completed.`,
-		};
+			await transport.finishAuth(callback.code);
+			retryClient = buildClient(options);
+			const retryTransport = createMcpSdkTransport({
+				registration,
+				oauthProvider: oauthContext.provider,
+				fetch: flowFetch,
+			});
+			await retryClient.connect(retryTransport, {
+				timeout: requestTimeoutMs,
+				signal: options.signal,
+			});
+			await retryClient.listTools(undefined, {
+				timeout: requestTimeoutMs,
+				signal: options.signal,
+			});
+			await oauthContext.clearError();
+			return {
+				serverName,
+				authorized: true,
+				message: `MCP server "${serverName}" OAuth authorization completed.`,
+			};
+		}
 	} catch (error) {
 		const cancelled = options.signal?.aborted === true;
 		const message = cancelled
@@ -948,7 +809,6 @@ export async function authorizeMcpServerOAuth(
 	} finally {
 		options.signal?.removeEventListener("abort", cancelCallbackWait);
 		await client.close().catch(() => undefined);
-		await probeClient?.close().catch(() => undefined);
 		await retryClient?.close().catch(() => undefined);
 		callbackServer.close();
 	}

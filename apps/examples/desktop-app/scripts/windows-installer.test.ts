@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { type ChildProcess, spawn } from "node:child_process";
 import {
@@ -35,8 +34,6 @@ const children: ChildProcess[] = [];
 let root: string;
 let fixture: string;
 let installer: string;
-let legacyUninstaller: string | undefined;
-let bridgeSerial = 0;
 
 function nsisString(value: string): string {
 	return value.replaceAll("$", "$$").replaceAll('"', '$\\"');
@@ -55,11 +52,7 @@ async function waitFor(check: () => boolean): Promise<void> {
 	throw new Error("Timed out waiting for fixture process");
 }
 
-async function run(
-	exe: string,
-	args: string[],
-	timeoutMs = 90_000,
-): Promise<number> {
+async function run(exe: string, args: string[]): Promise<number> {
 	const child = spawn(exe, args, {
 		cwd: root,
 		stdio: ["ignore", "ignore", "inherit"],
@@ -69,26 +62,11 @@ async function run(
 			(arg) => arg.startsWith("/D=") || arg.startsWith("_?="),
 		),
 	});
-	children.push(child);
-	let timer: ReturnType<typeof setTimeout> | undefined;
+	const timer = setTimeout(() => child.kill(), 90_000);
 	try {
 		return await new Promise<number>((resolve, reject) => {
 			child.once("error", reject);
 			child.once("exit", (code) => resolve(code ?? -1));
-			// A missing exit event must not leave this promise pending forever.
-			// Force only our child and fail explicitly; never report a timeout as success.
-			timer = setTimeout(() => {
-				try {
-					child.kill("SIGKILL");
-				} catch {
-					// The test still fails if Windows refuses termination; afterAll retries cleanup.
-				}
-				reject(
-					new Error(
-						`Fixture process ${path.basename(exe)} timed out after ${timeoutMs} ms`,
-					),
-				);
-			}, timeoutMs);
 		});
 	} finally {
 		clearTimeout(timer);
@@ -106,92 +84,8 @@ async function start(dir: string, name: string): Promise<ChildProcess> {
 		stdio: "ignore",
 	});
 	children.push(child);
-	await waitFor(() => {
-		if (child.exitCode !== null || child.signalCode !== null) throw new Error(`Fixture exited before readiness: code=${child.exitCode}, signal=${child.signalCode}`);
-		return existsSync(ready);
-	});
+	await waitFor(() => existsSync(ready));
 	return child;
-}
-
-async function buildLegacyBridge(oldDirectory: string): Promise<string> {
-	if (!legacyUninstaller) {
-		const oldHook = path.join(root, "original-1.0.7-hook.nsh");
-		const original = Bun.spawnSync(
-			[
-				"git",
-				"show",
-				"a26a46d2ffa302980ff4cca12eb5af19113d6669:apps/examples/desktop-app/src-tauri/nsis/installer-hooks.nsh",
-			],
-			{ cwd: path.dirname(lockfile) },
-		);
-		expect(original.exitCode).toBe(0);
-		writeFileSync(oldHook, original.stdout);
-		legacyUninstaller = path.join(root, "old-uninstall.exe");
-		const seed = path.join(root, "old-seed.exe");
-		const script = path.join(root, "old-seed.nsi");
-		writeFileSync(
-			script,
-			`
-Unicode true
-RequestExecutionLevel user
-!include FileFunc.nsh
-!define LANG_RUSSIAN 1049
-!define AVX1_AUTOSTART_LINK "Cline AVX1 legacy fixture-${process.pid}.lnk"
-!include "${nsisString(oldHook)}"
-!define MAINBINARYNAME "cline-app"
-Name "Old Cline hook fixture"
-OutFile "${nsisString(seed)}"
-Section
- WriteUninstaller "${nsisString(legacyUninstaller)}"
-SectionEnd
-Section "Uninstall"
- !insertmacro NSIS_HOOK_PREUNINSTALL
- FileOpen $0 "$INSTDIR\\legacy-uninstall-ran" w
- FileWrite $0 "completed"
- FileClose $0
-SectionEnd
-`,
-		);
-		expect(await run(nsis, ["/V2", script])).toBe(0);
-		expect(await run(seed, ["/S"])).toBe(0);
-	}
-	const serial = ++bridgeSerial;
-	const bridge = path.join(root, `bridge-${serial}.exe`);
-	const script = path.join(root, `bridge-${serial}.nsi`);
-	writeFileSync(
-		script,
-		`
-Unicode true
-RequestExecutionLevel user
-!include FileFunc.nsh
-!define LANG_RUSSIAN 1049
-!include "${nsisString(hook)}"
-!define MAINBINARYNAME "cline-app"
-Name "Legacy uninstall transition"
-OutFile "${nsisString(bridge)}"
-Var UpdateMode
-Section
- StrCpy $UpdateMode 0
- !insertmacro AVX1_DETECT_EXISTING_INSTALLATION
- StrCmp $UpdateMode 1 skip_legacy
- ExecWait '"${nsisString(legacyUninstaller)}" /S _?=$INSTDIR' $0
- StrCmp $0 0 skip_legacy
-  SetErrorLevel $0
-  Quit
- skip_legacy:
- !insertmacro NSIS_HOOK_PREINSTALL
- ClearErrors
- FileOpen $0 "$INSTDIR\\cline-cli.exe" w
- IfErrors 0 +3
-  SetErrorLevel 44
-  Quit
- FileWrite $0 "replaced"
- FileClose $0
-SectionEnd
-`,
-	);
-	expect(await run(nsis, ["/V2", script])).toBe(0);
-	return bridge;
 }
 
 test("locked Tauri CLI is the version whose NSIS pin this suite mirrors", () => {
@@ -202,62 +96,6 @@ test("locked Tauri CLI is the version whose NSIS pin this suite mirrors", () => 
 		resolved,
 		`@tauri-apps/cli moved from ${TAURI_CLI_VERSION}; re-read its bundler's NSIS_URL/NSIS_SHA1 and update TAURI_CLI_VERSION, NSIS_VERSION and the download in desktop-test.yml`,
 	).toBe(TAURI_CLI_VERSION);
-});
-
-test("production template requests UAC without changing current-user installation", () => {
-	const directory = path.resolve(import.meta.dir, "../src-tauri/nsis");
-	const provenance = JSON.parse(
-		readFileSync(path.join(directory, "template-provenance.json"), "utf8"),
-	);
-	const template = readFileSync(
-		path.join(directory, "installer.nsi"),
-		"utf8",
-	).replaceAll("\r\n", "\n");
-	const elevated =
-		'!if "${INSTALLMODE}" == "currentUser"\n  RequestExecutionLevel admin';
-	expect(template.includes(elevated)).toBe(true);
-	expect(template).toContain(
-		"  !insertmacro AVX1_DETECT_EXISTING_INSTALLATION\n\n  ; Abort downgrades",
-	);
-	expect(template).toContain(
-		"  ; In update mode, always proceeds without uninstalling\n  ${If} $UpdateMode = 1\n    Goto reinst_done",
-	);
-	expect(template).toContain(
-		"  ${If} $PassiveMode = 1\n  ${OrIf} $UpdateMode = 1\n    Call PageLeaveReinstall",
-	);
-	expect(template).toContain("AllowSkipFiles off");
-	expect(template.indexOf("  ; Copy external binaries")).toBeLessThan(
-		template.indexOf("  ; Copy resources"),
-	);
-	const original = template
-		.replace(
-			"; Never silently skip a locked owned binary and report a successful update.\nAllowSkipFiles off\n\n",
-			"",
-		)
-		.replace(
-			"  ${If} $PassiveMode = 1\n  ${OrIf} $UpdateMode = 1\n    Call PageLeaveReinstall",
-			"  ${If} $PassiveMode = 1\n    Call PageLeaveReinstall",
-		)
-		.replace("  !insertmacro AVX1_DETECT_EXISTING_INSTALLATION\n\n", "")
-		.replace(
-			elevated,
-			'!if "${INSTALLMODE}" == "currentUser"\n  RequestExecutionLevel user',
-		);
-	const externalStart = original.indexOf("  ; Copy external binaries\n");
-	const externalEnd = original.indexOf("  ; Copy resources\n", externalStart);
-	const external = original.slice(externalStart, externalEnd);
-	let stock = original.slice(0, externalStart) + original.slice(externalEnd);
-	const association = stock.indexOf("  ; Create file associations");
-	stock = stock.slice(0, association) + external + stock.slice(association);
-	expect(createHash("sha256").update(stock).digest("hex")).toBe(
-		provenance.original_sha256,
-	);
-	expect(provenance.tauri_cli).toBe(TAURI_CLI_VERSION);
-	const config = JSON.parse(
-		readFileSync(path.join(directory, "../tauri.windows.conf.json"), "utf8"),
-	);
-	expect(config.bundle.windows.nsis.installMode).toBe("currentUser");
-	expect(config.bundle.windows.nsis.template).toBe("nsis/installer.nsi");
 });
 
 describe.skipIf(!windows)("Windows installer process cleanup", () => {
@@ -279,7 +117,7 @@ describe.skipIf(!windows)("Windows installer process cleanup", () => {
 			await run(process.execPath, [
 				"build",
 				"--compile",
-				"--target=bun-windows-x64-baseline",
+				"--target=bun-windows-x64",
 				source,
 				"--outfile",
 				fixture,
@@ -297,8 +135,6 @@ describe.skipIf(!windows)("Windows installer process cleanup", () => {
 Unicode true
 RequestExecutionLevel user
 !include FileFunc.nsh
-!define LANG_RUSSIAN 1049
-!define AVX1_AUTOSTART_LINK "Cline AVX1 isolated installer test-${process.pid}.lnk"
 !include "${nsisString(hook)}"
 !define MAINBINARYNAME "cline-app"
 Name "Cline cleanup test"
@@ -347,8 +183,7 @@ SectionEnd
 
 	afterAll(async () => {
 		for (const child of children) {
-			if (child.exitCode === null && child.signalCode === null)
-				child.kill("SIGKILL");
+			if (child.exitCode === null && child.signalCode === null) child.kill();
 		}
 		await waitFor(() =>
 			children.every((p) => p.exitCode !== null || p.signalCode !== null),
@@ -362,12 +197,6 @@ SectionEnd
 			});
 	});
 
-	test("fails a stalled owned child instead of waiting forever for its exit event", async () => {
-		await expect(
-			run(fixture, [path.join(root, "timeout-ready")], 1_000),
-		).rejects.toThrow("timed out after 1000 ms");
-	}, 10_000);
-
 	test("first install and repeated cleanup succeed with no running processes", async () => {
 		const dir = path.join(root, "fresh install");
 		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
@@ -377,7 +206,7 @@ SectionEnd
 		);
 	}, 120_000);
 
-	test("automatically closes the exact install processes and preserves another install", async () => {
+	test("stops all target x64 processes, releases the file, and preserves another install", async () => {
 		const dir = path.join(root, "Cline 'quoted' $ space (测试)");
 		const beta = await start(`${dir} Beta`, "cline-cli.exe");
 		const targets = [
@@ -393,7 +222,6 @@ SectionEnd
 		await waitFor(() =>
 			targets.every((p) => p.exitCode !== null || p.signalCode !== null),
 		);
-		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		expect(readFileSync(path.join(dir, "cline-cli.exe"), "utf8")).toBe(
 			"replaced",
 		);
@@ -401,7 +229,7 @@ SectionEnd
 		expect(beta.signalCode).toBeNull();
 	}, 120_000);
 
-	test("uninstaller closes its busy runtime before deleting files", async () => {
+	test("uninstaller releases the same files before deleting them", async () => {
 		const dir = path.join(root, "uninstall");
 		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		copyFileSync(fixture, path.join(dir, "cline-cli.exe"));
@@ -411,116 +239,18 @@ SectionEnd
 			await run(path.join(dir, "uninstall.exe"), ["/S", `_?=${dir}`]),
 		).toBe(0);
 		await waitFor(() => target.exitCode !== null || target.signalCode !== null);
-		expect(
-			await run(path.join(dir, "uninstall.exe"), ["/S", `_?=${dir}`]),
-		).toBe(0);
 		expect(existsSync(path.join(dir, "cline-cli.exe"))).toBe(false);
 	}, 120_000);
 
-	test("installs with only a hidden Hub running and preserves unrelated files", async () => {
-		const dir = path.join(root, "hidden Hub only");
-		const hub = await start(dir, "cline-cli.exe");
-		writeFileSync(path.join(dir, "user-state.json"), "preserved");
-		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
-		await waitFor(() => hub.exitCode !== null || hub.signalCode !== null);
-		expect(readFileSync(path.join(dir, "user-state.json"), "utf8")).toBe(
-			"preserved",
-		);
-	}, 120_000);
-
-	test("closes only this installation's hidden DSW2API runtime", async () => {
-		const dir = path.join(root, "DSW runtime");
-		const runtime = path.join(dir, "bin", "dsw2api", "runtime");
-		const worker = await start(runtime, "pythonw.exe");
-		const other = await start(
-			path.join(root, "other DSW runtime"),
-			"pythonw.exe",
-		);
-		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
-		await waitFor(() => worker.exitCode !== null || worker.signalCode !== null);
-		expect(other.exitCode).toBeNull();
-	}, 120_000);
-
-	test("closes the exact native browser bridge while preserving another installation", async () => {
-		const dir = path.join(root, "browser bridge");
-		const worker = await start(
-			path.join(dir, "bin", "browser-bridge"),
-			"native-host.exe",
-		);
-		const other = await start(
-			path.join(root, "other browser bridge"),
-			"native-host.exe",
-		);
-		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
-		await waitFor(() => worker.exitCode !== null || worker.signalCode !== null);
-		expect(other.exitCode).toBeNull();
-	}, 120_000);
-
-	test("upgrade automatically closes the earlier backend before removing it", async () => {
+	test("upgrade stops and removes the earlier backend executable", async () => {
 		const dir = path.join(root, "upgrade");
 		const legacy = await start(dir, "code-sidecar.exe");
 		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		await waitFor(() => legacy.exitCode !== null || legacy.signalCode !== null);
-		expect(await run(installer, ["/S", `/D=${dir}`])).toBe(0);
 		expect(existsSync(path.join(dir, "code-sidecar.exe"))).toBe(false);
 		expect(readFileSync(path.join(dir, "cline-cli.exe"), "utf8")).toBe(
 			"replaced",
 		);
-	}, 120_000);
-
-	test("updates over the real 1.0.7 hidden-Hub guard without invoking its uninstaller", async () => {
-		const old = path.join(root, "legacy 'quoted' $ space (测试)");
-		const owner = await start(old, "cline-cli.exe");
-		copyFileSync(fixture, path.join(old, "cline-app.exe"));
-		const beta = await start(`${old} Beta`, "cline-cli.exe");
-		writeFileSync(path.join(old, "user-state.json"), "kept");
-		const bridge = await buildLegacyBridge(old);
-		expect(await run(legacyUninstaller!, ["/S", `_?=${old}`])).toBe(2);
-		expect(owner.exitCode).toBeNull();
-		expect(await run(bridge, ["/S", `/D=${old}`])).toBe(0);
-		await waitFor(() => owner.exitCode !== null || owner.signalCode !== null);
-		expect(existsSync(path.join(old, "legacy-uninstall-ran"))).toBe(false);
-		expect(readFileSync(path.join(old, "user-state.json"), "utf8")).toBe(
-			"kept",
-		);
-		expect(readFileSync(path.join(old, "cline-cli.exe"), "utf8")).toBe(
-			"replaced",
-		);
-		expect(beta.exitCode).toBeNull();
-	}, 120_000);
-
-	test("keeps fresh installs separate from in-place update detection", async () => {
-		const probe = path.join(root, "mode-probe.exe");
-		const script = path.join(root, "mode-probe.nsi");
-		writeFileSync(
-			script,
-			`
-Unicode true
-RequestExecutionLevel user
-!include FileFunc.nsh
-!define LANG_RUSSIAN 1049
-!include "${nsisString(hook)}"
-!define MAINBINARYNAME "cline-app"
-Var UpdateMode
-Name "Update mode probe"
-OutFile "${nsisString(probe)}"
-Section
- StrCpy $UpdateMode 0
- !insertmacro AVX1_DETECT_EXISTING_INSTALLATION
- CreateDirectory "$INSTDIR"
- FileOpen $0 "$INSTDIR\\mode" w
- FileWrite $0 "$UpdateMode"
- FileClose $0
-SectionEnd
-`,
-		);
-		expect(await run(nsis, ["/V2", script])).toBe(0);
-		const dir = path.join(root, "mode probe");
-		expect(await run(probe, ["/S", `/D=${dir}`])).toBe(0);
-		expect(readFileSync(path.join(dir, "mode"), "utf8")).toBe("0");
-		copyFileSync(fixture, path.join(dir, "cline-app.exe"));
-		expect(await run(probe, ["/S", `/D=${dir}`])).toBe(0);
-		expect(readFileSync(path.join(dir, "mode"), "utf8")).toBe("1");
 	}, 120_000);
 
 	// Only silent mode is automatable: passive (/P, what the Tauri updater
@@ -537,37 +267,4 @@ SectionEnd
 		);
 		expect(existsSync(path.join(dir, "uninstall.exe"))).toBe(false);
 	}, 120_000);
-	test("silent payload replacement fails instead of skipping a late file lock", async () => {
-		const dir = path.join(root, "late payload lock");
-		const owner = await start(dir, "payload.exe");
-		const source = path.join(root, "replacement.bin");
-		writeFileSync(source, "new payload");
-		const output = path.join(root, "payload-update.exe");
-		const script = path.join(root, "payload-update.nsi");
-		writeFileSync(
-			script,
-			`Unicode true
-Name "Owned payload update fixture"
-RequestExecutionLevel user
-OutFile "${nsisString(output)}"
-AllowSkipFiles off
-Section
-SetOutPath "${nsisString(dir)}"
-File /a /oname=payload.exe "${nsisString(source)}"
-SectionEnd
-`,
-		);
-		expect(await run(nsis, ["/V2", script])).toBe(0);
-		try {
-			expect(await run(output, ["/S"])).toBe(2);
-			expect(machine(path.join(dir, "payload.exe"))).toBe(0x8664);
-		} finally {
-			owner.kill();
-			await waitFor(() => owner.exitCode !== null || owner.signalCode !== null);
-		}
-		expect(await run(output, ["/S"])).toBe(0);
-		expect(readFileSync(path.join(dir, "payload.exe"), "utf8")).toBe(
-			"new payload",
-		);
-	}, 120000);
 });

@@ -139,8 +139,6 @@ export type LocalRuntimeBootstrapConfig = Pick<
 };
 
 export interface LocalRuntimeStartOptions {
-	/** Ephemeral replacement for built-in shell children only; never persisted. */
-	shellEnvironment?: import("../../services/shell-environment").ShellEnvironment;
 	hooks?: LocalRuntimeBootstrapConfig["hooks"];
 	logger?: LocalRuntimeBootstrapConfig["logger"];
 	telemetry?: LocalRuntimeBootstrapConfig["telemetry"];
@@ -167,17 +165,6 @@ export interface StartSessionInput {
 	interactive?: boolean;
 	sessionMetadata?: Record<string, unknown>;
 	initialMessages?: LlmsProviders.MessageWithMetadata[];
-	/**
-	 * Resume `config.sessionId` from the transcript the Hub already has in its
-	 * session store, so a long transcript never has to cross the wire.
-	 *
-	 * `initialMessages` must still hold that same persisted transcript: a Hub
-	 * that predates `session.resume` gets it inline instead. Only set this when
-	 * `initialMessages` was read unmodified from that session's store, never for
-	 * a rebuilt or forked transcript that differs from what is persisted. Hosts
-	 * that run in process ignore it.
-	 */
-	resumeFromStore?: boolean;
 	initialCompactionState?: SessionCompactionState;
 	userImages?: string[];
 	userFiles?: string[];

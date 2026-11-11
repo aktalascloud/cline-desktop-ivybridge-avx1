@@ -26,7 +26,6 @@ vi.mock("@cline/core", async () => {
 	return {
 		...actual,
 		SqliteSessionStore: class {
-			close() {}
 			listChildren(parentSessionId: string, limit = 200) {
 				return [...records.values()]
 					.filter((record) => record.parentSessionId === parentSessionId)

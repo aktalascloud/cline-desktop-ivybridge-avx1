@@ -233,11 +233,8 @@ describe("runAgent", () => {
 
 		expect(sessionManagerMocks.start).toHaveBeenCalledWith(
 			expect.objectContaining({
-				interactive: false,
+				prompt: "prompt",
 			}),
-		);
-		expect(sessionManagerMocks.start.mock.calls[0]?.[0]).not.toHaveProperty(
-			"prompt",
 		);
 		const startInput = sessionManagerMocks.start.mock.calls[0]?.[0] as
 			| { localRuntime?: Record<string, unknown> }
@@ -468,69 +465,6 @@ describe("runAgent", () => {
 		expect(process.exitCode).toBe(0);
 	});
 
-	it("times out the first streamed turn before it completes", async () => {
-		const result = {
-			text: "aborted",
-			finishReason: "aborted",
-			iterations: 1,
-			usage: { inputTokens: 0, outputTokens: 0 },
-			durationMs: 50,
-			model: { id: "fixture", provider: "openai-compatible", info: {} },
-		};
-		let finishTurn: (value: typeof result) => void = () => {};
-		sessionManagerMocks.start.mockImplementation(async (input) => {
-			// A prompt in start() runs before the caller can arm its timeout.
-			expect(input).not.toHaveProperty("prompt");
-			return {
-				sessionId: "first-turn",
-				manifest: { session_id: "first-turn" },
-			};
-		});
-		sessionManagerMocks.send.mockImplementation(
-			() =>
-				new Promise((resolve) => {
-					finishTurn = resolve;
-				}),
-		);
-		sessionManagerMocks.abort.mockImplementation(async () => {
-			finishTurn(result);
-		});
-		const { runAgent } = await import("./run-agent");
-		await runAgent(
-			"fixture prompt",
-			{
-				cwd: process.cwd(),
-				enableAgentTeams: false,
-				enableSpawnAgent: false,
-				enableTools: false,
-				mode: "act",
-				modelId: "fixture",
-				providerId: "openai-compatible",
-				apiKey: "fixture",
-				verbose: false,
-				sandbox: false,
-				defaultToolAutoApprove: false,
-				outputMode: "json",
-				systemPrompt: "fixture",
-				thinking: false,
-				toolPolicies: {},
-				timeoutSeconds: 0.05,
-			},
-			undefined,
-		);
-		expect(sessionManagerMocks.send).toHaveBeenCalledWith(
-			expect.objectContaining({ sessionId: "first-turn", prompt: "prompt" }),
-		);
-		expect(sessionManagerMocks.abort).toHaveBeenCalledWith(
-			"first-turn",
-			expect.any(Error),
-		);
-		expect(outputMocks.writeErr).toHaveBeenCalledWith(
-			"run timed out after 0.05s",
-		);
-		expect(process.exitCode).toBe(1);
-	});
-
 	it("does not fail an aborted run when teardown hooks throw", async () => {
 		const startedAt = new Date("2026-03-22T00:00:00.000Z");
 		const endedAt = new Date("2026-03-22T00:00:01.000Z");
@@ -598,6 +532,84 @@ describe("runAgent", () => {
 		expect(outputMocks.writeErr).not.toHaveBeenCalledWith(
 			"hook shutdown failed",
 		);
+	});
+
+	it("applies --timeout to a first turn that runs inside start()", async () => {
+		const startedAt = new Date("2026-03-22T00:00:00.000Z");
+		const endedAt = new Date("2026-03-22T00:00:01.000Z");
+		// The local backend only returns from start() once the first turn
+		// ends, so the turn here ends only when the run is aborted.
+		let finishTurn: (() => void) | undefined;
+		const turnFinished = new Promise<void>((resolve) => {
+			finishTurn = resolve;
+		});
+		sessionManagerMocks.abort.mockImplementation(async () => {
+			finishTurn?.();
+		});
+		sessionManagerMocks.start.mockImplementation(
+			async (input: { config: { sessionId: string } }) => {
+				await turnFinished;
+				return {
+					sessionId: input.config.sessionId,
+					manifestPath: "/tmp/manifest.json",
+					messagesPath: "/tmp/messages.json",
+					manifest: { session_id: input.config.sessionId },
+					result: {
+						text: "aborted",
+						usage: {
+							inputTokens: 0,
+							outputTokens: 0,
+							cacheReadTokens: 0,
+							cacheWriteTokens: 0,
+							totalCost: undefined,
+						},
+						messages: [],
+						toolCalls: [],
+						iterations: 0,
+						finishReason: "aborted",
+						model: { id: "gemini", provider: "openrouter", info: {} },
+						startedAt,
+						endedAt,
+						durationMs: 1000,
+					},
+				};
+			},
+		);
+
+		const { runAgent } = await import("./run-agent");
+
+		await runAgent("test prompt", {
+			cwd: process.cwd(),
+			enableAgentTeams: false,
+			enableSpawnAgent: false,
+			enableTools: [],
+			execution: {
+				maxConsecutiveMistakes: 3,
+			},
+			logger: undefined,
+			mode: "yolo",
+			modelId: "google/gemini-3-flash-preview",
+			outputMode: "text",
+			providerId: "openrouter",
+			systemPrompt: "system",
+			thinking: false,
+			timeoutSeconds: 0.05,
+			toolPolicies: { "*": { autoApprove: true } },
+			verbose: false,
+			workspaceRoot: process.cwd(),
+		} as never);
+
+		const startInput = sessionManagerMocks.start.mock.calls[0]?.[0] as {
+			config: { sessionId: string };
+		};
+		expect(sessionManagerMocks.abort).toHaveBeenCalledWith(
+			startInput.config.sessionId,
+			expect.any(Error),
+		);
+		expect(outputMocks.writeErr).toHaveBeenCalledWith(
+			"run timed out after 0.05s",
+		);
+		expect(process.exitCode).toBe(1);
 	});
 
 	it("sets a failing exit code when session startup throws", async () => {

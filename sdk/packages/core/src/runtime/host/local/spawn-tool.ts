@@ -123,7 +123,6 @@ export function createSessionSpawnTool(
 	config: CoreSessionConfig,
 	rootSessionId: string,
 	toolExecutors?: Partial<ToolExecutors>,
-	shellOptions?: import("../../../extensions/tools").ShellExecutorOptions,
 ): AgentTool {
 	const lifecycle = createSessionSubAgentLifecycleCallbacks(
 		deps,
@@ -137,18 +136,11 @@ export function createSessionSpawnTool(
 					telemetry: config.telemetry,
 					...ToolPresets[resolveToolPresetName({ mode: config.mode })],
 					executors: toolExecutors,
-					executorOptions: { bash: shellOptions },
 				})
 			: [];
 		if (config.enableSpawnAgent) {
 			tools.push(
-				createSessionSpawnTool(
-					deps,
-					config,
-					rootSessionId,
-					toolExecutors,
-					shellOptions,
-				),
+				createSessionSpawnTool(deps, config, rootSessionId, toolExecutors),
 			);
 		}
 		return filterDisabledTools(tools);

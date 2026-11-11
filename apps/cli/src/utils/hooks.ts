@@ -300,11 +300,9 @@ export function createRuntimeHooks(options: {
 					);
 					return;
 				}
-				const hookName =
-					result.status === "aborted" ||
-					isAbortReason(result.error?.message)
-						? "agent_abort"
-						: "agent_error";
+				const hookName = isAbortReason(result.error?.message)
+					? "agent_abort"
+					: "agent_error";
 				await dispatchHookPayload(
 					hookName === "agent_abort"
 						? {

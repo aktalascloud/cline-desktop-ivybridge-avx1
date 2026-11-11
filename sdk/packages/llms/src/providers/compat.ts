@@ -413,11 +413,13 @@ function buildGatewayRequest(
 		reasoning:
 			config.thinking !== undefined ||
 			config.reasoningEffort ||
-			config.thinkingBudgetTokens !== undefined
+			config.thinkingBudgetTokens !== undefined ||
+			config.preferThinkingOff
 				? {
 						enabled: config.thinking,
 						effort: config.reasoningEffort,
 						budgetTokens: config.thinkingBudgetTokens,
+						...(config.preferThinkingOff ? { preferOff: true } : {}),
 					}
 				: undefined,
 		signal,
@@ -507,8 +509,6 @@ function buildGatewayConfig(config: ProviderConfig) {
 		defaultModelId: config.modelId,
 		models: buildGatewayModels(providerId, config),
 		options: {
-			sampling: config.sampling,
-			authorReasoningMode: config.authorReasoningMode,
 			region: config.region ?? config.gcp?.region,
 			project: config.gcp?.projectId,
 			projectId: config.gcp?.projectId,

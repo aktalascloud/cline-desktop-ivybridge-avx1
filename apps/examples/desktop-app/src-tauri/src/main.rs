@@ -39,7 +39,6 @@ const TRAY_QUIT_MENU_ID: &str = "tray-quit";
 const KEYBINDINGS_MENU_ID: &str = "keybindings";
 const CHECK_FOR_UPDATES_MENU_ID: &str = "check-for-updates";
 const DESKTOP_ACTION_PENDING_EVENT: &str = "desktop-action-pending";
-static APP_STARTED: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 #[cfg(any(target_os = "macos", test))]
 const EXPORT_DIAGNOSTICS_MENU_ID: &str = "export-diagnostics";
 #[cfg(any(target_os = "macos", test))]
@@ -945,16 +944,6 @@ async fn pick_workspace_directory(
 }
 
 #[tauri::command]
-fn record_desktop_ready() {
-    // Opt-in benchmark output only. No path or user content arrives from JS.
-    if let Ok(path) = std::env::var("CLINE_AVX1_BENCH_READY") {
-        let elapsed = APP_STARTED.get().map(|start| start.elapsed().as_millis());
-        let value = serde_json::json!({"pid": std::process::id(), "main_to_hub_ready_ms": elapsed});
-        let _ = fs::write(path, value.to_string());
-    }
-}
-
-#[tauri::command]
 fn set_interface_language(app: tauri::AppHandle, language: String) -> Result<(), String> {
     if !matches!(language.as_str(), "en" | "ru") {
         return Err("Unsupported interface language".to_string());
@@ -982,81 +971,12 @@ fn get_update_status(update_state: State<'_, Arc<UpdateState>>) -> UpdateStatus 
     update_state.snapshot()
 }
 
-async fn ensure_update_safe(app: &tauri::AppHandle) -> Result<(), String> {
-    let message = || {
-        if native_locale::is_russian() {
-        "Не удалось подтвердить отсутствие активных сеансов во всех Hub. Дождитесь их завершения и повторите."
-    } else { "Could not confirm that all Hub sessions are idle. Wait for them to finish and retry." }.to_string()
-    };
-    let endpoint = app
-        .state::<Arc<DesktopBackendState>>()
-        .ws_endpoint
-        .lock()
-        .ok()
-        .and_then(|value| value.clone())
-        .ok_or_else(message)?;
-    let mut url = tauri::Url::parse(&endpoint).map_err(|_| message())?;
-    if !matches!(
-        url.host_str(),
-        Some("127.0.0.1") | Some("[::1]") | Some("::1")
-    ) || url.port().is_none()
-    {
-        return Err(message());
-    }
-    url.set_scheme("http").map_err(|_| message())?;
-    url.set_path("/update-safety");
-    let client = reqwest::Client::builder()
-        .no_proxy()
-        .redirect(reqwest::redirect::Policy::none())
-        .timeout(Duration::from_secs(5))
-        .build()
-        .map_err(|_| message())?;
-    // Never include the URL in errors: its query carries the approval token.
-    let response = client
-        .get(url)
-        .send()
-        .await
-        .map_err(|_| message())?
-        .error_for_status()
-        .map_err(|_| message())?;
-    let result: serde_json::Value = response.json().await.map_err(|_| message())?;
-    if result.get("safe").and_then(|value| value.as_bool()) == Some(true) {
-        Ok(())
-    } else {
-        Err(message())
-    }
-}
-
 #[tauri::command]
-async fn restart_to_apply_update(app: tauri::AppHandle) -> Result<(), String> {
-    ensure_update_safe(&app).await?;
+fn restart_to_apply_update(app: tauri::AppHandle) {
     apply_staged_update(&app);
-    Ok(())
 }
 
 fn apply_staged_update(app: &tauri::AppHandle) {
-    // A missing status is not evidence that there are no active sessions.
-    let sessions = app
-        .state::<TrayMenuState>()
-        .active_sessions
-        .load(AtomicOrdering::Relaxed);
-    if sessions != 0 {
-        let state = app.state::<Arc<UpdateState>>();
-        state.set(
-            "error",
-            None,
-            Some(
-                if native_locale::is_russian() {
-                    "Дождитесь завершения активных сеансов перед обновлением."
-                } else {
-                    "Wait for active sessions to finish before updating."
-                }
-                .to_string(),
-            ),
-        );
-        refresh_tray_status(app, &state);
-        return;
-    }
     let backend_state = app.state::<Arc<DesktopBackendState>>();
     let update_state = app.state::<Arc<UpdateState>>();
     // Neither restart() nor install() returns, so the run-loop Exit handler
@@ -1064,13 +984,6 @@ fn apply_staged_update(app: &tauri::AppHandle) {
     // first. On Windows this also releases the bundled CLI's file lock,
     // which the NSIS installer needs in order to replace it.
     backend_state.stop();
-    // The isolated fork Hub also holds cline-cli.exe open. Stop it only after
-    // the session gate, before asking NSIS to replace any installed files.
-    if let Some(context) = app.try_state::<AppContext>() {
-        if let Some(cli) = resolve_desktop_cli_path(&context) {
-            let _ = Command::new(cli).args(["hub", "stop"]).status();
-        }
-    }
     // Windows and Linux: install the bytes staged by the background cycle.
     // On Windows install() launches the NSIS installer (which relaunches the
     // app when done) and exits this process, so it only returns on failure.
@@ -1153,17 +1066,7 @@ async fn check_for_update_now(
 /// outcome (up to date / update ready / failed) in its own UI.
 fn handle_check_for_updates_menu(app: &tauri::AppHandle) {
     if app.state::<Arc<UpdateState>>().ready_version().is_some() {
-        let app = app.clone();
-        tauri::async_runtime::spawn(async move {
-            match ensure_update_safe(&app).await {
-                Ok(()) => apply_staged_update(&app),
-                Err(error) => {
-                    let state = app.state::<Arc<UpdateState>>();
-                    set_update_status(&app, &state, "error", None, Some(error));
-                    show_main_window(&app);
-                }
-            }
-        });
+        apply_staged_update(app);
     } else {
         queue_desktop_action(app, DesktopAction::CheckForUpdates);
     }
@@ -1728,9 +1631,6 @@ fn set_tray_status(
     hub_healthy: bool,
     running_sessions: u32,
 ) -> Result<(), String> {
-    tray_menu
-        .active_sessions
-        .store(running_sessions, AtomicOrdering::Relaxed);
     if let Ok(mut healthy) = tray_menu.hub_healthy.lock() {
         *healthy = hub_healthy;
     }
@@ -1755,7 +1655,6 @@ fn set_tray_status(
 }
 
 fn main() {
-    let _ = APP_STARTED.set(Instant::now());
     // Fork data and the bundled CLI stay separate from other Cline installs.
     // Set before creating threads. Explicit user data-directory overrides win.
     if non_empty_env("CLINE_DIR").is_none() && non_empty_env("CLINE_DATA_DIR").is_none() {
@@ -1882,7 +1781,6 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            record_desktop_ready,
             set_interface_language,
             get_desktop_backend_endpoint,
             pick_workspace_directory,

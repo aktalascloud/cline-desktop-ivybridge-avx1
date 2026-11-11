@@ -8,22 +8,6 @@ const clientState = vi.hoisted(() => ({
 	listToolsOptions: [] as unknown[],
 }));
 
-vi.mock("@modelcontextprotocol/sdk/client/auth.js", async (importOriginal) => ({
-	...(await importOriginal<
-		typeof import("@modelcontextprotocol/sdk/client/auth.js")
-	>()),
-	auth: async (
-		provider: import("@modelcontextprotocol/sdk/client/auth.js").OAuthClientProvider,
-	) => {
-		await provider.saveClientInformation?.({ client_id: "fixture-client" });
-		await provider.saveTokens({
-			access_token: "fixture-token",
-			token_type: "Bearer",
-		});
-		return "AUTHORIZED";
-	},
-}));
-
 vi.mock("@modelcontextprotocol/sdk/client/index.js", () => ({
 	Client: class {
 		async connect(_transport: unknown, options: unknown): Promise<void> {
@@ -55,7 +39,7 @@ describe("interactive MCP OAuth timeout", () => {
 		tempRoots.length = 0;
 	});
 
-	it("uses the registration timeout when verifying existing authorization", async () => {
+	it("uses the registration timeout for the authorization probe", async () => {
 		const tempRoot = await mkdtemp(join(tmpdir(), "core-mcp-oauth-timeout-"));
 		tempRoots.push(tempRoot);
 		const filePath = join(tempRoot, "cline_mcp_settings.json");
@@ -69,10 +53,6 @@ describe("interactive MCP OAuth timeout", () => {
 							url: "https://mcp.example.test",
 						},
 						timeout: 12,
-						oauth: {
-							clientInformation: { client_id: "fixture-client", issuer: "https://auth.example.test" },
-							tokens: { access_token: "fixture-token", token_type: "Bearer", issuer: "https://auth.example.test" },
-						},
 					},
 				},
 			}),
@@ -87,5 +67,37 @@ describe("interactive MCP OAuth timeout", () => {
 
 		expect(clientState.connectOptions).toEqual([{ timeout: 12_000 }]);
 		expect(clientState.listToolsOptions).toEqual([{ timeout: 12_000 }]);
+	});
+	it("closes its callback listener when cancelled before OAuth state initialization", async () => {
+		const tempRoot = await mkdtemp(join(tmpdir(), "mcp-oauth-cancel-"));
+		tempRoots.push(tempRoot);
+		const filePath = join(tempRoot, "cline_mcp_settings.json");
+		await writeFile(
+			filePath,
+			JSON.stringify({
+				mcpServers: {
+					remote: {
+						transport: {
+							type: "streamableHttp",
+							url: "https://example.test/mcp",
+						},
+					},
+				},
+			}),
+		);
+		const controller = new AbortController();
+		const onClose = vi.fn();
+		await expect(
+			authorizeMcpServerOAuth({
+				serverName: "remote",
+				filePath,
+				callbackPorts: [0],
+				signal: controller.signal,
+				onServerListening: () => controller.abort(),
+				onServerClose: onClose,
+			}),
+		).rejects.toThrow("cancelled");
+		expect(onClose).toHaveBeenCalledOnce();
+		expect(clientState.connectOptions).toEqual([]);
 	});
 });

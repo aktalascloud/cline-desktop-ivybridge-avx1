@@ -489,7 +489,6 @@ function updateMessageById(
 }
 
 type SessionUsageSummary = {
-	contextCompacted?: boolean;
 	tokensIn: number;
 	tokensOut: number;
 	cacheReadTokens: number;
@@ -539,9 +538,6 @@ function summarizeSessionUsage(
 		return undefined;
 	}
 	return {
-		contextCompacted: messages.some(
-			(message) => message.meta?.contextCompacted === true,
-		),
 		tokensIn: tokensIn ?? 0,
 		tokensOut: tokensOut ?? 0,
 		cacheReadTokens: cacheReadTokens ?? 0,
@@ -645,7 +641,6 @@ export function useChatSession(environmentId: string) {
 	>(null);
 	// Names what the runtime is doing before the first output of a turn (in
 	// place of "Thinking..."); ephemeral, cleared when the turn moves on.
-	const [contextCompacted, setContextCompacted] = useState(false);
 	const [activityLabel, setActivityLabel] = useState<string | null>(null);
 	const [hydratedHistorySessionId, setHydratedHistorySessionId] = useState<
 		string | null
@@ -708,7 +703,6 @@ export function useChatSession(environmentId: string) {
 	const pendingQueueSubmissionsRef = useRef(new Map<Promise<void>, string>());
 	const activePromptSubmissionsRef = useRef(0);
 	const manualCompactionSessionIdRef = useRef<string | null>(null);
-	const manualCompactionInFlightRef = useRef(false);
 	const [compactionSessionId, setCompactionSessionId] = useState<string | null>(
 		null,
 	);
@@ -755,10 +749,6 @@ export function useChatSession(environmentId: string) {
 				: undefined,
 		[messages, sessionId],
 	);
-	const persistedContextCompacted = persistedUsage?.contextCompacted;
-	useEffect(() => {
-		setContextCompacted(persistedContextCompacted ?? false);
-	}, [sessionId, persistedContextCompacted]);
 	const persistedTokensIn = persistedUsage?.tokensIn;
 	const persistedTokensOut = persistedUsage?.tokensOut;
 	const persistedCacheReadTokens = persistedUsage?.cacheReadTokens;
@@ -1727,16 +1717,6 @@ export function useChatSession(environmentId: string) {
 				text?: string;
 			};
 			if (record.sessionId !== activeSessionIdRef.current) return;
-			if (
-				record.command === "compact" &&
-				manualCompactionSessionIdRef.current === record.sessionId
-			) {
-				manualCompactionSessionIdRef.current = null;
-				setActivityLabel("");
-				setStatus(
-					record.text === "Compaction cancelled." ? "cancelled" : "completed",
-				);
-			}
 			const text = record.text?.trim();
 			if (!text) return;
 			toast({
@@ -2122,7 +2102,6 @@ export function useChatSession(environmentId: string) {
 			}
 
 			if (payload.stream === "chat_usage") {
-				setContextCompacted(false);
 				let usage: ChatUsageEvent;
 				try {
 					usage = JSON.parse(payload.chunk) as ChatUsageEvent;
@@ -2357,7 +2336,6 @@ export function useChatSession(environmentId: string) {
 				) {
 					return;
 				}
-				if (manualCompactionSessionIdRef.current === targetSessionId) return;
 				const nextStatus = record.status?.trim();
 				if (!nextStatus) {
 					return;
@@ -2460,7 +2438,6 @@ export function useChatSession(environmentId: string) {
 					cloudSnapshotHydrationIdRef.current = hydrationRequestIdRef.current;
 				}
 				const rehydratedMessages = record.messages;
-				if (manualCompactionSessionIdRef.current === targetSessionId) return;
 				const nextStatus = record.status?.trim();
 				// A locally submitted turn owns status and live routing until its RPC
 				// settles. A reconnect snapshot may describe the preceding turn.
@@ -2838,9 +2815,8 @@ export function useChatSession(environmentId: string) {
 			const isManualCompaction = /^\/compact(?:\s|$)/i.test(trimmed);
 			if (!trimmed && attachedFiles.length === 0) return true;
 			if (
-				manualCompactionInFlightRef.current ||
-				(manualCompactionSessionIdRef.current &&
-					manualCompactionSessionIdRef.current === activeSessionIdRef.current)
+				manualCompactionSessionIdRef.current &&
+				manualCompactionSessionIdRef.current === activeSessionIdRef.current
 			) {
 				toast({
 					title:
@@ -3010,7 +2986,6 @@ export function useChatSession(environmentId: string) {
 			// already advanced this turn's lifecycle past the snapshot carried
 			// by the response.
 			let turnEpochAtDispatch = turnEpochRef.current;
-			if (isManualCompaction) manualCompactionInFlightRef.current = true;
 			try {
 				if (pendingSessionStart) {
 					try {
@@ -3176,7 +3151,6 @@ export function useChatSession(environmentId: string) {
 						setCompactionSessionId(activeSessionId);
 					}
 					setStatus(isManualCompaction ? "running" : "starting");
-					if (isManualCompaction) setActivityLabel("Compacting context…");
 				}
 				await precedingPromptDispatch;
 				turnEpochAtDispatch = turnEpochRef.current;
@@ -3219,10 +3193,6 @@ export function useChatSession(environmentId: string) {
 			try {
 				const payload = await sendTask;
 				if (payload.ok && payload.commandHandled) {
-					if (/^\/compact(?:\s|$)/i.test(trimmed)) {
-						setActivityLabel(null);
-						setContextCompacted(payload.contextCompacted === true);
-					}
 					// A plugin slash command (e.g. `/goal status`) was handled by
 					// the sidecar without a turn: its reply arrives as a
 					// chat_command_output toast, so retract the optimistic
@@ -3585,17 +3555,14 @@ export function useChatSession(environmentId: string) {
 							meta: {
 								...(msg.meta ?? {}),
 								inputTokens:
-									!msg.meta?.requestDurationMs &&
 									typeof inputTokens === "number"
 										? inputTokens
 										: msg.meta?.inputTokens,
 								outputTokens:
-									!msg.meta?.requestDurationMs &&
 									typeof outputTokens === "number"
 										? outputTokens
 										: msg.meta?.outputTokens,
 								cacheReadTokens:
-									!msg.meta?.requestDurationMs &&
 									typeof resultCacheReadTokens === "number"
 										? resultCacheReadTokens
 										: msg.meta?.cacheReadTokens,
@@ -3703,7 +3670,6 @@ export function useChatSession(environmentId: string) {
 					setErrorState(errorMessage(err), activeSessionId);
 				}
 			} finally {
-				if (isManualCompaction) manualCompactionInFlightRef.current = false;
 				if (
 					manualCompactionSessionIdRef.current === activeSessionId &&
 					!shouldQueue
@@ -4162,7 +4128,6 @@ export function useChatSession(environmentId: string) {
 						branch?: string;
 						prompt?: string;
 						environmentId?: string;
-						compacting?: boolean;
 					}>("chat_session_command", {
 						request: {
 							action: "attach",
@@ -4194,10 +4159,6 @@ export function useChatSession(environmentId: string) {
 					throw new Error(
 						`Session ${session.sessionId} attached to environment ${attached.environmentId}, not ${environmentId}.`,
 					);
-				}
-				if (attached?.compacting) {
-					manualCompactionSessionIdRef.current = session.sessionId;
-					setActivityLabel("Compacting context…");
 				}
 				setConfig((prev) => ({
 					...prev,
@@ -4237,20 +4198,17 @@ export function useChatSession(environmentId: string) {
 
 				if (historyMessages.length > 0) {
 					setStatus(
-						attached?.compacting
-							? "running"
-							: session.origin === "cloud"
-								? (mapCloudRuntimeStatus(attached?.status || session.status) ??
+						session.origin === "cloud"
+							? (mapCloudRuntimeStatus(attached?.status || session.status) ??
 									inferHydratedChatStatus(
 										(attached?.status ||
 											session.status) as SessionHistoryStatus,
 										historyMessages,
 									))
-								: inferHydratedChatStatus(
-										(attached?.status ||
-											session.status) as SessionHistoryStatus,
-										historyMessages,
-									),
+							: inferHydratedChatStatus(
+									(attached?.status || session.status) as SessionHistoryStatus,
+									historyMessages,
+								),
 					);
 					return;
 				}
@@ -4272,7 +4230,6 @@ export function useChatSession(environmentId: string) {
 					synthesized,
 					(attached?.status || session.status) as SessionHistoryStatus,
 				);
-				if (attached?.compacting) setStatus("running");
 			} catch (err) {
 				if (hydrationRequestIdRef.current !== requestId) return;
 				const msg = errorMessage(err);
@@ -4439,7 +4396,6 @@ export function useChatSession(environmentId: string) {
 
 	const summary = useMemo(
 		() => ({
-			contextCompacted,
 			toolCalls,
 			tokensIn,
 			tokensOut,
@@ -4449,7 +4405,6 @@ export function useChatSession(environmentId: string) {
 			deletions: diffSummary.deletions,
 		}),
 		[
-			contextCompacted,
 			diffSummary.additions,
 			diffSummary.deletions,
 			tokensIn,

@@ -2763,59 +2763,6 @@ describe("sdk-gateway", () => {
 		}
 	});
 
-	it.each(
-		["dsw2api", "freellm"].flatMap((providerId) =>
-			[401, 403, 429, 503].map((statusCode) => ({ providerId, statusCode })),
-		),
-	)("never automatically replays $providerId HTTP $statusCode rejection", async ({
-		providerId,
-		statusCode,
-	}) => {
-		const error = {
-			message: "synthetic provider rejection",
-			statusCode,
-			isRetryable: true,
-		};
-		streamTextSpy.mockImplementation(
-			(input: { onError?: (e: { error: unknown }) => void }) => {
-				input.onError?.({ error });
-				return { fullStream: makeStreamParts([{ type: "error", error }]) };
-			},
-		);
-		const gateway = createGateway({
-			builtins: false,
-			providers: [
-				{
-					manifest: {
-						id: providerId,
-						name: "Browser session",
-						defaultModelId: "local",
-						models: [{ id: "local", name: "Local", providerId }],
-					},
-					createProvider: createOpenAICompatibleProvider,
-				},
-			],
-			providerConfigs: [
-				{ providerId, apiKey: "synthetic", baseUrl: "http://127.0.0.1:1/v1" },
-			],
-		});
-		const events = await collect(
-			await gateway.stream({
-				providerId,
-				modelId: "local",
-				messages: baseMessages,
-			}),
-		);
-		expect(streamTextSpy).toHaveBeenCalledOnce();
-		expect(streamTextSpy.mock.calls[0]?.[0]).toMatchObject({
-			maxRetries: 0,
-			streamRetries: 0,
-		});
-		expect(events.at(-1)).toMatchObject({
-			reason: "error",
-			errorRetryable: false,
-		});
-	});
 	it("uses three SDK stream retries without allowing another whole-turn retry", async () => {
 		const error = {
 			message: "upstream timeout",
@@ -7219,102 +7166,6 @@ describe("sdk-gateway", () => {
 		expect(headers.get("x-existing")).toBe("kept");
 	});
 
-	describe("aimlapi.com attribution", () => {
-		const ATTRIBUTION = [
-			"x-aimlapi-source",
-			"x-aimlapi-partner-id",
-			"x-aimlapi-integration-repo",
-			"x-aimlapi-integration-version",
-			"http-referer",
-			"x-title",
-		];
-
-		/** The fetch the aimlapi provider hands its vendor SDK, built around a
-		 *  fetch the HOST supplied, so the wrap is proven to survive one. */
-		async function aimlapiWireFetch(providerId = "aimlapi") {
-			const { fetchMock, fetch: hostFetch } = createFetchMock();
-			streamTextSpy.mockReturnValue({
-				fullStream: makeStreamParts([{ type: "finish", finishReason: "stop" }]),
-			});
-			const gateway = createGateway({
-				providerConfigs: [{ providerId, apiKey: "test-key", fetch: hostFetch }],
-			});
-			await collect(
-				await gateway.stream({
-					providerId,
-					modelId: "anthropic/claude-sonnet-5",
-					messages: baseMessages,
-				}),
-			);
-			const config = openaiCompatibleFactorySpy.mock.calls.at(-1)?.[0] as {
-				fetch?: typeof fetch;
-			};
-			return {
-				fetchMock,
-				send: async (url: string) => {
-					await config.fetch?.(url, {
-						method: "POST",
-						headers: { "x-existing": "kept" },
-						body: "{}",
-					});
-					const init = fetchMock.mock.calls.at(-1)?.[1] as
-						| RequestInit
-						| undefined;
-					return new Headers(init?.headers);
-				},
-			};
-		}
-
-		it("is added for api.aimlapi.com, through a host-supplied fetch", async () => {
-			const { fetchMock, send } = await aimlapiWireFetch();
-			const headers = await send("https://api.aimlapi.com/v1/chat/completions");
-
-			expect(fetchMock).toHaveBeenCalledOnce();
-			expect(headers.get("x-aimlapi-source")).toBe("agent/cline");
-			expect(headers.get("x-aimlapi-partner-id")).toBe(
-				"part_HSyUEqWOLXYAn56CBHNOMBlj",
-			);
-			expect(headers.get("x-aimlapi-partner-id")).toMatch(
-				/^part_[A-Za-z0-9]{1,64}$/,
-			);
-			expect(headers.get("x-aimlapi-integration-repo")).toBe("cline/cline");
-			expect(headers.get("http-referer")).toBe("https://cline.bot");
-			expect(headers.get("x-title")).toBe("Cline");
-			expect(headers.get("x-existing")).toBe("kept");
-		});
-
-		it("is NOT sent when the provider is pointed anywhere else", async () => {
-			const { send } = await aimlapiWireFetch();
-			for (const url of [
-				// look-alikes a suffix or substring test would attribute
-				"https://api.aimlapi.com.example.net/v1/chat/completions",
-				"https://notapi.aimlapi.com/v1/chat/completions",
-				// userinfo: the real host is evil.example
-				"https://api.aimlapi.com@evil.example/v1/chat/completions",
-				// the apex and a sibling are not the inference gateway
-				"https://aimlapi.com/v1/chat/completions",
-				"https://staging.api.aimlapi.com/v1/chat/completions",
-				// a plain baseUrl override: proxy, staging, local
-				"https://proxy.example.test/v1/chat/completions",
-				"http://localhost:8080/v1/chat/completions",
-			]) {
-				const headers = await send(url);
-				for (const name of ATTRIBUTION) {
-					expect(headers.has(name), `${name} leaked to ${url}`).toBe(false);
-				}
-				expect(headers.get("x-existing")).toBe("kept");
-			}
-		});
-
-		it("leaves every other provider's fetch untouched", async () => {
-			const { send } = await aimlapiWireFetch("openai-compatible");
-			const headers = await send("https://api.aimlapi.com/v1/chat/completions");
-			for (const name of ATTRIBUTION) {
-				expect(headers.has(name)).toBe(false);
-			}
-		});
-	});
-
 	it("preserves explicit configured header sticky session values", async () => {
 		const { fetchMock: customFetchMock, fetch: customFetch } =
 			createFetchMock();
@@ -7443,7 +7294,7 @@ describe("sdk-gateway", () => {
 	});
 
 	it("does not fall back to conversationId for OpenRouter session_id", async () => {
-		const { fetch: customFetch, fetchMock } = createFetchMock();
+		const { fetch: customFetch } = createFetchMock();
 		streamTextSpy.mockReturnValue({
 			fullStream: makeStreamParts([{ type: "finish", finishReason: "stop" }]),
 		});
@@ -7466,14 +7317,6 @@ describe("sdk-gateway", () => {
 		const config = openaiCompatibleFactorySpy.mock.calls[0]?.[0] as {
 			fetch?: typeof fetch;
 		};
-		const body = JSON.stringify({ messages: [{ role: "user", content: "hi" }] });
-		const response = await config.fetch?.("https://openrouter.ai/api/v1/chat/completions", { method: "POST", body });
-		await response?.text();
-		expect(fetchMock).toHaveBeenCalledOnce();
-		const init = fetchMock.mock.calls[0]?.[1] as RequestInit & { timeout?: boolean };
-		expect(init.body).toBe(body);
-		expect(JSON.parse(String(init.body))).not.toHaveProperty("session_id");
-		expect(init.signal).toBeInstanceOf(AbortSignal);
-		expect(init.timeout).toBe(false);
+		expect(config.fetch).toBe(customFetch);
 	});
 });

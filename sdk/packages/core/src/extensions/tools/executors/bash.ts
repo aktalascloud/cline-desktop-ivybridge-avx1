@@ -417,8 +417,6 @@ export interface ShellExecutorOptions {
 	 * Environment variables to add/override
 	 */
 	env?: Record<string, string>;
-	/** Set false for an owning-session snapshot; absent keys stay absent. */
-	inheritEnv?: boolean;
 
 	/**
 	 * Whether to combine stdout and stderr
@@ -449,7 +447,6 @@ interface SpawnConfig {
 	args: string[];
 	cwd: string;
 	env: Record<string, string>;
-	inheritEnv: boolean;
 	input?: string;
 }
 
@@ -735,9 +732,7 @@ function spawnAndCollect(
 
 		const child = spawn(config.executable, config.args, {
 			cwd: config.cwd,
-			env: config.inheritEnv
-				? { ...process.env, ...config.env }
-				: { ...config.env },
+			env: { ...process.env, ...config.env },
 			stdio: ["pipe", "pipe", "pipe"],
 			detached: !isWindows,
 			// Prevent a console window from flashing on Windows when the
@@ -1142,7 +1137,6 @@ export function createShellExecutor(
 		shell = getDefaultShell(process.platform),
 		timeoutMs = 30000,
 		env = {},
-		inheritEnv = true,
 		combineOutput = true,
 		executionController,
 		processStartTokenProbe = probeProcessStartTokenAsync,
@@ -1174,7 +1168,6 @@ export function createShellExecutor(
 				args: invocation.args,
 				cwd,
 				env,
-				inheritEnv,
 				input: invocation.input,
 			},
 			context,

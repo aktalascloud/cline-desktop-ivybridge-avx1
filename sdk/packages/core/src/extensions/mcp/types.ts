@@ -95,8 +95,6 @@ export interface McpServerOAuthState {
 export interface McpServerOAuthClientConfig {
 	clientId: string;
 	clientSecret?: string;
-	/** Trusted authorization-server issuer; required when a client secret is configured. */
-	issuer?: string;
 }
 
 export interface McpServerRegistration {

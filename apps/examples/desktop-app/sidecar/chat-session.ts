@@ -18,7 +18,6 @@ import {
 	projectSessionCompactionState,
 	RuntimeOAuthTokenManager,
 	readGlobalSettings,
-	readCompactionPreferencesGlobally,
 	readSessionCheckpointHistory,
 	resolveProviderApiKeyFromSettings,
 	type SessionCompactionState,
@@ -39,7 +38,6 @@ import {
 	type ConsecutiveMistakeLimitContext,
 	type ConsecutiveMistakeLimitDecision,
 	formatUserCommandBlock,
-	estimateRequestInputTokens,
 	type SessionPluginIssue,
 } from "@cline/shared";
 import {
@@ -72,7 +70,6 @@ import {
 } from "./context";
 import { isCloudAgentsEnabled } from "./feature-flags";
 import { readSessionManifest, sharedSessionDataDir } from "./paths";
-import { refreshLocalSamplingConfig } from "./sampling-settings";
 import { runPluginSlashCommand } from "./plugin-commands";
 import {
 	readReasoningEffort,
@@ -80,10 +77,7 @@ import {
 	workspacePathKey,
 } from "./session-config";
 import { derivePromptFromMessages } from "./session-data/common";
-import {
-	hasUnmeasuredCompaction,
-	persistSessionMessages,
-} from "./session-data/messages";
+import { persistSessionMessages } from "./session-data/messages";
 import type {
 	ChatSessionCommandRequest,
 	JsonRecord,
@@ -147,13 +141,7 @@ async function compactSession(
 		return COMPACT_WHILE_RUNNING_MESSAGE;
 	}
 	const messages = await manager.readMessages(sessionId);
-	const state = await manager
-		.readSessionCompactionState(sessionId)
-		.catch(() => undefined);
-	const workingMessages = state
-		? (projectSessionCompactionState(state, messages) ?? messages)
-		: messages;
-	const conversationMessages = workingMessages.filter(
+	const conversationMessages = messages.filter(
 		(message) => message.metadata?.displayOnly !== true,
 	);
 	if (conversationMessages.length === 0) {
@@ -175,13 +163,7 @@ async function compactSession(
 			baseUrl,
 			headers,
 			providerConfig,
-			compaction: {
-				...readCompactionPreferencesGlobally(),
-				enabled: true,
-				strategy:
-					readGlobalSettings().compactionStrategy ??
-					"agentic",
-			},
+			compaction: { enabled: true },
 			logger: ctx.logger,
 			telemetry: ctx.telemetry,
 			sessionId,
@@ -202,26 +184,16 @@ async function compactSession(
 		model: {
 			id: modelId,
 			provider: providerId,
-			info: providerConfig?.modelInfo ??
-				providerConfig?.knownModels?.[modelId] ??
-				getGeneratedModelsForRuntimeProvider(providerId)[modelId] ?? {
-					id: modelId,
-					maxInputTokens: FALLBACK_MANUAL_COMPACTION_MAX_INPUT_TOKENS,
-				},
+			info: getGeneratedModelsForRuntimeProvider(providerId)[modelId] ?? {
+				id: modelId,
+				maxInputTokens: FALLBACK_MANUAL_COMPACTION_MAX_INPUT_TOKENS,
+			},
 		},
 	});
 	abortSignal.throwIfAborted();
 	if (!result?.messages) {
 		return "No compaction needed.";
 	}
-	const size = (items: MessageWithMetadata[]) =>
-		estimateRequestInputTokens({
-			messages: items,
-			systemPrompt: "",
-			tools: [],
-		});
-	if (size(result.messages) >= size(conversationMessages))
-		return "The working context is already compact. Lower recent-message preservation if you need further compression.";
 	const { updated } = await manager.updateSessionCompactionState(
 		sessionId,
 		createSessionCompactionState({
@@ -713,13 +685,7 @@ function buildCoreSessionConfig(
 		checkpoint: { enabled: true },
 		// Core auto-compaction is opt-in; without this the 90% trigger never
 		// runs and long desktop sessions overflow the context window.
-		compaction: {
-			...readCompactionPreferencesGlobally(),
-			enabled: true,
-			strategy:
-				readGlobalSettings().compactionStrategy ??
-				"agentic",
-		},
+		compaction: { enabled: true },
 		sessions: config.sessions,
 		extensionContext: createDesktopExtensionContext(telemetryUser),
 		...mistakeRecovery,
@@ -1053,7 +1019,7 @@ async function handleStart(
 	const config =
 		binding.kind === "ssh"
 			? await withRemoteProviderCredentials(request.config)
-			: refreshLocalSamplingConfig(request.config);
+			: request.config;
 	// Workspace discovery must happen where the files live. Local desktop
 	// sessions keep the eager prompt path; SSH sessions leave a blank prompt for
 	// the remote Hub's LocalRuntimeHost bootstrap to compose from remote metadata.
@@ -1064,31 +1030,21 @@ async function handleStart(
 	const requestedSessionId = String(
 		config.sessionId ?? config.session_id ?? "",
 	).trim();
-	const callerInitialMessages =
+	const initialMessages =
 		Array.isArray(config.initialMessages) && config.initialMessages.length > 0
 			? config.initialMessages
-			: undefined;
-	const initialMessages =
-		callerInitialMessages ??
-		(requestedSessionId
-			? binding.kind === "ssh"
-				? await manager
-						.readMessages(requestedSessionId)
-						.catch((error: unknown) => {
-							// The desktop supplies an ID before a new remote session exists.
-							// Only this startup read may treat missing history as empty.
-							if (isSessionNotFoundError(error)) return undefined;
-							throw error;
-						})
-				: (readPersistedChatMessages(requestedSessionId) ?? undefined)
-			: undefined);
-	// A local transcript read unmodified from the session store can be loaded by
-	// the Hub itself. Sending a long one inline can exceed the Hub's inbound
-	// frame limit, which makes the chat impossible to reopen.
-	const resumeFromStore =
-		binding.kind === "local" &&
-		callerInitialMessages === undefined &&
-		initialMessages !== undefined;
+			: requestedSessionId
+				? binding.kind === "ssh"
+					? await manager
+							.readMessages(requestedSessionId)
+							.catch((error: unknown) => {
+								// The desktop supplies an ID before a new remote session exists.
+								// Only this startup read may treat missing history as empty.
+								if (isSessionNotFoundError(error)) return undefined;
+								throw error;
+							})
+					: (readPersistedChatMessages(requestedSessionId) ?? undefined)
+				: undefined;
 	// Resolved once start() returns; the mistake-limit prompt reads it lazily.
 	let startedSessionId = requestedSessionId;
 	const coreConfig: JsonRecord = {
@@ -1114,7 +1070,6 @@ async function handleStart(
 		source: SessionSource.DESKTOP,
 		interactive: true,
 		...(initialMessages ? { initialMessages } : {}),
-		...(resumeFromStore ? { resumeFromStore } : {}),
 		toolPolicies: resolveToolPolicies(config),
 		sessionMetadata:
 			binding.kind === "ssh"
@@ -1231,7 +1186,7 @@ async function handleAttach(
 			environmentId: binding.environmentId,
 			messages: existing?.messages ?? [],
 			promptsInQueue: existing?.promptsInQueue ?? [],
-			status: manualCompactions.has(sessionId) ? "running" : session.status,
+			status: session.status,
 			prompt:
 				session.prompt ||
 				(typeof metadata?.prompt === "string" ? metadata.prompt : undefined) ||
@@ -1253,8 +1208,7 @@ async function handleAttach(
 	return {
 		sessionId,
 		environmentId: binding.environmentId,
-		status: manualCompactions.has(sessionId) ? "running" : session.status,
-		compacting: manualCompactions.has(sessionId),
+		status: session.status,
 		provider: session.provider,
 		model: session.model,
 		cwd: session.cwd,
@@ -1714,17 +1668,7 @@ async function handleSendOnce(
 			command: commandName,
 			text,
 		});
-		return {
-			sessionId,
-			ok: true,
-			commandHandled: true,
-			...(hasUnmeasuredCompaction(
-				sessionId,
-				await manager.readMessages(sessionId),
-			)
-				? { contextCompacted: true }
-				: {}),
-		};
+		return { sessionId, ok: true, commandHandled: true };
 	}
 	const pluginCommand =
 		commandName && !BUILTIN_SLASH_COMMAND_NAMES.has(commandName)
@@ -1763,11 +1707,9 @@ async function handleSendOnce(
 	if (!delivery && session?.busy) {
 		delivery = "queue";
 	}
-	let nextConfig = request.config
+	const nextConfig = request.config
 		? mergeSessionConfig(session?.config ?? {}, request.config)
 		: session?.config;
-	if (binding.kind === "local" && nextConfig && !session?.busy)
-		nextConfig = refreshLocalSamplingConfig(nextConfig);
 	const providerChanged = Boolean(
 		session &&
 			request.config &&
@@ -1790,12 +1732,7 @@ async function handleSendOnce(
 		}
 	}
 	try {
-		if (
-			(request.config ||
-				binding.kind === "ssh" ||
-				nextConfig !== session?.config) &&
-			nextConfig
-		) {
+		if ((request.config || binding.kind === "ssh") && nextConfig) {
 			if (providerChanged && session) {
 				await rebuildSessionForProviderChange(
 					ctx,

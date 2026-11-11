@@ -818,6 +818,27 @@ describe("buildSessionConfig", () => {
 
 		expect(config.thinking).toBe(false)
 		expect(knownModel.capabilities).toEqual(expect.arrayContaining(["images", "reasoning", "tools"]))
+
+		// The same config through the real handler and gateway: the endpoint
+		// must receive the disable.
+		let body: Record<string, unknown> | undefined
+		const fetchStub = (async (_input: unknown, init?: RequestInit) => {
+			body = JSON.parse((init?.body as string) ?? "{}")
+			return new Response(JSON.stringify({ error: { message: "stub" } }), {
+				status: 400,
+				headers: { "content-type": "application/json" },
+			})
+		}) as unknown as typeof fetch
+		const handler = await LlmsModels.createHandlerAsync({
+			...(config.providerConfig as LlmsModels.ProviderConfig),
+			thinking: config.thinking,
+			reasoningEffort: config.reasoningEffort,
+			fetch: fetchStub,
+		})
+		for await (const _chunk of handler.createMessage("Summarize.", [{ role: "user", content: "hi" }])) {
+			// drain
+		}
+		expect(body?.reasoning_effort).toBe("none")
 	})
 
 	it("does not rewrite providers.json when the stored Azure settings already match", () => {
@@ -1263,6 +1284,7 @@ describe("buildSessionConfig", () => {
 	it.each([
 		["says nothing about reasoning", {}, true],
 		["denies reasoning explicitly", { supportsReasoning: false }, false],
+		["generates images", { operation: "image-generation" }, false],
 	])("treats a dynamic-list model that %s accordingly", async (_label, reasoningFlag, expectReasoning) => {
 		mocks.stateManager.getApiConfiguration.mockReturnValue({
 			actModeApiProvider: "openrouter",

@@ -1,4 +1,3 @@
-import { isQwen38NextAuthorModel } from "@cline/shared";
 import {
 	existsSync,
 	mkdirSync,
@@ -14,7 +13,6 @@ import {
 	ApiFormatSchema,
 	type ModelCapability,
 	ModelCapabilitySchema,
-	ModelReasoningOptionSchema,
 	type ModelInfo,
 	ModelModalitiesSchema,
 	ModelOperationModeSchema,
@@ -56,11 +54,9 @@ export const StoredModelEntrySchema = z
 		contextWindow: OptionalPositiveFiniteNumberSchema,
 		maxInputTokens: OptionalPositiveFiniteNumberSchema,
 		capabilities: z.array(ModelCapabilitySchema).optional(),
-		reasoningOptions: z.array(ModelReasoningOptionSchema).optional(),
 		supportsVision: z.boolean().optional(),
 		supportsAttachments: z.boolean().optional(),
 		supportsReasoning: z.boolean().optional(),
-		supportsAuthorModes: z.boolean().optional(),
 		operation: ModelOperationSchema.optional(),
 		operationModes: z.array(ModelOperationModeSchema).optional(),
 		modalities: ModelModalitiesSchema.optional(),
@@ -257,8 +253,6 @@ export function toProviderModel(
 		| "contextWindow"
 		| "capabilities"
 		| "thinkingConfig"
-		| "reasoningOptions"
-		| "metadata"
 		| "operation"
 		| "operationModes"
 		| "modalities"
@@ -269,9 +263,6 @@ export function toProviderModel(
 		name: info.name ?? modelId,
 		...(info.description ? { description: info.description } : {}),
 		operation: info.operation,
-		...(info.reasoningOptions
-			? { reasoningOptions: info.reasoningOptions }
-			: {}),
 		...(info.contextWindow !== undefined
 			? { contextWindow: info.contextWindow }
 			: {}),
@@ -284,10 +275,6 @@ export function toProviderModel(
 			info.thinkingConfig != null
 				? true
 				: declaredCapability(info.capabilities, "reasoning"),
-		...(info.metadata?.supportsAuthorModes === true &&
-		isQwen38NextAuthorModel(modelId)
-			? { supportsAuthorModes: true }
-			: {}),
 		operationModes: info.operationModes,
 		inputModalities: info.modalities?.input,
 		outputModalities: info.modalities?.output,
@@ -414,12 +401,6 @@ function toStoredModelInfo(
 	return {
 		id: modelId,
 		name: model?.name ?? modelId,
-		...(model?.reasoningOptions
-			? { reasoningOptions: model.reasoningOptions }
-			: {}),
-		...(model?.supportsAuthorModes === true && isQwen38NextAuthorModel(modelId)
-			? { metadata: { supportsAuthorModes: true } }
-			: {}),
 		...(model?.maxTokens !== undefined ? { maxTokens: model.maxTokens } : {}),
 		...(model?.contextWindow !== undefined
 			? { contextWindow: model.contextWindow }
@@ -649,9 +630,6 @@ export function registerCustomProvider(
 		provider: {
 			id: providerId,
 			name: entry.provider.name.trim() || titleCaseFromId(providerId),
-			...(typeof entry.provider.description === "string"
-				? { description: entry.provider.description }
-				: {}),
 			protocol,
 			client,
 			baseUrl: entry.provider.baseUrl,

@@ -1,0 +1,1080 @@
+diff --git a/apps/examples/desktop-app/sidecar/commands.ts b/apps/examples/desktop-app/sidecar/commands.ts
+index af1866a58a5fe2505a570f6f0f248e0a9272babd..2485fe1f115e27b9b3f6c53b1e6899b8f8c5cf67 100644
+--- a/apps/examples/desktop-app/sidecar/commands.ts
++++ b/apps/examples/desktop-app/sidecar/commands.ts
+@@ -52,6 +52,8 @@ import {
+ 	persistClineAccountTelemetryIdentity,
+ 	RemoteEnvironmentService,
+ 	readGlobalSettings,
++	readCompactionPreferencesGlobally,
++	setCompactionPreferencesGlobally,
+ 	readSessionCheckpointHistory,
+ 	resolveClineAccountTelemetryIdentity,
+ 	resolveSessionBackend,
+@@ -3334,6 +3336,15 @@ export async function handleCommand(
+ 	}
+ 
+ 	// ── Global settings ────────────────────────────────────────────────
++	if (command === "get_compaction_settings") {
++		return readCompactionPreferencesGlobally();
++	}
++	if (command === "set_compaction_settings") {
++		if (!options?.connection?.data?.canApproveTools) {
++			throw new Error("Compaction settings require a trusted connection");
++		}
++		return setCompactionPreferencesGlobally(args?.settings);
++	}
+ 	if (command === "get_global_settings") {
+ 		return readGlobalSettings();
+ 	}
+diff --git a/apps/examples/desktop-app/webview/components/views/settings/compaction-settings.tsx b/apps/examples/desktop-app/webview/components/views/settings/compaction-settings.tsx
+new file mode 100644
+index 0000000000000000000000000000000000000000..c256352c4066515f612b510206322f83bc4b1640
+--- /dev/null
++++ b/apps/examples/desktop-app/webview/components/views/settings/compaction-settings.tsx
+@@ -0,0 +1,140 @@
++"use client";
++import { useEffect, useState } from "react";
++import { Button } from "@/components/ui/button";
++import { Input } from "@/components/ui/input";
++import { Switch } from "@cline/ui";
++import { desktopClient } from "@/lib/desktop-client";
++import { useTranslation } from "@/lib/i18n";
++
++type Preferences = {
++	enabled: boolean;
++	triggerTokens: number;
++	maxInputTokens: number;
++	preserveRecentMessages: number;
++};
++export function CompactionSettings() {
++	const t = useTranslation();
++	const [value, setValue] = useState<Preferences>({
++		enabled: true,
++		triggerTokens: 90000,
++		maxInputTokens: 120000,
++		preserveRecentMessages: 40,
++	});
++	const [loading, setLoading] = useState(true);
++	const [saving, setSaving] = useState(false);
++	const [message, setMessage] = useState("");
++	useEffect(() => {
++		let active = true;
++		void desktopClient
++			.invoke<Preferences>("get_compaction_settings")
++			.then((v) => {
++				if (active && v) setValue(v);
++			})
++			.catch(() => {
++				if (active) setMessage("Could not load compaction settings");
++			})
++			.finally(() => {
++				if (active) setLoading(false);
++			});
++		return () => {
++			active = false;
++		};
++	}, []);
++	const save = async () => {
++		setSaving(true);
++		setMessage("");
++		try {
++			const saved = await desktopClient.invoke<Preferences>(
++				"set_compaction_settings",
++				{ settings: value },
++			);
++			if (saved) setValue(saved);
++			setMessage("Compaction settings saved");
++		} catch (e) {
++			setMessage(e instanceof Error ? e.message : String(e));
++		} finally {
++			setSaving(false);
++		}
++	};
++	const fields = [
++		{
++			key: "triggerTokens" as const,
++			label: "Token threshold",
++			min: 1024,
++			max: 10000000,
++			help: "Older context is summarized when the request reaches this threshold.",
++		},
++		{
++			key: "maxInputTokens" as const,
++			label: "Token limit",
++			min: 2048,
++			max: 10000000,
++			help: "The model window and answer reserve can lower the effective limit.",
++		},
++		{
++			key: "preserveRecentMessages" as const,
++			label: "Recent messages to preserve",
++			min: 0,
++			max: 1000,
++			help: "Keep recent messages and whole tool chains when they fit the budget. Full history stays saved.",
++		},
++	];
++	return (
++		<section
++			className="border-b py-4 space-y-4"
++			aria-label={t("Context compaction")}
++		>
++			<div className="flex items-center justify-between gap-4">
++				<h2 className="text-base font-semibold">
++					{t("Automatic context compaction")}
++				</h2>
++				<Switch
++					aria-label={t("Automatic context compaction")}
++					disabled={loading}
++					checked={value.enabled}
++					onCheckedChange={(enabled) => setValue({ ...value, enabled })}
++				/>
++			</div>
++			<form
++				className="space-y-3"
++				onSubmit={(e) => {
++					e.preventDefault();
++					void save();
++				}}
++			>
++				{fields.map((field) => (
++					<div key={field.key} className="max-w-xl space-y-1">
++						<label
++							htmlFor={`compaction-${field.key}`}
++							className="text-sm font-medium"
++						>
++							{t(field.label)}
++						</label>
++						<Input
++							id={`compaction-${field.key}`}
++							type="number"
++							min={field.min}
++							max={field.max}
++							step={1}
++							disabled={loading}
++							required
++							value={Number.isFinite(value[field.key]) ? value[field.key] : ""}
++							onChange={(e) =>
++								setValue({ ...value, [field.key]: e.target.valueAsNumber })
++							}
++						/>
++						<p className="text-xs text-muted-foreground">{t(field.help)}</p>
++					</div>
++				))}
++				<Button type="submit" disabled={saving || loading}>
++					{t(saving ? "Saving…" : "Save")}
++				</Button>
++				{message && (
++					<p role="status" className="text-sm">
++						{t(message)}
++					</p>
++				)}
++			</form>
++		</section>
++	);
++}
+diff --git a/sdk/packages/agents/src/agent-runtime.ts b/sdk/packages/agents/src/agent-runtime.ts
+index c0d9fa5263c92dc8b52f591bb4e2f9ddec444d2b..e4b801da00284b0ae500e36b770ea24b2c5738b3 100644
+--- a/sdk/packages/agents/src/agent-runtime.ts
++++ b/sdk/packages/agents/src/agent-runtime.ts
+@@ -604,7 +604,6 @@ export class AgentRuntime {
+ 		lastFinishReason: undefined as AgentModelFinishReason | undefined,
+ 	};
+ 	/** One automatic overflow-recovery attempt per run. */
+-	private overflowRecoveryAttempted = false;
+ 	/** Consecutive output-limit cut-offs recovered this run; see MAX_TOKENS_RECOVERY_LIMIT. */
+ 	private maxTokensRecoveryCount = 0;
+ 	/** One automatic recovery attempt per run for max-tokens-truncated turns. */
+@@ -816,7 +815,6 @@ export class AgentRuntime {
+ 		this.state.lastErrorReported = false;
+ 		this.state.lastFinishReason = undefined;
+ 		this.state.usage = cloneUsage(DEFAULT_USAGE);
+-		this.overflowRecoveryAttempted = false;
+ 		this.state.lastRequestInputTokens = 0;
+ 		this.pendingHookContexts = [];
+ 		this.maxTokensRecoveryCount = 0;
+@@ -1366,7 +1364,9 @@ export class AgentRuntime {
+ 	}
+ 
+ 	/**
+-	 * Run a model turn, recovering once per run from each of two conditions:
++	 * Run a model turn, recovering once per rejected step from context overflow.
++	 * A successful step may refill context; its next overflow gets its own retry.
++	 * Max-token recovery retains its separate per-run guard. The conditions are:
+ 	 * a provider-rejected context-window overflow, and a response truncated
+ 	 * at the output-token limit on a turn with no tool calls. Both recoveries
+ 	 * force a compaction through `prepareTurn` and retry the request.
+@@ -1387,7 +1387,6 @@ export class AgentRuntime {
+ 		if (!this.isRecoverableOverflowTurn(first)) {
+ 			return first;
+ 		}
+-		this.overflowRecoveryAttempted = true;
+ 		const providerError = this.state.lastError;
+ 		if (!this.config.prepareTurn) {
+ 			throw new ContextWindowOverflowError(
+@@ -1428,8 +1427,7 @@ export class AgentRuntime {
+ 	}): boolean {
+ 		if (
+ 			turn.finishReason !== "error" ||
+-			this.state.lastErrorClass !== "context_window_exceeded" ||
+-			this.overflowRecoveryAttempted
++			this.state.lastErrorClass !== "context_window_exceeded"
+ 		) {
+ 			return false;
+ 		}
+diff --git a/sdk/packages/core/src/extensions/context/agentic-compaction.ts b/sdk/packages/core/src/extensions/context/agentic-compaction.ts
+index 76f4cbed4992ae85975afb28dec7415c42e066bb..35a7e9eee9a7399eface52c00ca52c9f4da5102b 100644
+--- a/sdk/packages/core/src/extensions/context/agentic-compaction.ts
++++ b/sdk/packages/core/src/extensions/context/agentic-compaction.ts
+@@ -54,6 +54,7 @@ export async function runAgenticCompaction(options: {
+ 	providerConfig: ProviderConfig;
+ 	summarizer?: CoreCompactionSummarizerConfig;
+ 	preserveRecentTokens: number;
++	preserveRecentMessages?: number;
+ 	estimateMessageTokens: EstimateMessageTokens;
+ 	logger?: BasicLogger;
+ }): Promise<CoreCompactionResult | undefined> {
+@@ -66,6 +67,7 @@ export async function runAgenticCompaction(options: {
+ 		messages,
+ 		options.preserveRecentTokens,
+ 		options.estimateMessageTokens,
++		options.preserveRecentMessages,
+ 	);
+ 	if (cutIndex <= 0 || cutIndex >= messages.length) {
+ 		return undefined;
+diff --git a/sdk/packages/core/src/extensions/context/basic-compaction.ts b/sdk/packages/core/src/extensions/context/basic-compaction.ts
+index 31050c3c59dbdd1caeb0299baea5f0b6b6b20477..91bb71fefd301a6b7e4570b0918c29c0ec9e572a 100644
+--- a/sdk/packages/core/src/extensions/context/basic-compaction.ts
++++ b/sdk/packages/core/src/extensions/context/basic-compaction.ts
+@@ -11,6 +11,7 @@ import type {
+ import { buildBudgetProjection } from "./budget-projection";
+ import {
+ 	type EstimateMessageTokens,
++	findCutIndex,
+ 	formatToolActivitySummary,
+ 	hasToolActivity,
+ 	isTurnStartMessage,
+@@ -450,10 +451,49 @@ function sanitizeOlderAssistantFinal(
+  * summaries attached to the surviving prompts.
+  */
+ export function runBasicCompaction(options: {
++	preserveRecentMessages?: number;
+ 	context: CoreCompactionContext;
+ 	estimateMessageTokens: EstimateMessageTokens;
+ 	logger?: BasicLogger;
+ }): CoreCompactionResult | undefined {
++	if (options.preserveRecentMessages && options.preserveRecentMessages > 0) {
++		const messages = options.context.messages;
++		const cut = findCutIndex(
++			messages,
++			0,
++			options.estimateMessageTokens,
++			options.preserveRecentMessages,
++		);
++		const tail = messages.slice(cut);
++		const target =
++			options.context.budget.messages.targetTokens -
++			tail.reduce((n, m) => n + options.estimateMessageTokens(m), 0);
++		if (cut > 0 && target > 1024) {
++			const prefix = runBasicCompaction({
++				...options,
++				preserveRecentMessages: undefined,
++				context: {
++					...options.context,
++					messages: messages.slice(0, cut),
++					budget: {
++						...options.context.budget,
++						messages: {
++							...options.context.budget.messages,
++							targetTokens: target,
++						},
++					},
++				},
++			});
++			if (
++				prefix &&
++				prefix.messages.reduce(
++					(n, m) => n + options.estimateMessageTokens(m),
++					0,
++				) <= target
++			)
++				return { ...prefix, messages: [...prefix.messages, ...tail] };
++		}
++	}
+ 	const originalMessages = options.context.messages;
+ 	const estimate = options.estimateMessageTokens;
+ 	// A lone message has nothing to compact around it; truncating the only
+@@ -498,13 +538,17 @@ export function runBasicCompaction(options: {
+ 	}
+ 
+ 	// Output of an earlier compaction is frozen: those messages are kept
+-	// as-is and never re-folded, so this pass only processes new messages.
++	// as-is during normal compaction. A provider-rejected overflow must
++	// re-fold them too; otherwise recovery resends the same oversized prompt.
+ 	const frozenIndices = new Set<number>();
+ 	for (let index = 0; index < originalMessages.length; index += 1) {
+ 		if (sanitizedTypedByIndex.has(index)) {
+ 			continue;
+ 		}
+-		if (isPreservedByCompaction(originalMessages[index])) {
++		if (
++			options.context.mode !== "overflow_recovery" &&
++			isPreservedByCompaction(originalMessages[index])
++		) {
+ 			frozenIndices.add(index);
+ 			totalTokens += estimate(originalMessages[index]);
+ 		}
+diff --git a/sdk/packages/core/src/extensions/context/compaction-shared.ts b/sdk/packages/core/src/extensions/context/compaction-shared.ts
+index cc6d327881b12a9e6a018f4b6acd2c23dd16a002..94e85015e36e0f97e62a6848d3642286f388fa3c 100644
+--- a/sdk/packages/core/src/extensions/context/compaction-shared.ts
++++ b/sdk/packages/core/src/extensions/context/compaction-shared.ts
+@@ -96,7 +96,8 @@ export function resolveProviderMaxInputTokens(
+ 	const modelInfoLimit = resolveEffectiveMaxInputTokens({
+ 		maxInputTokens:
+ 			providerConfig.maxInputTokens ?? providerConfig.modelInfo?.maxInputTokens,
+-		contextWindow: providerConfig.modelInfo?.contextWindow,
++		contextWindow:
++			providerConfig.contextWindow ?? providerConfig.modelInfo?.contextWindow,
+ 	});
+ 	if (modelInfoLimit !== undefined) return modelInfoLimit;
+ 	const knownModelInfo = providerConfig.knownModels?.[providerConfig.modelId];
+@@ -369,6 +370,7 @@ export function findCutIndex(
+ 	messages: MessageWithMetadata[],
+ 	preserveRecentTokens: number,
+ 	estimateMessageTokens: EstimateMessageTokens,
++	preserveRecentMessages?: number,
+ ): number {
+ 	let total = 0;
+ 	let candidate = messages.length;
+@@ -380,6 +382,12 @@ export function findCutIndex(
+ 		}
+ 	}
+ 
++	if (preserveRecentMessages !== undefined)
++		candidate = Math.max(
++			0,
++			messages.length - Math.max(0, Math.floor(preserveRecentMessages)),
++		);
++
+ 	if (candidate <= 0) {
+ 		return 0;
+ 	}
+diff --git a/sdk/packages/core/src/extensions/context/compaction.test.ts b/sdk/packages/core/src/extensions/context/compaction.test.ts
+index 7a6518673f123b0c97ca7a8e011cbb9c3408fcf7..94ae86304b78b254b755f3f79a44db2425440caa 100644
+--- a/sdk/packages/core/src/extensions/context/compaction.test.ts
++++ b/sdk/packages/core/src/extensions/context/compaction.test.ts
+@@ -1,3 +1,6 @@
++import { mkdtempSync, rmSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join } from "node:path";
+ import type * as LlmsProviders from "@cline/llms";
+ import {
+ 	estimateRequestInputTokens,
+@@ -23,6 +26,7 @@ import {
+ 	estimateTokens,
+ 	MAX_INPUT_UNDERESTIMATE_FACTOR,
+ 	resolveEffectiveMaxInputTokens,
++	resolveProviderMaxInputTokens,
+ 	resolveSummarizerConfig,
+ 	serializeMessage,
+ 	TOOL_RESULT_CHAR_LIMIT,
+@@ -256,6 +260,34 @@ describe("resolveEffectiveMaxInputTokens", () => {
+ 	});
+ });
+ 
++describe("resolveProviderMaxInputTokens", () => {
++	it("resolves contextWindow configured on providerConfig when modelInfo is absent", () => {
++		expect(
++			resolveProviderMaxInputTokens({
++				providerId: "openai-compatible",
++				modelId: "custom-model",
++				contextWindow: 320_000,
++			}),
++		).toBe(288_000);
++	});
++
++	it("uses providerConfig.contextWindow over knownModels fallback", () => {
++		expect(
++			resolveProviderMaxInputTokens({
++				providerId: "openai-compatible",
++				modelId: "custom-model",
++				contextWindow: 262_144,
++				knownModels: {
++					"custom-model": {
++						id: "custom-model",
++						contextWindow: 128_000,
++					},
++				},
++			}),
++		).toBe(262_144 * 0.9);
++	});
++});
++
+ function runForcedBasicCompaction(
+ 	messages: LlmsProviders.Message[],
+ 	targetTokens: number,
+@@ -496,6 +528,44 @@ describe("createContextCompactionPrepareTurn", () => {
+ 		expect(result?.messages).toEqual([{ role: "user", content: "Compacted" }]);
+ 	});
+ 
++	it("auto-compacts a custom model with contextWindow on providerConfig when modelInfo has no limits", async () => {
++		const compact = vi.fn((_context: CoreCompactionContext) => ({
++			messages: [{ role: "user" as const, content: "Compacted" }],
++		}));
++		const prepareTurn = createContextCompactionPrepareTurn({
++			providerId: "openai-compatible",
++			modelId: "custom-model",
++			providerConfig: {
++				providerId: "openai-compatible",
++				modelId: "custom-model",
++				contextWindow: 1_000,
++			},
++			compaction: { enabled: true, compact },
++		});
++		const messages: MessageWithMetadata[] = [
++			{ role: "user", content: "x".repeat(3_000) },
++		];
++		const result = await prepareTurn?.({
++			agentId: "agent-1",
++			conversationId: "conv-1",
++			parentAgentId: null,
++			iteration: 1,
++			abortSignal: new AbortController().signal,
++			systemPrompt: "You are helpful.",
++			tools: [],
++			messages,
++			apiMessages: messages,
++			model: {
++				id: "custom-model",
++				provider: "openai-compatible",
++				info: { id: "custom-model" },
++			},
++		});
++
++		expect(compact).toHaveBeenCalledTimes(1);
++		expect(result?.messages).toEqual([{ role: "user", content: "Compacted" }]);
++	});
++
+ 	it("truncates text-block tool results when serializing compaction input", () => {
+ 		const longToolOutput = "x".repeat(TOOL_RESULT_CHAR_LIMIT + 100);
+ 
+@@ -5037,3 +5107,255 @@ describe("createContextCompactionPrepareTurn", () => {
+ 		).toBeDefined();
+ 	});
+ });
++
++it("auto-compacts a discovered 128K local model before sending an oversized history", async () => {
++	const { extractModelsFromPayload } = await import(
++		"../../services/providers/model-source"
++	);
++	const model = extractModelsFromPayload(
++		{ data: [{ id: "local", context_length: 131072 }] },
++		"local-provider",
++	)[0]!;
++	const messages: MessageWithMetadata[] = [
++		{ role: "user", content: "Initial task" },
++		{ role: "assistant", content: "Earlier context ".repeat(40000) },
++		{ role: "user", content: "Newest request" },
++	];
++	const original = JSON.stringify(messages);
++	const compact = vi.fn(async (ctx: CoreCompactionContext) => ({
++		messages: [
++			{ role: "user" as const, content: "Summary of completed work" },
++			ctx.messages.at(-1)!,
++		],
++	}));
++	const prepare = createContextCompactionPrepareTurn({
++		providerId: "local-provider",
++		modelId: "local",
++		compaction: { enabled: true, compact },
++	});
++	const result = await prepare?.({
++		agentId: "fixture",
++		conversationId: "fixture",
++		parentAgentId: null,
++		iteration: 2,
++		messages,
++		apiMessages: messages,
++		systemPrompt: "Preserve task and approvals",
++		tools: [],
++		abortSignal: new AbortController().signal,
++		model: { id: "local", provider: "local-provider", info: model },
++	});
++	expect(compact).toHaveBeenCalledOnce();
++	const budget = compact.mock.calls[0]![0].budget!;
++	expect(budget.request.maxInputTokens).toBeLessThan(131072);
++	expect(budget.request.targetTokens).toBeLessThan(
++		budget.request.triggerTokens,
++	);
++	expect(result?.messages.at(-1)?.content).toBe("Newest request");
++	expect(JSON.stringify(messages)).toBe(original);
++});
++
++it("applies edited thresholds to an already-created compaction callback without changing the transcript", async () => {
++	const { setCompactionPreferencesGlobally } = await import(
++		"../../services/global-settings"
++	);
++	const previous = process.env.CLINE_GLOBAL_SETTINGS_PATH;
++	const temp = mkdtempSync(join(tmpdir(), "live-compaction-"));
++	process.env.CLINE_GLOBAL_SETTINGS_PATH = join(temp, "settings.json");
++	try {
++		const compact = vi.fn(async (_context: CoreCompactionContext) => ({
++			messages: [
++				{ role: "user" as const, content: "Older context summary" },
++				{ role: "user" as const, content: "Newest request" },
++			],
++		}));
++		const prepare = createContextCompactionPrepareTurn({
++			providerId: "synthetic",
++			modelId: "local",
++			compaction: { enabled: true, compact },
++		})!;
++		const messages: MessageWithMetadata[] = [
++			{ role: "user", content: "Original task" },
++			{ role: "assistant", content: "synthetic history ".repeat(50000) },
++			{ role: "user", content: "Newest request" },
++		];
++		const original = JSON.stringify(messages);
++		const context = {
++			agentId: "fixture",
++			conversationId: "fixture",
++			parentAgentId: null,
++			iteration: 2,
++			messages,
++			apiMessages: messages,
++			tools: [],
++			systemPrompt: "Keep approvals",
++			abortSignal: new AbortController().signal,
++			model: {
++				id: "local",
++				provider: "synthetic",
++				info: { id: "local", contextWindow: 131072 },
++			},
++		};
++		setCompactionPreferencesGlobally({
++			enabled: false,
++			triggerTokens: 90000,
++			maxInputTokens: 120000,
++			preserveRecentMessages: 40,
++		});
++		expect(await prepare(context)).toBeUndefined();
++		expect(compact).not.toHaveBeenCalled();
++		setCompactionPreferencesGlobally({
++			enabled: true,
++			triggerTokens: 90000,
++			maxInputTokens: 120000,
++			preserveRecentMessages: 40,
++		});
++		expect((await prepare(context))?.messages.at(-1)?.content).toBe(
++			"Newest request",
++		);
++		expect(compact.mock.calls[0]?.[0].budget.request.triggerTokens).toBe(90000);
++		setCompactionPreferencesGlobally({
++			enabled: true,
++			triggerTokens: 80000,
++			maxInputTokens: 110000,
++			preserveRecentMessages: 10,
++		});
++		await prepare(context);
++		expect(compact.mock.calls[1]?.[0].budget.request.triggerTokens).toBe(80000);
++		expect(compact.mock.calls[1]?.[0].budget.request.maxInputTokens).toBe(
++			110000,
++		);
++		expect(JSON.stringify(messages)).toBe(original);
++	} finally {
++		if (previous === undefined) delete process.env.CLINE_GLOBAL_SETTINGS_PATH;
++		else process.env.CLINE_GLOBAL_SETTINGS_PATH = previous;
++		rmSync(temp, { recursive: true, force: true });
++	}
++});
++
++it("keeps forty recent messages verbatim while summarizing only the older prefix", async () => {
++	createHandlerMock.mockReturnValue({
++		createMessage: vi.fn(() =>
++			streamChunks([
++				{
++					type: "text",
++					id: "summary",
++					text: "Earlier work summary. Continue the requested task.",
++				},
++				{ type: "done", id: "summary", success: true },
++			]),
++		),
++	});
++	const messages: MessageWithMetadata[] = Array.from(
++		{ length: 100 },
++		(_, i) => ({
++			role: i % 2 === 0 ? "user" : "assistant",
++			content: `Synthetic message ${i}: ` + "x".repeat(500),
++		}),
++	);
++	const original = JSON.stringify(messages);
++	const prepare = createContextCompactionPrepareTurn({
++		providerId: "anthropic",
++		modelId: "mock-model",
++		providerConfig: {
++			providerId: "anthropic",
++			modelId: "mock-model",
++		} as LlmsProviders.ProviderConfig,
++		compaction: {
++			enabled: true,
++			strategy: "agentic",
++			preserveRecentTokens: 1,
++			preserveRecentMessages: 40,
++			triggerTokens: 15000,
++			maxInputTokens: 60000,
++		},
++	})!;
++	const result = await prepare({
++		agentId: "fixture",
++		conversationId: "fixture",
++		parentAgentId: null,
++		iteration: 1,
++		messages,
++		apiMessages: messages,
++		systemPrompt: "Keep approvals",
++		tools: [],
++		abortSignal: new AbortController().signal,
++		model: {
++			id: "mock-model",
++			provider: "anthropic",
++			info: { id: "mock-model", contextWindow: 131072 },
++		},
++	});
++	expect(createHandlerMock).toHaveBeenCalledOnce();
++	expect(result?.messages.slice(-40)).toEqual(messages.slice(-40));
++	expect(JSON.stringify(messages)).toBe(original);
++	expect(result?.messages.length).toBeLessThan(messages.length);
++});
++
++it("recompacts frozen tool results after a provider rejects an already compacted request", () => {
++	const frozen = { compaction: "preserved" };
++	const messages: MessageWithMetadata[] = [
++		{ role: "user", content: "Read the file and fix it" },
++		{
++			role: "assistant",
++			content: [
++				{
++					type: "tool_use",
++					id: "read-1",
++					name: "read_file",
++					input: { path: "sample.txt" },
++				},
++			],
++			metadata: frozen,
++		},
++		{
++			role: "user",
++			content: [
++				{
++					type: "tool_result",
++					tool_use_id: "read-1",
++				name: "read_file",
++					content: "large file result ".repeat(4000),
++				},
++			],
++			metadata: frozen,
++		},
++		{ role: "assistant", content: "Read sample.txt", metadata: frozen },
++		{ role: "user", content: "Continue the fix" },
++	];
++	const result = runBasicCompaction({
++		estimateMessageTokens: createTokenEstimator(),
++		context: {
++			agentId: "agent",
++			conversationId: "conversation",
++			parentAgentId: null,
++			iteration: 1,
++			messages,
++			model: { id: "test", provider: "test" },
++			mode: "overflow_recovery",
++			abortSignal: new AbortController().signal,
++			budget: {
++				request: {
++					inputTokens: 20000,
++					maxInputTokens: 10000,
++					triggerTokens: 9000,
++					targetTokens: 2000,
++					overheadTokens: 0,
++					thresholdRatio: 0.9,
++					utilizationRatio: 2,
++				},
++				messages: {
++					inputTokens: 20000,
++					triggerTokens: 9000,
++					targetTokens: 2000,
++				},
++			},
++		},
++	});
++	expect(result?.messages).toBeDefined();
++	expect(JSON.stringify(result?.messages).length).toBeLessThan(
++		JSON.stringify(messages).length / 2,
++	);
++	expect(JSON.stringify(result?.messages)).toContain("Continue the fix");
++	expect(JSON.stringify(result?.messages)).toContain("sample.txt");
++});
+diff --git a/sdk/packages/core/src/extensions/context/compaction.ts b/sdk/packages/core/src/extensions/context/compaction.ts
+index d6b8431304a98c769f142f77d79bafde48f448f5..385aee0dd9932594073de4727e1dc97429a516f5 100644
+--- a/sdk/packages/core/src/extensions/context/compaction.ts
++++ b/sdk/packages/core/src/extensions/context/compaction.ts
+@@ -1,3 +1,4 @@
++import { readGlobalSettings } from "../../services/global-settings";
+ import { estimateRequestInputTokens } from "@cline/shared";
+ import { resolveConnectionProviderConfig } from "../../services/llms/handler-factory";
+ import {
+@@ -32,6 +33,7 @@ import {
+ 	findLatestSummaryIndex,
+ 	MAX_INPUT_UNDERESTIMATE_FACTOR,
+ 	resolveEffectiveMaxInputTokens,
++	resolveProviderMaxInputTokens,
+ } from "./compaction-shared";
+ 
+ export interface ContextPipelinePrepareTurnInput {
+@@ -160,8 +162,9 @@ function summarizeToolResults(messages: CoreCompactionContext["messages"]): {
+ }
+ 
+ const BUILTIN_COMPACTION_STRATEGIES = {
+-	basic: ({ context, estimateMessageTokens, logger }) =>
++	basic: ({ context, estimateMessageTokens, logger, compaction }) =>
+ 		runBasicCompaction({
++			preserveRecentMessages: compaction?.preserveRecentMessages,
+ 			context,
+ 			estimateMessageTokens,
+ 			logger,
+@@ -177,6 +180,7 @@ const BUILTIN_COMPACTION_STRATEGIES = {
+ 			context,
+ 			providerConfig,
+ 			summarizer: compaction?.summarizer,
++			preserveRecentMessages: compaction?.preserveRecentMessages,
+ 			preserveRecentTokens: Math.min(
+ 				compaction?.preserveRecentTokens ?? DEFAULT_PRESERVE_RECENT_TOKENS,
+ 				context.budget.messages.targetTokens,
+@@ -285,23 +289,38 @@ export function createContextCompactionPrepareTurn(
+ 			context: ContextPipelinePrepareTurnInput,
+ 	  ) => Promise<ContextPipelinePrepareTurnResult | undefined>)
+ 	| undefined {
+-	const userCompaction: CoreCompactionConfig = {
++	const baseCompaction: CoreCompactionConfig = {
+ 		...config.compaction,
+ 		...options.compaction,
+ 	};
+-	if (userCompaction.enabled !== true) {
++	if (baseCompaction.enabled !== true) {
+ 		return undefined;
+ 	}
+ 
+ 	const estimateMessageTokens = createTokenEstimator();
+-	const strategy = userCompaction?.strategy ?? "agentic";
+-	const runBuiltinStrategy = BUILTIN_COMPACTION_STRATEGIES[strategy];
+ 	const mode = options.mode ?? "auto";
+-	const telemetryStrategy: TelemetryCompactionStrategy = userCompaction?.compact
+-		? "custom"
+-		: strategy;
+ 
+ 	return async (context) => {
++		const global = readGlobalSettings();
++		if (mode !== "manual" && global.compactionEnabled === false)
++			return undefined;
++		const userCompaction = {
++			...baseCompaction,
++			...(global.compactionTriggerTokens !== undefined
++				? { triggerTokens: global.compactionTriggerTokens }
++				: {}),
++			...(global.compactionMaxInputTokens !== undefined
++				? { maxInputTokens: global.compactionMaxInputTokens }
++				: {}),
++			...(global.compactionPreserveRecentMessages !== undefined
++				? { preserveRecentMessages: global.compactionPreserveRecentMessages }
++				: {}),
++		};
++		const strategy =
++			userCompaction.strategy ?? global.compactionStrategy ?? "agentic";
++		const runBuiltinStrategy = BUILTIN_COMPACTION_STRATEGIES[strategy];
++		const telemetryStrategy: TelemetryCompactionStrategy =
++			userCompaction.compact ? "custom" : strategy;
+ 		const effectiveMode: CoreCompactionMode = context.overflowRecovery
+ 			? "overflow_recovery"
+ 			: mode;
+@@ -322,19 +341,34 @@ export function createContextCompactionPrepareTurn(
+ 			0,
+ 			requestInputTokens - apiMessageTokens,
+ 		);
+-		const modelMaxInputTokens = resolveEffectiveMaxInputTokens({
+-			maxInputTokens: context.model.info?.maxInputTokens,
+-			contextWindow: context.model.info?.contextWindow,
+-		});
++		const modelMaxInputTokens =
++			resolveEffectiveMaxInputTokens({
++				maxInputTokens: context.model.info?.maxInputTokens,
++				contextWindow: context.model.info?.contextWindow,
++			}) ??
++			(config.providerConfig
++				? resolveProviderMaxInputTokens(config.providerConfig)
++				: undefined);
+ 		// An unknown model limit is not evidence that the request is full.
+ 		// Custom models can have any context window; using a guessed limit here
+ 		// can trigger compaction even on a new session's system prompt/tools.
+ 		// Manual compaction and provider-confirmed overflow recovery still need
+ 		// a working budget, so only those modes use the default.
+-		if (effectiveMode === "auto" && modelMaxInputTokens === undefined) {
++		if (
++			effectiveMode === "auto" &&
++			modelMaxInputTokens === undefined &&
++			!(userCompaction.maxInputTokens && userCompaction.maxInputTokens > 0)
++		) {
+ 			return undefined;
+ 		}
+-		const rawMaxInputTokens = modelMaxInputTokens ?? DEFAULT_MAX_INPUT_TOKENS;
++		const rawMaxInputTokens = Math.min(
++			modelMaxInputTokens ??
++				userCompaction.maxInputTokens ??
++				DEFAULT_MAX_INPUT_TOKENS,
++			userCompaction.maxInputTokens && userCompaction.maxInputTokens > 0
++				? userCompaction.maxInputTokens
++				: Infinity,
++		);
+ 		// The char-based estimate under-counts dense content (disassembly, image
+ 		// dumps, minified sources). When the provider's actual count for the
+ 		// PREVIOUS request already exceeds our estimate for the (larger) current
+@@ -361,7 +395,12 @@ export function createContextCompactionPrepareTurn(
+ 					)
+ 				: 1;
+ 		const maxInputTokens = rawMaxInputTokens / underestimateFactor;
+-		const requestTriggerTokens = maxInputTokens * COMPACTION_TRIGGER_RATIO;
++		const requestTriggerTokens = Math.min(
++			maxInputTokens * COMPACTION_TRIGGER_RATIO,
++			userCompaction.triggerTokens && userCompaction.triggerTokens > 0
++				? userCompaction.triggerTokens / underestimateFactor
++				: Infinity,
++		);
+ 		const messageTriggerTokens = translateRequestBudgetToMessages(
+ 			requestTriggerTokens,
+ 			requestOverheadTokens,
+@@ -588,6 +627,20 @@ export function createContextCompactionPrepareTurn(
+ 			context.abortSignal.removeEventListener("abort", recordCancellation);
+ 		}
+ 
++		if (
++			executedStrategy === "agentic" &&
++			(((effectiveMode === "manual" ||
++				userCompaction.maxInputTokens !== undefined) &&
++				!result?.messages) ||
++				(userCompaction.preserveRecentMessages !== undefined &&
++					result?.messages &&
++					result.messages.reduce((n, m) => n + estimateMessageTokens(m), 0) >
++						messageTargetTokens))
++		) {
++			executedStrategy = "basic";
++			result = await BUILTIN_COMPACTION_STRATEGIES.basic(builtinOptions);
++		}
++
+ 		const durationMs = Date.now() - startedAt;
+ 		// Telemetry identity: surface the agent/conversation passed into the
+ 		// prepareTurn so multi-agent runs can attribute compactions correctly.
+@@ -606,6 +659,10 @@ export function createContextCompactionPrepareTurn(
+ 				0,
+ 			);
+ 			const afterRequestTokens = requestOverheadTokens + afterMessageTokens;
++			if (userCompaction.maxInputTokens && afterRequestTokens > maxInputTokens)
++				throw new Error(
++					"Compaction cannot fit the current input within the model window. Reduce attachments or preserve fewer recent messages.",
++				);
+ 			config.logger?.log("Context compaction completed", {
+ 				severity: "info",
+ 				strategy: executedStrategy,
+diff --git a/sdk/packages/core/src/index.ts b/sdk/packages/core/src/index.ts
+index 2368a88cbfc5a098194b9e17051c951344ef5ea7..f124e13c47f4703dc63dfd3f734102999eed987e 100644
+--- a/sdk/packages/core/src/index.ts
++++ b/sdk/packages/core/src/index.ts
+@@ -626,6 +626,8 @@ export {
+ 	readCompactionModeGlobally,
+ 	readCompactionStrategyGlobally,
+ 	readGlobalSettings,
++	readCompactionPreferencesGlobally,
++	setCompactionPreferencesGlobally,
+ 	readPlanActModeGlobally,
+ 	readToolAutoApproveGlobally,
+ 	readTuiThemeGlobally,
+diff --git a/sdk/packages/core/src/runtime/host/runtime-host.test.ts b/sdk/packages/core/src/runtime/host/runtime-host.test.ts
+index 580f17a09872ad9d2cf73305daf690a51970e29d..706c514c26ecd3c93d4b548eed434c530aae4ab7 100644
+--- a/sdk/packages/core/src/runtime/host/runtime-host.test.ts
++++ b/sdk/packages/core/src/runtime/host/runtime-host.test.ts
+@@ -3,9 +3,33 @@ import { SessionRunInProgressError } from "../orchestration/session-runtime-orch
+ import {
+ 	isSessionNotFoundError,
+ 	isUnusableSessionError,
++	splitCoreSessionConfig,
+ 	SessionNotFoundError,
+ } from "./runtime-host";
+ 
++it("preserves compaction budgets across the Desktop-to-Hub boundary", () => {
++	const compaction = {
++		enabled: true,
++		strategy: "basic" as const,
++		triggerTokens: 90000,
++		maxInputTokens: 120000,
++		preserveRecentMessages: 40,
++	};
++	const result = splitCoreSessionConfig({
++		cwd: ".",
++		providerId: "fixture",
++		modelId: "fixture",
++		systemPrompt: "",
++		enableTools: false,
++		enableSpawnAgent: false,
++		enableAgentTeams: false,
++		compaction,
++	});
++	expect(JSON.parse(JSON.stringify(result.config)).compaction).toMatchObject(
++		compaction,
++	);
++});
++
+ describe("isUnusableSessionError", () => {
+ 	it("matches a missing session", () => {
+ 		expect(isUnusableSessionError(new SessionNotFoundError("sess_1"))).toBe(
+diff --git a/sdk/packages/core/src/runtime/host/runtime-host.ts b/sdk/packages/core/src/runtime/host/runtime-host.ts
+index b8c7c5440b623f78fc1a61516eace28fe42f1424..57cc71a30f22468d5246d17b03c91e971fccbee0 100644
+--- a/sdk/packages/core/src/runtime/host/runtime-host.ts
++++ b/sdk/packages/core/src/runtime/host/runtime-host.ts
+@@ -243,6 +243,9 @@ export function splitCoreSessionConfig(config: ClineCoreStartConfig): {
+ 							enabled: compaction.enabled,
+ 							strategy: compaction.strategy,
+ 							preserveRecentTokens: compaction.preserveRecentTokens,
++							triggerTokens: compaction.triggerTokens,
++							maxInputTokens: compaction.maxInputTokens,
++							preserveRecentMessages: compaction.preserveRecentMessages,
+ 							summarizer: compaction.summarizer,
+ 						},
+ 					}
+diff --git a/sdk/packages/core/src/services/global-settings.ts b/sdk/packages/core/src/services/global-settings.ts
+index 5f5b0e0fb8f60c07de03a7b2a4c42c0a54346797..d77c90de985c5a9674ce10aab58474d79c25d522 100644
+--- a/sdk/packages/core/src/services/global-settings.ts
++++ b/sdk/packages/core/src/services/global-settings.ts
+@@ -64,6 +64,27 @@ export const GlobalSettingsSchema = z
+ 		autoUpdateEnabled: z.boolean().default(true).catch(true),
+ 		compactionStrategy: GlobalCompactionStrategySchema.optional(),
+ 		compactionEnabled: z.boolean().optional().catch(undefined),
++		compactionTriggerTokens: z
++			.number()
++			.int()
++			.min(1024)
++			.max(10000000)
++			.optional()
++			.catch(undefined),
++		compactionMaxInputTokens: z
++			.number()
++			.int()
++			.min(2048)
++			.max(10000000)
++			.optional()
++			.catch(undefined),
++		compactionPreserveRecentMessages: z
++			.number()
++			.int()
++			.min(0)
++			.max(1000)
++			.optional()
++			.catch(undefined),
+ 		planActMode: GlobalPlanActModeSchema.optional().catch(undefined),
+ 		toolAutoApprove: z.boolean().optional().catch(undefined),
+ 		tuiTheme: z.string().optional().catch(undefined),
+@@ -80,6 +101,9 @@ export const GlobalSettingsSchema = z
+ 			autoUpdateEnabled: boolean;
+ 			compactionStrategy?: GlobalCompactionStrategy;
+ 			compactionEnabled?: boolean;
++			compactionTriggerTokens?: number;
++			compactionMaxInputTokens?: number;
++			compactionPreserveRecentMessages?: number;
+ 			planActMode?: GlobalPlanActMode;
+ 			toolAutoApprove?: boolean;
+ 			tuiTheme?: string;
+@@ -98,6 +122,13 @@ export const GlobalSettingsSchema = z
+ 		if (settings.compactionEnabled !== undefined) {
+ 			normalized.compactionEnabled = settings.compactionEnabled;
+ 		}
++		for (const key of [
++			"compactionTriggerTokens",
++			"compactionMaxInputTokens",
++			"compactionPreserveRecentMessages",
++		] as const) {
++			if (settings[key] !== undefined) normalized[key] = settings[key];
++		}
+ 		if (settings.planActMode) {
+ 			normalized.planActMode = settings.planActMode;
+ 		}
+@@ -567,3 +598,34 @@ export function filterExtensionToolRegistrations(
+ 		};
+ 	});
+ }
++
++export function readCompactionPreferencesGlobally() {
++	const settings = readGlobalSettings();
++	return {
++		enabled: settings.compactionEnabled !== false,
++		triggerTokens: settings.compactionTriggerTokens ?? 90000,
++		maxInputTokens: settings.compactionMaxInputTokens ?? 120000,
++		preserveRecentMessages: settings.compactionPreserveRecentMessages ?? 40,
++	};
++}
++export function setCompactionPreferencesGlobally(input: unknown) {
++	const value = z
++		.object({
++			enabled: z.boolean(),
++			triggerTokens: z.number().int().min(1024).max(10000000),
++			maxInputTokens: z.number().int().min(2048).max(10000000),
++			preserveRecentMessages: z.number().int().min(0).max(1000),
++		})
++		.strict()
++		.parse(input);
++	if (value.triggerTokens >= value.maxInputTokens)
++		throw new Error("Compaction trigger must be below the token limit");
++	writeGlobalSettings({
++		...readGlobalSettings(),
++		compactionEnabled: value.enabled,
++		compactionTriggerTokens: value.triggerTokens,
++		compactionMaxInputTokens: value.maxInputTokens,
++		compactionPreserveRecentMessages: value.preserveRecentMessages,
++	});
++	return readCompactionPreferencesGlobally();
++}
+diff --git a/sdk/packages/core/src/services/llms/provider-settings.ts b/sdk/packages/core/src/services/llms/provider-settings.ts
+index d0599897f3515e1f4a95e3c88fd4c6436eaf2cf3..a699b3e5d7e6178b669dcf717aceb316f6efb845 100644
+--- a/sdk/packages/core/src/services/llms/provider-settings.ts
++++ b/sdk/packages/core/src/services/llms/provider-settings.ts
+@@ -264,6 +264,7 @@ export function toProviderConfig(
+ 		timeoutMs: settings.timeout,
+ 		maxOutputTokens: settings.maxTokens,
+ 		maxInputTokens: settings.contextWindow,
++		contextWindow: settings.contextWindow,
+ 		thinking: settings.reasoning?.enabled,
+ 		reasoningEffort,
+ 		thinkingBudgetTokens: settings.reasoning?.budgetTokens,
+diff --git a/sdk/packages/core/src/types/config.ts b/sdk/packages/core/src/types/config.ts
+index 3b6e19233cb177a6572f400afa02fe6fe5c45abe..4824f637f13e4b1c024fc60152e8dc7b6bd2def7 100644
+--- a/sdk/packages/core/src/types/config.ts
++++ b/sdk/packages/core/src/types/config.ts
+@@ -157,6 +157,9 @@ export interface CoreCompactionSummarizerConfig {
+ export type CoreCompactionStrategy = "basic" | "agentic";
+ 
+ export interface CoreCompactionConfig {
++	triggerTokens?: number;
++	maxInputTokens?: number;
++	preserveRecentMessages?: number;
+ 	enabled?: boolean;
+ 	strategy?: CoreCompactionStrategy;
+ 	preserveRecentTokens?: number;
+diff --git a/sdk/packages/llms/src/providers/config.ts b/sdk/packages/llms/src/providers/config.ts
+index 8f0a49ca19128fa08c710f03231665c6e02839eb..8781c2728ac721c8dfa03f9cc6cd9984484b8947 100644
+--- a/sdk/packages/llms/src/providers/config.ts
++++ b/sdk/packages/llms/src/providers/config.ts
+@@ -108,6 +108,8 @@ export interface EndpointConfig {
+  * Model configuration
+  */
+ export interface ModelConfig {
++	/** Explicit context window from the provider configuration. */
++	contextWindow?: number;
+ 	/** Model identifier */
+ 	modelId: string;
+ 	/** Pre-fetched model info (optional - will use defaults if not provided) */

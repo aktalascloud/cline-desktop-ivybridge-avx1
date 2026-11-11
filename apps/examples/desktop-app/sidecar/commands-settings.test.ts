@@ -51,16 +51,6 @@ afterEach(() => {
 });
 
 describe("desktop settings commands", () => {
-	it("serves the provider catalog command used by the native Windows model picker", async () => {
-		const { ctx } = createContext();
-		const command = vi.fn().mockResolvedValue({ ok: true, payload: { providers: [{ id: "fixture-provider" }, { id: "dsw2api" }] } });
-		ctx.runtimeBindings.set(LOCAL_ENVIRONMENT_ID, { hubClient: { command } } as unknown as SessionRuntimeBinding);
-		const catalog = await handleCommand(ctx, "list_provider_catalog");
-		const legacy = await handleCommand(ctx, "list_providers");
-		expect(catalog).toEqual(legacy);
-		expect(catalog).toMatchObject({ providers: [{ id: "fixture-provider" }] });
-		expect(command).toHaveBeenLastCalledWith("providers.list", { isClinePassEnabled: true }, undefined, { retryAfterDispatch: false });
-	});
 	it("only returns hub notification content to trusted desktop connections", async () => {
 		const { ctx } = createContext();
 		const command = vi

@@ -54,11 +54,6 @@ describe("parseGitHubRepoFullName", () => {
 		undefined,
 		"",
 		"https://gitlab.com/cline/cline.git",
-		"https://notgithub.com/cline/cline.git",
-		"https://github.com.evil.invalid/cline/cline.git",
-		"file:///github.com/cline/cline.git",
-		"https://github.com/cline/cline?other=repo",
-		"https://github.com/cline/cline/extra",
 	])("ignores %s", (remote) => {
 		expect(parseGitHubRepoFullName(remote)).toBeUndefined();
 	});

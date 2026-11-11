@@ -108,6 +108,8 @@ export interface EndpointConfig {
  * Model configuration
  */
 export interface ModelConfig {
+	/** Explicit context window from the provider configuration. */
+	contextWindow?: number;
 	/** Model identifier */
 	modelId: string;
 	/** Pre-fetched model info (optional - will use defaults if not provided) */
@@ -120,14 +122,10 @@ export interface ModelConfig {
  * Token limits configuration
  */
 export interface TokenConfig {
-	/** Optional OpenAI Chat defaults for local compatible endpoints. */
-	sampling?: import("./routing/openai-chat-sampling").OpenAIChatSampling;
 	/** Maximum input tokens (overrides model default) */
 	maxInputTokens?: number;
 	/** Maximum output tokens (overrides model default) */
 	maxOutputTokens?: number;
-	/** Context window in tokens (overrides model default) */
-	contextWindow?: number;
 	/** Sampling temperature (overrides model default) */
 	temperature?: number;
 }
@@ -136,14 +134,19 @@ export interface TokenConfig {
  * Reasoning/thinking model configuration
  */
 export interface ReasoningConfig {
-	/** Opt-in prompt mode for compatible author templates, used with XHigh only. */
-	authorReasoningMode?: "ultra" | "adaptive";
 	/** Reasoning effort level */
 	reasoningEffort?: ReasoningEffort;
 	/** Extended thinking budget in tokens */
 	thinkingBudgetTokens?: number;
 	/** Enable thinking with provider/model defaults when supported */
 	thinking?: boolean;
+	/**
+	 * Turn thinking off when the model is known to allow that, and otherwise
+	 * leave the settings above as they are. Unlike `thinking: false` this is
+	 * never sent to a model whose catalog entry does not advertise an off
+	 * option, so it is safe to set for a model the catalog does not describe.
+	 */
+	preferThinkingOff?: boolean;
 }
 
 /**

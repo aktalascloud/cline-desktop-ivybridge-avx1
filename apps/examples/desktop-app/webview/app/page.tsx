@@ -406,13 +406,6 @@ export default function Home() {
 	const startup = useHubStartup();
 	const hubReady =
 		startup.transport === "connected" && startup.hub.state === "ready";
-	useEffect(() => {
-		if (hubReady && "__TAURI_INTERNALS__" in window) {
-			void import("@tauri-apps/api/core")
-				.then(({ invoke }) => invoke("record_desktop_ready"))
-				.catch(() => {});
-		}
-	}, [hubReady]);
 	// Mount the app once the Hub is first ready, then hide it with Activity
 	// whenever the Hub is not ready. Hidden Activity content keeps its state
 	// (open conversations) but unmounts effects, so its dialogs, including
@@ -1950,28 +1943,6 @@ function ChatThreadPane({
 			});
 			setProviderCredentials(next);
 			setProviderModelContextWindows(nextContextWindows);
-			setConfig((current) => {
-				const provider = payload.providers.find(
-					(p) => p.id === current.provider,
-				);
-				if (!provider?.baseUrl || provider.modelList?.length !== 1)
-					return current;
-				try {
-					if (
-						!["127.0.0.1", "localhost", "[::1]"].includes(
-							new URL(provider.baseUrl).hostname,
-						)
-					)
-						return current;
-				} catch {
-					return current;
-				}
-				const model = provider.modelList?.[0];
-				return model && current.model !== model.id
-					? { ...current, model: model.id }
-					: current;
-			});
-
 			setHasConnectedProvider(anyConnected);
 		} catch {
 			// Keep current config if provider catalog cannot be read.
