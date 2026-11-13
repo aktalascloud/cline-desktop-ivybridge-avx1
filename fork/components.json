@@ -1,139 +1,30 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.17",
-  "upstream_sha": "94eecbbe1a2f899c66b118d13656651b0a884e1f",
-  "build_source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
-  "compiled_component_source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
-  "release_approved": true,
+  "version": "1.0.19",
+  "upstream_sha": "c5df41f937c496ce8c8e689ba58776593c703dfa",
+  "build_source_sha": "f9fb9a7eeae8b20cf8e609c96b0fa4fa622694aa",
+  "compiled_component_source_sha": "f9fb9a7eeae8b20cf8e609c96b0fa4fa622694aa",
   "native": {
-    "kind": "source-built",
-    "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
-    "rust": "1.97.0",
-    "msvc": "14.44.35207",
-    "windows_sdk": "10.0.26100.0",
-    "profile": "ivy-fat1",
-    "rust_flags": [
-      "opt-level=3",
-      "lto=fat",
-      "codegen-units=1",
-      "target-cpu=ivybridge",
-      "target-feature=-avx2,-fma",
-      "debug=0",
-      "source/cargo path remapping"
-    ],
-    "c_flags": "Dependency defaults; no global CFLAGS override",
-    "pgo": false,
-    "affinity_or_numa_pinning": false,
-    "sha256": "58cbf9b76aabc5eefadf7f4eb0b1203bdb78064a0746314eed52ffebd45b3dcf"
+    "sha256": "f40da556ed7c8a1be87dda4b821129706db7a0b8c0d59d9ea320a5c77f333a50",
+    "target_cpu": "ivybridge",
+    "avx": true,
+    "f16c": true,
+    "avx2": false,
+    "fma": false,
+    "lto": "fat",
+    "codegen_units": 1
   },
   "cli_and_hub": {
-    "version": "3.0.74",
-    "kind": "source-built JavaScript with embedded prebuilt Bun",
-    "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
-    "target": "bun-windows-x64-baseline",
-    "build_flags": [
-      "compile",
-      "minify"
-    ],
-    "launch_controls": [
-      "system CA",
-      "no launch-directory dotenv/bunfig autoload",
-      "fork storage bootstrap",
-      "official updater disabled"
-    ],
-    "sha256": "a6a5d8cbb7246b772dd7ad5601e497f1d2a3f47a1d6ea5d11bfdb93d78f0f2e3"
+    "sha256": "0e604d8b5375abcf4a97affa065416e9fb78e5d06363a8f9b53351c57d5274a4",
+    "target": "bun-windows-x64-baseline"
   },
-  "sdk": {
-    "version": "0.2.0",
-    "kind": "source-built production JavaScript",
-    "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
-    "sha256": "f101d07c512632d05d4d2da8b106c8a6f3c522b172fcf16d78764a2e11de5a8c"
-  },
-  "backend": {
-    "kind": "source-built JavaScript",
-    "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
-    "flags": [
-      "target=bun",
-      "minify",
-      "no telemetry credentials inlined"
-    ],
-    "sha256": "c1bd17b8d78073690347f1f88816bfc9cb668ec34dc94f336f4562d68441e0ee"
-  },
-  "frontend": {
-    "kind": "source-built static export",
-    "source_sha": "2c720e67d582db84a0eb2b2b68646a296426cde9",
-    "next": "16.4.3",
-    "react": "19.2.4"
-  },
-  "prebuilt": [
-    {
-      "name": "Bun / JavaScriptCore",
-      "version": "1.4.2+744846f84",
-      "source": "https://github.com/oven-sh/bun/tree/744846f844374847c902b5e7fd59b4342a51ef99",
-      "download_alias_exe_sha256": "15277c59ccd6c6c20f8dc9716c2b59c1776320d606b6a8658f70be8799519ca4",
-      "notes": "x64/baseline aliases are byte-identical; actual runtime and CLI run on the target Ivy Bridge. Rust/C flags do not rebuild Bun/JSC."
-    },
-    {
-      "name": "OpenTUI native libraries",
-      "version": "0.4.3",
-      "notes": "Prebuilt platform packages; no local CPU flags claimed. Windows TUI smoke test loads its FFI renderer."
-    },
-    {
-      "name": "WebView2",
-      "version": "153.0.4234.32 at initial qualification",
-      "notes": "Existing Microsoft system runtime, not rebuilt or bundled as an optimized engine."
-    },
-    {
-      "name": "Python standard-library MCP runtime",
-      "source": "https://www.python.org/ftp/python/3.14.10/python-3.14.10-embed-amd64.zip",
-      "archive_sha256": "90905e64a840557d8c1bc4f5b74db3d7ee85e3ffb217611cac1c7813acea4159",
-      "kind": "official prebuilt; no local optimization flags claimed",
-      "flags": "No local CPU compiler flags applied"
-    }
-  ],
-  "remote_helpers": {
-    "kind": "cross-built CLI JavaScript with prebuilt Bun runtime",
-    "targets": [
-      "bun-linux-x64-baseline",
-      "bun-linux-arm64"
-    ],
-    "notes": "Included for upstream SSH support; Linux executables are not executed on Windows."
-  },
-  "bundled_defaults": {
-    "ponytail": {
-      "repository": "https://github.com/DietrichGebert/ponytail",
-      "sha": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846",
-      "source_path": ".clinerules/ponytail.md",
-      "license": "MIT",
-      "sha256": "ca99e5958383063029b206c7c50a0eaad1c29914a362bedd46033ec16b537e1e"
-    },
-    "web_search": "DuckDuckGo Lite MCP; Python stdlib only",
-    "subagents": "Known official agents-squad hashes use packaged repair; user plugin files are not edited"
-  },
-  "providers": {
-    "local": "User-configured OpenAI-compatible endpoint; private models/settings are not packaged",
-    "freellm": {
-      "models": [
-        "nvidia/nemotron-3.5-super-vl:free",
-        "reflection/beam-free"
-      ],
-      "registration_or_personal_key": false,
-      "shared_service_quota": "200 requests/hour/IP; vendor availability applies"
-    }
-  },
-  "cargo_lock_sha256": "56db47f995c57abbd2e1f89bc3d6e171a0544c04240964dfdb4ed4fd95d262bf",
-  "bun_lock_sha256": "6c23f7b04a1ccb6f17ccacfb0246202ea101c441cfdc9728539456bdb22c6a80",
-  "cuda_used": false,
-  "llm_models_included": false,
-  "authenticode": "NotSigned",
-  "updater_zip_support": false,
   "installer": {
-    "name": "Cline-Desktop-AVX1-RU-Setup.exe",
-    "kind": "NSIS Windows x64",
-    "uac": "requireAdministrator",
-    "compression": "lzma",
-    "sha256": "849c3b6b0e8ad7c8687c71ccd8c729744f76b9a9b8b72317bb715ce14616c799",
-    "size": 144601083
-  }
+    "sha256": "9dd143ffd4509c6d271c0f1ca8e78a82fd4ce24165dcfaeae02f91fa8a668789",
+    "size": 134589425,
+    "updater_signature_verified": true,
+    "tamper_rejected": true
+  },
+  "authenticode": "NotSigned",
+  "llm_models_included": false
 }

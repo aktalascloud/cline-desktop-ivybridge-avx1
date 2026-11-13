@@ -1,42 +1,39 @@
 {
   "status": "qualified-installed",
   "release_approved": true,
-  "version": "1.0.17",
-  "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
+  "version": "1.0.19",
+  "source_sha": "f9fb9a7eeae8b20cf8e609c96b0fa4fa622694aa",
   "ci": {
-    "run": 42366235084,
-    "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
-    "conclusion": "success"
+    "run": 42968634499,
+    "source_sha": "f9fb9a7eeae8b20cf8e609c96b0fa4fa622694aa",
+    "conclusion": "success",
+    "scope": "source patch replay"
   },
   "validation": {
-    "targeted_regressions": "passed; including distinct overflow cycles and server-owned generation controls",
-    "production_frontend": "passed",
-    "native_api_settings_providers": "passed",
-    "tools_mcp_stream_cancel": "passed",
-    "manual_auto_resume_compaction_wire": "passed",
-    "installed_payload_files": 2932,
+    "installed_payload_files": 2894,
     "profile_and_ui_preserved": true,
-    "privacy_licenses_signature_tamper": "passed",
-    "gui": "waived",
-    "real_local_inference": false,
-    "new_performance_claims": false,
-    "sdk_ui_tests_and_typecheck": "passed; whitespace-only assertion fixed and verifier suite rerun",
-    "strict_desktop_webview": "historical baseline, not requalified fully green",
-    "local_native_checks": "exact input reuse from 1.0.16; current installer independently audited",
-    "patches": "3 active source overlays, 4 bound Bun patches; hashes and exact disposable-index replay passed"
+    "installed_smoke_passed": true,
+    "hub_http_status_missing_wrong_valid": [
+      401,
+      401,
+      101
+    ]
   },
   "publication": {
-    "version": "1.0.17",
-    "tag": "avx1-v1.0.17",
-    "source_sha": "b055e3f2a1a17b59b0e91e48d48e9ebbbaebb0e3",
-    "asset_sha256": "849c3b6b0e8ad7c8687c71ccd8c729744f76b9a9b8b72317bb715ce14616c799",
-    "size": 144601083,
+    "version": "1.0.19",
+    "tag": "avx1-v1.0.19",
+    "source": "f9fb9a7eeae8b20cf8e609c96b0fa4fa622694aa",
+    "ci_run": 42968634499,
     "published": true,
+    "installer_sha256": "9dd143ffd4509c6d271c0f1ca8e78a82fd4ce24165dcfaeae02f91fa8a668789",
+    "size": 134589425,
+    "release_id": 441300973,
+    "asset_id": 734373350,
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.19",
+    "exe_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.19/Cline-Desktop-AVX1-RU-Setup.exe",
+    "utc": "2026-11-13T11:13:00Z",
+    "asset_sha256": "9dd143ffd4509c6d271c0f1ca8e78a82fd4ce24165dcfaeae02f91fa8a668789",
     "download_skipped_by_user": true,
-    "anonymous_download_verified": false,
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.17",
-    "exe_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.17/Cline-Desktop-AVX1-RU-Setup.exe",
-    "asset_readback_verified": true
-  },
-  "verified_utc": "2026-11-07T11:25:47.349123+00:00"
+    "anonymous_download_verified": false
+  }
 }
