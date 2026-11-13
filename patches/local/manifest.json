@@ -1,6 +1,6 @@
 {
-  "official_commit": "50e77bc1e8f7ab023b7986821e4b5f82ff51b8c4",
-  "official_tree": "30167c3740b45b2775b6bba090d6a9dcb12b787d",
+  "official_commit": "72b3d7140553a733242126e51a7c2e87efe75c64",
+  "official_tree": "e8702f632b78bef71a649ccc90795805fcdcddd6",
   "patches": [
     {
       "file": "01-windows-avx1.patch",
@@ -24,8 +24,8 @@
     }
   ],
   "exact_git_tree_replay": true,
-  "sanitized_base": "1c97deeb92dab98281576eddf41680db75e27325",
-  "build_tree": "6e1d749083d2804e7d89b7415a08232a5c1ce9c3",
+  "sanitized_base": "e9b377721afb0844e7f1a759038d72ae3fbb7b89",
+  "build_tree": "2254ad2d2db75729819f8e488ed2153cbd5a1f20",
   "publication_files": [
     ".gitattributes",
     ".github/workflows/avx1-verify.yml",
