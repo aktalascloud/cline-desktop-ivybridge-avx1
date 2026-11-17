@@ -4,7 +4,7 @@
 
 Минимальный форк официального Cline Desktop для Windows x64 и Ivy Bridge. AVX/F16C, Rust O3 и fat LTO. AVX2 и FMA отключены, CLI использует baseline Bun.
 
-Русский интерфейс и трей, FreeLLM без ключа, исправленный автокомпакт и штатное меню reasoning. FreeLLM включает Nemotron 3.5 Super VL 120B и North Mini Code 30B. Обновление сохраняет профиль `.cline-avx1` и настройки интерфейса.
+Русский интерфейс и трей, FreeLLM без ключа, исправленный автокомпакт и штатное меню reasoning. FreeLLM включает Nemotron 3 Ultra 550B и Dots3-Note Preview 280B. Обновление сохраняет профиль `.cline-avx1` и настройки интерфейса.
 
 [Релиз](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) · [Патчи и SHA256](patches/local/README.md)
 
@@ -12,7 +12,7 @@
 
 Minimal official Cline Desktop fork for Windows x64 and Ivy Bridge. AVX/F16C, Rust O3 and fat LTO. AVX2 and FMA are disabled, and the CLI uses baseline Bun.
 
-Russian and English UI, keyless FreeLLM, automatic compaction fixes and the stock reasoning selector. FreeLLM includes Nemotron 3.5 Super VL 120B and North Mini Code 30B. The installer preserves `.cline-avx1` and interface preferences.
+Russian and English UI, keyless FreeLLM, automatic compaction fixes and the stock reasoning selector. FreeLLM includes Nemotron 3 Ultra 550B and Dots3-Note Preview 280B. The installer preserves `.cline-avx1` and interface preferences.
 
 [Release](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/latest) · [Patches and SHA256](patches/local/README.md)
 
