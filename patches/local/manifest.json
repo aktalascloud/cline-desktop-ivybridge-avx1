@@ -1,10 +1,10 @@
 {
-  "official_commit": "72b3d7140553a733242126e51a7c2e87efe75c64",
-  "official_tree": "e8702f632b78bef71a649ccc90795805fcdcddd6",
+  "official_commit": "eff43e19b267e171f597ab03733bfed25090f72d",
+  "official_tree": "205712748ee5f7e3ed65e53f3415b82fdce16519",
   "patches": [
     {
       "file": "01-windows-avx1.patch",
-      "sha256": "9453855c1b142b8d5456b7e559aad85282b96df100a0437ec119ea8af45188e5",
+      "sha256": "6144dcdf771ae1e4454611d1f7119a44903b0fd1891e3ad28af783116d329c84",
       "files": 18
     },
     {
@@ -14,18 +14,18 @@
     },
     {
       "file": "03-compaction.patch",
-      "sha256": "128256f72fd9795bef1510de235b3082bc405564d929fef67cdf7b20e2ecb5e6",
+      "sha256": "4f4363561b489c01250285d87a110daf247a566cc46c7510cd1c7cefeb237797",
       "files": 15
     },
     {
       "file": "04-freellm-and-model-context.patch",
-      "sha256": "5b260f1cbd3e9f239e2aaffbe740fb7a6e0f17203f4b3af6b463820f1674b951",
+      "sha256": "78a07a0e2fa7a23dbcd88ee6fb1fb9b4042ee35fd8f91cd3c3d87a90354db60e",
       "files": 6
     }
   ],
   "exact_git_tree_replay": true,
-  "sanitized_base": "e9b377721afb0844e7f1a759038d72ae3fbb7b89",
-  "build_tree": "2254ad2d2db75729819f8e488ed2153cbd5a1f20",
+  "sanitized_base": "ebb732758cc4c387175add5eff6b02e386e2ec8f",
+  "build_tree": "e85f7d56f2e7fa71149e85a465ba2a936a20b3ae",
   "publication_files": [
     ".gitattributes",
     ".github/workflows/avx1-verify.yml",

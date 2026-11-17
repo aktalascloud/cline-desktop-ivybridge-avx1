@@ -74,7 +74,7 @@ index 0000000000000000000000000000000000000000..8fb1a84f5bf9b047fe63c345090bc072
 +  }
 +}
 diff --git a/sdk/packages/core/src/services/llms/provider-defaults.ts b/sdk/packages/core/src/services/llms/provider-defaults.ts
-index 402c3d39c8a40f7db84628849f19618a8b06dc27..1a55a87d30760b8ce0b551740bb6f46d374d2d8b 100644
+index 796d53fc129b739e8665dbfe5f36d02abe5a47d9..a095ef22e0fe557d05f7e749809a500441e49a75 100644
 --- a/sdk/packages/core/src/services/llms/provider-defaults.ts
 +++ b/sdk/packages/core/src/services/llms/provider-defaults.ts
 @@ -2,7 +2,7 @@
@@ -86,7 +86,7 @@ index 402c3d39c8a40f7db84628849f19618a8b06dc27..1a55a87d30760b8ce0b551740bb6f46d
  	resolveModelsSourceUrl,
  } from "../providers/model-source";
  import type {
-@@ -718,16 +718,16 @@ async function getPublicProviderModels(
+@@ -724,16 +724,16 @@ async function getPublicProviderModels(
  		return inFlight;
  	}
  

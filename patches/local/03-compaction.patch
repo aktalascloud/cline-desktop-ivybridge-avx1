@@ -884,10 +884,10 @@ index d6b8431304a98c769f142f77d79bafde48f448f5..385aee0dd9932594073de4727e1dc974
  				severity: "info",
  				strategy: executedStrategy,
 diff --git a/sdk/packages/core/src/index.ts b/sdk/packages/core/src/index.ts
-index 2368a88cbfc5a098194b9e17051c951344ef5ea7..f124e13c47f4703dc63dfd3f734102999eed987e 100644
+index b70bd737ed379407e9dcd8cae8b268915c168f5b..2b72ce20d748d8aad5a34d3277581f014d43d20a 100644
 --- a/sdk/packages/core/src/index.ts
 +++ b/sdk/packages/core/src/index.ts
-@@ -626,6 +626,8 @@ export {
+@@ -628,6 +628,8 @@ export {
  	readCompactionModeGlobally,
  	readCompactionStrategyGlobally,
  	readGlobalSettings,
