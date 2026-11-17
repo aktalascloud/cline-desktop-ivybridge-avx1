@@ -76,6 +76,60 @@ afterEach(() => {
 });
 
 describe("live provider model loading", () => {
+	it("replaces a retired default only in the managed FreeLLM catalog", async () => {
+		const dir = mkdtempSync(path.join(os.tmpdir(), "freellm-managed-test-"));
+		const baseUrl = "https://gateway.example/v1";
+		const provider = {
+			name: "FreeLLM",
+			baseUrl,
+			protocol: "openai-chat",
+			client: "openai-compatible",
+			forkManagedCatalog: "freellm-v1",
+		};
+		const stale = {
+			version: 1,
+			providers: {
+				freellm: {
+					provider: { ...provider, defaultModelId: "old" },
+					models: { old: { id: "old" } },
+				},
+			},
+		};
+		try {
+			vi.stubEnv("CLINE_DESKTOP_CLI_PATH", path.join(dir, "cline-cli.exe"));
+			const defaults = path.join(dir, "bin", "defaults");
+			mkdirSync(defaults, { recursive: true });
+			writeFileSync(
+				path.join(defaults, "freellm.json"),
+				JSON.stringify({
+					version: 1,
+					providers: {
+						freellm: {
+							provider: { ...provider, defaultModelId: "new" },
+							models: { new: { id: "new" }, second: { id: "second" } },
+						},
+					},
+				}),
+			);
+			const modelsPath = path.join(dir, "models.json");
+			writeFileSync(modelsPath, JSON.stringify(stale));
+			expect(await readModelsFile(modelsPath)).toEqual(stale);
+			new ProviderSettingsManager({
+				filePath: path.join(dir, "providers.json"),
+			});
+			const collection = LlmsModels.getProviderCollectionSync("freellm");
+			expect(collection?.provider.defaultModelId).toBe("new");
+			expect(Object.keys(collection?.models ?? {}).sort()).toEqual([
+				"new",
+				"second",
+			]);
+			expect(await readModelsFile(modelsPath)).toEqual(stale);
+		} finally {
+			vi.unstubAllEnvs();
+			rmSync(dir, { recursive: true, force: true });
+		}
+	});
+
 	it.each([
 		["baseten", "https://inference.baseten.co/v1/models"],
 		["hicap", "https://api.hicap.ai/v2/openai/models"],

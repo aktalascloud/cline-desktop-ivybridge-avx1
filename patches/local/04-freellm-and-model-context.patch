@@ -103,7 +103,7 @@ index 796d53fc129b739e8665dbfe5f36d02abe5a47d9..a095ef22e0fe557d05f7e749809a5004
  			);
  			PUBLIC_MODELS_CACHE.set(cacheKey, {
 diff --git a/sdk/packages/core/src/services/providers/local-provider-registry.ts b/sdk/packages/core/src/services/providers/local-provider-registry.ts
-index fce3eb93ea7753cc96511f01b1b7835e8afdc438..993342a6ba2906610c8c5b978512d85b46e1a921 100644
+index fce3eb93ea7753cc96511f01b1b7835e8afdc438..ffea5fb66a74a992bfc4bd74cd39fa8bbb563c14 100644
 --- a/sdk/packages/core/src/services/providers/local-provider-registry.ts
 +++ b/sdk/packages/core/src/services/providers/local-provider-registry.ts
 @@ -705,6 +705,7 @@ export function ensureCustomProvidersLoadedSync(
@@ -114,7 +114,7 @@ index fce3eb93ea7753cc96511f01b1b7835e8afdc438..993342a6ba2906610c8c5b978512d85b
  	for (const [providerId, entry] of Object.entries(state.providers)) {
  		registerCustomProvider(providerId, entry);
  	}
-@@ -719,8 +720,35 @@ export async function ensureCustomProvidersLoaded(
+@@ -719,8 +720,39 @@ export async function ensureCustomProvidersLoaded(
  		return;
  	}
  	const state = await readModelsFile(modelsPath);
@@ -143,13 +143,82 @@ index fce3eb93ea7753cc96511f01b1b7835e8afdc438..993342a6ba2906610c8c5b978512d85b
 +		// Refresh only our managed catalog in memory; never rewrite personal settings.
 +		userState.providers.freellm = {
 +			...managed,
-+			provider: { ...managed.provider, description: current.provider.description },
++			provider: {
++				...managed.provider,
++				description: current.provider.description,
++				defaultModelId: current.provider.defaultModelId,
++			},
 +			models: current.models,
 +		};
 +	}
 +	if (!userState.providers.freellm && bundled.providers.freellm)
 +		registerCustomProvider("freellm", bundled.providers.freellm);
 +}
+diff --git a/sdk/packages/core/src/services/providers/local-provider-service.test.ts b/sdk/packages/core/src/services/providers/local-provider-service.test.ts
+index 51aebd95c31a9534f43a9827ad1a6144e6dc372b..607840d8e8d06bf2848d3d1a816334feeea9658f 100644
+--- a/sdk/packages/core/src/services/providers/local-provider-service.test.ts
++++ b/sdk/packages/core/src/services/providers/local-provider-service.test.ts
+@@ -76,6 +76,60 @@ afterEach(() => {
+ });
+ 
+ describe("live provider model loading", () => {
++	it("replaces a retired default only in the managed FreeLLM catalog", async () => {
++		const dir = mkdtempSync(path.join(os.tmpdir(), "freellm-managed-test-"));
++		const baseUrl = "https://gateway.example/v1";
++		const provider = {
++			name: "FreeLLM",
++			baseUrl,
++			protocol: "openai-chat",
++			client: "openai-compatible",
++			forkManagedCatalog: "freellm-v1",
++		};
++		const stale = {
++			version: 1,
++			providers: {
++				freellm: {
++					provider: { ...provider, defaultModelId: "old" },
++					models: { old: { id: "old" } },
++				},
++			},
++		};
++		try {
++			vi.stubEnv("CLINE_DESKTOP_CLI_PATH", path.join(dir, "cline-cli.exe"));
++			const defaults = path.join(dir, "bin", "defaults");
++			mkdirSync(defaults, { recursive: true });
++			writeFileSync(
++				path.join(defaults, "freellm.json"),
++				JSON.stringify({
++					version: 1,
++					providers: {
++						freellm: {
++							provider: { ...provider, defaultModelId: "new" },
++							models: { new: { id: "new" }, second: { id: "second" } },
++						},
++					},
++				}),
++			);
++			const modelsPath = path.join(dir, "models.json");
++			writeFileSync(modelsPath, JSON.stringify(stale));
++			expect(await readModelsFile(modelsPath)).toEqual(stale);
++			new ProviderSettingsManager({
++				filePath: path.join(dir, "providers.json"),
++			});
++			const collection = LlmsModels.getProviderCollectionSync("freellm");
++			expect(collection?.provider.defaultModelId).toBe("new");
++			expect(Object.keys(collection?.models ?? {}).sort()).toEqual([
++				"new",
++				"second",
++			]);
++			expect(await readModelsFile(modelsPath)).toEqual(stale);
++		} finally {
++			vi.unstubAllEnvs();
++			rmSync(dir, { recursive: true, force: true });
++		}
++	});
++
+ 	it.each([
+ 		["baseten", "https://inference.baseten.co/v1/models"],
+ 		["hicap", "https://api.hicap.ai/v2/openai/models"],
 diff --git a/sdk/packages/core/src/services/providers/local-provider-service.ts b/sdk/packages/core/src/services/providers/local-provider-service.ts
 index d4fbc63ae83b277230fa3bbb35d9205f973104cd..2592322926d989bbf8f2b002299a5836d8fa0163 100644
 --- a/sdk/packages/core/src/services/providers/local-provider-service.ts

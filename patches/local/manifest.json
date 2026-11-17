@@ -4,7 +4,7 @@
   "patches": [
     {
       "file": "01-windows-avx1.patch",
-      "sha256": "86aed946418b52ce626adc4d0ce098cf5fe22795d6aff84c0829c1fa1ae29bc4",
+      "sha256": "a75403fcf7ab686457d2179cc4b262a6e4ffe4ffadc5a193360c34199976857b",
       "files": 18
     },
     {
@@ -19,13 +19,13 @@
     },
     {
       "file": "04-freellm-and-model-context.patch",
-      "sha256": "997850a8dc358a1926fb28bc965f6fe65bd2cbf3067b718067ad842551cd131b",
-      "files": 6
+      "sha256": "c06e9f9b6783a05da25f17aec0cb2d3297aac47ec1b3c079e1ad04b6deb5d9bd",
+      "files": 7
     }
   ],
   "exact_git_tree_replay": true,
   "sanitized_base": "ebb732758cc4c387175add5eff6b02e386e2ec8f",
-  "build_tree": "0b5d82742ad2d2177de32c3437c0d34178875331",
+  "build_tree": "65a5a0649cd9ad60f62a8a9de813f22e1886233f",
   "publication_files": [
     ".gitattributes",
     ".github/workflows/avx1-verify.yml",

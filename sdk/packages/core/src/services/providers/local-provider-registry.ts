@@ -745,7 +745,11 @@ function registerBundledProviders(userState: StoredModelsFile): void {
 		// Refresh only our managed catalog in memory; never rewrite personal settings.
 		userState.providers.freellm = {
 			...managed,
-			provider: { ...managed.provider, description: current.provider.description },
+			provider: {
+				...managed.provider,
+				description: current.provider.description,
+				defaultModelId: current.provider.defaultModelId,
+			},
 			models: current.models,
 		};
 	}

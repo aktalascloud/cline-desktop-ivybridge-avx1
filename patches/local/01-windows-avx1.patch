@@ -86,14 +86,14 @@ index 0000000000000000000000000000000000000000..2825f90ba80229d5e8232430e6335bf9
 +	return "if (!process.env.CLINE_DIR?.trim() && !process.env.CLINE_DATA_DIR?.trim()) { process.env.CLINE_DIR = process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:os').homedir(), '.cline-avx1'); }";
 +}
 diff --git a/apps/examples/desktop-app/package.json b/apps/examples/desktop-app/package.json
-index 61c3ef3890ebf51c3780bf74e2dd47948853fc0b..7f55ca8fd5ce89dfbf4b7a0dad8a37829dbd936f 100644
+index 61c3ef3890ebf51c3780bf74e2dd47948853fc0b..8ed543c79a16aea4def3bb94ff239a664ca508e6 100644
 --- a/apps/examples/desktop-app/package.json
 +++ b/apps/examples/desktop-app/package.json
 @@ -1,6 +1,6 @@
  {
  	"name": "@cline/code",
 -	"version": "0.0.49",
-+	"version": "1.0.21",
++	"version": "1.0.22",
  	"private": true,
  	"scripts": {
  		"build:ui": "bun -F @cline/ui build",
@@ -1641,7 +1641,7 @@ index 0000000000000000000000000000000000000000..de49e1493998e5eae5ee10d967243f5a
 +    }
 +}
 diff --git a/apps/examples/desktop-app/src-tauri/tauri.conf.json b/apps/examples/desktop-app/src-tauri/tauri.conf.json
-index 7e0be406428b77eafc9c26db50915cae76d7d280..6aa609380aa85ad071d8c728fe05434a1d820908 100644
+index 7e0be406428b77eafc9c26db50915cae76d7d280..f8138879c935603533c67aa1648e5901c4ad86cd 100644
 --- a/apps/examples/desktop-app/src-tauri/tauri.conf.json
 +++ b/apps/examples/desktop-app/src-tauri/tauri.conf.json
 @@ -1,19 +1,18 @@
@@ -1651,7 +1651,7 @@ index 7e0be406428b77eafc9c26db50915cae76d7d280..6aa609380aa85ad071d8c728fe05434a
 -	"version": "0.0.49",
 -	"identifier": "bot.cline.app",
 +	"productName": "Cline Desktop AVX1 RU",
-+	"version": "1.0.21",
++	"version": "1.0.22",
 +	"identifier": "cloud.aktalas.cline.desktop.avx1.ru",
  	"build": {
  		"beforeDevCommand": "bun run build:runtime && bun run dev:web",
