@@ -1,11 +1,11 @@
 {
-  "version": "1.0.19",
-  "notes": "Hub WebSocket требует токен. / Hub WebSocket upgrades require a token.",
-  "pub_date": "2026-11-13T11:13:00Z",
+  "version": "1.0.20",
+  "notes": "Обновлены MCP и расчёт контекста LiteLLM. / Updated MCP metadata and LiteLLM context budgeting.",
+  "pub_date": "2026-11-17T14:51:35Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYnZ5a3IydVFQamRpNzNqb1NhQVlHcTk1YUtuRUlDajRHRlQ5WENqWXZYT05GcXd5WUNDcDRpaDV1MFhPZSsrNi9maHR0Njk1MVR5RXhabW51SEhKZGdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0Mzc3NDM0CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4xOV94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjE5ClEwYUZ3bGpRWE9RdnJURzRsTG9IWDBsZFBWbHdXVWk3K3IzanNDazNUR0dHcExoUldWMXdpYWZUYzA2VHc3MTVTYlh1QWdjUTc1WjRlY3VKRHBVVEJBPT0K",
-      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.19/Cline-Desktop-AVX1-RU-Setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRQk12eU5MWndiYm10ZnBxR0hwOFN0Nm9ScFhlMCt4V05NQStSZEVLZUtYclVkWlg0bmtEVjRlVHNlaTZ6UlEwM1FuYlRzYlBqbXd0MEJ2MHd5UXR6aGNlUEVHbHVER1FnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk0OTI2ODE0CWZpbGU6Q2xpbmUgRGVza3RvcCBBVlgxIFJVXzEuMC4yMF94NjQtc2V0dXAuZXhlCXZlcnNpb246MS4wLjIwCllkcmc5NkRyMnh3enlCMnREeWxkcU5meFhrWmJMcW9EeEVpaEFtdjVnTlh3VUJENTBSSURyRXRDVlU1dzlSZTNxNG0yYW1ZTkNQZWpzcVdZNHRtMEFRPT0K",
+      "url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.20/Cline-Desktop-AVX1-RU-Setup.exe"
     }
   }
 }

@@ -1,12 +1,12 @@
 {
   "application": "Cline Desktop AVX1 RU",
   "unofficial": true,
-  "version": "1.0.19",
-  "upstream_sha": "c5df41f937c496ce8c8e689ba58776593c703dfa",
-  "build_source_sha": "f9fb9a7eeae8b20cf8e609c96b0fa4fa622694aa",
-  "compiled_component_source_sha": "f9fb9a7eeae8b20cf8e609c96b0fa4fa622694aa",
+  "version": "1.0.20",
+  "upstream_sha": "eff43e19b267e171f597ab03733bfed25090f72d",
+  "build_source_sha": "8434fb75b4349647e2d7f6b0f5152add97170032",
+  "compiled_component_source_sha": "8434fb75b4349647e2d7f6b0f5152add97170032",
   "native": {
-    "sha256": "f40da556ed7c8a1be87dda4b821129706db7a0b8c0d59d9ea320a5c77f333a50",
+    "sha256": "f0160ec62ccde57bdf196f3180300494d3ec832c8c4511504360a0d3f8091b50",
     "target_cpu": "ivybridge",
     "avx": true,
     "f16c": true,
@@ -16,12 +16,12 @@
     "codegen_units": 1
   },
   "cli_and_hub": {
-    "sha256": "0e604d8b5375abcf4a97affa065416e9fb78e5d06363a8f9b53351c57d5274a4",
+    "sha256": "06547dbf57f283c0d6a5b7a1059f8a507f6448245f50399fd3c909d592ed1dfc",
     "target": "bun-windows-x64-baseline"
   },
   "installer": {
-    "sha256": "9dd143ffd4509c6d271c0f1ca8e78a82fd4ce24165dcfaeae02f91fa8a668789",
-    "size": 134589425,
+    "sha256": "17b90a40f0bc8f77ce88795b2a5ff4bf69a2c7fb21648e846a05858315b829a9",
+    "size": 134340205,
     "updater_signature_verified": true,
     "tamper_rejected": true
   },
