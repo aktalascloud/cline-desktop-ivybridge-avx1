@@ -114,9 +114,24 @@ describe("live provider model loading", () => {
 			const modelsPath = path.join(dir, "models.json");
 			writeFileSync(modelsPath, JSON.stringify(stale));
 			expect(await readModelsFile(modelsPath)).toEqual(stale);
-			new ProviderSettingsManager({
-				filePath: path.join(dir, "providers.json"),
-			});
+			const settingsPath = path.join(dir, "providers.json");
+			writeFileSync(
+				settingsPath,
+				JSON.stringify({
+					version: 1,
+					modes: {},
+					lastUsedProvider: "freellm",
+					providers: {
+						freellm: {
+							settings: { provider: "freellm", baseUrl, model: "old" },
+							updatedAt: "2026-11-17T00:00:00Z",
+							tokenSource: "manual",
+						},
+					},
+				}),
+			);
+			const manager = new ProviderSettingsManager({ filePath: settingsPath });
+			expect(manager.getProviderSettings("freellm")?.model).toBe("old");
 			const collection = LlmsModels.getProviderCollectionSync("freellm");
 			expect(collection?.provider.defaultModelId).toBe("new");
 			expect(Object.keys(collection?.models ?? {}).sort()).toEqual([

@@ -519,6 +519,15 @@ export function registerProviderSettingsProvider(
 	const existingCollection = LlmsModels.MODEL_COLLECTIONS_BY_PROVIDER_ID[
 		providerId
 	] as LlmsModels.ModelCollection | undefined;
+	if (
+		providerId === "freellm" &&
+		existingCollection?.provider.metadata?.forkManagedCatalog ===
+			"freellm-v1" &&
+		baseUrl === existingCollection.provider.baseUrl
+	) {
+		// Saved selections drive requests without expanding the managed picker.
+		return;
+	}
 	const generatedModels = getGeneratedModelsForProvider(providerId);
 	const modelCapabilities = toModelCapabilities(settings.capabilities);
 	const fallbackCapabilities =
@@ -637,7 +646,13 @@ export function registerCustomProvider(
 			defaultModelId,
 			capabilities: toProviderCapabilities(entry.provider.capabilities),
 			source: "file",
-			metadata: CUSTOM_ENDPOINT_METADATA,
+			metadata: {
+				...CUSTOM_ENDPOINT_METADATA,
+				...(providerId === "freellm" &&
+				entry.provider.forkManagedCatalog === "freellm-v1"
+					? { forkManagedCatalog: "freellm-v1" }
+					: {}),
+			},
 		},
 		models: normalizedModels,
 	});

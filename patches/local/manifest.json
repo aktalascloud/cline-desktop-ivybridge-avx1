@@ -19,13 +19,13 @@
     },
     {
       "file": "04-freellm-and-model-context.patch",
-      "sha256": "c06e9f9b6783a05da25f17aec0cb2d3297aac47ec1b3c079e1ad04b6deb5d9bd",
+      "sha256": "6c2f97a2a6cc7f9ac43d1c642e3b91b813a4c80097097a8c10c8e559b746e5ec",
       "files": 7
     }
   ],
   "exact_git_tree_replay": true,
   "sanitized_base": "ebb732758cc4c387175add5eff6b02e386e2ec8f",
-  "build_tree": "65a5a0649cd9ad60f62a8a9de813f22e1886233f",
+  "build_tree": "1f53624fb8bc666b89883e35b5f66d4408a5c94c",
   "publication_files": [
     ".gitattributes",
     ".github/workflows/avx1-verify.yml",

@@ -103,10 +103,41 @@ index 796d53fc129b739e8665dbfe5f36d02abe5a47d9..a095ef22e0fe557d05f7e749809a5004
  			);
  			PUBLIC_MODELS_CACHE.set(cacheKey, {
 diff --git a/sdk/packages/core/src/services/providers/local-provider-registry.ts b/sdk/packages/core/src/services/providers/local-provider-registry.ts
-index fce3eb93ea7753cc96511f01b1b7835e8afdc438..ffea5fb66a74a992bfc4bd74cd39fa8bbb563c14 100644
+index fce3eb93ea7753cc96511f01b1b7835e8afdc438..5b727ea88f9cfcad7fbd6cf027d2c8e69760cb53 100644
 --- a/sdk/packages/core/src/services/providers/local-provider-registry.ts
 +++ b/sdk/packages/core/src/services/providers/local-provider-registry.ts
-@@ -705,6 +705,7 @@ export function ensureCustomProvidersLoadedSync(
+@@ -519,6 +519,15 @@ export function registerProviderSettingsProvider(
+ 	const existingCollection = LlmsModels.MODEL_COLLECTIONS_BY_PROVIDER_ID[
+ 		providerId
+ 	] as LlmsModels.ModelCollection | undefined;
++	if (
++		providerId === "freellm" &&
++		existingCollection?.provider.metadata?.forkManagedCatalog ===
++			"freellm-v1" &&
++		baseUrl === existingCollection.provider.baseUrl
++	) {
++		// Saved selections drive requests without expanding the managed picker.
++		return;
++	}
+ 	const generatedModels = getGeneratedModelsForProvider(providerId);
+ 	const modelCapabilities = toModelCapabilities(settings.capabilities);
+ 	const fallbackCapabilities =
+@@ -637,7 +646,13 @@ export function registerCustomProvider(
+ 			defaultModelId,
+ 			capabilities: toProviderCapabilities(entry.provider.capabilities),
+ 			source: "file",
+-			metadata: CUSTOM_ENDPOINT_METADATA,
++			metadata: {
++				...CUSTOM_ENDPOINT_METADATA,
++				...(providerId === "freellm" &&
++				entry.provider.forkManagedCatalog === "freellm-v1"
++					? { forkManagedCatalog: "freellm-v1" }
++					: {}),
++			},
+ 		},
+ 		models: normalizedModels,
+ 	});
+@@ -705,6 +720,7 @@ export function ensureCustomProvidersLoadedSync(
  		return;
  	}
  	const state = readModelsFileSync(modelsPath);
@@ -114,7 +145,7 @@ index fce3eb93ea7753cc96511f01b1b7835e8afdc438..ffea5fb66a74a992bfc4bd74cd39fa8b
  	for (const [providerId, entry] of Object.entries(state.providers)) {
  		registerCustomProvider(providerId, entry);
  	}
-@@ -719,8 +720,39 @@ export async function ensureCustomProvidersLoaded(
+@@ -719,8 +735,39 @@ export async function ensureCustomProvidersLoaded(
  		return;
  	}
  	const state = await readModelsFile(modelsPath);
@@ -155,10 +186,10 @@ index fce3eb93ea7753cc96511f01b1b7835e8afdc438..ffea5fb66a74a992bfc4bd74cd39fa8b
 +		registerCustomProvider("freellm", bundled.providers.freellm);
 +}
 diff --git a/sdk/packages/core/src/services/providers/local-provider-service.test.ts b/sdk/packages/core/src/services/providers/local-provider-service.test.ts
-index 51aebd95c31a9534f43a9827ad1a6144e6dc372b..607840d8e8d06bf2848d3d1a816334feeea9658f 100644
+index 51aebd95c31a9534f43a9827ad1a6144e6dc372b..2ae7cc7e981bd74da446fc0c89ec10ed4a5a4111 100644
 --- a/sdk/packages/core/src/services/providers/local-provider-service.test.ts
 +++ b/sdk/packages/core/src/services/providers/local-provider-service.test.ts
-@@ -76,6 +76,60 @@ afterEach(() => {
+@@ -76,6 +76,75 @@ afterEach(() => {
  });
  
  describe("live provider model loading", () => {
@@ -200,9 +231,24 @@ index 51aebd95c31a9534f43a9827ad1a6144e6dc372b..607840d8e8d06bf2848d3d1a816334fe
 +			const modelsPath = path.join(dir, "models.json");
 +			writeFileSync(modelsPath, JSON.stringify(stale));
 +			expect(await readModelsFile(modelsPath)).toEqual(stale);
-+			new ProviderSettingsManager({
-+				filePath: path.join(dir, "providers.json"),
-+			});
++			const settingsPath = path.join(dir, "providers.json");
++			writeFileSync(
++				settingsPath,
++				JSON.stringify({
++					version: 1,
++					modes: {},
++					lastUsedProvider: "freellm",
++					providers: {
++						freellm: {
++							settings: { provider: "freellm", baseUrl, model: "old" },
++							updatedAt: "2026-11-17T00:00:00Z",
++							tokenSource: "manual",
++						},
++					},
++				}),
++			);
++			const manager = new ProviderSettingsManager({ filePath: settingsPath });
++			expect(manager.getProviderSettings("freellm")?.model).toBe("old");
 +			const collection = LlmsModels.getProviderCollectionSync("freellm");
 +			expect(collection?.provider.defaultModelId).toBe("new");
 +			expect(Object.keys(collection?.models ?? {}).sort()).toEqual([
