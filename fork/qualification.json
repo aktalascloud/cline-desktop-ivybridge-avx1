@@ -1,42 +1,32 @@
 {
   "status": "qualified-installed",
-  "release_approved": true,
-  "version": "1.0.20",
-  "source_sha": "8434fb75b4349647e2d7f6b0f5152add97170032",
+  "version": "1.0.22",
+  "source_sha": "3d48eab3a987ad475243e8cf9ed981ceda08dde6",
   "ci": {
-    "run": 44101656634,
-    "source_sha": "8434fb75b4349647e2d7f6b0f5152add97170032",
-    "conclusion": "success",
-    "scope": "source patch replay"
+    "run": 44126117413,
+    "scope": "source patch replay",
+    "conclusion": "success"
   },
   "validation": {
     "installed_payload_files": 2894,
     "profile_and_ui_preserved": true,
     "installed_smoke_passed": true,
-    "compiled_hub_http_status_missing_wrong_valid": [
-      401,
-      401,
-      101
-    ],
-    "installed_hub_authentication_passed": true,
-    "targeted_core_tests_passed": 71,
-    "targeted_core_tests_skipped": 3
+    "installed_hub_authentication_passed": true
   },
   "publication": {
-    "version": "1.0.20",
-    "tag": "avx1-v1.0.20",
-    "source": "8434fb75b4349647e2d7f6b0f5152add97170032",
-    "ci_run": 44101656634,
+    "version": "1.0.22",
+    "tag": "avx1-v1.0.22",
+    "source": "3d48eab3a987ad475243e8cf9ed981ceda08dde6",
+    "ci_run": 44126117413,
     "published": true,
-    "installer_sha256": "17b90a40f0bc8f77ce88795b2a5ff4bf69a2c7fb21648e846a05858315b829a9",
-    "size": 134340205,
-    "release_id": 448771591,
-    "asset_id": 759445713,
-    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.20",
-    "exe_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.20/Cline-Desktop-AVX1-RU-Setup.exe",
-    "utc": "2026-11-17T14:51:35Z",
-    "asset_sha256": "17b90a40f0bc8f77ce88795b2a5ff4bf69a2c7fb21648e846a05858315b829a9",
-    "download_skipped_by_user": true,
-    "anonymous_download_verified": false
+    "installer_sha256": "ed33e2f9d25ac78c58a53acc2a1529fedfa9db83e7a58dcae198e9df8f03f33c",
+    "size": 134192677,
+    "release_id": 448919529,
+    "asset_id": 759835510,
+    "release_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/tag/avx1-v1.0.22",
+    "exe_url": "https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/releases/download/avx1-v1.0.22/Cline-Desktop-AVX1-RU-Setup.exe",
+    "utc": "2026-11-17T16:45:25Z",
+    "asset_sha256": "ed33e2f9d25ac78c58a53acc2a1529fedfa9db83e7a58dcae198e9df8f03f33c",
+    "download_skipped_by_user": true
   }
 }
