@@ -519,6 +519,15 @@ export function registerProviderSettingsProvider(
 	const existingCollection = LlmsModels.MODEL_COLLECTIONS_BY_PROVIDER_ID[
 		providerId
 	] as LlmsModels.ModelCollection | undefined;
+	if (
+		providerId === "freellm" &&
+		existingCollection?.provider.metadata?.forkManagedCatalog ===
+			"freellm-v1" &&
+		baseUrl === existingCollection.provider.baseUrl
+	) {
+		// Saved selections drive requests without expanding the managed picker.
+		return;
+	}
 	const generatedModels = getGeneratedModelsForProvider(providerId);
 	const modelCapabilities = toModelCapabilities(settings.capabilities);
 	const fallbackCapabilities =
@@ -637,7 +646,13 @@ export function registerCustomProvider(
 			defaultModelId,
 			capabilities: toProviderCapabilities(entry.provider.capabilities),
 			source: "file",
-			metadata: CUSTOM_ENDPOINT_METADATA,
+			metadata: {
+				...CUSTOM_ENDPOINT_METADATA,
+				...(providerId === "freellm" &&
+				entry.provider.forkManagedCatalog === "freellm-v1"
+					? { forkManagedCatalog: "freellm-v1" }
+					: {}),
+			},
 		},
 		models: normalizedModels,
 	});
@@ -705,6 +720,7 @@ export function ensureCustomProvidersLoadedSync(
 		return;
 	}
 	const state = readModelsFileSync(modelsPath);
+	registerBundledProviders(state);
 	for (const [providerId, entry] of Object.entries(state.providers)) {
 		registerCustomProvider(providerId, entry);
 	}
@@ -719,8 +735,39 @@ export async function ensureCustomProvidersLoaded(
 		return;
 	}
 	const state = await readModelsFile(modelsPath);
+	registerBundledProviders(state);
 	for (const [providerId, entry] of Object.entries(state.providers)) {
 		registerCustomProvider(providerId, entry);
 	}
 	LOADED_MODELS_REGISTRY_PATHS.add(modelsPath);
+}
+
+function registerBundledProviders(userState: StoredModelsFile): void {
+	const file = join(
+		dirname(process.env.CLINE_DESKTOP_CLI_PATH?.trim() || process.execPath),
+		"bin",
+		"defaults",
+		"freellm.json",
+	);
+	const bundled = readModelsFileSync(file);
+	const managed = userState.providers.freellm;
+	const current = bundled.providers.freellm;
+	if (
+		managed?.provider?.forkManagedCatalog === "freellm-v1" &&
+		current?.provider &&
+		managed.provider.baseUrl === current.provider.baseUrl
+	) {
+		// Refresh only our managed catalog in memory; never rewrite personal settings.
+		userState.providers.freellm = {
+			...managed,
+			provider: {
+				...managed.provider,
+				description: current.provider.description,
+				defaultModelId: current.provider.defaultModelId,
+			},
+			models: current.models,
+		};
+	}
+	if (!userState.providers.freellm && bundled.providers.freellm)
+		registerCustomProvider("freellm", bundled.providers.freellm);
 }

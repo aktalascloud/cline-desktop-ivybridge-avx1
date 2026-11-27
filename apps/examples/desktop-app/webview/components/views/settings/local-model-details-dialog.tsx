@@ -1,4 +1,6 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
+
 
 import { ChevronRight, Loader2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
@@ -66,6 +68,7 @@ const CAPABILITY_LABELS: Record<string, string> = {
 };
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
+	const t = useTranslation();
 	return (
 		<section className="flex flex-col gap-3">
 			<h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -87,6 +90,7 @@ function ReadOnlyField({
 	value: string;
 	hint?: string;
 }) {
+	const t = useTranslation();
 	return (
 		<div className="flex flex-col gap-1">
 			<span className="flex items-baseline justify-between gap-2 text-xs text-foreground">
@@ -109,6 +113,7 @@ function ReadOnlyField({
 }
 
 function Fact({ label, value }: { label: string; value: ReactNode }) {
+	const t = useTranslation();
 	return (
 		<div className="flex flex-col">
 			<span className="text-[11px] text-muted-foreground">{label}</span>
@@ -118,6 +123,7 @@ function Fact({ label, value }: { label: string; value: ReactNode }) {
 }
 
 function TextBlock({ title, text }: { title: string; text: string }) {
+	const t = useTranslation();
 	return (
 		<Collapsible>
 			<CollapsibleTrigger className="group flex items-center gap-1 text-sm text-foreground hover:underline">
@@ -155,6 +161,7 @@ export function LocalModelDetailsDialog({
 	running: LocalModelsStatus["running"][number] | undefined;
 	onOpenChange: (open: boolean) => void;
 }) {
+	const t = useTranslation();
 	const [details, setDetails] = useState<LocalModelDetails>();
 	const [error, setError] = useState<string>();
 	const isOllama = runtime === "ollama";
@@ -198,9 +205,7 @@ export function LocalModelDetailsDialog({
 				<DialogHeader>
 					<DialogTitle className="font-mono text-base">{model}</DialogTitle>
 					<DialogDescription>
-						The settings {LOCAL_RUNTIMES[runtime].name} runs this model with.
-						They're read-only for now.
-					</DialogDescription>
+						{t("The settings ")}{LOCAL_RUNTIMES[runtime].name} {t(" runs this model with. They're read-only for now.")}</DialogDescription>
 				</DialogHeader>
 
 				{error ? (
@@ -210,30 +215,29 @@ export function LocalModelDetailsDialog({
 				) : !details ? (
 					<div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
 						<Loader2 className="size-4 animate-spin" />
-						Reading model details…
-					</div>
+						{t("Reading model details…")}</div>
 				) : (
 					<div className="flex flex-col gap-6">
-						<Section title="Model">
+						<Section title={t("Model")}>
 							<div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
-								<Fact label="Architecture" value={details.architecture} />
-								<Fact label="Parameters" value={details.parameterSize} />
-								<Fact label="Quantization" value={details.quantization} />
-								<Fact label="Size on disk" value={formatGb(sizeBytes)} />
+								<Fact label={t("Architecture")} value={details.architecture} />
+								<Fact label={t("Parameters")} value={details.parameterSize} />
+								<Fact label={t("Quantization")} value={details.quantization} />
+								<Fact label={t("Size on disk")} value={formatGb(sizeBytes)} />
 								<Fact
-									label="Max context"
+									label={t("Max context")}
 									value={formatTokens(details.contextLength)}
 								/>
 								{isOllama ? (
 									<>
 										<Fact
-											label="Embedding size"
+											label={t("Embedding size")}
 											value={details.embeddingLength || ""}
 										/>
-										<Fact label="Layers" value={details.layers || ""} />
+										<Fact label={t("Layers")} value={details.layers || ""} />
 									</>
 								) : null}
-								<Fact label="Format" value={details.format.toUpperCase()} />
+								<Fact label={t("Format")} value={details.format.toUpperCase()} />
 							</div>
 							{details.capabilities.length > 0 ? (
 								<div className="flex flex-wrap gap-1.5">
@@ -246,7 +250,7 @@ export function LocalModelDetailsDialog({
 							) : null}
 						</Section>
 
-						<Section title="How Cline runs it">
+						<Section title={t("How Cline runs it")}>
 							<div className="grid gap-3 sm:grid-cols-2">
 								<ReadOnlyField
 									hint={
@@ -254,14 +258,14 @@ export function LocalModelDetailsDialog({
 											? `The model supports up to ${details.contextLength.toLocaleString()}. Larger windows need more memory.`
 											: undefined
 									}
-									label="Context window"
+									label={t("Context window")}
 									option={isOllama ? "num_ctx" : "context_length"}
 									value={formatTokens(contextWindow)}
 								/>
 								{isOllama ? (
 									<ReadOnlyField
 										hint="Set with OLLAMA_KEEP_ALIVE on the Ollama server."
-										label="Keep loaded"
+										label={t("Keep loaded")}
 										option="keep_alive"
 										value={
 											running?.expiresAtMs &&
@@ -273,12 +277,12 @@ export function LocalModelDetailsDialog({
 								) : (
 									<ReadOnlyField
 										hint="Models LM Studio loads on its own unload after an hour idle."
-										label="Keep loaded"
+										label={t("Keep loaded")}
 										value="Until unloaded, when loaded from Cline"
 									/>
 								)}
 								<ReadOnlyField
-									label="Thinking"
+									label={t("Thinking")}
 									option={isOllama ? "think" : undefined}
 									value={
 										supportsThinking
@@ -289,7 +293,7 @@ export function LocalModelDetailsDialog({
 								{isOllama ? (
 									<ReadOnlyField
 										hint="Includes loading the model, so large models on slow hardware can hit it."
-										label="Response timeout"
+										label={t("Response timeout")}
 										value="5 minutes to start responding (default)"
 									/>
 								) : null}
@@ -297,7 +301,7 @@ export function LocalModelDetailsDialog({
 						</Section>
 
 						{isOllama ? null : (
-							<Section title="Load settings">
+							<Section title={t("Load settings")}>
 								{details.loadConfig ? (
 									<div className="grid gap-3 sm:grid-cols-2">
 										{Object.entries(LOAD_CONFIG_LABELS).map(([key, label]) => {
@@ -314,19 +318,16 @@ export function LocalModelDetailsDialog({
 									</div>
 								) : (
 									<p className="text-sm text-muted-foreground">
-										Load the model to see the settings LM Studio loads it with.
-									</p>
+										{t("Load the model to see the settings LM Studio loads it with.")}</p>
 								)}
 								<p className="text-xs text-muted-foreground">
-									Defaults for sampling and loading are set per model in LM
-									Studio's My Models.
-								</p>
+									{t("Defaults for sampling and loading are set per model in LM Studio's My Models.")}</p>
 							</Section>
 						)}
 
 						{isOllama ? (
 							<>
-								<Section title="Sampling">
+								<Section title={t("Sampling")}>
 									<div className="grid gap-3 sm:grid-cols-2">
 										{SAMPLING_OPTIONS.map((option) => {
 											const value = parameters[option.key]?.join(", ");
@@ -352,8 +353,7 @@ export function LocalModelDetailsDialog({
 									{parameters.stop?.length ? (
 										<div className="flex flex-col gap-1">
 											<span className="flex items-baseline justify-between text-xs text-foreground">
-												Stop sequences
-												<code className="text-[11px] text-muted-foreground">
+												{t("Stop sequences")}<code className="text-[11px] text-muted-foreground">
 													stop
 												</code>
 											</span>
@@ -371,36 +371,33 @@ export function LocalModelDetailsDialog({
 									) : null}
 								</Section>
 
-								<Section title="Advanced">
+								<Section title={t("Advanced")}>
 									<div className="flex flex-col gap-2">
 										{details.template ? (
 											<TextBlock
 												text={details.template}
-												title="Prompt template"
+												title={t("Prompt template")}
 											/>
 										) : null}
 										{details.system ? (
-											<TextBlock text={details.system} title="System prompt" />
+											<TextBlock text={details.system} title={t("System prompt")} />
 										) : null}
 										{details.modelfile ? (
-											<TextBlock text={details.modelfile} title="Modelfile" />
+											<TextBlock text={details.modelfile} title={t("Modelfile")} />
 										) : null}
 										{details.license ? (
-											<TextBlock text={details.license} title="License" />
+											<TextBlock text={details.license} title={t("License")} />
 										) : null}
 									</div>
 									<p className="text-xs text-muted-foreground">
-										To change these, build your own variant of the model from a{" "}
+										{t("To change these, build your own variant of the model from a")}{" "}
 										<button
 											className="text-primary underline-offset-4 hover:underline"
 											onClick={() => void openExternalUrl(MODELFILE_DOCS_URL)}
 											type="button"
 										>
-											Modelfile
-										</button>{" "}
-										with <code>ollama create</code>. It then shows up under
-										Downloaded models.
-									</p>
+											{t("Modelfile")}</button>{" "}
+										{t("with ")}<code>ollama create</code>{t(". It then shows up under Downloaded models.")}</p>
 								</Section>
 							</>
 						) : null}

@@ -2094,6 +2094,8 @@ function createAiSdkProvider(
 			// Multi-protocol HTTP gateways declare model adapters in models.dev.
 			// Keep native and local CLI transports authoritative for their models.
 			const kind = resolveModelProviderKind(defaultKind, context);
+			// A shared FreeLLM quota is not helped by replaying a rejected request.
+			const freeLlm = context.provider.id === "freellm";
 			const log = context.logger;
 			let stream: AiSdkStreamResult | undefined;
 			const capturedError: { current: CapturedStreamError | undefined } = {
@@ -2312,14 +2314,14 @@ function createAiSdkProvider(
 				stream = streamText({
 					model: withEmptyResponseRetry(
 						provider.operations.language(context.model.id),
-						provider.retryEmptyResponses,
+						freeLlm ? false : provider.retryEmptyResponses,
 						context.logger,
 					) as never,
 					messages: messages as never,
 					...(useSystemOption ? { system: systemPrompt } : {}),
 					...(tools ? { tools } : {}),
 					abortSignal: request.signal,
-					maxRetries: MODEL_REQUEST_MAX_RETRIES,
+					maxRetries: freeLlm ? 0 : MODEL_REQUEST_MAX_RETRIES,
 					experimental_repairToolCall: repairMalformedToolCall as never,
 					telemetry: { isEnabled: false },
 					providerOptions: providerOptions as never,
@@ -2327,7 +2329,7 @@ function createAiSdkProvider(
 						? { stopWhen: stepCountIs(8) }
 						: {}),
 					...requestConfig,
-					streamRetries: MODEL_STREAM_MAX_RETRIES,
+					streamRetries: freeLlm ? 0 : MODEL_STREAM_MAX_RETRIES,
 					...(portableReasoning ? { reasoning: portableReasoning } : {}),
 					onLanguageModelCallStart: () => {
 						capturedError.current = undefined;
@@ -2350,7 +2352,7 @@ function createAiSdkProvider(
 				// upfront or Bun/Node will surface them as unhandled rejections.
 				suppressDanglingStreamPromises(stream);
 
-				yield* emitAiSdkEvents(
+				for await (const event of emitAiSdkEvents(
 					stream,
 					modelToolRequest,
 					context,
@@ -2358,7 +2360,11 @@ function createAiSdkProvider(
 					capturedError,
 					modelToolAdapters,
 					reportError,
-				);
+				)) {
+					yield freeLlm && event.type === "finish" && event.reason === "error"
+						? { ...event, errorRetryable: false }
+						: event;
+				}
 			} catch (error) {
 				suppressDanglingStreamPromises(stream);
 				// Prefer the real provider error captured in onError over the generic
@@ -2371,7 +2377,7 @@ function createAiSdkProvider(
 					reason: "error",
 					error: captured.message,
 					errorClass: captured.errorClass,
-					errorRetryable: captured.retryable,
+					errorRetryable: freeLlm ? false : captured.retryable,
 					errorReported: captured.reported,
 				};
 			}

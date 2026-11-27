@@ -1,4 +1,6 @@
 "use client";
+import { readLanguage } from "@/lib/i18n";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { GitHubIcon } from "@cline/ui";
 import {
@@ -91,6 +93,7 @@ export function ConnectorLogo({
 	logo?: string;
 	className?: string;
 }) {
+	const t = useTranslation();
 	// Keyed to the URL so a later, different logo (status arriving after the
 	// slug fallback 404ed) gets its own attempt.
 	const [failedSrc, setFailedSrc] = useState<string | null>(null);
@@ -159,6 +162,7 @@ export function ConnectorActionButton({
 	/** Opens the detail dialog; used by the View state in list rows. */
 	onView?: () => void;
 }) {
+	const t = useTranslation();
 	if (status === "connected") {
 		if (!showUninstall) {
 			return (
@@ -171,7 +175,7 @@ export function ConnectorActionButton({
 					type="button"
 					variant="default"
 				>
-					View
+					{t("View")}
 				</Button>
 			);
 		}
@@ -191,7 +195,7 @@ export function ConnectorActionButton({
 				) : (
 					<Trash2 className="size-4" />
 				)}
-				Uninstall
+				{t("Uninstall")}
 			</Button>
 		);
 	}
@@ -207,7 +211,7 @@ export function ConnectorActionButton({
 				variant="ghost"
 			>
 				<Loader2 className="size-4 animate-spin" />
-				Cancel
+				{t("Cancel")}
 			</Button>
 		);
 	}
@@ -223,7 +227,7 @@ export function ConnectorActionButton({
 			variant="default"
 		>
 			{busy ? <Loader2 className="size-4 animate-spin" /> : null}
-			Install
+			{t("Install")}
 		</Button>
 	);
 }
@@ -249,6 +253,7 @@ export function ComposioConnectorsView({
 		onOpenDetails: () => void;
 	}) => ReactNode;
 }) {
+	const t = useTranslation();
 	const {
 		status,
 		statusBySlug,
@@ -406,7 +411,8 @@ export function ComposioConnectorsView({
 	if (loadError && !status) {
 		return (
 			<p className="select-text text-sm text-destructive" role="alert">
-				Failed to load connectors: {loadError}
+				{t("Failed to load connectors: ")}
+				{loadError}
 			</p>
 		);
 	}
@@ -414,7 +420,7 @@ export function ComposioConnectorsView({
 	if (!status) {
 		return (
 			<output
-				aria-label="Loading connectors"
+				aria-label={t("Loading connectors")}
 				className="flex items-center justify-center py-16"
 			>
 				<Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -431,7 +437,7 @@ export function ComposioConnectorsView({
 		// The Marketplace hides its connector section in this case.
 		return (
 			<p className="text-sm text-muted-foreground">
-				Connectors aren&apos;t available.
+				{t("Connectors aren&apos;t available.")}
 			</p>
 		);
 	}
@@ -472,7 +478,7 @@ export function ComposioConnectorsView({
 	const catalogList =
 		catalogLoading && !catalog ? (
 			<output
-				aria-label="Loading connector catalog"
+				aria-label={t("Loading connector catalog")}
 				className="flex items-center justify-center py-10"
 			>
 				<Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -488,7 +494,7 @@ export function ComposioConnectorsView({
 					type="button"
 					variant="outline"
 				>
-					Retry
+					{t("Retry")}
 				</Button>
 			</div>
 		) : (
@@ -538,7 +544,7 @@ export function ComposioConnectorsView({
 						<p className="py-4 text-sm text-muted-foreground">
 							{trimmedQuery
 								? `No connectors match "${query.trim()}".`
-								: "No connectors are available for your account yet."}
+								: t("No connectors are available for your account yet.")}
 						</p>
 					) : null}
 				</div>
@@ -547,8 +553,11 @@ export function ComposioConnectorsView({
 				) : null}
 				{!appendOnScroll && hiddenCount > 0 ? (
 					<p className="text-xs text-muted-foreground">
-						Showing the {CATALOG_PREVIEW_COUNT} most-used connectors — search to
-						find {hiddenCount} more.
+						{t("Showing the ")}
+						{CATALOG_PREVIEW_COUNT}
+						{t(" most-used connectors — search to find ")}
+						{hiddenCount}
+						{t(" more.")}
 					</p>
 				) : null}
 			</>
@@ -570,11 +579,12 @@ export function ComposioConnectorsView({
 				<div className="grid gap-4">
 					<div className="flex items-center justify-between gap-3">
 						<p className="text-sm text-muted-foreground">
-							Connect your accounts to give Cline tools for your favorite apps.
-							Tools become available in new sessions.
+							{t(
+								"Connect your accounts to give Cline tools for your favorite apps. Tools become available in new sessions.",
+							)}
 						</p>
 						<Button
-							aria-label="Refresh connectors"
+							aria-label={t("Refresh connectors")}
 							disabled={refreshing}
 							onClick={() => void refresh()}
 							size="sm"
@@ -588,7 +598,8 @@ export function ComposioConnectorsView({
 					</div>
 					{loadError ? (
 						<p className="text-xs text-destructive" role="alert">
-							Failed to refresh connectors: {loadError}
+							{t("Failed to refresh connectors: ")}
+							{loadError}
 						</p>
 					) : null}
 				</div>
@@ -596,7 +607,7 @@ export function ComposioConnectorsView({
 				<section className="grid min-w-0 gap-3">
 					<div className="flex items-center justify-between gap-3">
 						<h2 className="text-base font-semibold text-foreground">
-							Installed
+							{t("Installed")}
 						</h2>
 						<span className="text-sm text-muted-foreground">
 							{installedEntries.length}
@@ -606,10 +617,10 @@ export function ComposioConnectorsView({
 						<div className="relative">
 							<Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
-								aria-label="Search installed connectors"
+								aria-label={t("Search installed connectors")}
 								className="h-10 pl-8"
 								onChange={(event) => setInstalledQuery(event.target.value)}
-								placeholder="Search installed connectors"
+								placeholder={t("Search installed connectors")}
 								value={installedQuery}
 							/>
 						</div>
@@ -638,7 +649,9 @@ export function ComposioConnectorsView({
 						<div className="rounded-lg border border-dashed bg-card p-6 text-center text-sm text-muted-foreground">
 							{trimmedInstalledQuery
 								? `No installed connectors match "${installedQuery.trim()}".`
-								: "No connectors installed. Install a connector below or ask Cline about it in a task."}
+								: t(
+										"No connectors installed. Install a connector below or ask Cline about it in a task.",
+									)}
 						</div>
 					)}
 				</section>
@@ -648,11 +661,12 @@ export function ComposioConnectorsView({
 						<div className="flex items-center justify-between gap-3">
 							<div className="grid gap-0.5">
 								<h2 className="text-base font-semibold text-foreground">
-									Suggested
+									{t("Suggested")}
 								</h2>
 								<p className="text-xs text-muted-foreground">
-									Connector combinations that work well together. Install the
-									ones you are missing to unlock the workflow.
+									{t(
+										"Connector combinations that work well together. Install the ones you are missing to unlock the workflow.",
+									)}
 								</p>
 							</div>
 							<span className="text-sm text-muted-foreground">
@@ -677,7 +691,9 @@ export function ComposioConnectorsView({
 
 				<section className="grid min-w-0 gap-3">
 					<div className="flex items-center justify-between gap-3">
-						<h2 className="text-base font-semibold text-foreground">Browse</h2>
+						<h2 className="text-base font-semibold text-foreground">
+							{t("Browse")}
+						</h2>
 						{catalog ? (
 							<span className="text-sm text-muted-foreground">
 								{matchingCatalog.length}
@@ -688,10 +704,10 @@ export function ComposioConnectorsView({
 						<div className="relative">
 							<Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
-								aria-label="Search all connectors"
+								aria-label={t("Search all connectors")}
 								className="h-10 pl-8"
 								onChange={(event) => setLocalQuery(event.target.value)}
-								placeholder="Search all connectors"
+								placeholder={t("Search all connectors")}
 								value={localQuery}
 							/>
 						</div>
@@ -709,9 +725,10 @@ export function ComposioConnectorsView({
 			{!renderItem ? (
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<p className="text-sm text-muted-foreground">
-						<Badge className="mr-1">Beta</Badge>Connect your accounts to give
-						Cline tools for your favorite apps. Tools will become available in
-						new sessions.
+						<Badge className="mr-1">{t("Beta")}</Badge>
+						{t(
+							"Connect your accounts to give Cline tools for your favorite apps. Tools will become available in new sessions.",
+						)}
 					</p>
 					{searchQuery === undefined ? (
 						<div className="relative">
@@ -719,8 +736,8 @@ export function ComposioConnectorsView({
 							<Input
 								className="h-8 w-64 pl-8"
 								onChange={(event) => setLocalQuery(event.target.value)}
-								aria-label="Search connectors"
-								placeholder="Search connectors"
+								aria-label={t("Search connectors")}
+								placeholder={t("Search connectors")}
 								value={query}
 							/>
 						</div>
@@ -755,6 +772,7 @@ function ConnectorsUnavailable({
 	onRefresh: () => Promise<void>;
 	refreshing: boolean;
 }) {
+	const t = useTranslation();
 	const { user, accountReady, refreshAccount } = useAccount();
 	const [signingIn, setSigningIn] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -780,7 +798,7 @@ function ConnectorsUnavailable({
 	if (!signedIn && !accountReady) {
 		return (
 			<output
-				aria-label="Loading account"
+				aria-label={t("Loading account")}
 				className="flex items-center justify-center py-16"
 			>
 				<Loader2 className="size-6 animate-spin text-muted-foreground" />
@@ -803,13 +821,17 @@ function ConnectorsUnavailable({
 				<div className="grid gap-2">
 					<h2 className="text-lg font-semibold text-foreground">
 						{signedIn
-							? "Connectors aren't enabled for your account yet"
-							: "Sign in to Cline to use connectors"}
+							? t("Connectors aren't enabled for your account yet")
+							: t("Sign in to Cline to use connectors")}
 					</h2>
 					<p className="text-sm text-muted-foreground">
 						{signedIn
-							? "Connectors are rolling out in beta. Once your Cline account has access, Gmail, Slack, GitHub, and hundreds of other apps will show up here with one-click install."
-							: "Connectors give Cline tools for Gmail, Slack, GitHub, and hundreds of other apps with a quick sign-in to each, no API keys. They require a Cline account."}
+							? t(
+									"Connectors are rolling out in beta. Once your Cline account has access, Gmail, Slack, GitHub, and hundreds of other apps will show up here with one-click install.",
+								)
+							: t(
+									"Connectors give Cline tools for Gmail, Slack, GitHub, and hundreds of other apps with a quick sign-in to each, no API keys. They require a Cline account.",
+								)}
 					</p>
 				</div>
 				{signedIn ? (
@@ -821,7 +843,7 @@ function ConnectorsUnavailable({
 						variant="outline"
 					>
 						<RefreshCw className={cn("size-4", refreshing && "animate-spin")} />
-						Check again
+						{t("Check again")}
 					</Button>
 				) : (
 					<div className="flex flex-wrap items-center justify-center gap-2">
@@ -836,7 +858,7 @@ function ConnectorsUnavailable({
 							) : (
 								<LogIn className="size-4" />
 							)}
-							{signingIn ? "Waiting for browser…" : "Sign in"}
+							{signingIn ? t("Waiting for browser…") : t("Sign in")}
 						</Button>
 						<Button
 							onClick={() => void openExternalUrl(CREATE_ACCOUNT_URL)}
@@ -844,14 +866,14 @@ function ConnectorsUnavailable({
 							type="button"
 							variant="outline"
 						>
-							Create account
+							{t("Create account")}
 							<ExternalLink className="size-4" />
 						</Button>
 					</div>
 				)}
 				{signingIn && deviceUserCode ? (
 					<p className="text-sm text-muted-foreground">
-						Confirm this code in your browser:{" "}
+						{t("Confirm this code in your browser:")}{" "}
 						<span className="font-mono font-medium text-foreground">
 							{deviceUserCode}
 						</span>
@@ -884,6 +906,7 @@ function ConnectorRow({
 	onDisconnect: () => void;
 	onOpenDetails: () => void;
 }) {
+	const t = useTranslation();
 	return (
 		<div className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-background/60 px-3 py-2.5 transition-colors hover:border-border hover:bg-background">
 			{/* A real button (nested interactives are invalid HTML, so the
@@ -945,6 +968,7 @@ function ConnectorCard({
 	onDisconnect: () => void;
 	onOpenDetails: () => void;
 }) {
+	const t = useTranslation();
 	const status = summary?.status ?? "not_connected";
 	const toolCount = entry.toolsCount;
 	return (
@@ -996,12 +1020,12 @@ function ConnectorCard({
 					</span>
 					{status === "pending" ? (
 						<Badge variant="outline" className="shrink-0 text-muted-foreground">
-							Authorizing…
+							{t("Authorizing…")}
 						</Badge>
 					) : null}
 					{toolCount ? (
 						<Badge variant="outline" className="shrink-0 text-muted-foreground">
-							{toolCount} {toolCount === 1 ? "tool" : "tools"}
+							{toolCount} {toolCount === 1 ? t("tool") : t("tools")}
 						</Badge>
 					) : null}
 				</span>
@@ -1037,6 +1061,7 @@ function RecipeCard({
 	onConnect: (slug: ComposioToolkitSlug) => void;
 	onCancel: (slug: ComposioToolkitSlug) => void;
 }) {
+	const t = useTranslation();
 	const error = recipe.connectors.some(
 		(connector) => connector.slug === actionError?.toolkit,
 	)
@@ -1053,7 +1078,9 @@ function RecipeCard({
 				</p>
 			</div>
 			<p className="rounded-md border bg-muted/30 px-3 py-2 text-xs leading-5 text-muted-foreground">
-				&ldquo;{recipe.prompt}&rdquo;
+				{t("&ldquo;")}
+				{recipe.prompt}
+				{t("&rdquo;")}
 			</p>
 			<div className="mt-auto flex flex-wrap gap-2">
 				{recipe.connectors.map((connector) => {
@@ -1138,6 +1165,7 @@ function ConnectorDetailDialog({
 	onDisconnect: () => void;
 	onOpenChange: (open: boolean) => void;
 }) {
+	const t = useTranslation();
 	const status = summary?.status ?? "not_connected";
 	return (
 		<Dialog onOpenChange={onOpenChange} open={entry !== null}>
@@ -1170,7 +1198,7 @@ function ConnectorDetailDialog({
 							<dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
 								{entry.categories && entry.categories.length > 0 ? (
 									<>
-										<dt className="text-muted-foreground">Category</dt>
+										<dt className="text-muted-foreground">{t("Category")}</dt>
 										<dd className="flex flex-wrap gap-1">
 											{entry.categories.map((category) => (
 												<Badge
@@ -1186,15 +1214,17 @@ function ConnectorDetailDialog({
 								) : null}
 								{summary?.connectedAt ? (
 									<>
-										<dt className="text-muted-foreground">Connected</dt>
+										<dt className="text-muted-foreground">{t("Connected")}</dt>
 										<dd className="text-foreground">
-											{new Date(summary.connectedAt).toLocaleString()}
+											{new Date(summary.connectedAt).toLocaleString(
+												readLanguage(),
+											)}
 										</dd>
 									</>
 								) : null}
 								{typeof entry.toolsCount === "number" ? (
 									<>
-										<dt className="text-muted-foreground">Tools</dt>
+										<dt className="text-muted-foreground">{t("Tools")}</dt>
 										<dd className="text-foreground">{entry.toolsCount}</dd>
 									</>
 								) : null}
@@ -1203,7 +1233,9 @@ function ConnectorDetailDialog({
 							{status === "pending" ? (
 								<p className="inline-flex items-center gap-2 text-sm text-muted-foreground">
 									<Loader2 className="size-4 animate-spin" />
-									Finish authorizing {entry.name} in your browser…
+									{t("Finish authorizing ")}
+									{entry.name}
+									{t(" in your browser…")}
 								</p>
 							) : null}
 

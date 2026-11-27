@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Switch } from "@cline/ui";
 import {
@@ -123,6 +124,7 @@ const AUTH_KIND_LABEL: Record<ProviderAuthKind, string> = {
 };
 
 function AuthKindHint({ kind }: { kind: ProviderAuthKind }) {
+	const t = useTranslation();
 	const Icon =
 		kind === "oauth" ? Globe : kind === "local" ? MonitorSmartphone : KeyRound;
 	return (
@@ -198,6 +200,7 @@ function ProviderRow({
 	onConfigure: (id: string) => void;
 	selected: boolean;
 }) {
+	const t = useTranslation();
 	const connected = isProviderConnected(provider);
 	const authKind = getProviderAuthKind(provider);
 	return (
@@ -214,8 +217,10 @@ function ProviderRow({
 			</p>
 			{connected ? (
 				<span className="shrink-0 text-xs font-medium text-muted-foreground">
-					Configured
+					{t("Configured")}
 				</span>
+			) : provider.id === "dsw2api" ? (
+				<span className="text-xs text-muted-foreground">{t("Sign in")}</span>
 			) : (
 				<AuthKindHint kind={authKind} />
 			)}
@@ -237,6 +242,7 @@ function ProviderSection({
 	onToggle: () => void;
 	children: ReactNode;
 }) {
+	const t = useTranslation();
 	const contentId = useId();
 	return (
 		<div className="mt-8 first:mt-0">
@@ -281,6 +287,7 @@ export function ProviderListContent({
 	selectedProviderId?: string | null;
 	variant?: "page" | "panel";
 }) {
+	const t = useTranslation();
 	const [providerSearch, setProviderSearch] = useState("");
 	const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
 		new Set(),
@@ -352,13 +359,13 @@ export function ProviderListContent({
 								isPanel ? "text-2xl" : "text-3xl",
 							)}
 						>
-							Bring your own key
+							{t("Bring your own key")}
 						</h1>
 						<InUseBadge section="Providers" />
 					</div>
 					<p className="mt-3 text-base leading-6 text-muted-foreground">
 						{connectedCount === 0
-							? "Connect a provider to start using models."
+							? t("Connect a provider to start using models.")
 							: `${connectedCount} configured · ${providers.length} available`}
 					</p>
 				</div>
@@ -368,7 +375,7 @@ export function ProviderListContent({
 					type="button"
 				>
 					<PlusCircle className="size-4" />
-					Add provider
+					{t("Add provider")}
 				</Button>
 			</div>
 
@@ -378,18 +385,18 @@ export function ProviderListContent({
 				<div className="flex h-9 items-center gap-2 rounded border bg-background px-3">
 					<Search className="size-4 shrink-0 text-muted-foreground" />
 					<Input
-						aria-label="Search model providers"
+						aria-label={t("Search model providers")}
 						className={EMBEDDED_INPUT_CLASS}
 						onChange={(event) => {
 							setProviderSearch(event.target.value);
 							setCollapsedSections(new Set());
 						}}
-						placeholder="Search providers"
+						placeholder={t("Search providers")}
 						value={providerSearch}
 					/>
 					{providerSearch ? (
 						<button
-							aria-label="Clear provider search"
+							aria-label={t("Clear provider search")}
 							className="grid size-5 place-items-center rounded text-muted-foreground hover:text-foreground"
 							onClick={() => setProviderSearch("")}
 							type="button"
@@ -401,7 +408,7 @@ export function ProviderListContent({
 			</div>
 
 			<section
-				aria-label="Model providers"
+				aria-label={t("Model providers")}
 				className={cn(
 					"min-h-0 flex-1 overflow-y-auto overscroll-contain",
 					isPanel ? "max-w-none" : "max-w-2xl",
@@ -411,13 +418,18 @@ export function ProviderListContent({
 			>
 				{filteredProviders.length === 0 ? (
 					<div className="border-y px-2 py-6 text-base text-muted-foreground">
-						No providers match "{providerSearch.trim()}".
+						{t('No providers match "')}
+						{providerSearch.trim()}".
 					</div>
 				) : null}
 
 				{connectedProviders.length > 0 ? (
 					<ProviderSection
-						title="Configured"
+						title={t(
+							providers.some((provider) => provider.id === "dsw2api")
+								? "Your providers"
+								: "Configured",
+						)}
 						expanded={!collapsedSections.has("Configured")}
 						onToggle={() => toggleSection("Configured")}
 					>
@@ -431,10 +443,10 @@ export function ProviderListContent({
 						onToggle={() => toggleSection("Popular")}
 						description={
 							connectedProviders.length === 0 && !providerSearchQuery
-								? "Sign in or add an API key to connect."
+								? t("Sign in or add an API key to connect.")
 								: undefined
 						}
-						title="Popular"
+						title={t("Popular")}
 					>
 						{renderRows(popularProviders)}
 					</ProviderSection>
@@ -442,7 +454,7 @@ export function ProviderListContent({
 
 				{otherProviders.length > 0 ? (
 					<ProviderSection
-						title="All providers"
+						title={t("All providers")}
 						expanded={!collapsedSections.has("All providers")}
 						onToggle={() => toggleSection("All providers")}
 					>
@@ -475,16 +487,19 @@ function ConfigFieldRow({
 	onDraftChange: (value: string) => void;
 	onCommit: (value: string | boolean) => void;
 }) {
+	const t = useTranslation();
 	const valueText = fieldValueToString(value);
 	const isSecret = field.type === "password" || field.secret;
 	const providerKeyUrl = getProviderApiKeyUrl(provider);
 	return (
 		<div className="grid min-h-18 grid-cols-1 items-center gap-3 border-b py-4 @2xl:grid-cols-[minmax(12rem,0.55fr)_minmax(16rem,0.45fr)] @2xl:gap-6">
 			<header>
-				<h3 className="text-lg font-semibold text-foreground">{field.label}</h3>
+				<h3 className="text-lg font-semibold text-foreground">
+					{t(field.label)}
+				</h3>
 				{field.description ? (
 					<p className="mt-1 text-base leading-relaxed text-muted-foreground">
-						{field.description}
+						{t(field.description)}
 					</p>
 				) : null}
 				{field.path === "apiKey" && providerKeyUrl ? (
@@ -513,10 +528,10 @@ function ConfigFieldRow({
 					onChange={(event) => onCommit(event.target.value)}
 					value={valueText}
 				>
-					<option value="">Not set</option>
+					<option value="">{t("Not set")}</option>
 					{field.options?.map((option) => (
 						<option key={String(option.value)} value={String(option.value)}>
-							{option.label}
+							{t(option.label)}
 						</option>
 					))}
 				</select>
@@ -529,7 +544,8 @@ function ConfigFieldRow({
 						className={EMBEDDED_INPUT_CLASS}
 						onBlur={() => onCommit(valueText)}
 						onChange={(event) => onDraftChange(event.target.value)}
-						placeholder={field.placeholder}
+						placeholder={field.placeholder ? t(field.placeholder) : undefined}
+						step={field.type === "number" ? "any" : undefined}
 						spellCheck={false}
 						type={
 							isSecret && !shown
@@ -545,7 +561,7 @@ function ConfigFieldRow({
 					{isSecret ? (
 						<>
 							<Button
-								aria-label={shown ? "Hide secret" : "Show secret"}
+								aria-label={shown ? t("Hide secret") : t("Show secret")}
 								className="rounded-md p-1 text-muted-foreground hover:text-foreground "
 								onClick={onToggleShown}
 								variant="ghost"
@@ -599,6 +615,7 @@ export function ProviderDetailContent({
 	onDisconnect?: () => void;
 	variant?: "page" | "panel";
 }) {
+	const t = useTranslation();
 	const deviceUserCode = useOAuthUserCode(oauthLoginPending);
 	const [shownSecrets, setShownSecrets] = useState<Record<string, boolean>>({});
 	const [localConfigValues, setLocalConfigValues] = useState<
@@ -817,11 +834,12 @@ export function ProviderDetailContent({
 					<div className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3">
 						<div className="min-w-0">
 							<p className="text-sm font-medium text-foreground">
-								Signed in via browser
+								{t("Signed in via browser")}
 							</p>
 							<p className="text-xs text-muted-foreground">
-								This provider authenticates with your account — no API key
-								needed.
+								{t(
+									"This provider authenticates with your account — no API key needed.",
+								)}
 							</p>
 						</div>
 					</div>
@@ -829,7 +847,7 @@ export function ProviderDetailContent({
 					<div className="flex flex-col">
 						<div className="mb-2 flex items-center justify-between gap-4">
 							<p className="text-sm text-muted-foreground">
-								Configured with an API key.
+								{t("Configured with an API key.")}
 							</p>
 						</div>
 						{apiKeyField ? renderConfigFieldRow(apiKeyField) : null}
@@ -837,10 +855,11 @@ export function ProviderDetailContent({
 				) : (
 					<div className="rounded-lg border px-4 py-4">
 						<p className="text-sm font-medium text-foreground">
-							Sign in to {provider.name}
+							{t("Sign in to ")}
+							{provider.name}
 						</p>
 						<p className="mt-1 text-xs text-muted-foreground">
-							Connects through your browser. No API key needed.
+							{t("Connects through your browser. No API key needed.")}
 						</p>
 						{onOAuthLogin ? (
 							<Button
@@ -855,14 +874,14 @@ export function ProviderDetailContent({
 								) : null}
 								<span>
 									{oauthLoginPending
-										? "Waiting for browser..."
-										: "Sign in with browser"}
+										? t("Waiting for browser...")
+										: t("Sign in with browser")}
 								</span>
 							</Button>
 						) : null}
 						{oauthLoginPending && deviceUserCode ? (
 							<p className="mt-3 text-xs text-muted-foreground">
-								Confirm this code in your browser:{" "}
+								{t("Confirm this code in your browser:")}{" "}
 								<span className="font-mono font-medium text-foreground">
 									{deviceUserCode}
 								</span>
@@ -878,7 +897,7 @@ export function ProviderDetailContent({
 									type="button"
 									variant="ghost"
 								>
-									Use an API key instead
+									{t("Use an API key instead")}
 									<ChevronDown
 										aria-hidden="true"
 										className={cn(
@@ -902,11 +921,12 @@ export function ProviderDetailContent({
 				<div className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3">
 					<div className="min-w-0">
 						<p className="text-sm font-medium text-foreground">
-							Uses your local CLI sign-in
+							{t("Uses your local CLI sign-in")}
 						</p>
 						<p className="text-xs text-muted-foreground">
-							Credentials come from the provider's own CLI on this machine — no
-							API key needed.
+							{t(
+								"Credentials come from the provider's own CLI on this machine — no API key needed.",
+							)}
 						</p>
 					</div>
 					{!connected && onConnect && (
@@ -916,7 +936,7 @@ export function ProviderDetailContent({
 							size="sm"
 							type="button"
 						>
-							Connect
+							{t("Connect")}
 						</Button>
 					)}
 				</div>
@@ -931,9 +951,9 @@ export function ProviderDetailContent({
 				{!connected ? (
 					<div className="mt-4 flex items-center justify-between gap-4">
 						<p className="text-xs text-muted-foreground">
-							Saving an API key configures this provider automatically. Use
-							Connect if it reads credentials from your environment or a local
-							endpoint.
+							{t(
+								"Saving an API key configures this provider automatically. Use Connect if it reads credentials from your environment or a local endpoint.",
+							)}
 						</p>
 						{onConnect ? (
 							<Button
@@ -943,7 +963,7 @@ export function ProviderDetailContent({
 								type="button"
 								variant="outline"
 							>
-								Connect
+								{t("Connect")}
 							</Button>
 						) : null}
 					</div>
@@ -963,7 +983,7 @@ export function ProviderDetailContent({
 				<div className="mb-8 flex items-center gap-3">
 					{isPanel ? null : (
 						<Button
-							aria-label="Back to providers"
+							aria-label={t("Back to providers")}
 							className="rounded-md p-1.5 text-muted-foreground hover:bg-surface-hover hover:text-foreground "
 							onClick={onBack}
 							variant="ghost"
@@ -982,12 +1002,12 @@ export function ProviderDetailContent({
 								{provider.name}
 							</h1>
 							<span className="inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-								{connected ? "Configured" : "Not configured"}
+								{connected ? t("Configured") : t("Not configured")}
 							</span>
 						</div>
 						{connected && authKind !== "oauth" && authKind !== "local" ? (
 							<p className="mt-2 text-xs text-muted-foreground">
-								Changes to the fields below are saved automatically.
+								{t("Changes to the fields below are saved automatically.")}
 							</p>
 						) : null}
 					</div>
@@ -1000,8 +1020,8 @@ export function ProviderDetailContent({
 							variant="outline"
 						>
 							{authKind === "oauth" && oauthConnected
-								? "Sign out"
-								: "Disconnect"}
+								? t("Sign out")
+								: t("Disconnect")}
 						</Button>
 					) : null}
 				</div>
@@ -1020,10 +1040,10 @@ export function ProviderDetailContent({
 				<div className="flex h-12 shrink-0 items-center justify-between bg-muted/40 px-4">
 					<div className="flex items-center gap-1">
 						<h2 className="mr-1 text-lg font-medium text-muted-foreground">
-							Models
+							{t("Models")}
 						</h2>
 						<Button
-							aria-label="Refresh models"
+							aria-label={t("Refresh models")}
 							className="size-4 rounded-none p-0 text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground"
 							disabled={modelsLoading}
 							onClick={onLoadModels}
@@ -1036,7 +1056,7 @@ export function ProviderDetailContent({
 					</div>
 					{onUpdateModels ? (
 						<Button
-							aria-label="Add model"
+							aria-label={t("Add model")}
 							className="size-4 rounded-none p-0 text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground"
 							disabled={modelsLoading}
 							onClick={() =>
@@ -1051,7 +1071,7 @@ export function ProviderDetailContent({
 				{isAddingModel ? (
 					<div className="flex shrink-0 items-center gap-2 border-t px-4 py-3">
 						<Input
-							aria-label="New model ID"
+							aria-label={t("New model ID")}
 							autoFocus
 							className="h-9 flex-1 font-mono"
 							onChange={(event) =>
@@ -1064,18 +1084,18 @@ export function ProviderDetailContent({
 								if (event.key === "Enter") addModel();
 								if (event.key === "Escape") setAddModelState(null);
 							}}
-							placeholder="Model ID"
+							placeholder={t("Model ID")}
 							value={newModelId}
 						/>
 						<Button disabled={!newModelId.trim()} onClick={addModel} size="sm">
-							Add
+							{t("Add")}
 						</Button>
 						<Button
 							onClick={() => setAddModelState(null)}
 							size="sm"
 							variant="ghost"
 						>
-							Cancel
+							{t("Cancel")}
 						</Button>
 					</div>
 				) : null}
@@ -1092,7 +1112,7 @@ export function ProviderDetailContent({
 						<div className="mx-4 mt-4 flex h-9 shrink-0 items-center gap-2 rounded border bg-background px-3">
 							<Search className="size-4 shrink-0 text-muted-foreground" />
 							<Input
-								aria-label="Search models"
+								aria-label={t("Search models")}
 								className={EMBEDDED_INPUT_CLASS}
 								onChange={(event) =>
 									setModelSearchState({
@@ -1100,14 +1120,14 @@ export function ProviderDetailContent({
 										value: event.target.value,
 									})
 								}
-								placeholder="Search models by name or ID"
+								placeholder={t("Search models by name or ID")}
 								spellCheck={false}
 								value={modelSearch}
 							/>
 						</div>
 						{filteredModelList.length > 0 ? (
 							<section
-								aria-label="Models"
+								aria-label={t("Models")}
 								className="min-h-0 flex-1 overflow-y-auto overscroll-contain border-t"
 								// biome-ignore lint/a11y/noNoninteractiveTabindex: Allow keyboard scrolling of the model list.
 								tabIndex={0}
@@ -1131,9 +1151,9 @@ export function ProviderDetailContent({
 												{/* Capability icons */}
 												{model.supportsAttachments && (
 													<span
-														aria-label="File support"
+														aria-label={t("File support")}
 														role="img"
-														title="File support"
+														title={t("File support")}
 													>
 														<FileIcon
 															aria-hidden="true"
@@ -1143,9 +1163,9 @@ export function ProviderDetailContent({
 												)}
 												{model.supportsVision && (
 													<span
-														aria-label="Image support"
+														aria-label={t("Image support")}
 														role="img"
-														title="Image support"
+														title={t("Image support")}
 													>
 														<ImageIcon
 															aria-hidden="true"
@@ -1158,9 +1178,9 @@ export function ProviderDetailContent({
 													model.operation !== "transcription" &&
 													model.operation !== "realtime" && (
 														<span
-															aria-label="Audio support"
+															aria-label={t("Audio support")}
 															role="img"
-															title="Audio support"
+															title={t("Audio support")}
 														>
 															<Mic
 																aria-hidden="true"
@@ -1170,9 +1190,9 @@ export function ProviderDetailContent({
 													)}
 												{model.supportsReasoning && (
 													<span
-														aria-label="Reasoning support"
+														aria-label={t("Reasoning support")}
 														role="img"
-														title="Reasoning support"
+														title={t("Reasoning support")}
 													>
 														<Brain
 															aria-hidden="true"
@@ -1190,14 +1210,14 @@ export function ProviderDetailContent({
 												aria-label={`Copy model ID ${model.id}`}
 												className="mt-1 flex max-w-full items-center gap-1.5 px-1 text-left text-xs text-muted-foreground  hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 												onClick={() => copyModelId(model.id)}
-												title="Copy model ID"
+												title={t("Copy model ID")}
 												type="button"
 											>
 												<span className="min-w-0 truncate">{model.id}</span>
 												<Copy className="size-3 shrink-0" />
 												{copiedModelId === model.id ? (
 													<span className="shrink-0 text-foreground">
-														Copied
+														{t("Copied")}
 													</span>
 												) : null}
 											</button>
@@ -1231,7 +1251,8 @@ export function ProviderDetailContent({
 						) : (
 							<div className="rounded-lg border border-border px-4 py-8 text-center">
 								<p className="text-sm text-muted-foreground">
-									No models match "{modelSearch.trim()}".
+									{t('No models match "')}
+									{modelSearch.trim()}".
 								</p>
 							</div>
 						)}
@@ -1240,8 +1261,8 @@ export function ProviderDetailContent({
 					<div className="rounded-lg border border-border px-4 py-8 text-center">
 						<p className="text-sm text-muted-foreground">
 							{modelsLoading
-								? "Loading models..."
-								: "No models available. Click refresh to load models."}
+								? t("Loading models...")
+								: t("No models available. Click refresh to load models.")}
 						</p>
 					</div>
 				)}

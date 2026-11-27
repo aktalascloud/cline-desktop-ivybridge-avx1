@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 // Styled composition of shadcn/ui's Message Scroller. The upstream primitive
 // owns anchoring, streamed output, visibility tracking, and scroll commands.
@@ -86,6 +87,7 @@ export function MessageScrollerButton({
 	children,
 	...props
 }: MessageScrollerButtonProps) {
+	const t = useTranslation();
 	const resolvedBehavior =
 		behavior ??
 		(typeof window !== "undefined" &&
@@ -105,7 +107,7 @@ export function MessageScrollerButton({
 				<>
 					<ArrowDownIcon aria-hidden="true" />
 					<span className="cline-message-scroller-button-label">
-						{direction === "end" ? "Scroll to end" : "Scroll to start"}
+						{direction === "end" ? t("Scroll to end") : t("Scroll to start")}
 					</span>
 				</>
 			)}

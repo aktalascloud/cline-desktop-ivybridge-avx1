@@ -1,3 +1,4 @@
+import { t, useTranslation } from "@/lib/i18n";
 import {
 	ArrowUpRight,
 	BadgeCheck,
@@ -323,13 +324,14 @@ function SectionHeader({
 	beta?: boolean;
 	meta: MarketplaceTypeMeta;
 }) {
+	const t = useTranslation();
 	return (
 		<h2 className="flex min-w-0 items-center gap-2 px-2.5 pb-1.5 pt-1">
 			<MarketplaceTypeGlyph className="size-5 rounded-md" meta={meta} />
 			<span className="shrink-0 text-sm font-semibold text-foreground">
 				{meta.plural}
 			</span>
-			{beta ? <Badge>Beta</Badge> : null}
+			{beta ? <Badge>{t("Beta")}</Badge> : null}
 			<span className="ml-1 min-w-0 flex-1 truncate text-xs text-muted-foreground/80">
 				{meta.blurb}
 			</span>
@@ -348,6 +350,7 @@ function MetaCell({
 	onOpen?: () => void;
 	value: string;
 }) {
+	const t = useTranslation();
 	const content = (
 		<>
 			<span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -389,6 +392,7 @@ function DetailPane({
 	onClose: () => void;
 	onSelectTag: (tag: string) => void;
 }) {
+	const t = useTranslation();
 	const meta = TYPE_META[entry.type];
 	const key = entryKey(entry);
 	const state = directory.actionStates.get(key);
@@ -421,7 +425,7 @@ function DetailPane({
 							{entry.verified ? (
 								<Badge className="border border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300">
 									<BadgeCheck />
-									Verified
+									{t("Verified")}
 								</Badge>
 							) : null}
 							<MarketplaceTypePill meta={meta} />
@@ -453,7 +457,7 @@ function DetailPane({
 									variant="outline"
 								>
 									<Globe className="size-4" />
-									Learn more
+									{t("Learn more")}
 									<ArrowUpRight className="size-3.5 text-muted-foreground" />
 								</Button>
 							) : null}
@@ -472,7 +476,7 @@ function DetailPane({
 						) : null}
 					</div>
 					<Button
-						aria-label="Close details"
+						aria-label={t("Close details")}
 						className="shrink-0 text-muted-foreground"
 						onClick={onClose}
 						size="icon"
@@ -500,7 +504,7 @@ function DetailPane({
 					<div className="rounded-xl border bg-card p-4">
 						<MetaCell
 							icon={User}
-							label="Author"
+							label={t("Author")}
 							onOpen={
 								entry.author.url
 									? () => void openExternalUrl(entry.author?.url as string)
@@ -512,7 +516,9 @@ function DetailPane({
 				) : null}
 
 				<section className="grid gap-2">
-					<h2 className="text-sm font-semibold text-foreground">About</h2>
+					<h2 className="text-sm font-semibold text-foreground">
+						{t("About")}
+					</h2>
 					<p className="text-sm leading-6 text-muted-foreground">
 						{entry.description}
 					</p>
@@ -540,7 +546,7 @@ function DetailPane({
 				{requiredEnv.length > 0 || optionalEnv.length > 0 ? (
 					<section className="grid gap-2">
 						<h2 className="text-sm font-semibold text-foreground">
-							Environment setup
+							{t("Environment setup")}
 						</h2>
 						<div className="grid gap-2">
 							{[...requiredEnv, ...optionalEnv].map((env) => (
@@ -553,7 +559,7 @@ function DetailPane({
 											{env.name}
 										</code>
 										<Badge variant="outline">
-											{env.required === false ? "Optional" : "Required"}
+											{env.required === false ? t("Optional") : t("Required")}
 										</Badge>
 									</div>
 									{env.description ? (
@@ -567,7 +573,7 @@ function DetailPane({
 											onClick={() => void openExternalUrl(env.url as string)}
 											type="button"
 										>
-											Get value
+											{t("Get value")}
 											<ArrowUpRight className="size-3" />
 										</button>
 									) : null}
@@ -592,6 +598,7 @@ export function MarketplaceExplorerView({
 }: {
 	initialTypeFilter?: MarketplaceTypeFilter | null;
 }) {
+	const t = useTranslation();
 	const directory = useMarketplaceDirectory();
 	const [query, setQuery] = useState("");
 	const [typeFilter, setTypeFilter] = useState<MarketplaceTypeFilter | null>(
@@ -715,10 +722,10 @@ export function MarketplaceExplorerView({
 					<div className="relative">
 						<Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 						<Input
-							aria-label="Search marketplace"
+							aria-label={t("Search marketplace")}
 							className="h-9 pl-8"
 							onChange={(event) => setQuery(event.target.value)}
-							placeholder="Search marketplace"
+							placeholder={t("Search marketplace")}
 							value={query}
 						/>
 					</div>
@@ -730,7 +737,7 @@ export function MarketplaceExplorerView({
 							type="button"
 							variant={typeFilter === null ? "default" : "outline"}
 						>
-							All
+							{t("All")}
 						</Button>
 						{MATURITY_ORDER.map((type) => {
 							const meta = TYPE_META[type];
@@ -774,7 +781,7 @@ export function MarketplaceExplorerView({
 										typeFilter !== "connector" && TYPE_META.connector.text,
 									)}
 								/>
-								Connectors
+								{t("Connectors")}
 								<span className="text-[10px] opacity-70">
 									{connectorCount ?? "…"}
 								</span>
@@ -784,7 +791,7 @@ export function MarketplaceExplorerView({
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
-										aria-label="Filter by category"
+										aria-label={t("Filter by category")}
 										className="ml-auto text-muted-foreground"
 										size="xs"
 										type="button"
@@ -792,7 +799,7 @@ export function MarketplaceExplorerView({
 									>
 										{selectedTag
 											? (directory.tagLabels.get(selectedTag) ?? selectedTag)
-											: "All categories"}
+											: t("All categories")}
 										<ChevronDown className="size-3.5" />
 									</Button>
 								</DropdownMenuTrigger>
@@ -804,7 +811,7 @@ export function MarketplaceExplorerView({
 										value={selectedTag ?? ""}
 									>
 										<DropdownMenuRadioItem value="">
-											All categories
+											{t("All categories")}
 										</DropdownMenuRadioItem>
 										{visibleTags.map((tag) => (
 											<DropdownMenuRadioItem key={tag.id} value={tag.id}>
@@ -825,7 +832,7 @@ export function MarketplaceExplorerView({
 						{typeFilter !== "connector" && directory.loading ? (
 							<p className="flex items-center justify-center p-6 text-sm text-muted-foreground">
 								<Spinner className="mr-2" />
-								Loading marketplace...
+								{t("Loading marketplace...")}
 							</p>
 						) : null}
 						{typeFilter !== "connector" && directory.errorMessage ? (
@@ -865,11 +872,11 @@ export function MarketplaceExplorerView({
 						!directory.loading &&
 						!directory.errorMessage ? (
 							<p className="px-3 py-6 text-center text-sm text-muted-foreground">
-								No entries match the current filters.
+								{t("No entries match the current filters.")}
 							</p>
 						) : null}
 						{showConnectors ? (
-							<section className="grid gap-0.5" aria-label="Connectors">
+							<section className="grid gap-0.5" aria-label={t("Connectors")}>
 								<SectionHeader beta meta={TYPE_META.connector} />
 								<ComposioConnectorsView
 									appendOnScroll

@@ -296,6 +296,10 @@ function legacyNativeBridge() {
 	).clineLegacy;
 }
 
+export function isLegacyDesktopAvailable(): boolean {
+	return Boolean(legacyNativeBridge());
+}
+
 const LEGACY_NATIVE_COMMANDS = new Set([
 	"pick_workspace_directory",
 	"open_third_party_notices",

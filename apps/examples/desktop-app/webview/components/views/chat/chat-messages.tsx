@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { AgentAskQuestion } from "@cline/ui";
 import {
@@ -141,6 +142,7 @@ function ChatMessagesImpl({
 	lastTurnChanges,
 	onReviewLastTurn,
 }: ChatMessagesProps) {
+	const t = useTranslation();
 	const hasMessages = messages.length > 0;
 	// Scanned from the tail without copying: this component re-renders on
 	// every stream flush, so a reversed array clone per render would churn
@@ -575,7 +577,7 @@ function ChatMessagesImpl({
 		>
 			<MessageScroller className="isolate h-full min-h-0 min-w-0">
 				<MessageScrollerViewport
-					aria-label="Agent conversation"
+					aria-label={t("Agent conversation")}
 					className="h-full min-h-0 min-w-0"
 				>
 					<MessageScrollerContent
@@ -780,7 +782,7 @@ function ChatMessagesImpl({
 									>
 										<Loader2 className="size-4 animate-spin" />
 										<span className={STREAMING_TITLE_CLASS}>
-											{startingLabel ?? activityLabel ?? "Thinking..."}
+											{startingLabel ?? activityLabel ?? t("Thinking...")}
 										</span>
 									</MessageScrollerItem>
 								) : null}
@@ -828,14 +830,14 @@ function ChatMessagesImpl({
 										<div className="pointer-events-none absolute right-6 top-6 z-20 rounded-full border border-border/70 bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur-[1px]">
 											<div className="flex items-center gap-1.5">
 												<Loader2 className="h-3.5 w-3.5 animate-spin" />
-												Switching session...
+												{t("Switching session...")}
 											</div>
 										</div>
 									) : (
 										<div className="rounded-xl border border-border/70 bg-card p-4">
 											<div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
 												<Loader2 className="h-4 w-4 animate-spin" />
-												Loading session...
+												{t("Loading session...")}
 											</div>
 											<div className="space-y-3">
 												<div className="h-4 w-2/5 animate-pulse rounded bg-muted/70" />
@@ -850,16 +852,16 @@ function ChatMessagesImpl({
 									<div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
 										<Loader2 className="h-3.5 w-3.5 animate-spin" />
 										{chatTransportState === "reconnecting"
-											? "Reconnecting chat..."
+											? t("Reconnecting chat...")
 											: chatTransportState === "unavailable"
-												? "Chat backend unavailable"
-												: "Connecting chat..."}
+												? t("Chat backend unavailable")
+												: t("Connecting chat...")}
 									</div>
 								) : null}
 								{shouldShowErrorBanner ? (
 									<div className="cline-chat-selectable mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
 										{lastErrorMessage?.content !== error ? (
-											<p>{error}</p>
+											<p>{t(error ?? "")}</p>
 										) : null}
 										{errorAction ? (
 											<Button
@@ -895,14 +897,17 @@ function ChatMessagesImpl({
 				>
 					<AlertDialogContent>
 						<AlertDialogHeader>
-							<AlertDialogTitle>Revert to this checkpoint?</AlertDialogTitle>
+							<AlertDialogTitle>
+								{t("Revert to this checkpoint?")}
+							</AlertDialogTitle>
 							<AlertDialogDescription>
-								Workspace files and conversation history after this point will
-								be discarded. This cannot be undone.
+								{t(
+									"Workspace files and conversation history after this point will be discarded. This cannot be undone.",
+								)}
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
-							<AlertDialogCancel>Cancel</AlertDialogCancel>
+							<AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
 							<AlertDialogAction
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 								onClick={() => {
@@ -916,7 +921,7 @@ function ChatMessagesImpl({
 									}
 								}}
 							>
-								Revert
+								{t("Revert")}
 							</AlertDialogAction>
 						</AlertDialogFooter>
 					</AlertDialogContent>
@@ -931,16 +936,17 @@ function ChatMessagesImpl({
 				>
 					<AlertDialogContent>
 						<AlertDialogHeader>
-							<AlertDialogTitle>Edit and restart from here?</AlertDialogTitle>
+							<AlertDialogTitle>
+								{t("Edit and restart from here?")}
+							</AlertDialogTitle>
 							<AlertDialogDescription>
-								This creates a new session and restores the workspace to its
-								checkpoint before placing this message in the composer.
-								Workspace and conversation changes after this point will be
-								discarded.
+								{t(
+									"This creates a new session and restores the workspace to its checkpoint before placing this message in the composer. Workspace and conversation changes after this point will be discarded.",
+								)}
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
-							<AlertDialogCancel>Cancel</AlertDialogCancel>
+							<AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
 							<AlertDialogAction
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 								onClick={() => {
@@ -955,7 +961,7 @@ function ChatMessagesImpl({
 									}
 								}}
 							>
-								Continue
+								{t("Continue")}
 							</AlertDialogAction>
 						</AlertDialogFooter>
 					</AlertDialogContent>

@@ -137,6 +137,7 @@ async function startBackend() {
 			CLINE_HUB_PATHNAME: "/hub",
 			CLINE_SIDECAR_HOST: "127.0.0.1",
 			CLINE_LEGACY_APP_ORIGIN: origin,
+			CLINE_LEGACY_APP_VERSION: app.getVersion(),
 			CLINE_LEGACY_RUNTIME_ROOT: join(runtimeRoot, "legacy"),
 			CLINE_PLUGIN_RUNTIME_DIR: join(runtimeRoot, "plugin-runtime"),
 			CLINE_SIDECAR_TRUSTED_ORIGINS: origin,
@@ -217,6 +218,9 @@ async function runSmokeTest() {
 	return window.webContents.executeJavaScript(`new Promise((resolve, reject) => {
 		const socket = new WebSocket(window.__SIDECAR_WS_ENDPOINT__);
 		const timer = setTimeout(() => { socket.close(); reject(Error("Hub smoke test timed out")); }, 60000);
+		const replies = new Map();
+		const request = (id, command, args) => socket.send(JSON.stringify({ type: "command", id, command, args }));
+		let started = false;
 		socket.onerror = () => { clearTimeout(timer); reject(Error("Could not connect to backend")); };
 		socket.onmessage = ({data}) => {
 			const message = JSON.parse(data);
@@ -226,15 +230,34 @@ async function runSmokeTest() {
 					socket.close();
 					reject(Error(message.event.payload.error ?? "Hub startup failed"));
 				}
-				if (message.event.payload.state === "ready") {
-					socket.send(JSON.stringify({ type: "command", id: "smoke", command: "get_process_context" }));
+				if (message.event.payload.state === "ready" && !started) {
+					started = true;
+					request("version", "get_process_context");
+					request("compaction", "get_compaction_settings");
+					request("models", "list_provider_models", { provider: "freellm" });
 				}
 			}
-			if (message.id === "smoke") {
+			if (message.type !== "response") return;
+			if (!message.ok) {
 				clearTimeout(timer);
 				socket.close();
-				if (message.ok) resolve({ title: document.title, sidecar: true, hub: true, renderer: Boolean(document.querySelector("main,button")) });
-				else reject(Error(message.error));
+				reject(Error(message.error));
+				return;
+			}
+			replies.set(message.id, message.result);
+			if (replies.size === 3) {
+				clearTimeout(timer);
+				socket.close();
+				resolve({
+					title: document.title,
+					language: document.documentElement.lang,
+					sidecar: true,
+					hub: true,
+					renderer: Boolean(document.querySelector("main,button")),
+					version: replies.get("version")?.appVersion,
+					compaction: replies.get("compaction"),
+					models: replies.get("models")?.models?.map(model => model.id),
+				});
 			}
 		};
 	})`);

@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "reviewed_date": "2026-11-27",
+  "source": "https://ai-gateway.kilo.ai/api/v1/models",
+  "shared_hourly_limit": 200,
+  "user_key_required": false,
+  "vendors": [
+    "Baidu",
+    "Reflection",
+    "NVIDIA"
+  ],
+  "providers": {
+    "freellm": {
+      "provider": {
+        "name": "FreeLLM",
+        "description": "Three free cloud models via Kilo Gateway. Shared 200 requests/hour per IP, no account or key. Providers may log prompts. NVIDIA trial: do not submit personal or confidential data.",
+        "baseUrl": "https://ai-gateway.kilo.ai/api/v1",
+        "defaultModelId": "baidu/ernie-5.5-flash-preview:free",
+        "protocol": "openai-chat",
+        "client": "openai-compatible",
+        "capabilities": [
+          "tools",
+          "streaming",
+          "reasoning"
+        ],
+        "forkManagedCatalog": "freellm-v1"
+      },
+      "models": {
+        "baidu/ernie-5.5-flash-preview:free": {
+          "id": "baidu/ernie-5.5-flash-preview:free",
+          "name": "ERNIE 5.5 Flash Preview",
+          "contextWindow": 1024000,
+          "maxTokens": 921600,
+          "capabilities": [
+            "tools",
+            "streaming",
+            "reasoning",
+            "temperature"
+          ],
+          "inputPrice": 0,
+          "outputPrice": 0,
+          "description": "Artificial Analysis Intelligence Index: 31 (2026-11-27)"
+        },
+        "reflection/beam-free": {
+          "id": "reflection/beam-free",
+          "name": "Beam 1.0",
+          "contextWindow": 1048576,
+          "maxTokens": 131072,
+          "capabilities": [
+            "tools",
+            "streaming",
+            "reasoning",
+            "temperature"
+          ],
+          "inputPrice": 0,
+          "outputPrice": 0,
+          "description": "Artificial Analysis Intelligence Index: 18 (2026-11-27)"
+        },
+        "nvidia/nemotron-3.5-super-vl:free": {
+          "id": "nvidia/nemotron-3.5-super-vl:free",
+          "name": "Nemotron 3.5 Super VL",
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "capabilities": [
+            "tools",
+            "streaming",
+            "reasoning",
+            "temperature",
+            "vision"
+          ],
+          "inputPrice": 0,
+          "outputPrice": 0,
+          "description": "Artificial Analysis Intelligence Index: 14 (2026-11-27)"
+        }
+      }
+    }
+  },
+  "benchmark": "https://artificialanalysis.ai/models/releases"
+}

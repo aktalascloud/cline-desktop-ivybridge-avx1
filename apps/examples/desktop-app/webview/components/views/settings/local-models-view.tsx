@@ -1,4 +1,6 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
+
 
 import {
 	Download,
@@ -129,7 +131,7 @@ function readChatSelection(): { provider: string; model?: string } {
 function describeHardware(hardware: LocalHardwareInfo): string {
 	const memory = `${Math.round(hardware.totalMemoryGb)} GB`;
 	if (hardware.unifiedMemory) {
-		return `${hardware.cpuModel} · ${memory} unified memory`;
+		return `${hardware.cpuModel} · ${memory} ${t("unified memory")}`;
 	}
 	if (hardware.gpus.length > 0) {
 		const gpus = hardware.gpus
@@ -137,13 +139,13 @@ function describeHardware(hardware: LocalHardwareInfo): string {
 			.join(", ");
 		return `${gpus} · ${memory} RAM`;
 	}
-	return `${hardware.cpuModel} · ${memory} RAM · No supported GPU detected`;
+	return `${hardware.cpuModel} · ${memory} RAM · ${t("No supported GPU detected")}`;
 }
 
 function describeRunning(running: RunningModel) {
 	const placement = describeModelPlacement(running);
 	return [
-		placement ? `Loaded ${placement}` : "Loaded",
+		placement ? t("Loaded {placement}", { placement: placement.replace("on CPU", t("on CPU")).replace("on GPU", t("on GPU")) }) : t("Loaded"),
 		formatMemory(running.sizeBytes),
 		running.contextLength > 0 ? formatContext(running.contextLength) : "",
 		describeUnloadTime(running.expiresAtMs) ?? "",
@@ -159,7 +161,7 @@ function describeInstalled(model: InstalledModel) {
 		model.quantization,
 		...model.capabilities
 			.map((capability) => CAPABILITY_LABELS[capability])
-			.filter(Boolean),
+			.filter(Boolean).map((label) => t(label)),
 		model.contextLength > 0
 			? `up to ${formatContext(model.contextLength)}`
 			: "",
@@ -175,6 +177,7 @@ function SectionHeading({
 	title: string;
 	aside?: ReactNode;
 }) {
+	const t = useTranslation();
 	return (
 		<div className="mb-2 flex items-baseline justify-between gap-3">
 			<p className="text-sm font-semibold text-foreground">{title}</p>
@@ -192,6 +195,7 @@ function StorageBar({
 	modelsBytes: number;
 	disk: NonNullable<LocalModelsStatus["disk"]>;
 }) {
+	const t = useTranslation();
 	const percent = (bytes: number) =>
 		`${Math.max(0, Math.min(100, (bytes / disk.totalBytes) * 100))}%`;
 	const otherBytes = Math.max(
@@ -210,15 +214,15 @@ function StorageBar({
 			<div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
 				<span className="flex items-center gap-1.5">
 					<span className="inline-block size-2 rounded-full bg-primary" />
-					Models {formatGb(modelsBytes)}
+					{t("Models ")}{formatGb(modelsBytes)}
 				</span>
 				<span className="flex items-center gap-1.5">
 					<span className="inline-block size-2 rounded-full bg-muted-foreground/30" />
-					Other files {formatGb(otherBytes)}
+					{t("Other files ")}{formatGb(otherBytes)}
 				</span>
 				<span className="flex items-center gap-1.5">
 					<span className="inline-block size-2 rounded-full border bg-muted" />
-					Free {formatGb(disk.freeBytes)}
+					{t("Free space ")}{formatGb(disk.freeBytes)}
 				</span>
 			</div>
 		</div>
@@ -234,11 +238,12 @@ function RuntimePicker({
 	runtimes: LocalModelsStatus["runtimes"] | undefined;
 	onChange: (runtime: LocalRuntime) => void;
 }) {
+	const t = useTranslation();
 	return (
 		<div>
-			<SectionHeading title="Run models with" />
+			<SectionHeading title={t("Run models with")} />
 			<RadioGroup
-				aria-label="Local model runtime"
+				aria-label={t("Local model runtime")}
 				className="sm:grid-cols-2"
 				onValueChange={(next) => {
 					if (isLocalRuntime(next)) onChange(next);
@@ -276,15 +281,15 @@ function RuntimePicker({
 												)}
 											/>
 											{summary.reachable
-												? "Running"
+												? t("Running")
 												: summary.installed
-													? "Not running"
-													: "Not installed"}
+													? t("Not running")
+													: t("Not installed")}
 										</span>
 									) : null}
 								</span>
 								<span className="text-xs text-muted-foreground">
-									{RUNTIME_BLURBS[runtime]}
+									{t(RUNTIME_BLURBS[runtime])}
 								</span>
 							</span>
 						</label>
@@ -296,6 +301,7 @@ function RuntimePicker({
 }
 
 export function LocalModelsContent() {
+	const t = useTranslation();
 	const [runtime, setRuntime] = useState(readPreferredRuntime);
 	const runtimeRef = useRef(runtime);
 	const refreshGenerationRef = useRef(0);
@@ -592,18 +598,17 @@ export function LocalModelsContent() {
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="text-sm font-semibold text-foreground">{title}</span>
 					{section === "recommended" && entry && entry === recommended ? (
-						<Badge>Recommended for you</Badge>
+						<Badge>{t("Recommended for you")}</Badge>
 					) : null}
 					{isActive ? (
 						<Badge
 							className="border-emerald-400/50 text-emerald-600 dark:text-emerald-400"
 							variant="outline"
 						>
-							In use
-						</Badge>
+							{t("In use")}</Badge>
 					) : null}
 					{section === "recommended" && installedModel ? (
-						<Badge variant="outline">Downloaded</Badge>
+						<Badge variant="outline">{t("Downloaded")}</Badge>
 					) : null}
 					{section === "recommended"
 						? entry?.tags.map((tag) => (
@@ -634,14 +639,14 @@ export function LocalModelsContent() {
 				{pull ? (
 					<div className="flex max-w-md flex-col gap-1">
 						<Progress
-							aria-label={`Downloading ${name}`}
+							aria-label={t("Downloading {name}", { name })}
 							className="h-1.5"
 							value={pullPercent}
 						/>
 						<div className="flex justify-between gap-2 text-xs text-muted-foreground">
 							<span className="truncate">
 								{pull.total > 0
-									? `Downloading ${formatGb(pull.completed)} of ${formatGb(pull.total)}`
+									? t("Downloading {completed} of {total}", { completed: formatGb(pull.completed), total: formatGb(pull.total) })
 									: pull.status}
 							</span>
 							{pull.total > 0 ? <span>{Math.floor(pullPercent)}%</span> : null}
@@ -663,13 +668,12 @@ export function LocalModelsContent() {
 							variant={fit === "too-large" ? "outline" : "default"}
 						>
 							<Download />
-							Download{entry ? ` (${entry.sizeGb} GB)` : ""}
+							{t("Download")}{entry ? ` (${entry.sizeGb} GB)` : ""}
 						</Button>
 					) : null}
 					{!installedModel && !pull && notEnoughDisk && disk ? (
 						<span className="text-xs text-destructive">
-							Not enough disk space ({formatGb(disk.freeBytes)} free)
-						</span>
+							{t("Not enough disk space (")}{formatGb(disk.freeBytes)} {t(" free)")}</span>
 					) : null}
 					{pull && LOCAL_RUNTIMES[shownRuntime].canCancelDownloads ? (
 						<Button
@@ -684,8 +688,7 @@ export function LocalModelsContent() {
 							variant="outline"
 						>
 							<X />
-							Cancel
-						</Button>
+							{t("Cancel")}</Button>
 					) : null}
 					{installedModel && showRunControls && !isActive ? (
 						<Button
@@ -700,8 +703,7 @@ export function LocalModelsContent() {
 							type="button"
 						>
 							{action === "using" ? <Loader2 className="animate-spin" /> : null}
-							Use with Cline
-						</Button>
+							{t("Use with Cline")}</Button>
 					) : null}
 					{installedModel && showRunControls && !runningModel ? (
 						<Button
@@ -720,7 +722,7 @@ export function LocalModelsContent() {
 							) : (
 								<Play />
 							)}
-							{action === "loading" ? "Loading…" : "Load"}
+							{action === "loading" ? t("Loading…") : t("Load")}
 						</Button>
 					) : null}
 					{runningModel && showRunControls ? (
@@ -736,8 +738,7 @@ export function LocalModelsContent() {
 							) : (
 								<Square />
 							)}
-							Unload
-						</Button>
+							{t("Unload")}</Button>
 					) : null}
 					{installedModel ? (
 						<Button
@@ -747,8 +748,7 @@ export function LocalModelsContent() {
 							variant="ghost"
 						>
 							<SlidersHorizontal />
-							Details
-						</Button>
+							{t("Details")}</Button>
 					) : null}
 					{installedModel && section === "downloaded" ? (
 						<Button
@@ -768,8 +768,7 @@ export function LocalModelsContent() {
 							) : (
 								<Trash2 />
 							)}
-							Delete
-						</Button>
+							{t("Delete")}</Button>
 					) : null}
 				</div>
 			</div>
@@ -784,29 +783,26 @@ export function LocalModelsContent() {
 			<PageHeader
 				description={
 					<>
-						Run models on your own machine with Ollama or LM Studio. Download
-						one, then click{" "}
-						<span className="font-medium text-foreground">Use with Cline</span>{" "}
-						to switch Cline to it with the right settings.
-					</>
+						{t("Run models on your own machine with Ollama or LM Studio. Download one, then click")}{" "}
+						<span className="font-medium text-foreground">{t("Use with Cline")}</span>{" "}
+						{t("to switch Cline to it with the right settings.")}</>
 				}
 				meta={<InUseBadge section="Local Models" />}
-				title="Local Models"
+				title={t("Local Models")}
 			/>
 			<section className="flex max-w-3xl flex-col gap-6">
 				{hardware ? (
 					<div className="flex flex-col gap-1 rounded-lg border bg-card px-4 py-3">
 						<span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-							Your machine
-						</span>
+							{t("Your machine")}</span>
 						<span className="text-sm text-foreground">
 							{describeHardware(hardware)}
 						</span>
 						{budget ? (
 							<span className="text-xs text-muted-foreground">
 								{budget.gpuGb > 0
-									? `Models needing up to ~${Math.floor(budget.gpuGb)} GB run fully on the GPU.`
-									: "Without a supported GPU, models run on the CPU and respond slowly."}
+									? t("Models needing up to ~{memory} GB run fully on the GPU.", { memory: Math.floor(budget.gpuGb) })
+									: t("Without a supported GPU, models run on the CPU and respond slowly.")}
 							</span>
 						) : null}
 					</div>
@@ -832,10 +828,10 @@ export function LocalModelsContent() {
 						<SectionHeading
 							aside={
 								machineMemoryBytes > 0
-									? `${formatMemory(loadedBytes)} of ${formatMemory(machineMemoryBytes)} memory`
+									? t("{used} of {total} memory", { used: formatMemory(loadedBytes), total: formatMemory(machineMemoryBytes) })
 									: undefined
 							}
-							title="Loaded in memory"
+							title={t("Loaded in memory")}
 						/>
 						<div className="overflow-hidden rounded-lg border">
 							{[...running.entries()].map(([name, model]) => (
@@ -854,13 +850,12 @@ export function LocalModelsContent() {
 													className="border-emerald-400/50 text-emerald-600 dark:text-emerald-400"
 													variant="outline"
 												>
-													In use
-												</Badge>
+													{t("In use")}</Badge>
 											) : null}
 										</div>
 										{machineMemoryBytes > 0 ? (
 											<Progress
-												aria-label={`${name} memory use`}
+												aria-label={t("{name} memory use", { name })}
 												className="h-1.5 max-w-md"
 												value={(model.sizeBytes / machineMemoryBytes) * 100}
 											/>
@@ -886,8 +881,7 @@ export function LocalModelsContent() {
 										) : (
 											<Square />
 										)}
-										Unload
-									</Button>
+										{t("Unload")}</Button>
 								</div>
 							))}
 						</div>
@@ -895,7 +889,7 @@ export function LocalModelsContent() {
 				) : null}
 
 				<div>
-					<SectionHeading title="Recommended models" />
+					<SectionHeading title={t("Recommended models")} />
 					<div className="overflow-hidden rounded-lg border">
 						{LOCAL_MODEL_CATALOG.map((entry) =>
 							renderModelRow(entry.ids[shownRuntime], {
@@ -911,8 +905,8 @@ export function LocalModelsContent() {
 				{installedBySize.length > 0 ? (
 					<div>
 						<SectionHeading
-							aside={`${installedBySize.length} ${installedBySize.length === 1 ? "model" : "models"} · ${formatGb(modelsBytes)}`}
-							title="Downloaded models"
+							aside={`${t("{count} models", { count: installedBySize.length })} · ${formatGb(modelsBytes)}`}
+							title={t("Downloaded models")}
 						/>
 						{disk ? <StorageBar disk={disk} modelsBytes={modelsBytes} /> : null}
 						<div className="overflow-hidden rounded-lg border">
@@ -936,20 +930,14 @@ export function LocalModelsContent() {
 				<p className="text-xs text-muted-foreground">
 					{shownRuntime === "ollama" ? (
 						<>
-							Models loaded here stay in memory until you unload them. A model
-							Ollama loads on its own, when a message arrives for it, is
-							unloaded after a few minutes idle (configurable with{" "}
+							{t("Models loaded here stay in memory until you unload them. A model Ollama loads on its own, when a message arrives for it, is unloaded after a few minutes idle (configurable with")}{" "}
 							<code>OLLAMA_KEEP_ALIVE</code>).
 						</>
 					) : (
 						<>
-							Models loaded here stay in memory until you unload them. A model
-							LM Studio loads on its own, when a message arrives for it, uses LM
-							Studio's default context length and is unloaded after an hour
-							idle.
-						</>
+							{t("Models loaded here stay in memory until you unload them. A model LM Studio loads on its own, when a message arrives for it, uses LM Studio's default context length and is unloaded after an hour idle.")}</>
 					)}{" "}
-					The server URL can be changed under Provider → BYOK → {runtimeName}.
+					{t("The server URL can be changed under Provider → BYOK → ")}{runtimeName}.
 				</p>
 			</section>
 
@@ -974,17 +962,15 @@ export function LocalModelsContent() {
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Delete {pendingDelete?.name}?</AlertDialogTitle>
+						<AlertDialogTitle>{t("Delete ")}{pendingDelete?.name}?</AlertDialogTitle>
 						<AlertDialogDescription>
-							This frees {formatGb(pendingDelete?.sizeBytes ?? 0)} on your disk.
-							You can download it again anytime.
-							{deleteName === activeModel
-								? " Cline is set to use this model, so pick another one before your next message."
+							{t("This frees ")}{formatGb(pendingDelete?.sizeBytes ?? 0)} {t(" on your disk. You can download it again anytime.")}{deleteName === activeModel
+								? t(" Cline is set to use this model, so pick another one before your next message.")
 								: ""}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
 						<AlertDialogAction
 							className="bg-destructive text-white hover:bg-destructive/90"
 							onClick={() => {
@@ -999,8 +985,7 @@ export function LocalModelsContent() {
 								}
 							}}
 						>
-							Delete
-						</AlertDialogAction>
+							{t("Delete")}</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>

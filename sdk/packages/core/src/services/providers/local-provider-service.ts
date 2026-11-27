@@ -55,7 +55,8 @@ import {
 	writeModelsFile,
 } from "./local-provider-registry";
 import {
-	fetchModelIdsFromSource,
+	fetchModelsFromSource,
+	type DiscoveredModel,
 	resolveModelsSourceUrl,
 } from "./model-source";
 import { isProviderSettingsUsable } from "./provider-readiness";
@@ -369,18 +370,27 @@ function normalizeHeaders(
 function buildProviderModels(
 	modelIds: string[],
 	existingModels: StoredProviderEntry["models"] = {},
+	discovered: DiscoveredModel[] = [],
 ) {
 	// Provider capabilities are inherited at registration. Persist only model
 	// overrides so refreshing defaults cannot overwrite user customizations.
 	return Object.fromEntries(
-		modelIds.map((id) => [
-			id,
-			{
+		modelIds.map((id) => {
+			const discoveredModel = discovered.find((model) => model.id === id);
+			return [
 				id,
-				name: id,
-				...existingModels[id],
-			},
-		]),
+				{
+					id,
+					name: id,
+					...discoveredModel,
+					...existingModels[id],
+					// The endpoint owns its allocated window; saved metadata can be stale.
+					...(discoveredModel?.contextWindow !== undefined
+						? { contextWindow: discoveredModel.contextWindow }
+						: {}),
+				},
+			];
+		}),
 	);
 }
 
@@ -414,14 +424,14 @@ async function resolveModelIds(params: {
 	modelsSourceUrl?: string;
 	fallbackModelIds?: string[];
 	shouldRecompute: boolean;
-}): Promise<string[]> {
+}): Promise<{ modelIds: string[]; discovered: DiscoveredModel[] }> {
 	if (!params.shouldRecompute) {
-		return params.fallbackModelIds ?? [];
+		return { modelIds: params.fallbackModelIds ?? [], discovered: [] };
 	}
-	let fetchedModels: string[] = [];
+	let fetchedModels: DiscoveredModel[] = [];
 	if (params.modelsSourceUrl) {
 		try {
-			fetchedModels = await fetchModelIdsFromSource(
+			fetchedModels = await fetchModelsFromSource(
 				params.modelsSourceUrl,
 				params.providerId,
 				params,
@@ -430,7 +440,10 @@ async function resolveModelIds(params: {
 			throw new ModelDiscoveryError(cause);
 		}
 	}
-	return [...new Set([...(params.explicitModels ?? []), ...fetchedModels])];
+	return {
+		modelIds: [...new Set([...(params.explicitModels ?? []), ...fetchedModels.map((model) => model.id)])],
+		discovered: fetchedModels,
+	};
 }
 
 function removeProviderFromSettingsState(
@@ -583,7 +596,7 @@ async function addLocalProviderUnlocked(
 	const typedModels = uniqueTrimmed(request.models);
 	const sourceUrl = request.modelsSourceUrl?.trim();
 	const normalizedHeaders = normalizeHeaders(request.headers);
-	const modelIds = await resolveModelIds({
+	const { modelIds, discovered } = await resolveModelIds({
 		providerId,
 		explicitModels: typedModels,
 		modelsSourceUrl: sourceUrl,
@@ -635,7 +648,7 @@ async function addLocalProviderUnlocked(
 			capabilities,
 			modelsSourceUrl: sourceUrl,
 		},
-		models: buildProviderModels(modelIds),
+		models: buildProviderModels(modelIds, {}, discovered),
 		discoveredModelIds: modelIds.filter((id) => !typedModels.includes(id)),
 	};
 	await writeModelsFile(modelsPath, modelsState);
@@ -806,7 +819,7 @@ async function prepareProviderUpdate(
 	const existingModelIds = Object.keys(existingEntry.models ?? {})
 		.map((id) => id.trim())
 		.filter(Boolean);
-	const modelIds = await resolveModelIds({
+	const { modelIds, discovered } = await resolveModelIds({
 		providerId,
 		explicitModels,
 		modelsSourceUrl: nextModelsSourceUrl,
@@ -872,7 +885,7 @@ async function prepareProviderUpdate(
 			capabilities,
 			modelsSourceUrl: nextModelsSourceUrl,
 		},
-		models: buildProviderModels(modelIds, existingEntry.models),
+		models: buildProviderModels(modelIds, existingEntry.models, discovered),
 		discoveredModelIds: nextModelsSourceUrl
 			? shouldRecomputeModels
 				? modelIds.filter((id) => !explicitModels.includes(id))
@@ -936,8 +949,20 @@ export function markLocalProviderEnabled(
 	if (!id) throw new Error("providerId is required");
 
 	const directSettings = manager.read().providers[id]?.settings;
+	const bundled =
+		id === "freellm"
+			? LlmsModels.getProviderCollectionSync(id)?.provider
+			: undefined;
 	manager.saveProviderSettings(
 		{
+			...(bundled
+				? {
+						baseUrl: bundled.baseUrl,
+						model: bundled.defaultModelId,
+						client: bundled.client,
+						protocol: bundled.protocol,
+					}
+				: {}),
 			...(directSettings ?? {}),
 			provider: id,
 		},
@@ -1039,7 +1064,9 @@ export async function listLocalProviders(
 								? { apiKeyOptional: true }
 								: {}),
 						},
-						authDescription: "This provider uses API keys for authentication.",
+						authDescription: id === "freellm"
+							? "No account or key. Shared limit: 200 requests/hour/IP."
+							: "This provider uses API keys for authentication.",
 						baseUrlDescription:
 							"The base endpoint to use for provider requests.",
 						configFields,

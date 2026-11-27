@@ -86,7 +86,10 @@ try {
 	renameSync(join(stage, "electron.exe"), join(stage, "ClineLegacy.exe"));
 	const app = join(stage, "resources", "app");
 	const runtime = join(app, "runtime");
+	const defaults = join(stage, "bin", "defaults");
 	mkdirSync(app, { recursive: true });
+	mkdirSync(defaults, { recursive: true });
+	cpSync(join(root, "fork/defaults/freellm.json"), join(defaults, "freellm.json"));
 	for (const name of ["main.cjs", "preload.cjs", "package.json"]) {
 		cpSync(join(legacy, name), join(app, name));
 	}
@@ -126,12 +129,14 @@ try {
 	});
 	const uninstall = join(scratch, "uninstall.nsh");
 	writeFileSync(uninstall, uninstallPlan(stage, stage).join("\r\n") + "\r\n");
-	const target = join(scratch, "Cline_0.0.51_legacy_x64-setup.exe");
+	const { version } = JSON.parse(readFileSync(join(legacy, "package.json"), "utf8"));
+	const target = join(scratch, `Cline_${version}_x64-setup.exe`);
 	run([
 		makensisExe,
 		"/V2",
 		`/DCLINE_STAGE=${stage}`,
 		`/DCLINE_INSTALLER=${target}`,
+		`/DCLINE_DISPLAY_VERSION=${version}`,
 		`/DCLINE_UNINSTALL_FILES=${uninstall}`,
 		join(legacy, "installer.nsi"),
 	]);

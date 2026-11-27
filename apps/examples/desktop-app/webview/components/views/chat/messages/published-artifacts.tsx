@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "@/lib/i18n";
 
 import { SUPPORTED_IMAGE_MEDIA_TYPES } from "@cline/shared/browser";
 import {
@@ -23,6 +24,7 @@ export function PublishedArtifacts({
 	sessionId: string;
 	reportedArtifactIds?: ReadonlySet<string>;
 }) {
+	const t = useTranslation();
 	const images: ReactNode[] = [];
 	const otherFiles: ReactNode[] = [];
 	for (const [index, file] of files.entries()) {
@@ -72,15 +74,21 @@ export function PublishedArtifacts({
 	return (
 		<div className="min-w-0 space-y-2 py-1 text-sm">
 			{images.length > 0 && (
-				<Carousel aria-label="Published images" opts={{ loop: true }}>
+				<Carousel aria-label={t("Published images")} opts={{ loop: true }}>
 					<CarouselContent>{images}</CarouselContent>
 					{images.length > 1 && (
 						<div className="mt-2 flex items-center justify-end gap-2">
 							<span className="mr-auto text-muted-foreground">
-								{images.length} images
+								{t("{count} images", { count: images.length })}
 							</span>
-							<CarouselPrevious className="rounded-md border border-border p-2 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring" />
-							<CarouselNext className="rounded-md border border-border p-2 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring" />
+							<CarouselPrevious
+								aria-label={t("Previous screenshot")}
+								className="rounded-md border border-border p-2 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+							/>
+							<CarouselNext
+								aria-label={t("Next screenshot")}
+								className="rounded-md border border-border p-2 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+							/>
 						</div>
 					)}
 				</Carousel>

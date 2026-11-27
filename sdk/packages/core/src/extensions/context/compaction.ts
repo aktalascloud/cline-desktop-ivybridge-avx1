@@ -1,3 +1,4 @@
+import { readGlobalSettings } from "../../services/global-settings";
 import { estimateRequestInputTokens } from "@cline/shared";
 import { resolveConnectionProviderConfig } from "../../services/llms/handler-factory";
 import {
@@ -32,6 +33,7 @@ import {
 	findLatestSummaryIndex,
 	MAX_INPUT_UNDERESTIMATE_FACTOR,
 	resolveEffectiveMaxInputTokens,
+	resolveProviderMaxInputTokens,
 } from "./compaction-shared";
 
 export interface ContextPipelinePrepareTurnInput {
@@ -160,8 +162,9 @@ function summarizeToolResults(messages: CoreCompactionContext["messages"]): {
 }
 
 const BUILTIN_COMPACTION_STRATEGIES = {
-	basic: ({ context, estimateMessageTokens, logger }) =>
+	basic: ({ context, estimateMessageTokens, logger, compaction }) =>
 		runBasicCompaction({
+			preserveRecentMessages: compaction?.preserveRecentMessages,
 			context,
 			estimateMessageTokens,
 			logger,
@@ -177,6 +180,7 @@ const BUILTIN_COMPACTION_STRATEGIES = {
 			context,
 			providerConfig,
 			summarizer: compaction?.summarizer,
+			preserveRecentMessages: compaction?.preserveRecentMessages,
 			preserveRecentTokens: Math.min(
 				compaction?.preserveRecentTokens ?? DEFAULT_PRESERVE_RECENT_TOKENS,
 				context.budget.messages.targetTokens,
@@ -285,23 +289,38 @@ export function createContextCompactionPrepareTurn(
 			context: ContextPipelinePrepareTurnInput,
 	  ) => Promise<ContextPipelinePrepareTurnResult | undefined>)
 	| undefined {
-	const userCompaction: CoreCompactionConfig = {
+	const baseCompaction: CoreCompactionConfig = {
 		...config.compaction,
 		...options.compaction,
 	};
-	if (userCompaction.enabled !== true) {
+	if (baseCompaction.enabled !== true) {
 		return undefined;
 	}
 
 	const estimateMessageTokens = createTokenEstimator();
-	const strategy = userCompaction?.strategy ?? "agentic";
-	const runBuiltinStrategy = BUILTIN_COMPACTION_STRATEGIES[strategy];
 	const mode = options.mode ?? "auto";
-	const telemetryStrategy: TelemetryCompactionStrategy = userCompaction?.compact
-		? "custom"
-		: strategy;
 
 	return async (context) => {
+		const global = readGlobalSettings();
+		if (mode !== "manual" && global.compactionEnabled === false)
+			return undefined;
+		const userCompaction = {
+			...baseCompaction,
+			...(global.compactionTriggerTokens !== undefined
+				? { triggerTokens: global.compactionTriggerTokens }
+				: {}),
+			...(global.compactionMaxInputTokens !== undefined
+				? { maxInputTokens: global.compactionMaxInputTokens }
+				: {}),
+			...(global.compactionPreserveRecentMessages !== undefined
+				? { preserveRecentMessages: global.compactionPreserveRecentMessages }
+				: {}),
+		};
+		const strategy =
+			userCompaction.strategy ?? global.compactionStrategy ?? "agentic";
+		const runBuiltinStrategy = BUILTIN_COMPACTION_STRATEGIES[strategy];
+		const telemetryStrategy: TelemetryCompactionStrategy =
+			userCompaction.compact ? "custom" : strategy;
 		const effectiveMode: CoreCompactionMode = context.overflowRecovery
 			? "overflow_recovery"
 			: mode;
@@ -322,19 +341,34 @@ export function createContextCompactionPrepareTurn(
 			0,
 			requestInputTokens - apiMessageTokens,
 		);
-		const modelMaxInputTokens = resolveEffectiveMaxInputTokens({
-			maxInputTokens: context.model.info?.maxInputTokens,
-			contextWindow: context.model.info?.contextWindow,
-		});
+		const modelMaxInputTokens =
+			resolveEffectiveMaxInputTokens({
+				maxInputTokens: context.model.info?.maxInputTokens,
+				contextWindow: context.model.info?.contextWindow,
+			}) ??
+			(config.providerConfig
+				? resolveProviderMaxInputTokens(config.providerConfig)
+				: undefined);
 		// An unknown model limit is not evidence that the request is full.
 		// Custom models can have any context window; using a guessed limit here
 		// can trigger compaction even on a new session's system prompt/tools.
 		// Manual compaction and provider-confirmed overflow recovery still need
 		// a working budget, so only those modes use the default.
-		if (effectiveMode === "auto" && modelMaxInputTokens === undefined) {
+		if (
+			effectiveMode === "auto" &&
+			modelMaxInputTokens === undefined &&
+			!(userCompaction.maxInputTokens && userCompaction.maxInputTokens > 0)
+		) {
 			return undefined;
 		}
-		const rawMaxInputTokens = modelMaxInputTokens ?? DEFAULT_MAX_INPUT_TOKENS;
+		const rawMaxInputTokens = Math.min(
+			modelMaxInputTokens ??
+				userCompaction.maxInputTokens ??
+				DEFAULT_MAX_INPUT_TOKENS,
+			userCompaction.maxInputTokens && userCompaction.maxInputTokens > 0
+				? userCompaction.maxInputTokens
+				: Infinity,
+		);
 		// The char-based estimate under-counts dense content (disassembly, image
 		// dumps, minified sources). When the provider's actual count for the
 		// PREVIOUS request already exceeds our estimate for the (larger) current
@@ -361,7 +395,12 @@ export function createContextCompactionPrepareTurn(
 					)
 				: 1;
 		const maxInputTokens = rawMaxInputTokens / underestimateFactor;
-		const requestTriggerTokens = maxInputTokens * COMPACTION_TRIGGER_RATIO;
+		const requestTriggerTokens = Math.min(
+			maxInputTokens * COMPACTION_TRIGGER_RATIO,
+			userCompaction.triggerTokens && userCompaction.triggerTokens > 0
+				? userCompaction.triggerTokens / underestimateFactor
+				: Infinity,
+		);
 		const messageTriggerTokens = translateRequestBudgetToMessages(
 			requestTriggerTokens,
 			requestOverheadTokens,
@@ -588,6 +627,20 @@ export function createContextCompactionPrepareTurn(
 			context.abortSignal.removeEventListener("abort", recordCancellation);
 		}
 
+		if (
+			executedStrategy === "agentic" &&
+			(((effectiveMode === "manual" ||
+				userCompaction.maxInputTokens !== undefined) &&
+				!result?.messages) ||
+				(userCompaction.preserveRecentMessages !== undefined &&
+					result?.messages &&
+					result.messages.reduce((n, m) => n + estimateMessageTokens(m), 0) >
+						messageTargetTokens))
+		) {
+			executedStrategy = "basic";
+			result = await BUILTIN_COMPACTION_STRATEGIES.basic(builtinOptions);
+		}
+
 		const durationMs = Date.now() - startedAt;
 		// Telemetry identity: surface the agent/conversation passed into the
 		// prepareTurn so multi-agent runs can attribute compactions correctly.
@@ -606,6 +659,10 @@ export function createContextCompactionPrepareTurn(
 				0,
 			);
 			const afterRequestTokens = requestOverheadTokens + afterMessageTokens;
+			if (userCompaction.maxInputTokens && afterRequestTokens > maxInputTokens)
+				throw new Error(
+					"Compaction cannot fit the current input within the model window. Reduce attachments or preserve fewer recent messages.",
+				);
 			config.logger?.log("Context compaction completed", {
 				severity: "info",
 				strategy: executedStrategy,

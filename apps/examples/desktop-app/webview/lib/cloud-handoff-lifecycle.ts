@@ -1,3 +1,4 @@
+import { t } from "@/lib/i18n";
 import type { HandoffProgressPhase, HandoffResult } from "./cloud-handoff";
 import type { CloudHandoffUiAction } from "./cloud-handoff-ui-state";
 import {
@@ -86,7 +87,7 @@ export function createHandoffLifecycle(effects: HandoffLifecycleEffects) {
 			typeof result.warning === "string" ? result.warning.trim() : "";
 		if (warning)
 			notify(source, {
-				title: "Handoff completed with a warning",
+				title: t("Handoff completed with a warning"),
 				description: warning,
 				...(result.warningKind === "unconfirmed"
 					? { variant: "destructive" }
@@ -156,7 +157,7 @@ export function createHandoffLifecycle(effects: HandoffLifecycleEffects) {
 			});
 			if (!ctx.silent)
 				notify(sourceSessionId, {
-					title: "Cloud preparation failed",
+					title: t("Cloud preparation failed"),
 					description: message,
 					variant: "destructive",
 					connectUrl,
@@ -222,7 +223,7 @@ export function createHandoffLifecycle(effects: HandoffLifecycleEffects) {
 						"Delivery could not be confirmed. Check the cloud task before sending again.",
 				});
 				notify(sourceSessionId, {
-					title: "Check the cloud task",
+					title: t("Check the cloud task"),
 					description: `Delivery could not be confirmed. Open ${attempt.target.dashboardUrl} before sending again.`,
 				});
 				return;
@@ -237,7 +238,7 @@ export function createHandoffLifecycle(effects: HandoffLifecycleEffects) {
 				retryAttachments: ctx.sourceAttachments,
 			});
 			notify(sourceSessionId, {
-				title: "Cloud request needs attention",
+				title: t("Cloud request needs attention"),
 				description: message,
 				variant: "destructive",
 				connectUrl,

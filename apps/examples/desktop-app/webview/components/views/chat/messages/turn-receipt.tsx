@@ -1,4 +1,6 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
+
 
 import { FileDiff } from "lucide-react";
 import { type SessionChangeSet, sumChanges } from "@/lib/session-changes";
@@ -17,6 +19,7 @@ export function TurnReceipt({
 	changes: SessionChangeSet;
 	onReview: (path?: string) => void;
 }) {
+	const t = useTranslation();
 	const { additions, deletions } = sumChanges(changes.files);
 	const count = changes.files.length + changes.omitted;
 	const listed = changes.files.slice(0, LISTED_FILES);
@@ -27,22 +30,21 @@ export function TurnReceipt({
 			data-testid="turn-receipt"
 		>
 			<button
-				aria-label={`Review last turn changes: ${count} files, ${additions} additions, ${deletions} deletions`}
+				aria-label={t("Review last turn changes: {count} files, {additions} additions, {deletions} deletions", { count, additions, deletions })}
 				className="flex w-full items-center gap-2 bg-muted/40 px-3 py-1.5 text-left hover:bg-surface-hover"
 				onClick={() => onReview()}
 				type="button"
 			>
 				<FileDiff className="size-3.5 shrink-0 text-muted-foreground" />
 				<span className="font-medium text-foreground">
-					Changed {count} file{count === 1 ? "" : "s"}
+					{t("Changed ")}{t("{count} files", { count })}
 				</span>
 				<span className="font-mono text-[11px]">
 					<span className="text-chart-2">+{additions}</span>{" "}
 					<span className="text-destructive">-{deletions}</span>
 				</span>
 				<span className="ml-auto text-[11px] text-muted-foreground">
-					Review
-				</span>
+					{t("Review")}</span>
 			</button>
 			{listed.map((file) => (
 				<button
@@ -71,7 +73,7 @@ export function TurnReceipt({
 					onClick={() => onReview()}
 					type="button"
 				>
-					{hidden} more file{hidden === 1 ? "" : "s"}
+					{t("{count} more files", { count: hidden })}
 				</button>
 			) : null}
 		</div>

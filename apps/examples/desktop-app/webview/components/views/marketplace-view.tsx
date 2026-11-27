@@ -1,3 +1,4 @@
+import { t, useTranslation } from "@/lib/i18n";
 import {
 	Blocks,
 	ChevronRight,
@@ -210,6 +211,7 @@ function entryHasSetupGuidance(entry: MarketplaceEntry): boolean {
 }
 
 function EntrySetupGuidance({ entry }: { entry: MarketplaceEntry }) {
+	const t = useTranslation();
 	const requiredEnv =
 		entry.install.env?.filter((env) => env.required !== false) ?? [];
 	const optionalEnv =
@@ -220,10 +222,12 @@ function EntrySetupGuidance({ entry }: { entry: MarketplaceEntry }) {
 			{requiredEnv.length > 0 || optionalEnv.length > 0 ? (
 				<div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
 					<p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-						Environment setup needed
+						{t("Environment setup needed")}
 					</p>
 					<p className="mt-1 text-xs leading-5 text-amber-800/80 dark:text-amber-100/80">
-						Add these values to your Cline/plugin environment after install.
+						{t(
+							"Add these values to your Cline/plugin environment after install.",
+						)}
 					</p>
 					<div className="mt-3 grid gap-2">
 						{[...requiredEnv, ...optionalEnv].map((env) => (
@@ -236,7 +240,7 @@ function EntrySetupGuidance({ entry }: { entry: MarketplaceEntry }) {
 										<span style={CODE_FONT_STYLE}>{env.name}</span>
 									</code>
 									<Badge variant="outline">
-										{env.required === false ? "Optional" : "Required"}
+										{env.required === false ? t("Optional") : t("Required")}
 									</Badge>
 								</div>
 								{env.description ? (
@@ -260,7 +264,7 @@ function EntrySetupGuidance({ entry }: { entry: MarketplaceEntry }) {
 										rel="noreferrer"
 										target="_blank"
 									>
-										Get value
+										{t("Get value")}
 										<ExternalLink className="size-3" />
 									</a>
 								) : null}
@@ -286,6 +290,7 @@ function EntryDetails({
 	actionState: EntryActionState | undefined;
 	entry: MarketplaceEntry;
 }) {
+	const t = useTranslation();
 	const hasSetupDetails =
 		entryHasSetupGuidance(entry) || actionState?.status === "failed";
 
@@ -317,6 +322,7 @@ export function MarketplaceEntrySetupDetails({
 }: {
 	entries: MarketplaceEntry[];
 }) {
+	const t = useTranslation();
 	const entriesWithGuidance = entries.filter(entryHasSetupGuidance);
 	if (entriesWithGuidance.length === 0) {
 		return null;
@@ -334,7 +340,7 @@ export function MarketplaceEntrySetupDetails({
 							<ChevronRight className="h-3 w-3 transition-transform group-data-[state=open]:rotate-90" />
 							{entriesWithGuidance.length > 1
 								? `Marketplace setup instructions (${entry.name})`
-								: "Marketplace setup instructions"}
+								: t("Marketplace setup instructions")}
 						</button>
 					</CollapsibleTrigger>
 					<CollapsibleContent className="grid gap-3">
@@ -373,6 +379,7 @@ function MarketplaceEntryCard({
 	sourceLabel?: string;
 	tagLabels: Map<string, string>;
 }) {
+	const t = useTranslation();
 	const EntryIcon = primitivePageDetails[entry.type].icon;
 	const busy =
 		actionState?.status === "installing" ||
@@ -413,7 +420,7 @@ function MarketplaceEntryCard({
 		</output>
 	) : setupNeeded ? (
 		<span className="text-xs text-amber-700 dark:text-amber-300">
-			Requires setup after install
+			{t("Requires setup after install")}
 		</span>
 	) : null;
 	const actionButton = (
@@ -446,7 +453,7 @@ function MarketplaceEntryCard({
 					{showFeatured && entry.featured ? (
 						<Badge className="border border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300">
 							<Star className="fill-current" />
-							Featured
+							{t("Featured")}
 						</Badge>
 					) : null}
 					{sourceLabel ? (
@@ -537,6 +544,7 @@ function TagButton({
 	onClick: () => void;
 	tag: MarketplaceTag;
 }) {
+	const t = useTranslation();
 	return (
 		<Button
 			aria-pressed={active}
@@ -593,6 +601,7 @@ function MarketplaceSection({
 	tagLabels: Map<string, string>;
 	title?: string;
 }) {
+	const t = useTranslation();
 	const totalCount = entries.length + localInstalledItems.length;
 	return (
 		<section className="grid min-w-0 gap-3">
@@ -660,6 +669,7 @@ export function MarketplaceView({
 	primitive?: MarketplacePrimitiveType;
 	variant?: MarketplaceViewVariant;
 }) {
+	const t = useTranslation();
 	const [catalog, setCatalog] = useState<MarketplaceCatalog | null>(null);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [query, setQuery] = useState("");
@@ -969,7 +979,7 @@ export function MarketplaceView({
 					type="button"
 					variant={typeFilter === null ? "default" : "outline"}
 				>
-					All
+					{t("All")}
 					<span className="rounded bg-background/30 px-1.5 py-0.5 text-xs">
 						{queryFilteredEntries.length}
 					</span>
@@ -1019,7 +1029,7 @@ export function MarketplaceView({
 						variant="ghost"
 					>
 						<X className="size-3.5" />
-						Clear
+						{t("Clear")}
 					</Button>
 				) : null}
 			</div>
@@ -1135,7 +1145,7 @@ export function MarketplaceView({
 								variant="outline"
 							>
 								<Blocks className="size-4" />
-								Installed
+								{t("Installed")}
 							</Button>
 						) : undefined
 					}
@@ -1145,14 +1155,14 @@ export function MarketplaceView({
 			{!catalog && !errorMessage ? (
 				<div className="flex min-h-80 items-center justify-center rounded-lg border bg-card text-sm text-muted-foreground">
 					<Spinner className="mr-2" />
-					Loading marketplace...
+					{t("Loading marketplace...")}
 				</div>
 			) : null}
 
 			{catalog && !installedStatusReady ? (
 				<div className="flex min-h-80 items-center justify-center rounded-lg border bg-card text-sm text-muted-foreground">
 					<Spinner className="mr-2" />
-					Checking installed status...
+					{t("Checking installed status...")}
 				</div>
 			) : null}
 
@@ -1195,7 +1205,7 @@ export function MarketplaceView({
 							showEntryTags={false}
 							sourceLabel="Marketplace"
 							tagLabels={tagLabels}
-							title="Installed"
+							title={t("Installed")}
 						/>
 					) : null}
 
@@ -1237,7 +1247,7 @@ export function MarketplaceView({
 							onToggleExpanded={toggleExpanded}
 							onUninstall={uninstallEntry}
 							tagLabels={tagLabels}
-							title={variant === "directory" ? undefined : "Browse"}
+							title={variant === "directory" ? undefined : t("Browse")}
 						/>
 					) : null}
 				</div>

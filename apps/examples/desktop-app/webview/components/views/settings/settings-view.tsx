@@ -1,4 +1,7 @@
+import { CompactionSettings } from "./compaction-settings";
+import { t, useTranslation } from "@/lib/i18n";
 import { Switch } from "@cline/ui";
+import { LanguageSettings } from "@/components/language-settings";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -120,6 +123,7 @@ export function SettingsView({
 	onNavigateSection: (section: SettingsSection) => void;
 	onOpenSession?: (sessionId: string) => void | Promise<void>;
 }) {
+	const t = useTranslation();
 	const activeNav = section;
 	const { refreshAccount } = useAccount();
 	const [marketplaceInitialFilter, setMarketplaceInitialFilter] =
@@ -557,9 +561,11 @@ export function SettingsView({
 		>
 			<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
 				<DialogHeader>
-					<DialogTitle>Add Provider</DialogTitle>
+					<DialogTitle>{t("Add Provider")}</DialogTitle>
 					<DialogDescription>
-						Add an OpenAI-compatible provider and choose its available models.
+						{t(
+							"Add an OpenAI-compatible provider and choose its available models.",
+						)}
 					</DialogDescription>
 				</DialogHeader>
 				<AddProviderContent
@@ -574,12 +580,15 @@ export function SettingsView({
 
 	const providerContent = providersLoading ? (
 		<div className="flex h-full items-center justify-center">
-			<p className="text-sm text-muted-foreground">Loading providers...</p>
+			<p className="text-sm text-muted-foreground">
+				{t("Loading providers...")}
+			</p>
 		</div>
 	) : providerCatalogError ? (
 		<div className="flex h-full items-center justify-center">
 			<p className="max-w-xl px-4 text-center text-sm text-destructive">
-				Failed to load providers: {providerCatalogError}
+				{t("Failed to load providers: ")}
+				{providerCatalogError}
 			</p>
 		</div>
 	) : selectedProvider ? (
@@ -671,7 +680,8 @@ export function SettingsView({
 		) : (
 			<div className="flex h-full items-center justify-center">
 				<p className="text-sm text-muted-foreground">
-					{activeNav} settings coming soon.
+					{activeNav}
+					{t(" settings coming soon.")}
 				</p>
 			</div>
 		);
@@ -698,6 +708,7 @@ const ACCENT_OPTIONS: { id: HubAccent; label: string; swatch: string }[] = [
 ];
 
 function GeneralSettingsContent() {
+	const t = useTranslation();
 	const [theme, setTheme] = useState<HubTheme>(() => {
 		if (typeof window === "undefined") return "light";
 		return readStoredHubTheme() ?? readSystemHubTheme();
@@ -845,34 +856,44 @@ function GeneralSettingsContent() {
 	return (
 		<PageFrame>
 			<PageHeader
-				description="Manage desktop preferences for this browser and CLI environment."
-				title="Settings"
+				description={t(
+					"Manage desktop preferences for this browser and CLI environment.",
+				)}
+				title={t("Settings")}
 			/>
 			<section className="max-w-344">
+				<LanguageSettings />
+				<CompactionSettings />
 				<NotificationSettings />
 				<div className="flex py-4 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
 					<div className="flex flex-col gap-1">
-						<p className="text-base font-semibold text-foreground">Dark mode</p>
+						<p className="text-base font-semibold text-foreground">
+							{t("Dark mode")}
+						</p>
 						<p className="text-sm text-muted-foreground">
-							Keep the desktop interface in dark mode on this browser.
+							{t("Keep the desktop interface in dark mode on this browser.")}
 						</p>
 					</div>
 					<Switch
-						aria-label="Dark mode"
+						aria-label={t("Dark mode")}
 						checked={theme === "dark"}
 						onCheckedChange={updateTheme}
 					/>
 				</div>
 				<div className="flex items-center justify-between gap-5 border-b py-4 max-[720px]:flex-col max-[720px]:items-stretch">
 					<div className="flex flex-col gap-1">
-						<p className="text-base font-semibold text-foreground">Font size</p>
+						<p className="text-base font-semibold text-foreground">
+							{t("Font size")}
+						</p>
 						<p className="text-sm text-muted-foreground">
-							Adjust the size of text and interface elements throughout the app.
+							{t(
+								"Adjust the size of text and interface elements throughout the app.",
+							)}
 						</p>
 					</div>
 					<div className="flex w-64 shrink-0 items-center gap-3 max-[720px]:w-full">
 						<Button
-							aria-label="Decrease font size"
+							aria-label={t("Decrease font size")}
 							className="size-7"
 							disabled={fontSize === MIN_APP_FONT_SIZE}
 							onClick={() => updateFontSizePreference(fontSize - 1)}
@@ -883,7 +904,7 @@ function GeneralSettingsContent() {
 							<Minus />
 						</Button>
 						<Slider
-							aria-label="Font size"
+							aria-label={t("Font size")}
 							aria-valuetext={`${fontSize} pixels`}
 							max={MAX_APP_FONT_SIZE}
 							min={MIN_APP_FONT_SIZE}
@@ -892,7 +913,7 @@ function GeneralSettingsContent() {
 							value={[fontSize]}
 						/>
 						<Button
-							aria-label="Increase font size"
+							aria-label={t("Increase font size")}
 							className="size-7"
 							disabled={fontSize === MAX_APP_FONT_SIZE}
 							onClick={() => updateFontSizePreference(fontSize + 1)}
@@ -903,26 +924,27 @@ function GeneralSettingsContent() {
 							<Plus />
 						</Button>
 						<output
-							aria-label="Selected font size"
+							aria-label={t("Selected font size")}
 							className="w-10 shrink-0 text-right font-mono text-sm tabular-nums text-foreground"
 						>
-							{fontSize}px
+							{fontSize}
+							{t("px")}
 						</output>
 					</div>
 				</div>
 				<div className="flex py-4 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
 					<div className="flex flex-col gap-1">
 						<p className="text-base font-semibold text-foreground">
-							Accent color
+							{t("Accent color")}
 						</p>
 						<p className="text-sm text-muted-foreground">
-							Tint buttons, links, and highlights across the app.
+							{t("Tint buttons, links, and highlights across the app.")}
 						</p>
 					</div>
 					<div className="flex shrink-0 items-center gap-2">
 						{ACCENT_OPTIONS.map((option) => (
 							<button
-								aria-label={option.label}
+								aria-label={t(option.label)}
 								aria-pressed={accent === option.id}
 								className={cn(
 									"size-7 rounded-full border border-foreground/10 transition-transform hover:scale-110",
@@ -932,7 +954,7 @@ function GeneralSettingsContent() {
 								key={option.id}
 								onClick={() => updateAccent(option.id)}
 								style={{ backgroundColor: option.swatch }}
-								title={option.label}
+								title={t(option.label)}
 								type="button"
 							/>
 						))}
@@ -940,13 +962,17 @@ function GeneralSettingsContent() {
 				</div>
 				<div className="flex items-center justify-between gap-5 border-b py-4 max-[720px]:flex-col max-[720px]:items-stretch">
 					<div className="flex flex-col gap-1">
-						<p className="text-base font-semibold text-foreground">App icon</p>
+						<p className="text-base font-semibold text-foreground">
+							{t("App icon")}
+						</p>
 						<p className="text-sm text-muted-foreground">
-							Pick the icon Cline shows in the {appIconLocation}.
+							{t("Pick the icon Cline shows in the ")}
+							{appIconLocation}.
 						</p>
 						{appIconError ? (
 							<p className="mt-2 text-xs text-destructive" role="alert">
-								Failed to change app icon: {appIconError}
+								{t("Failed to change app icon: ")}
+								{appIconError}
 							</p>
 						) : null}
 					</div>
@@ -986,43 +1012,33 @@ function GeneralSettingsContent() {
 						))}
 					</div>
 				</div>
-				<div className="flex py-4 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
-					<div className="flex flex-col gap-1">
-						<p className="text-base font-semibold text-foreground">
-							Keep CLI up to date
-						</p>
-						<p className="text-sm text-muted-foreground">
-							Automatically update the cline terminal command, which shares your
-							sessions and settings with this app. The app itself updates
-							separately.
-						</p>
-						{autoUpdateError ? (
-							<p className="mt-2 text-xs text-destructive" role="alert">
-								Failed to update CLI auto-update setting: {autoUpdateError}
-							</p>
-						) : null}
-					</div>
-					<Switch
-						aria-label="Keep CLI up to date"
-						checked={autoUpdateEnabled}
-						disabled={autoUpdateLoading || autoUpdateSaving}
-						onCheckedChange={(checked) => void updateAutoUpdateEnabled(checked)}
-					/>
+				<div className="border-b py-4">
+					<p className="text-base font-semibold text-foreground">
+						{t("CLI / Hub")}
+					</p>
+					<p className="mt-1 text-sm text-muted-foreground">
+						{t(
+							"The CLI and Hub are updated together with this fork through the signed Desktop installer.",
+						)}
+					</p>
 				</div>
 				<div className="flex py-4 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
 					<div className="flex flex-col gap-1">
-						<p className="text-base font-semibold text-foreground">Telemetry</p>
-						<p className="text-sm text-muted-foreground">
-							Enable error and usage reports to help improve Cline.
+						<p className="text-base font-semibold text-foreground">
+							{t("Telemetry")}
 						</p>
-						{telemetryError ? (
+						<p className="text-sm text-muted-foreground">
+							{t("Enable error and usage reports to help improve Cline.")}
+						</p>
+						{autoUpdateError ? (
 							<p className="mt-2 text-xs text-destructive" role="alert">
-								Failed to update telemetry setting: {telemetryError}
+								{t("Failed to update telemetry setting: ")}
+								{telemetryError}
 							</p>
 						) : null}
 					</div>
 					<Switch
-						aria-label="Telemetry"
+						aria-label={t("Telemetry")}
 						checked={!telemetryOptOut}
 						disabled={telemetryLoading || telemetrySaving}
 						onCheckedChange={(checked) => void updateTelemetryOptOut(!checked)}
@@ -1031,11 +1047,12 @@ function GeneralSettingsContent() {
 				<div className="flex py-4 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
 					<div className="flex flex-col gap-1">
 						<p className="text-base font-semibold text-foreground">
-							New user experience
+							{t("New user experience")}
 						</p>
 						<p className="text-sm text-muted-foreground">
-							Replay the first-run experience new users see when they open Cline
-							for the first time.
+							{t(
+								"Replay the first-run experience new users see when they open Cline for the first time.",
+							)}
 						</p>
 					</div>
 					<Button
@@ -1046,7 +1063,7 @@ function GeneralSettingsContent() {
 						variant="outline"
 					>
 						<RotateCcw className="size-3" />
-						Replay
+						{t("Replay")}
 					</Button>
 				</div>
 				<HubPanel />

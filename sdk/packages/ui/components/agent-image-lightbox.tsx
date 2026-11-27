@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import { X } from "lucide-react";
 
@@ -18,10 +19,11 @@ export function AgentImageLightboxContent({
 	onClose,
 	backdropTabIndex,
 }: AgentImageLightboxContentProps) {
+	const t = useTranslation();
 	return (
 		<>
 			<button
-				aria-label="Close expanded attachment"
+				aria-label={t("Close expanded attachment")}
 				className="absolute inset-0 cursor-zoom-out"
 				onClick={onClose}
 				tabIndex={backdropTabIndex}
@@ -34,7 +36,7 @@ export function AgentImageLightboxContent({
 					src={src}
 				/>
 				<button
-					aria-label="Close image viewer"
+					aria-label={t("Close image viewer")}
 					className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium cursor-pointer disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-3 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-cline-ui-ring focus-visible:ring-cline-ui-ring/50 focus-visible:ring-[3px] aria-invalid:ring-cline-ui-destructive/20 cline-ui-dark:aria-invalid:ring-cline-ui-destructive/40 aria-invalid:border-cline-ui-destructive bg-cline-ui-secondary text-cline-ui-secondary-foreground hover:bg-cline-ui-surface-hover size-5 pointer-events-auto absolute right-0 top-0 rounded-full"
 					data-slot="button"
 					onClick={onClose}

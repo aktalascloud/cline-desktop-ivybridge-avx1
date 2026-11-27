@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import {
 	AlertCircle,
@@ -74,6 +75,7 @@ export function ImportSessionsDialog({
 	onOpenChange,
 	onImported,
 }: ImportSessionsDialogProps) {
+	const t = useTranslation();
 	const [phase, setPhase] = useState<ImportPhase>("loading");
 	const [scanError, setScanError] = useState<string | null>(null);
 	const [sessions, setSessions] = useState<ImportableSession[]>([]);
@@ -231,17 +233,18 @@ export function ImportSessionsDialog({
 			    survives class merging across variants. */}
 			<DialogContent className="grid h-[min(680px,calc(100dvh-2rem))] w-[min(620px,calc(100vw-2rem))] max-w-none grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] gap-4 overflow-hidden sm:max-w-none">
 				<DialogHeader>
-					<DialogTitle>Import sessions</DialogTitle>
+					<DialogTitle>{t("Import sessions")}</DialogTitle>
 					<DialogDescription>
-						Bring your conversation history from other coding tools into Cline.
-						Imported sessions appear in your history and can be continued here.
+						{t(
+							"Bring your conversation history from other coding tools into Cline. Imported sessions appear in your history and can be continued here.",
+						)}
 					</DialogDescription>
 				</DialogHeader>
 
 				{phase === "loading" ? (
 					<div className="flex min-h-0 flex-col items-center justify-center gap-3 text-muted-foreground">
 						<Loader2 className="size-5 animate-spin" />
-						<p className="text-sm">Scanning for sessions…</p>
+						<p className="text-sm">{t("Scanning for sessions…")}</p>
 					</div>
 				) : null}
 
@@ -249,17 +252,19 @@ export function ImportSessionsDialog({
 					<div className="flex min-h-0 flex-col gap-3">
 						{scanError ? (
 							<p className="text-sm text-destructive" role="alert">
-								Couldn't scan for sessions: {scanError}
+								{t("Couldn't scan for sessions: ")}
+								{scanError}
 							</p>
 						) : null}
 						{sessions.length === 0 && !scanError ? (
 							<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-center">
 								<p className="text-sm font-medium text-foreground">
-									No sessions found
+									{t("No sessions found")}
 								</p>
 								<p className="max-w-sm text-sm text-muted-foreground">
-									Cline looks for local history from Claude Code, Codex, and
-									opencode. Nothing importable turned up on this machine.
+									{t(
+										"Cline looks for local history from Claude Code, Codex, and opencode. Nothing importable turned up on this machine.",
+									)}
 								</p>
 							</div>
 						) : null}
@@ -268,16 +273,16 @@ export function ImportSessionsDialog({
 								<div className="relative shrink-0">
 									<Search className="-translate-y-1/2 pointer-events-none absolute left-2.5 top-1/2 size-4 text-muted-foreground" />
 									<Input
-										aria-label="Filter sessions"
+										aria-label={t("Filter sessions")}
 										className="h-8 pl-8"
 										onChange={(event) => setQuery(event.target.value)}
-										placeholder="Filter by title or folder"
+										placeholder={t("Filter by title or folder")}
 										value={query}
 									/>
 								</div>
 								<div className="flex shrink-0 items-center gap-2 border-b pb-2">
 									<Checkbox
-										aria-label="Select all sessions"
+										aria-label={t("Select all sessions")}
 										checked={
 											allVisibleSelected
 												? true
@@ -295,11 +300,12 @@ export function ImportSessionsDialog({
 										className="cursor-pointer text-sm text-foreground"
 										htmlFor="import-select-all"
 									>
-										Select all
+										{t("Select all")}
 									</label>
 									<span className="ml-auto text-xs text-muted-foreground">
-										{selectedVisibleCount} of {visibleSelectableKeys.length}{" "}
-										selected
+										{selectedVisibleCount}
+										{t(" of ")}
+										{visibleSelectableKeys.length} {t("selected")}
 									</span>
 								</div>
 								<div className="min-h-0 flex-1 overflow-y-auto pr-1">
@@ -409,7 +415,7 @@ export function ImportSessionsDialog({
 																					className="shrink-0"
 																					variant="secondary"
 																				>
-																					Imported
+																					{t("Imported")}
 																				</Badge>
 																			) : null}
 																		</span>
@@ -423,7 +429,8 @@ export function ImportSessionsDialog({
 																			</span>
 																			<span aria-hidden>·</span>
 																			<span className="shrink-0">
-																				{session.messageCount} message
+																				{session.messageCount}
+																				{t(" message")}
 																				{session.messageCount === 1 ? "" : "s"}
 																			</span>
 																			{session.cwd ? (
@@ -446,7 +453,8 @@ export function ImportSessionsDialog({
 									})}
 									{groups.length === 0 ? (
 										<p className="py-8 text-center text-sm text-muted-foreground">
-											No sessions match "{query.trim()}".
+											{t('No sessions match "')}
+											{query.trim()}".
 										</p>
 									) : null}
 								</div>
@@ -459,7 +467,9 @@ export function ImportSessionsDialog({
 					<div className="flex min-h-0 flex-col gap-4">
 						<div className="flex flex-col gap-2">
 							<div className="flex items-center justify-between text-sm">
-								<span className="text-foreground">Importing sessions…</span>
+								<span className="text-foreground">
+									{t("Importing sessions…")}
+								</span>
 								<span className="text-muted-foreground">
 									{progress.done} / {progress.total}
 								</span>
@@ -497,11 +507,11 @@ export function ImportSessionsDialog({
 						<p className="text-sm text-foreground">
 							{succeeded.length > 0
 								? `Imported ${succeeded.length} session${succeeded.length === 1 ? "" : "s"}.`
-								: "No sessions were imported."}
+								: t("No sessions were imported.")}
 							{failures.length > 0
 								? ` ${failures.length} failed.`
 								: succeeded.length > 0
-									? " They're in your history now."
+									? t(" They're in your history now.")
 									: ""}
 						</p>
 						{failures.length > 0 ? (
@@ -542,26 +552,27 @@ export function ImportSessionsDialog({
 								type="button"
 								variant="ghost"
 							>
-								Cancel
+								{t("Cancel")}
 							</Button>
 							<Button
 								disabled={selected.size === 0}
 								onClick={() => void startImport()}
 								type="button"
 							>
-								Import{selected.size > 0 ? ` ${selected.size}` : ""}
+								{t("Import")}
+								{selected.size > 0 ? ` ${selected.size}` : ""}
 							</Button>
 						</>
 					) : null}
 					{phase === "importing" ? (
 						<Button disabled type="button">
 							<Loader2 className="size-4 animate-spin" />
-							Importing…
+							{t("Importing…")}
 						</Button>
 					) : null}
 					{phase === "done" ? (
 						<Button onClick={() => onOpenChange(false)} type="button">
-							Done
+							{t("Done")}
 						</Button>
 					) : null}
 				</DialogFooter>

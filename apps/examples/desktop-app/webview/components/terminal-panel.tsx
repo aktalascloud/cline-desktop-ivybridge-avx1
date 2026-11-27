@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import "@xterm/xterm/css/xterm.css";
 
@@ -42,6 +43,7 @@ type TerminalPanelProps = {
  * and keeps xterm sized to the panel.
  */
 export function TerminalPanel({ cwd, ...props }: TerminalPanelProps) {
+	const t = useTranslation();
 	const key = normalizeTerminalCwd(cwd);
 	// Remount per directory so "no tabs" means "fresh panel" and not "the
 	// last shell exited" when the workspace changes under an open panel.
@@ -56,6 +58,7 @@ function TerminalPanelForCwd({
 	onHeightChange,
 	onClose,
 }: TerminalPanelProps) {
+	const t = useTranslation();
 	const tabs = useSyncExternalStore(
 		subscribeTerminalTabs,
 		() => listTerminalTabs(cwd),
@@ -166,13 +169,13 @@ function TerminalPanelForCwd({
 
 	return (
 		<section
-			aria-label="Terminal"
+			aria-label={t("Terminal")}
 			className="relative flex max-h-[80%] shrink-0 flex-col border-t border-border/70 bg-background"
 			style={{ height }}
 		>
 			{/* biome-ignore lint/a11y/useSemanticElements: a separator role is the ARIA pattern for a resize splitter */}
 			<div
-				aria-label="Resize terminal"
+				aria-label={t("Resize terminal")}
 				aria-orientation="horizontal"
 				aria-valuemin={TERMINAL_PANEL_MIN_HEIGHT}
 				aria-valuenow={height}
@@ -212,10 +215,10 @@ function TerminalPanelForCwd({
 						/>
 					))}
 					<button
-						aria-label="New terminal"
+						aria-label={t("New terminal")}
 						className="mb-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-hover hover:text-foreground"
 						onClick={() => createTerminalTab(cwd)}
-						title="New terminal"
+						title={t("New terminal")}
 						type="button"
 					>
 						<Plus className="size-3.5" />
@@ -223,10 +226,10 @@ function TerminalPanelForCwd({
 				</div>
 				<div className="mb-0.5 ml-auto flex shrink-0 items-center">
 					<button
-						aria-label="Hide terminal"
+						aria-label={t("Hide terminal")}
 						className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-hover hover:text-foreground"
 						onClick={onClose}
-						title="Hide terminal (Ctrl+`)"
+						title={t("Hide terminal (Ctrl+`)")}
 						type="button"
 					>
 						<X className="size-3.5" />
@@ -252,6 +255,7 @@ function TerminalTabButton({
 	onSelect: () => void;
 	onClose: () => void;
 }) {
+	const t = useTranslation();
 	return (
 		<div className={cn("group/tab relative min-w-0", active && "-mb-px")}>
 			<button
@@ -275,7 +279,7 @@ function TerminalTabButton({
 					event.stopPropagation();
 					onClose();
 				}}
-				title="Kill terminal"
+				title={t("Kill terminal")}
 				type="button"
 			>
 				<X className="size-3" />

@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Import } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -30,6 +31,7 @@ function toolStatus(
 }
 
 export function ImportContent() {
+	const t = useTranslation();
 	const [scan, setScan] = useState<ListImportableSessionsResponse | null>(null);
 	const [scanError, setScanError] = useState<string | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -68,11 +70,13 @@ export function ImportContent() {
 				actions={
 					<Button onClick={() => setDialogOpen(true)} type="button">
 						<Import className="size-4" />
-						Import sessions
+						{t("Import sessions")}
 					</Button>
 				}
-				description="Bring your conversation history from other coding tools into Cline. Imported sessions show up in your history and can be continued here."
-				title="Import"
+				description={t(
+					"Bring your conversation history from other coding tools into Cline. Imported sessions show up in your history and can be continued here.",
+				)}
+				title={t("Import")}
 			/>
 			<section className="max-w-2xl">
 				{SESSION_IMPORT_TOOL_ORDER.map((tool, index) => (
@@ -92,15 +96,16 @@ export function ImportContent() {
 								{scan
 									? toolStatus(tool, scan)
 									: scanError
-										? "Scan failed"
-										: "Scanning…"}
+										? t("Scan failed")
+										: t("Scanning…")}
 							</p>
 						</div>
 					</div>
 				))}
 				{scanError ? (
 					<p className="mt-4 text-sm text-destructive" role="alert">
-						Couldn't scan for sessions: {scanError}
+						{t("Couldn't scan for sessions: ")}
+						{scanError}
 					</p>
 				) : null}
 			</section>

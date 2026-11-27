@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { describeOutdatedHubSessions } from "@cline/shared/browser";
 import { useCallback, useEffect, useState } from "react";
@@ -89,6 +90,7 @@ let updateCheckKickedForKey: string | null = null;
  *   and quitting the app (the old Hub keeps running for its clients).
  */
 export function HubUpdateRequiredDialog() {
+	const t = useTranslation();
 	const [mismatch, setMismatch] = useState<HubBuildMismatchPayload | null>(
 		null,
 	);
@@ -210,15 +212,19 @@ export function HubUpdateRequiredDialog() {
 			<AlertDialog open>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Cline Hub update required</AlertDialogTitle>
+						<AlertDialogTitle>
+							{t("Cline Hub update required")}
+						</AlertDialogTitle>
 						<AlertDialogDescription>
-							Cline needs a newer Cline Hub, but the running one is still
-							serving {describeOutdatedHubSessions(mismatch)}.
+							{t(
+								"Cline needs a newer Cline Hub, but the running one is still serving ",
+							)}
+							{describeOutdatedHubSessions(mismatch)}.
 						</AlertDialogDescription>
 						<AlertDialogDescription>
-							Update Now stops that Hub and interrupts its sessions. Quit Cline
-							closes this app and leaves the Hub running, so you can update
-							later.
+							{t(
+								"Update Now stops that Hub and interrupts its sessions. Quit Cline closes this app and leaves the Hub running, so you can update later.",
+							)}
 						</AlertDialogDescription>
 						{updateHint ? (
 							<AlertDialogDescription>{updateHint}</AlertDialogDescription>
@@ -232,7 +238,7 @@ export function HubUpdateRequiredDialog() {
 								void handleQuit();
 							}}
 						>
-							Quit Cline
+							{t("Quit Cline")}
 						</AlertDialogCancel>
 						<AlertDialogAction
 							disabled={phase !== "idle"}
@@ -242,12 +248,12 @@ export function HubUpdateRequiredDialog() {
 							}}
 						>
 							{phase === "restarting"
-								? "Restarting…"
+								? t("Restarting…")
 								: phase === "updating"
-									? "Updating…"
+									? t("Updating…")
 									: updateHint
-										? "Try again"
-										: "Update Now"}
+										? t("Try again")
+										: t("Update Now")}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>
@@ -277,14 +283,15 @@ export function HubUpdateRequiredDialog() {
 		>
 			<AlertDialogContent>
 				<AlertDialogHeader>
-					<AlertDialogTitle>Cline Hub was updated</AlertDialogTitle>
+					<AlertDialogTitle>{t("Cline Hub was updated")}</AlertDialogTitle>
 					<AlertDialogDescription>
-						Another Cline installation updated the shared Cline Hub
+						{t("Another Cline installation updated the shared Cline Hub")}
 						{mismatch?.hubCoreVersion
 							? ` (core ${mismatch.hubCoreVersion})`
 							: ""}
-						, and it no longer matches this app. Update and restart Cline to
-						stay in sync with the running Hub.
+						{t(
+							", and it no longer matches this app. Update and restart Cline to stay in sync with the running Hub.",
+						)}
 					</AlertDialogDescription>
 					{updateHint ? (
 						<AlertDialogDescription>{updateHint}</AlertDialogDescription>
@@ -292,7 +299,7 @@ export function HubUpdateRequiredDialog() {
 				</AlertDialogHeader>
 				<AlertDialogFooter>
 					<AlertDialogCancel disabled={phase !== "idle"}>
-						Later
+						{t("Later")}
 					</AlertDialogCancel>
 					<AlertDialogAction
 						disabled={phase !== "idle"}
@@ -302,12 +309,12 @@ export function HubUpdateRequiredDialog() {
 						}}
 					>
 						{phase === "restarting"
-							? "Restarting…"
+							? t("Restarting…")
 							: phase === "updating"
-								? "Checking for updates…"
+								? t("Checking for updates…")
 								: updateHint
-									? "Try again"
-									: "Update and restart"}
+									? t("Try again")
+									: t("Update and restart")}
 					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>

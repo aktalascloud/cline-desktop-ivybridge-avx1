@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Check, Cloud, Laptop, Loader2, Server, Settings } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -87,6 +88,7 @@ export function EnvironmentSelector({
 	onSelectEnvironment,
 	onAddSshHost,
 }: EnvironmentSelectorProps) {
+	const t = useTranslation();
 	const model = useMemo(
 		() => buildEnvironmentSelectorModel(activeEnvironmentId, profiles),
 		[activeEnvironmentId, profiles],
@@ -136,7 +138,7 @@ export function EnvironmentSelector({
 			return (
 				<span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
 					<Loader2 className="size-3 animate-spin" />
-					Connecting
+					{t("Connecting")}
 				</span>
 			);
 		}
@@ -188,10 +190,10 @@ export function EnvironmentSelector({
 					}}
 				>
 					<Cloud className="size-4" />
-					<span className="uppercase">Cloud</span>
+					<span className="uppercase">{t("Cloud")}</span>
 					{!cloudEnabled ? (
 						<span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] font-normal normal-case tracking-normal text-muted-foreground">
-							Coming soon
+							{t("Coming soon")}
 						</span>
 					) : cloudSelected ? (
 						<Check className="ml-auto" />
@@ -202,11 +204,11 @@ export function EnvironmentSelector({
 				<div className="flex items-center justify-between">
 					<DropdownMenuLabel className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
 						<Server className="size-4" />
-						Remote
+						{t("Remote")}
 					</DropdownMenuLabel>
 					<DropdownMenuItem
-						aria-label="Add SSH Host"
-						title="Add SSH Host"
+						aria-label={t("Add SSH Host")}
+						title={t("Add SSH Host")}
 						className="mr-1 size-6 justify-center p-0"
 						disabled={busy}
 						onSelect={onAddSshHost}
@@ -234,7 +236,9 @@ export function EnvironmentSelector({
 					))
 				) : (
 					<DropdownMenuItem disabled>
-						<span className="text-muted-foreground">No SSH hosts saved</span>
+						<span className="text-muted-foreground">
+							{t("No SSH hosts saved")}
+						</span>
 					</DropdownMenuItem>
 				)}
 			</DropdownMenuContent>

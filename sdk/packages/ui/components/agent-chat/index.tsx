@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./../ui-locale.js";
 
 import {
 	type ButtonHTMLAttributes,
@@ -614,6 +615,7 @@ export const ThinkingBlock = ({
 	redacted = false,
 	...props
 }: ThinkingBlockProps) => {
+	const t = useTranslation();
 	const resolvedLabel =
 		label ??
 		(isStreaming ? "Thinking" : formatThoughtLabel(durationMilliseconds));
@@ -638,7 +640,7 @@ export const ThinkingBlock = ({
 				className="cline-chat-thinking-content"
 				presentation="rail"
 			>
-				{children ?? (redacted ? "[redacted]" : null)}
+				{children ?? (redacted ? t("[redacted]") : null)}
 			</ReasoningContent>
 		</Reasoning>
 	);

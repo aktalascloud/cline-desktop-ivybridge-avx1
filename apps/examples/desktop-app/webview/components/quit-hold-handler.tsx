@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Kbd, KbdGroup } from "@cline/ui";
 import { useEffect, useRef, useState } from "react";
@@ -50,6 +51,7 @@ export function QuitHoldHandler({
 }: {
 	bindings: ResolvedKeybindings;
 }) {
+	const t = useTranslation();
 	const { key: accelerator, holdMs = 0 } = bindings.quit;
 	const [progress, setProgress] = useState<number | null>(null);
 	const holdRef = useRef<{ start: number; lastRepeat: number | null } | null>(
@@ -163,13 +165,13 @@ export function QuitHoldHandler({
 		>
 			<div className="w-64 rounded-lg border bg-popover px-4 py-3 text-popover-foreground shadow-lg">
 				<p className="flex items-center gap-2 text-sm font-medium">
-					Hold
+					{t("Hold")}
 					<KbdGroup>
 						{acceleratorKeys(accelerator).map((part) => (
 							<Kbd key={part}>{part}</Kbd>
 						))}
 					</KbdGroup>
-					to quit
+					{t("to quit")}
 				</p>
 				<div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
 					<div

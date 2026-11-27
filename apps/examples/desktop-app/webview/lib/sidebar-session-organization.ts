@@ -1,3 +1,4 @@
+import { readLanguage } from "@/lib/i18n";
 import { isChatWorkspacePath } from "@cline/shared/browser";
 import { normalizeTitle } from "@/components/utils";
 import {
@@ -169,7 +170,7 @@ export function scheduleRunLabel(thread: SessionThread): string {
 	if (thread.scheduleRunNumber) return `Run ${thread.scheduleRunNumber}`;
 	const started = parseTimestamp(thread.startedAt);
 	if (Number.isFinite(started)) {
-		return new Date(started).toLocaleString(undefined, {
+		return new Date(started).toLocaleString(readLanguage(), {
 			month: "short",
 			day: "numeric",
 			hour: "numeric",

@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import {
 	formatSessionSearchPreview,
@@ -39,6 +40,7 @@ export function SessionCommandBar({
 	onOpenChange: (open: boolean) => void;
 	onOpenSession: (sessionId: string) => void | Promise<void>;
 }) {
+	const t = useTranslation();
 	const keybindings = useKeybindings();
 	const searchKey = keybindings["command-bar"].key;
 	const searchHint = searchKey ? formatAccelerator(searchKey) : null;
@@ -125,7 +127,7 @@ export function SessionCommandBar({
 	return (
 		<CommandDialog
 			className="h-[min(38rem,calc(100vh-2rem))] w-[min(56rem,calc(100vw-2rem))] max-w-none sm:max-w-none"
-			description="Search messages across all Cline sessions"
+			description={t("Search messages across all Cline sessions")}
 			onOpenChange={onOpenChange}
 			open={open}
 			// Hits arrive filtered and ranked by the FTS index; letting cmdk
@@ -133,11 +135,11 @@ export function SessionCommandBar({
 			// text lives outside the truncated snippet.
 			shouldFilter={false}
 			showCloseButton={false}
-			title="Search session history"
+			title={t("Search session history")}
 		>
 			<CommandInput
 				onValueChange={handleQueryChange}
-				placeholder="Search all session history…"
+				placeholder={t("Search all session history…")}
 				value={query}
 			/>
 			<CommandList
@@ -147,11 +149,11 @@ export function SessionCommandBar({
 				{searching ? (
 					<div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
 						<Loader2 className="size-4 animate-spin" />
-						Searching sessions…
+						{t("Searching sessions…")}
 					</div>
 				) : null}
 				{!searching && query.trim() ? (
-					<CommandEmpty>No matching session history.</CommandEmpty>
+					<CommandEmpty>{t("No matching session history.")}</CommandEmpty>
 				) : null}
 				{!searching && hits.length > 0 ? (
 					<CommandGroup heading="Session history">
@@ -183,19 +185,23 @@ export function SessionCommandBar({
 						))}
 						{visibleHitCount < hits.length ? (
 							<div className="py-2 text-center text-[11px] text-muted-foreground">
-								Showing {visibleHitCount} of {hits.length} results
+								{t("Showing ")}
+								{visibleHitCount}
+								{t(" of ")}
+								{hits.length}
+								{t(" results")}
 							</div>
 						) : null}
 					</CommandGroup>
 				) : null}
 				{!query.trim() ? (
 					<div className="px-4 py-8 text-center text-sm text-muted-foreground">
-						Search messages, commands, errors, and file paths.
+						{t("Search messages, commands, errors, and file paths.")}
 					</div>
 				) : null}
 			</CommandList>
 			<div className="flex items-center justify-between border-t px-3 py-2 text-[11px] text-muted-foreground">
-				<span>Navigate with ↑↓ and open with ↵</span>
+				<span>{t("Navigate with ↑↓ and open with ↵")}</span>
 				{searchHint ? (
 					<kbd className="rounded border bg-muted px-1.5 py-0.5 font-sans">
 						{searchHint}

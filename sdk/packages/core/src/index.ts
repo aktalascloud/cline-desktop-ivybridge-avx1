@@ -628,6 +628,8 @@ export {
 	readCompactionModeGlobally,
 	readCompactionStrategyGlobally,
 	readGlobalSettings,
+	readCompactionPreferencesGlobally,
+	setCompactionPreferencesGlobally,
 	readPlanActModeGlobally,
 	readToolAutoApproveGlobally,
 	readTuiThemeGlobally,

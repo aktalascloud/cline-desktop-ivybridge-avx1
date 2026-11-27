@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Loader2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
@@ -21,6 +22,7 @@ export function HubStartupScreen({
 	transport,
 	hub,
 }: ReturnType<typeof useHubStartup>) {
+	const t = useTranslation();
 	const connected = transport === "connected";
 	const [backendUnresponsive, setBackendUnresponsive] = useState(false);
 	const [exportStatus, setExportStatus] = useState<string | null>(null);
@@ -54,30 +56,32 @@ export function HubStartupScreen({
 		content = (
 			<>
 				<h1 className="text-base font-medium">
-					Cline's desktop backend isn't responding
+					{t("Cline's desktop backend isn't responding")}
 				</h1>
 				<p className="text-sm text-muted-foreground">
-					Cline keeps trying in the background. Reload to try again now.
+					{t("Cline keeps trying in the background. Reload to try again now.")}
 				</p>
-				<Button onClick={() => window.location.reload()}>Reload</Button>
+				<Button onClick={() => window.location.reload()}>{t("Reload")}</Button>
 			</>
 		);
 	} else if (connected && hub.state === "failed") {
 		content = (
 			<>
 				<h1 className="text-base font-medium">
-					Cline couldn't connect to its Hub
+					{t("Cline couldn't connect to its Hub")}
 				</h1>
 				<p className="text-sm text-muted-foreground">
-					{hub.error} Retry, or export diagnostics and share the file with the
-					Cline team if this keeps happening.
+					{hub.error}
+					{t(
+						" Retry, or export diagnostics and share the file with the Cline team if this keeps happening.",
+					)}
 				</p>
 				<div className="flex gap-2">
 					<Button onClick={() => void desktopClient.invoke("retry_hub")}>
-						Retry
+						{t("Retry")}
 					</Button>
 					<Button variant="outline" onClick={() => void exportDiagnostics()}>
-						Export diagnostics
+						{t("Export diagnostics")}
 					</Button>
 				</div>
 				{exportStatus ? (
@@ -95,7 +99,7 @@ export function HubStartupScreen({
 					className="size-6 animate-spin text-muted-foreground"
 				/>
 				<output className="text-sm text-muted-foreground">
-					Starting Cline…
+					{t("Starting Cline…")}
 				</output>
 			</>
 		);

@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { CircleArrowUp, Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils";
  * stays reachable after the one-time toast is dismissed.
  */
 export function AppUpdateIndicator({ className }: { className?: string }) {
+	const t = useTranslation();
 	const status = useAppUpdateStatus();
 	const [restarting, setRestarting] = useState(false);
 
@@ -45,10 +47,14 @@ export function AppUpdateIndicator({ className }: { className?: string }) {
 				</Button>
 			</PopoverTrigger>
 			<PopoverContent align="start" className="w-64 p-3" side="bottom">
-				<p className="text-sm font-medium">Update ready: v{status.version}</p>
+				<p className="text-sm font-medium">
+					{t("Update ready: v")}
+					{status.version}
+				</p>
 				<p className="mt-1 text-xs text-muted-foreground">
-					The new version has been downloaded and will be used the next time the
-					app starts. Restart now to switch to it right away.
+					{t(
+						"The new version has been downloaded and will be used the next time the app starts. Restart now to switch to it right away.",
+					)}
 				</p>
 				<Button
 					className="mt-3 w-full"
@@ -67,10 +73,10 @@ export function AppUpdateIndicator({ className }: { className?: string }) {
 					{restarting ? (
 						<>
 							<Loader2 className="size-4 animate-spin" />
-							Restarting...
+							{t("Restarting...")}
 						</>
 					) : (
-						"Restart now"
+						t("Restart now")
 					)}
 				</Button>
 			</PopoverContent>

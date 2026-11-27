@@ -178,3 +178,8 @@ export {
 	type SessionStatusTone,
 } from "./session-status.js";
 export { Switch, type SwitchProps } from "./switch.js";
+export {
+	UiLocaleProvider,
+	type UiTranslator,
+	useUiLocale,
+} from "./ui-locale.js";

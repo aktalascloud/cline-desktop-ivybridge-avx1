@@ -1,4 +1,6 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
+
 
 import {
 	createContext,
@@ -36,6 +38,7 @@ export function Carousel({
 	setApi?: (api: CarouselApi) => void;
 	children: ReactNode;
 }) {
+
 	const [viewport, api] = useEmblaCarousel({ align: "start", ...opts });
 	useEffect(() => {
 		setApi?.(api);
@@ -80,6 +83,7 @@ export function CarouselContent({
 	className,
 	...props
 }: ComponentProps<"div">) {
+
 	const { viewport } = useCarousel();
 	return (
 		<div ref={viewport} className="overflow-hidden">
@@ -88,6 +92,7 @@ export function CarouselContent({
 	);
 }
 export function CarouselItem({ className, ...props }: ComponentProps<"div">) {
+
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: fieldset would break layout styling
 		<div
@@ -99,6 +104,7 @@ export function CarouselItem({ className, ...props }: ComponentProps<"div">) {
 	);
 }
 export function CarouselPrevious(props: ComponentProps<"button">) {
+	const t = useTranslation();
 	const { api } = useCarousel();
 	return (
 		<button
@@ -108,13 +114,14 @@ export function CarouselPrevious(props: ComponentProps<"button">) {
 				props.onClick?.(event);
 				api?.scrollPrev();
 			}}
-			aria-label="Previous screenshot"
+			aria-label={t("Previous screenshot")}
 		>
 			<ArrowLeft className="size-4" />
 		</button>
 	);
 }
 export function CarouselNext(props: ComponentProps<"button">) {
+	const t = useTranslation();
 	const { api } = useCarousel();
 	return (
 		<button
@@ -124,7 +131,7 @@ export function CarouselNext(props: ComponentProps<"button">) {
 				props.onClick?.(event);
 				api?.scrollNext();
 			}}
-			aria-label="Next screenshot"
+			aria-label={t("Next screenshot")}
 		>
 			<ArrowRight className="size-4" />
 		</button>

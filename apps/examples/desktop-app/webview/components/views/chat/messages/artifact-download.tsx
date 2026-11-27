@@ -3,6 +3,7 @@
 import { Download, LoaderCircle } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 import { useArtifactResource } from "@/hooks/use-artifact-resource";
 
 export function ArtifactDownload({
@@ -18,13 +19,18 @@ export function ArtifactDownload({
 	className?: string;
 	children?: (control: ReactNode) => ReactNode;
 }) {
+	const t = useTranslation();
 	const { accountReady, state, open } = useArtifactResource({
 		sessionId,
 		reference: { type: "artifact", artifactId },
 	});
 	const busy = state.status === "loading";
 	const failed = state.status === "error";
-	const label = busy ? "Preparing…" : failed ? "Retry download" : "Download";
+	const label = busy
+		? t("Preparing…")
+		: failed
+			? t("Retry download")
+			: t("Download");
 	const control = (
 		<>
 			<Button
@@ -55,7 +61,7 @@ export function ArtifactDownload({
 			</Button>
 			{failed && (
 				<output className={iconOnly ? "sr-only" : "text-destructive"}>
-					Could not download this file.
+					{t("Could not download this file.")}
 				</output>
 			)}
 		</>

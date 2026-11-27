@@ -1,4 +1,6 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
+
 
 import type { HandoffGitPreview } from "@cline/core/cloud";
 import { Cloud, ExternalLink, Loader2, X } from "lucide-react";
@@ -28,6 +30,7 @@ export function CloudHandoffGitConfirmation({
 	plan: HandoffGitPreview;
 	onDecision: (approved: boolean) => void;
 }) {
+	const t = useTranslation();
 	return (
 		<AlertDialog
 			open
@@ -37,44 +40,33 @@ export function CloudHandoffGitConfirmation({
 		>
 			<AlertDialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
 				<AlertDialogHeader>
-					<AlertDialogTitle>Continue in cloud?</AlertDialogTitle>
+					<AlertDialogTitle>{t("Continue in cloud?")}</AlertDialogTitle>
 					<AlertDialogDescription>
-						Cline will push a snapshot to a new GitHub branch and start a cloud
-						task with a summary of this conversation. You can keep working
-						locally. Later messages and edits stay local.
-						{plan.commits.length > 0 && (
-							<span className="mt-2 block">
-								This includes {plan.commits.length} local{" "}
-								{plan.commits.length === 1 ? "commit" : "commits"} not confirmed
-								on the remote.
-							</span>
+						{t("Cline will push a snapshot to a new GitHub branch and start a cloud task with a summary of this conversation. You can keep working locally. Later messages and edits stay local.")}{plan.commits.length > 0 && (
+							<span className="mt-2 block">{t("Includes {count} local commits not confirmed on the remote.", { count: plan.commits.length })}</span>
 						)}
 						{plan.files.length > 0 && (
-							<span className="mt-2 block">
-								{plan.files.length} changed/new{" "}
-								{plan.files.length === 1 ? "file" : "files"} will be committed.
-								Ignored files are excluded.
-							</span>
+							<span className="mt-2 block">{t("{count} changed/new files will be committed. Ignored files are excluded.", { count: plan.files.length })}</span>
 						)}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<dl className="space-y-2 text-sm">
 					<div>
-						<dt className="text-muted-foreground">Repository</dt>
+						<dt className="text-muted-foreground">{t("Repository")}</dt>
 						<dd className="break-all">
 							{plan.repoUrl} ({plan.remote})
 						</dd>
 					</div>
 					<div>
-						<dt className="text-muted-foreground">New branch</dt>
+						<dt className="text-muted-foreground">{t("New branch")}</dt>
 						<dd className="break-all font-mono text-xs">{plan.branch}</dd>
 					</div>
 				</dl>
 				<details className="text-sm">
-					<summary className="cursor-pointer">Details</summary>
+					<summary className="cursor-pointer">{t("Details")}</summary>
 					<div className="mt-2 max-h-48 space-y-2 overflow-auto text-xs">
 						<p className="break-all text-muted-foreground">
-							Current branch: {plan.sourceBranch}
+							{t("Current branch: ")}{plan.sourceBranch}
 						</p>
 						{plan.files.length > 0 && (
 							<ul>
@@ -88,8 +80,7 @@ export function CloudHandoffGitConfirmation({
 						{plan.commits.length > 0 && (
 							<>
 								<p className="text-muted-foreground">
-									Commits not confirmed on the remote:
-								</p>
+									{t("Commits not confirmed on the remote:")}</p>
 								<ul>
 									{plan.commits.map((commit) => (
 										<li className="break-all font-mono" key={commit}>
@@ -103,11 +94,9 @@ export function CloudHandoffGitConfirmation({
 				</details>
 				<AlertDialogFooter>
 					<AlertDialogCancel onClick={() => onDecision(false)}>
-						Cancel
-					</AlertDialogCancel>
+						{t("Cancel")}</AlertDialogCancel>
 					<AlertDialogAction onClick={() => onDecision(true)}>
-						Push and continue
-					</AlertDialogAction>
+						{t("Push and continue")}</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>
 		</AlertDialog>
@@ -127,6 +116,7 @@ export function CloudHandoffStatus({
 	onConnectGitHub: (url: string) => void;
 	onDismiss: () => void;
 }) {
+	const t = useTranslation();
 	const pending = state.preparing || state.status === "progress";
 	const failureMessage = state.status === "failed" ? state.message.trim() : "";
 	const failureLabel = failureMessage.startsWith("Couldn't complete the push.")
@@ -158,8 +148,7 @@ export function CloudHandoffStatus({
 			size="sm"
 			variant="outline"
 		>
-			Connect GitHub
-		</Button>
+			{t("Connect GitHub")}</Button>
 	) : null;
 	const restoreAction = canRestoreDraft ? (
 		<Button
@@ -171,19 +160,19 @@ export function CloudHandoffStatus({
 			variant="outline"
 		>
 			{state.status === "complete"
-				? "Open cloud task with draft"
-				: "Restore draft"}
+				? t("Open cloud task with draft")
+				: t("Restore draft")}
 		</Button>
 	) : null;
 	const label = state.preparing
-		? HANDOFF_PROGRESS_LABELS.checking
+		? t(HANDOFF_PROGRESS_LABELS.checking)
 		: state.status === "progress"
-			? state.message?.trim() || HANDOFF_PROGRESS_LABELS[state.phase]
+			? state.message?.trim() || t(HANDOFF_PROGRESS_LABELS[state.phase])
 			: state.status === "complete"
 				? state.message
-					? "Check the cloud task"
-					: "Cloud task ready"
-				: failureLabel;
+					? t("Check the cloud task")
+					: t("Cloud task ready")
+				: t(failureLabel);
 	return (
 		<output
 			aria-live="polite"
@@ -208,8 +197,7 @@ export function CloudHandoffStatus({
 						size="sm"
 						variant="ghost"
 					>
-						Open cloud task
-						<ExternalLink aria-hidden="true" className="size-3.5" />
+						{t("Open cloud task")}<ExternalLink aria-hidden="true" className="size-3.5" />
 					</Button>
 				)}
 				{!pending && state.status === "failed" && (
@@ -222,11 +210,10 @@ export function CloudHandoffStatus({
 										size="sm"
 										variant="ghost"
 									>
-										Details
-									</Button>
+										{t("Details")}</Button>
 								</PopoverTrigger>
 								<PopoverContent
-									aria-label="Cloud handoff details"
+									aria-label={t("Cloud handoff details")}
 									className="cline-chat-selectable max-h-64 max-w-[calc(100vw-2rem)] overflow-y-auto whitespace-pre-wrap break-words text-xs"
 									side="top"
 								>
@@ -240,7 +227,7 @@ export function CloudHandoffStatus({
 				)}
 				{!pending && !hasRecoveryDraft && (
 					<Button
-						aria-label="Dismiss cloud handoff status"
+						aria-label={t("Dismiss cloud handoff status")}
 						className="size-7 shrink-0"
 						onClick={onDismiss}
 						size="icon"
@@ -273,8 +260,7 @@ export function CloudHandoffStatus({
 						size="sm"
 						variant="outline"
 					>
-						Restore draft
-					</Button>
+						{t("Restore draft")}</Button>
 					{connectAction}
 				</div>
 			)}

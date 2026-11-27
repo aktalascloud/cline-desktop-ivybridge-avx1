@@ -11,6 +11,7 @@ import type {
 import { buildBudgetProjection } from "./budget-projection";
 import {
 	type EstimateMessageTokens,
+	findCutIndex,
 	formatToolActivitySummary,
 	hasToolActivity,
 	isTurnStartMessage,
@@ -450,10 +451,49 @@ function sanitizeOlderAssistantFinal(
  * summaries attached to the surviving prompts.
  */
 export function runBasicCompaction(options: {
+	preserveRecentMessages?: number;
 	context: CoreCompactionContext;
 	estimateMessageTokens: EstimateMessageTokens;
 	logger?: BasicLogger;
 }): CoreCompactionResult | undefined {
+	if (options.preserveRecentMessages && options.preserveRecentMessages > 0) {
+		const messages = options.context.messages;
+		const cut = findCutIndex(
+			messages,
+			0,
+			options.estimateMessageTokens,
+			options.preserveRecentMessages,
+		);
+		const tail = messages.slice(cut);
+		const target =
+			options.context.budget.messages.targetTokens -
+			tail.reduce((n, m) => n + options.estimateMessageTokens(m), 0);
+		if (cut > 0 && target > 1024) {
+			const prefix = runBasicCompaction({
+				...options,
+				preserveRecentMessages: undefined,
+				context: {
+					...options.context,
+					messages: messages.slice(0, cut),
+					budget: {
+						...options.context.budget,
+						messages: {
+							...options.context.budget.messages,
+							targetTokens: target,
+						},
+					},
+				},
+			});
+			if (
+				prefix &&
+				prefix.messages.reduce(
+					(n, m) => n + options.estimateMessageTokens(m),
+					0,
+				) <= target
+			)
+				return { ...prefix, messages: [...prefix.messages, ...tail] };
+		}
+	}
 	const originalMessages = options.context.messages;
 	const estimate = options.estimateMessageTokens;
 	// A lone message has nothing to compact around it; truncating the only
@@ -498,13 +538,17 @@ export function runBasicCompaction(options: {
 	}
 
 	// Output of an earlier compaction is frozen: those messages are kept
-	// as-is and never re-folded, so this pass only processes new messages.
+	// as-is during normal compaction. A provider-rejected overflow must
+	// re-fold them too; otherwise recovery resends the same oversized prompt.
 	const frozenIndices = new Set<number>();
 	for (let index = 0; index < originalMessages.length; index += 1) {
 		if (sanitizedTypedByIndex.has(index)) {
 			continue;
 		}
-		if (isPreservedByCompaction(originalMessages[index])) {
+		if (
+			options.context.mode !== "overflow_recovery" &&
+			isPreservedByCompaction(originalMessages[index])
+		) {
 			frozenIndices.add(index);
 			totalTokens += estimate(originalMessages[index]);
 		}

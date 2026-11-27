@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Minus, Square, X } from "lucide-react";
@@ -33,6 +34,7 @@ export function WindowTitleBarProvider({
 	children: ReactNode;
 	contentEnabled?: boolean;
 }) {
+	const t = useTranslation();
 	const [portalTarget, setPortalTarget] = useState<HTMLDivElement | null>(null);
 
 	return (
@@ -55,6 +57,7 @@ function isWindowsDesktop(): boolean {
 
 /** Native window actions for the borderless Windows frame. */
 export function WindowControls() {
+	const t = useTranslation();
 	const [isWindows, setIsWindows] = useState(false);
 	const [isMaximized, setIsMaximized] = useState(false);
 
@@ -92,7 +95,7 @@ export function WindowControls() {
 			}}
 		>
 			<button
-				aria-label="Minimize"
+				aria-label={t("Minimize")}
 				className="flex w-12 items-center justify-center text-foreground hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
 				onClick={() => void appWindow.minimize()}
 				type="button"
@@ -100,7 +103,7 @@ export function WindowControls() {
 				<Minus aria-hidden="true" className="size-4" strokeWidth={1.5} />
 			</button>
 			<button
-				aria-label={isMaximized ? "Restore" : "Maximize"}
+				aria-label={isMaximized ? t("Restore") : t("Maximize")}
 				className="flex w-12 items-center justify-center text-foreground hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
 				onClick={() => void appWindow.toggleMaximize()}
 				type="button"
@@ -115,7 +118,7 @@ export function WindowControls() {
 				)}
 			</button>
 			<button
-				aria-label="Close"
+				aria-label={t("Close")}
 				className="flex w-12 items-center justify-center text-foreground hover:bg-red-600 hover:text-white focus-visible:bg-red-600 focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white"
 				onClick={() => void appWindow.close()}
 				type="button"
@@ -138,6 +141,7 @@ export function WindowTitleBar({
 	className?: string;
 	hostContent?: boolean;
 }) {
+	const t = useTranslation();
 	const context = useContext(WindowTitleBarContext);
 	if (!context) {
 		throw new Error(
@@ -170,6 +174,7 @@ export function WindowTitleBar({
 
 /** Projects page-owned controls into the persistent shell title bar. */
 export function WindowTitleBarContent({ children }: { children: ReactNode }) {
+	const t = useTranslation();
 	const context = useContext(WindowTitleBarContext);
 	if (!context) {
 		throw new Error(

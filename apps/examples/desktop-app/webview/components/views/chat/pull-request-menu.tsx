@@ -1,4 +1,6 @@
 "use client";
+import { readLanguage } from "@/lib/i18n";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { GitHubIcon } from "@cline/ui";
 import {
@@ -86,6 +88,7 @@ function checksLabel(checks: PullRequestCheck[]) {
 }
 
 function CheckStateIcon({ state }: { state: PullRequestCheck["state"] }) {
+	const t = useTranslation();
 	if (state === "success") return <CircleCheck className="text-green-500" />;
 	if (state === "failure") return <CircleX className="text-red-400" />;
 	if (state === "pending") return <CircleDashed className="text-yellow-500" />;
@@ -100,12 +103,14 @@ export function PullRequestMenu({
 	cwd: string;
 	branch: string | null;
 }) {
+	const t = useTranslation();
 	// Remount on workspace/branch changes so another repository's PR never flashes.
 	if (!cwd || !branch || branch === "no-git") return null;
 	return <WorkspacePullRequestMenu key={`${cwd}:${branch}`} cwd={cwd} />;
 }
 
 function WorkspacePullRequestMenu({ cwd }: { cwd: string }) {
+	const t = useTranslation();
 	const [data, setData] = useState<PullRequestStatus | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const refresh = useRef<() => void>(() => {});
@@ -264,10 +269,10 @@ function WorkspacePullRequestMenu({ cwd }: { cwd: string }) {
 									<span aria-hidden="true">·</span>
 									<span className="font-mono tabular-nums">
 										<span className="text-chart-2">
-											+{pr.additions.toLocaleString()}
+											+{pr.additions.toLocaleString(readLanguage())}
 										</span>{" "}
 										<span className="text-destructive">
-											-{pr.deletions.toLocaleString()}
+											-{pr.deletions.toLocaleString(readLanguage())}
 										</span>
 									</span>
 								</p>
@@ -281,7 +286,7 @@ function WorkspacePullRequestMenu({ cwd }: { cwd: string }) {
 							}}
 						>
 							<GitHubIcon />
-							Open on GitHub
+							{t("Open on GitHub")}
 							<ArrowUpRight className="ml-auto" />
 						</DropdownMenuItem>
 						{pr.checks.length > 0 ? (
@@ -335,7 +340,7 @@ function WorkspacePullRequestMenu({ cwd }: { cwd: string }) {
 						) : (
 							<DropdownMenuItem disabled>
 								<CircleMinus />
-								No checks
+								{t("No checks")}
 							</DropdownMenuItem>
 						)}
 					</>
@@ -349,23 +354,25 @@ function WorkspacePullRequestMenu({ cwd }: { cwd: string }) {
 							}}
 						>
 							<X />
-							Dismiss
+							{t("Dismiss")}
 						</DropdownMenuItem>
 					</>
 				) : data?.createUrl ? (
 					<>
 						<p className="px-2 py-1.5 text-xs text-muted-foreground">
-							No pull request for this branch yet.
+							{t("No pull request for this branch yet.")}
 						</p>
 						<DropdownMenuItem
 							onSelect={() => {
 								trackPullRequestEvent("create_clicked", data);
 								if (data.createUrl) void open(data.createUrl);
 							}}
-							title="Open GitHub’s comparison form for this branch. Push your commits before submitting."
+							title={t(
+								"Open GitHub’s comparison form for this branch. Push your commits before submitting.",
+							)}
 						>
 							<GitPullRequestCreateArrow />
-							Create pull request
+							{t("Create pull request")}
 							<ArrowUpRight className="ml-auto" />
 						</DropdownMenuItem>
 					</>
@@ -374,7 +381,7 @@ function WorkspacePullRequestMenu({ cwd }: { cwd: string }) {
 				{data?.branch ? (
 					<DropdownMenuItem onSelect={() => void copyBranch(data.branch)}>
 						<Copy />
-						Copy branch name
+						{t("Copy branch name")}
 					</DropdownMenuItem>
 				) : null}
 				<DropdownMenuItem
@@ -387,7 +394,7 @@ function WorkspacePullRequestMenu({ cwd }: { cwd: string }) {
 					}}
 				>
 					<RefreshCw className={cn(loading && "animate-spin")} />
-					Refresh status
+					{t("Refresh status")}
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

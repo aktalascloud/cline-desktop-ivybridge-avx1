@@ -1,4 +1,6 @@
 "use client";
+import { useTranslation } from "@/lib/i18n";
+
 
 import { SUPPORTED_IMAGE_MEDIA_TYPES } from "@cline/shared/browser";
 import {
@@ -19,6 +21,7 @@ type Props = GeneratedMediaContentProps & {
 };
 
 export function ArtifactImage(props: Props) {
+
 	const { media, sessionId } = props;
 	if (
 		media.source.type !== "artifact" ||
@@ -48,6 +51,7 @@ function ResolvedArtifactImage({
 	sessionId: string;
 	reference: ArtifactReference;
 }) {
+	const t = useTranslation();
 	const container = useRef<HTMLDivElement>(null);
 	const [visible, setVisible] = useState(false);
 	const { state, load, retry, reportLoadError } = useArtifactResource({
@@ -79,7 +83,7 @@ function ResolvedArtifactImage({
 		<div ref={container} data-media-id={media.id} className={className}>
 			{state.status === "error" ? (
 				<output className={classNames?.unavailable ?? className}>
-					Image unavailable.{" "}
+					{t("Image unavailable.")}{" "}
 					{interactive && (
 						<Button
 							type="button"
@@ -87,15 +91,14 @@ function ResolvedArtifactImage({
 							size="sm"
 							onClick={() => void retry()}
 						>
-							Retry
-						</Button>
+							{t("Retry")}</Button>
 					)}
 				</output>
 			) : state.status === "ready" ? (
 				// biome-ignore lint/performance/noImgElement: Load the access resource directly without the Next image proxy.
 				<img
 					key={state.attempt}
-					alt={media.name ?? "Published image"}
+					alt={media.name ?? t("Published image")}
 					src={state.resource.url}
 					className={classNames?.image ?? className}
 					referrerPolicy="no-referrer"
@@ -103,8 +106,7 @@ function ResolvedArtifactImage({
 				/>
 			) : (
 				<output className="text-sm text-muted-foreground">
-					Loading image…
-				</output>
+					{t("Loading image…")}</output>
 			)}
 		</div>
 	);

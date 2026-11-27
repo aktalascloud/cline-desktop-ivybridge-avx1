@@ -1,4 +1,6 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
+
 
 import { Cpu, Loader2, Play, Settings2, Square } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -42,6 +44,7 @@ export function LocalModelIndicator({
 	isBusy: boolean;
 	onOpenLocalModels?: () => void;
 }) {
+	const t = useTranslation();
 	const [status, setStatus] = useState<LocalModelsStatus>();
 	const [pending, setPending] = useState<string>();
 	const [error, setError] = useState<string>();
@@ -157,7 +160,7 @@ export function LocalModelIndicator({
 				sideOffset={8}
 			>
 				<div className="flex flex-col gap-0.5">
-					<span className="text-xs text-muted-foreground">Local model</span>
+					<span className="text-xs text-muted-foreground">{t("Local model")}</span>
 					<span className="truncate font-mono text-sm text-foreground">
 						{selected}
 					</span>
@@ -190,7 +193,7 @@ export function LocalModelIndicator({
 								) : (
 									<Play />
 								)}
-								Start {name}
+								{t("Start ")}{name}
 							</Button>
 						) : null}
 					</>
@@ -198,15 +201,15 @@ export function LocalModelIndicator({
 					<div className="flex flex-col gap-1.5">
 						<div className="flex items-baseline justify-between text-sm">
 							<span className="text-foreground">
-								{placement ? `Loaded ${placement}` : "Loaded"}
+								{placement ? `Loaded ${placement}` : t("Loaded")}
 							</span>
 							<span className="text-xs text-muted-foreground">
-								{formatMemory(running.sizeBytes)} of{" "}
+								{formatMemory(running.sizeBytes)} {t(" of")}{" "}
 								{formatMemory(machineMemoryBytes)}
 							</span>
 						</div>
 						<Progress
-							aria-label="Memory used by this model"
+							aria-label={t("Memory used by this model")}
 							className="h-1.5"
 							value={(running.sizeBytes / machineMemoryBytes) * 100}
 						/>
@@ -225,7 +228,7 @@ export function LocalModelIndicator({
 							onClick={() => void unload(running.name)}
 							size="sm"
 							title={
-								isBusy ? "Wait for the current response to finish" : undefined
+								isBusy ? t("Wait for the current response to finish") : undefined
 							}
 							type="button"
 							variant="outline"
@@ -235,15 +238,12 @@ export function LocalModelIndicator({
 							) : (
 								<Square />
 							)}
-							Unload and free memory
-						</Button>
+							{t("Unload and free memory")}</Button>
 					</div>
 				) : (
 					<>
 						<p className="text-sm text-muted-foreground">
-							Not in memory. {name} loads it when you send a message, which can
-							take a while for large models.
-						</p>
+							{t("Not in memory. ")}{name} {t(" loads it when you send a message, which can take a while for large models.")}</p>
 						<Button
 							disabled={!!pending}
 							onClick={() =>
@@ -270,14 +270,14 @@ export function LocalModelIndicator({
 							) : (
 								<Play />
 							)}
-							{pending === "load" ? "Loading…" : "Load now"}
+							{pending === "load" ? t("Loading…") : t("Load now")}
 						</Button>
 					</>
 				)}
 
 				{others.length > 0 ? (
 					<div className="flex flex-col gap-1.5 border-t pt-3">
-						<span className="text-xs text-muted-foreground">Also loaded</span>
+						<span className="text-xs text-muted-foreground">{t("Also loaded")}</span>
 						{others.map((entry) => (
 							<div className="flex items-center gap-2 text-xs" key={entry.name}>
 								<span className="min-w-0 flex-1 truncate font-mono text-foreground">
@@ -299,8 +299,7 @@ export function LocalModelIndicator({
 									) : (
 										<Square />
 									)}
-									Unload
-								</Button>
+									{t("Unload")}</Button>
 							</div>
 						))}
 					</div>
@@ -325,8 +324,7 @@ export function LocalModelIndicator({
 						variant="ghost"
 					>
 						<Settings2 />
-						Local model settings
-					</Button>
+						{t("Local model settings")}</Button>
 				) : null}
 			</PopoverContent>
 		</Popover>

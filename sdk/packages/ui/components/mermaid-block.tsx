@@ -1,4 +1,5 @@
 "use client";
+import { useTranslation } from "./ui-locale.js";
 
 import type { MermaidConfig } from "mermaid";
 import {
@@ -181,6 +182,7 @@ function DownloadMenu({
 	onPng: () => void;
 	pngDisabled: boolean;
 }) {
+	const t = useTranslation();
 	const [open, setOpen] = useState(false);
 	const rootRef = useRef<HTMLDivElement>(null);
 	const triggerRef = useRef<HTMLButtonElement>(null);
@@ -236,18 +238,18 @@ function DownloadMenu({
 			<button
 				aria-expanded={open}
 				aria-haspopup="menu"
-				aria-label="Download diagram"
+				aria-label={t("Download diagram")}
 				className="cline-mermaid__button"
 				onClick={() => setOpen((current) => !current)}
 				ref={triggerRef}
-				title="Download diagram"
+				title={t("Download diagram")}
 				type="button"
 			>
 				<Icon>{ICONS.download}</Icon>
 			</button>
 			{open ? (
 				<div
-					aria-label="Download diagram"
+					aria-label={t("Download diagram")}
 					className="cline-mermaid__menu"
 					onKeyDown={onMenuKeyDown}
 					role="menu"
@@ -260,7 +262,7 @@ function DownloadMenu({
 						role="menuitem"
 						type="button"
 					>
-						PNG image
+						{t("PNG image")}
 					</button>
 					<button
 						className="cline-mermaid__menu-item"
@@ -268,7 +270,7 @@ function DownloadMenu({
 						role="menuitem"
 						type="button"
 					>
-						Mermaid source (.mmd)
+						{t("Mermaid source (.mmd)")}
 					</button>
 				</div>
 			) : null}
@@ -382,13 +384,14 @@ function useDiagramView({ interactive }: DiagramViewOptions) {
 type DiagramViewApi = ReturnType<typeof useDiagramView>;
 
 function ZoomControls({ api }: { api: DiagramViewApi }) {
+	const t = useTranslation();
 	const percent = Math.round(api.view.scale * 100);
 	return (
 		<>
-			<ToolbarButton label="Zoom out" onClick={api.zoomOut}>
+			<ToolbarButton label={t("Zoom out")} onClick={api.zoomOut}>
 				<Icon>{ICONS.zoomOut}</Icon>
 			</ToolbarButton>
-			<ToolbarButton label="Zoom in" onClick={api.zoomIn}>
+			<ToolbarButton label={t("Zoom in")} onClick={api.zoomIn}>
 				<Icon>{ICONS.zoomIn}</Icon>
 			</ToolbarButton>
 			<ToolbarButton
@@ -444,6 +447,7 @@ function FullscreenDialog({
 	onClose: () => void;
 	svg: string;
 }) {
+	const t = useTranslation();
 	const dialogRef = useRef<HTMLDialogElement>(null);
 	const api = useDiagramView({ interactive: true });
 
@@ -484,12 +488,12 @@ function FullscreenDialog({
 			<div className="cline-mermaid__header">
 				<span className="cline-mermaid__filename">{filename}</span>
 				<div
-					aria-label="Diagram actions"
+					aria-label={t("Diagram actions")}
 					className="cline-mermaid__actions"
 					role="toolbar"
 				>
 					<ZoomControls api={api} />
-					<ToolbarButton label="Exit fullscreen" onClick={onClose}>
+					<ToolbarButton label={t("Exit fullscreen")} onClick={onClose}>
 						<Icon>{ICONS.exit}</Icon>
 					</ToolbarButton>
 				</div>
@@ -534,6 +538,7 @@ export function MermaidBlock({
 	meta,
 	service,
 }: MermaidBlockProps) {
+	const t = useTranslation();
 	const instanceId = useId().replace(/[^a-zA-Z0-9]/g, "");
 	const renderCount = useRef(0);
 	const figureRef = useRef<HTMLElement>(null);
@@ -637,13 +642,13 @@ export function MermaidBlock({
 					{sourceName}
 				</span>
 				<div
-					aria-label="Diagram actions"
+					aria-label={t("Diagram actions")}
 					className="cline-mermaid__actions"
 					role="toolbar"
 				>
 					{ready ? <ZoomControls api={api} /> : null}
 					<ToolbarButton
-						label={copied ? "Copied" : "Copy diagram source"}
+						label={copied ? t("Copied") : t("Copy diagram source")}
 						onClick={() => void copySource()}
 					>
 						<Icon>{copied ? ICONS.check : ICONS.copy}</Icon>
@@ -656,7 +661,7 @@ export function MermaidBlock({
 					<ToolbarButton
 						buttonRef={fullscreenTriggerRef}
 						disabled={!ready}
-						label="View fullscreen"
+						label={t("View fullscreen")}
 						onClick={() => setFullscreen(true)}
 					>
 						<Icon>{ICONS.enter}</Icon>
@@ -669,12 +674,15 @@ export function MermaidBlock({
 			{state.status === "pending" ? (
 				<output aria-busy="true" className="cline-mermaid__skeleton">
 					<span aria-hidden="true" className="cline-mermaid__spinner" />
-					{isIncomplete ? "Drawing diagram…" : "Rendering diagram…"}
+					{isIncomplete ? t("Drawing diagram…") : t("Rendering diagram…")}
 				</output>
 			) : null}
 			{state.status === "error" ? (
 				<div className="cline-mermaid__error" role="alert">
-					<p>Mermaid Error: {state.message}</p>
+					<p>
+						{t("Mermaid Error: ")}
+						{state.message}
+					</p>
 					<pre>
 						<code>{code}</code>
 					</pre>
@@ -686,7 +694,7 @@ export function MermaidBlock({
 						}}
 						type="button"
 					>
-						Retry
+						{t("Retry")}
 					</button>
 				</div>
 			) : null}

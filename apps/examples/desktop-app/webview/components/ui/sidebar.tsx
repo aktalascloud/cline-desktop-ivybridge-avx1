@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -125,6 +126,7 @@ function SidebarProvider({
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 }) {
+	const t = useTranslation();
 	const isMobile = useIsMobile();
 	const [openMobile, setOpenMobile] = React.useState(false);
 	const [desktopWidth, setDesktopWidthState] =
@@ -250,6 +252,7 @@ function Sidebar({
 	variant?: "sidebar" | "floating" | "inset";
 	collapsible?: "offcanvas" | "icon" | "none";
 }) {
+	const t = useTranslation();
 	const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
 	if (collapsible === "none") {
@@ -283,8 +286,10 @@ function Sidebar({
 					side={side}
 				>
 					<SheetHeader className="sr-only">
-						<SheetTitle>Sidebar</SheetTitle>
-						<SheetDescription>Displays the mobile sidebar.</SheetDescription>
+						<SheetTitle>{t("Sidebar")}</SheetTitle>
+						<SheetDescription>
+							{t("Displays the mobile sidebar.")}
+						</SheetDescription>
 					</SheetHeader>
 					<div className="flex h-full w-full flex-col">{children}</div>
 				</SheetContent>
@@ -345,6 +350,7 @@ function SidebarTrigger({
 	onClick,
 	...props
 }: React.ComponentProps<typeof Button>) {
+	const t = useTranslation();
 	const { toggleSidebar } = useSidebar();
 
 	return (
@@ -361,12 +367,13 @@ function SidebarTrigger({
 			{...props}
 		>
 			<PanelLeftIcon className="size-3.5" />
-			<span className="sr-only">Toggle Sidebar</span>
+			<span className="sr-only">{t("Toggle Sidebar")}</span>
 		</Button>
 	);
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
+	const t = useTranslation();
 	const { setOpen, setDesktopWidth, desktopWidth } = useSidebar();
 	const didDragRef = React.useRef(false);
 
@@ -426,11 +433,11 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 		<button
 			data-sidebar="rail"
 			data-slot="sidebar-rail"
-			aria-label="Toggle Sidebar"
+			aria-label={t("Toggle Sidebar")}
 			tabIndex={-1}
 			onClick={handleClick}
 			onPointerDown={handlePointerDown}
-			title="Drag to resize or click to toggle sidebar"
+			title={t("Drag to resize or click to toggle sidebar")}
 			className={cn(
 				"hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 sm:flex",
 				"in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
@@ -446,6 +453,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 }
 
 function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+	const t = useTranslation();
 	return (
 		<main
 			data-slot="sidebar-inset"
@@ -463,6 +471,7 @@ function SidebarInput({
 	className,
 	...props
 }: React.ComponentProps<typeof Input>) {
+	const t = useTranslation();
 	return (
 		<Input
 			data-slot="sidebar-input"
@@ -474,6 +483,7 @@ function SidebarInput({
 }
 
 function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
+	const t = useTranslation();
 	return (
 		<div
 			data-slot="sidebar-header"
@@ -485,6 +495,7 @@ function SidebarHeader({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function SidebarFooter({ className, ...props }: React.ComponentProps<"div">) {
+	const t = useTranslation();
 	return (
 		<div
 			data-slot="sidebar-footer"
@@ -499,6 +510,7 @@ function SidebarSeparator({
 	className,
 	...props
 }: React.ComponentProps<typeof Separator>) {
+	const t = useTranslation();
 	return (
 		<Separator
 			data-slot="sidebar-separator"
@@ -510,6 +522,7 @@ function SidebarSeparator({
 }
 
 function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
+	const t = useTranslation();
 	return (
 		<div
 			data-slot="sidebar-content"
@@ -524,6 +537,7 @@ function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
+	const t = useTranslation();
 	return (
 		<div
 			data-slot="sidebar-group"
@@ -539,6 +553,7 @@ function SidebarGroupLabel({
 	asChild = false,
 	...props
 }: React.ComponentProps<"div"> & { asChild?: boolean }) {
+	const t = useTranslation();
 	const Comp = asChild ? Slot : "div";
 
 	return (
@@ -560,6 +575,7 @@ function SidebarGroupAction({
 	asChild = false,
 	...props
 }: React.ComponentProps<"button"> & { asChild?: boolean }) {
+	const t = useTranslation();
 	const Comp = asChild ? Slot : "button";
 
 	return (
@@ -582,6 +598,7 @@ function SidebarGroupContent({
 	className,
 	...props
 }: React.ComponentProps<"div">) {
+	const t = useTranslation();
 	return (
 		<div
 			data-slot="sidebar-group-content"
@@ -593,6 +610,7 @@ function SidebarGroupContent({
 }
 
 function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
+	const t = useTranslation();
 	return (
 		<ul
 			data-slot="sidebar-menu"
@@ -604,6 +622,7 @@ function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
 }
 
 function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
+	const t = useTranslation();
 	return (
 		<li
 			data-slot="sidebar-menu-item"
@@ -649,6 +668,7 @@ function SidebarMenuButton({
 	isActive?: boolean;
 	tooltip?: string | React.ComponentProps<typeof TooltipContent>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
+	const t = useTranslation();
 	const Comp = asChild ? Slot : "button";
 	const { isMobile, state } = useSidebar();
 
@@ -695,6 +715,7 @@ function SidebarMenuAction({
 	asChild?: boolean;
 	showOnHover?: boolean;
 }) {
+	const t = useTranslation();
 	const Comp = asChild ? Slot : "button";
 
 	return (
@@ -722,6 +743,7 @@ function SidebarMenuBadge({
 	className,
 	...props
 }: React.ComponentProps<"div">) {
+	const t = useTranslation();
 	return (
 		<div
 			data-slot="sidebar-menu-badge"
@@ -747,6 +769,7 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
 	showIcon?: boolean;
 }) {
+	const t = useTranslation();
 	// Random width between 50 to 90%.
 	const width = React.useMemo(() => {
 		return `${Math.floor(Math.random() * 40) + 50}%`;
@@ -779,6 +802,7 @@ function SidebarMenuSkeleton({
 }
 
 function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
+	const t = useTranslation();
 	return (
 		<ul
 			data-slot="sidebar-menu-sub"
@@ -797,6 +821,7 @@ function SidebarMenuSubItem({
 	className,
 	...props
 }: React.ComponentProps<"li">) {
+	const t = useTranslation();
 	return (
 		<li
 			data-slot="sidebar-menu-sub-item"
@@ -818,6 +843,7 @@ function SidebarMenuSubButton({
 	size?: "sm" | "md";
 	isActive?: boolean;
 }) {
+	const t = useTranslation();
 	const Comp = asChild ? Slot : "a";
 
 	return (

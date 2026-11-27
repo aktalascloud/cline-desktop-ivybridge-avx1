@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import {
 	Check,
@@ -151,6 +152,7 @@ export function ProjectFilesPanel({
 	fileDiffs,
 	onClose,
 }: ProjectFilesPanelProps) {
+	const t = useTranslation();
 	const [view, setView] = useState<PanelView>("source-control");
 	const [directories, setDirectories] = useState<Map<string, DirectoryState>>(
 		() => new Map(),
@@ -733,7 +735,8 @@ export function ProjectFilesPanel({
 					className="flex h-7 items-center gap-2 text-[11px] text-muted-foreground"
 					style={{ paddingLeft: 8 + depth * 12 + 16 }}
 				>
-					<Loader2 className="size-3 animate-spin" /> Loading...
+					<Loader2 className="size-3 animate-spin" />
+					{t(" Loading...")}
 				</div>
 			) : state?.error ? (
 				<div
@@ -795,7 +798,7 @@ export function ProjectFilesPanel({
 								{changedBySession ? (
 									<span
 										className="size-1.5 shrink-0 rounded-full bg-primary"
-										title="Changed in this session"
+										title={t("Changed in this session")}
 									/>
 								) : null}
 								{status && !isDirectory ? (
@@ -818,7 +821,9 @@ export function ProjectFilesPanel({
 						className="py-1 text-[11px] text-muted-foreground"
 						style={{ paddingLeft: 8 + depth * 12 + 16 }}
 					>
-						Showing the first {state.entries.length} entries
+						{t("Showing the first ")}
+						{state.entries.length}
+						{t(" entries")}
 					</div>
 				) : null}
 			</>
@@ -850,7 +855,7 @@ export function ProjectFilesPanel({
 			>
 				<div className="shrink-0 border-b border-border/70 p-2">
 					<div
-						aria-label="Panel view"
+						aria-label={t("Panel view")}
 						className="grid h-7 grid-cols-2 items-center rounded-md bg-secondary p-0.5 text-[11px]"
 						role="tablist"
 					>
@@ -970,7 +975,7 @@ export function ProjectFilesPanel({
 						})}
 					</div>
 					<Button
-						aria-label="Hide project files"
+						aria-label={t("Hide project files")}
 						className="my-auto mr-1 size-6 shrink-0 text-muted-foreground"
 						onClick={onClose}
 						size="icon-sm"
@@ -996,7 +1001,7 @@ export function ProjectFilesPanel({
 							) : null}
 							{activeScope === "staged" ? (
 								<span className="shrink-0 rounded bg-secondary px-1.5 py-px text-[10px]">
-									staged
+									{t("staged")}
 								</span>
 							) : null}
 							{activeCommit ? (
@@ -1008,7 +1013,7 @@ export function ProjectFilesPanel({
 								{activeScope === "worktree" && activeChange?.worktree ? (
 									<>
 										<Button
-											aria-label="Discard changes"
+											aria-label={t("Discard changes")}
 											className="h-6 gap-1 px-1.5 text-[10.5px]"
 											disabled={sourceControl.busy}
 											onClick={() =>
@@ -1019,10 +1024,11 @@ export function ProjectFilesPanel({
 											type="button"
 											variant="ghost"
 										>
-											<Undo2 className="size-3" /> Discard
+											<Undo2 className="size-3" />
+											{t(" Discard")}
 										</Button>
 										<Button
-											aria-label="Stage file"
+											aria-label={t("Stage file")}
 											className="h-6 gap-1 px-1.5 text-[10.5px]"
 											disabled={sourceControl.busy}
 											onClick={() =>
@@ -1036,12 +1042,13 @@ export function ProjectFilesPanel({
 											type="button"
 											variant="ghost"
 										>
-											<Plus className="size-3" /> Stage
+											<Plus className="size-3" />
+											{t(" Stage")}
 										</Button>
 									</>
 								) : activeScope === "staged" && activeChange?.staged ? (
 									<Button
-										aria-label="Unstage file"
+										aria-label={t("Unstage file")}
 										className="h-6 gap-1 px-1.5 text-[10.5px]"
 										disabled={sourceControl.busy}
 										onClick={() =>
@@ -1055,7 +1062,8 @@ export function ProjectFilesPanel({
 										type="button"
 										variant="ghost"
 									>
-										<Minus className="size-3" /> Unstage
+										<Minus className="size-3" />
+										{t(" Unstage")}
 									</Button>
 								) : null}
 								{canDiff && !activeCommit ? (
@@ -1079,7 +1087,7 @@ export function ProjectFilesPanel({
 									</div>
 								) : null}
 								<Button
-									aria-label="Copy file path"
+									aria-label={t("Copy file path")}
 									className="size-6"
 									onClick={() => void handleCopyPath()}
 									size="icon-sm"
@@ -1093,7 +1101,7 @@ export function ProjectFilesPanel({
 									)}
 								</Button>
 								<Button
-									aria-label="Open in editor"
+									aria-label={t("Open in editor")}
 									className="size-6"
 									disabled={opening}
 									onClick={() => void handleOpenInEditor()}
@@ -1114,11 +1122,12 @@ export function ProjectFilesPanel({
 								) : activeGitDiff.error ? (
 									<ErrorText>{activeGitDiff.error}</ErrorText>
 								) : activeGitDiff.binary ? (
-									<Centered>Binary file</Centered>
+									<Centered>{t("Binary file")}</Centered>
 								) : activeGitDiff.truncated ? (
 									<Centered className="p-6 text-center">
-										This file is larger than 1 MB; open it in your editor to
-										review the change.
+										{t(
+											"This file is larger than 1 MB; open it in your editor to review the change.",
+										)}
 									</Centered>
 								) : (
 									<CodeDiff
@@ -1153,7 +1162,7 @@ export function ProjectFilesPanel({
 							) : activeFileState.error ? (
 								<ErrorText>{activeFileState.error}</ErrorText>
 							) : activeFileState.content === null ? (
-								<Centered>Binary file</Centered>
+								<Centered>{t("Binary file")}</Centered>
 							) : (
 								<>
 									<CodeFile
@@ -1162,7 +1171,7 @@ export function ProjectFilesPanel({
 									/>
 									{activeFileState.truncated ? (
 										<div className="border-t border-border/60 px-3 py-2 text-[11px] text-muted-foreground">
-											File truncated to the first 1 MB.
+											{t("File truncated to the first 1 MB.")}
 										</div>
 									) : null}
 								</>
@@ -1172,8 +1181,8 @@ export function ProjectFilesPanel({
 				) : (
 					<Centered className="p-6 text-center">
 						{view === "source-control"
-							? "Select a change to review it"
-							: "Select a file to view it"}
+							? t("Select a change to review it")
+							: t("Select a file to view it")}
 					</Centered>
 				)}
 			</div>
@@ -1192,17 +1201,21 @@ export function ProjectFilesPanel({
 						</AlertDialogTitle>
 						<AlertDialogDescription>
 							{pendingDiscard.some((file) => file.status === "?")
-								? "Modified files revert to their last committed contents and untracked files are deleted. This cannot be undone."
-								: "The files revert to their last committed contents. This cannot be undone."}
+								? t(
+										"Modified files revert to their last committed contents and untracked files are deleted. This cannot be undone.",
+									)
+								: t(
+										"The files revert to their last committed contents. This cannot be undone.",
+									)}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
 						<AlertDialogAction
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							onClick={() => void confirmDiscard()}
 						>
-							Discard
+							{t("Discard")}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>
@@ -1212,6 +1225,7 @@ export function ProjectFilesPanel({
 }
 
 function Spinner() {
+	const t = useTranslation();
 	return (
 		<Centered>
 			<Loader2 className="size-4 animate-spin" />
@@ -1220,6 +1234,7 @@ function Spinner() {
 }
 
 function ErrorText({ children }: { children: React.ReactNode }) {
+	const t = useTranslation();
 	return <div className="p-4 text-xs text-destructive">{children}</div>;
 }
 
@@ -1230,6 +1245,7 @@ function Centered({
 	children: React.ReactNode;
 	className?: string;
 }) {
+	const t = useTranslation();
 	return (
 		<div
 			className={cn(

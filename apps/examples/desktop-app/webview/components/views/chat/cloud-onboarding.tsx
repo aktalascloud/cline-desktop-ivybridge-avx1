@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import {
 	ArrowRight,
@@ -42,14 +43,15 @@ export function CloudOnboardingCard({
 	signingIn?: boolean;
 	checking?: boolean;
 }) {
+	const t = useTranslation();
 	if (variant === "error") {
 		return (
 			<div className="rounded-xl border border-border bg-card/80 p-6 text-center shadow-sm backdrop-blur-sm">
 				<p className="text-sm font-medium text-foreground">
-					Could not reach Cline Cloud
+					{t("Could not reach Cline Cloud")}
 				</p>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Check your connection and try again.
+					{t("Check your connection and try again.")}
 				</p>
 				<Button
 					className="mt-4"
@@ -62,7 +64,7 @@ export function CloudOnboardingCard({
 						aria-hidden="true"
 						className={cn("size-3.5", checking && "animate-spin")}
 					/>
-					Retry
+					{t("Retry")}
 				</Button>
 			</div>
 		);
@@ -78,20 +80,19 @@ export function CloudOnboardingCard({
 					<div className="min-w-0">
 						<p className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-primary">
 							<Sparkles aria-hidden="true" className="size-3" />
-							Cloud sessions
+							{t("Cloud sessions")}
 						</p>
 						<h2 className="mt-3 text-lg font-semibold text-foreground">
 							{isSignedOut
-								? "Run Cline in the cloud"
+								? t("Run Cline in the cloud")
 								: isNoRepositories
-									? "Give Cline access to a repository"
-									: "Connect GitHub to get started"}
+									? t("Give Cline access to a repository")
+									: t("Connect GitHub to get started")}
 						</h2>
 						<p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
-							Cloud sessions run on secure, isolated sandboxes on Cline's
-							infrastructure. Cline clones your repository, works on a branch,
-							and keeps going even when you close the app — check back in from
-							any device.
+							{t(
+								"Cloud sessions run on secure, isolated sandboxes on Cline's infrastructure. Cline clones your repository, works on a branch, and keeps going even when you close the app — check back in from any device.",
+							)}
 						</p>
 					</div>
 					<CloudFlowIllustration className="shrink-0 max-[720px]:self-center" />
@@ -102,35 +103,36 @@ export function CloudOnboardingCard({
 						<OnboardingStep
 							icon={<LogIn aria-hidden="true" className="size-4" />}
 							index={1}
-							title="Sign in with Cline"
+							title={t("Sign in with Cline")}
 						>
-							Cloud sessions are part of your Cline account.
+							{t("Cloud sessions are part of your Cline account.")}
 						</OnboardingStep>
 					) : (
 						<OnboardingStep
 							done={isNoRepositories}
 							icon={<Github aria-hidden="true" className="size-4" />}
 							index={1}
-							title="Connect GitHub"
+							title={t("Connect GitHub")}
 						>
-							Link your GitHub account from the Cline dashboard.
+							{t("Link your GitHub account from the Cline dashboard.")}
 						</OnboardingStep>
 					)}
 					<OnboardingStep
 						active={isNoRepositories}
 						icon={<ShieldCheck aria-hidden="true" className="size-4" />}
 						index={2}
-						title="Pick your repositories"
+						title={t("Pick your repositories")}
 					>
-						Choose which repositories the Cline GitHub App can access.
+						{t("Choose which repositories the Cline GitHub App can access.")}
 					</OnboardingStep>
 					<OnboardingStep
 						icon={<GitBranch aria-hidden="true" className="size-4" />}
 						index={3}
-						title="Start a session"
+						title={t("Start a session")}
 					>
-						Pick a repo and branch here, describe the task, and Cline gets to
-						work in the cloud.
+						{t(
+							"Pick a repo and branch here, describe the task, and Cline gets to work in the cloud.",
+						)}
 					</OnboardingStep>
 				</ol>
 
@@ -139,7 +141,9 @@ export function CloudOnboardingCard({
 						<>
 							<Button disabled={signingIn} onClick={onSignIn} size="sm">
 								<LogIn aria-hidden="true" className="size-3.5" />
-								{signingIn ? "Waiting for browser…" : "Sign in with Cline"}
+								{signingIn
+									? t("Waiting for browser…")
+									: t("Sign in with Cline")}
 							</Button>
 							{signingIn && onCancelSignIn && (
 								<Button
@@ -148,14 +152,16 @@ export function CloudOnboardingCard({
 									size="sm"
 									variant="ghost"
 								>
-									Cancel
+									{t("Cancel")}
 								</Button>
 							)}
 						</>
 					) : (
 						<Button onClick={onConnect} size="sm">
 							<Github aria-hidden="true" className="size-3.5" />
-							{isNoRepositories ? "Manage repository access" : "Connect GitHub"}
+							{isNoRepositories
+								? t("Manage repository access")
+								: t("Connect GitHub")}
 							<ExternalLink aria-hidden="true" className="size-3" />
 						</Button>
 					)}
@@ -170,7 +176,7 @@ export function CloudOnboardingCard({
 								aria-hidden="true"
 								className={cn("size-3.5", checking && "animate-spin")}
 							/>
-							{isNoRepositories ? "Check again" : "I've connected GitHub"}
+							{isNoRepositories ? t("Check again") : t("I've connected GitHub")}
 						</Button>
 					)}
 					{isSignedOut ? null : (
@@ -182,7 +188,7 @@ export function CloudOnboardingCard({
 								aria-hidden="true"
 								className="size-3 animate-spin motion-reduce:animate-none"
 							/>
-							Watching for changes — this updates automatically.
+							{t("Watching for changes — this updates automatically.")}
 						</span>
 					)}
 				</div>
@@ -206,6 +212,7 @@ function OnboardingStep({
 	done?: boolean;
 	active?: boolean;
 }) {
+	const t = useTranslation();
 	return (
 		<li
 			className={cn(
@@ -239,6 +246,7 @@ function OnboardingStep({
 }
 
 function CloudFlowIllustration({ className }: { className?: string }) {
+	const t = useTranslation();
 	return (
 		<div
 			aria-hidden="true"
@@ -266,6 +274,7 @@ function IllustrationNode({
 	children: ReactNode;
 	emphasized?: boolean;
 }) {
+	const t = useTranslation();
 	return (
 		<span
 			className={cn(

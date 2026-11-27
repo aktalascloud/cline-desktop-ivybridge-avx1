@@ -1,4 +1,6 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
+
 
 import { Check, Copy, Download, Loader2, Play, RefreshCw } from "lucide-react";
 import { useState } from "react";
@@ -40,6 +42,7 @@ function StatusLine({
 	refreshing: boolean;
 	onRefresh: () => void;
 }) {
+	const t = useTranslation();
 	return (
 		<div className="flex items-center gap-2 text-sm">
 			<span
@@ -54,11 +57,11 @@ function StatusLine({
 			/>
 			<span className="flex-1 text-foreground">{children}</span>
 			<Button
-				aria-label="Check again"
+				aria-label={t("Check again")}
 				disabled={refreshing}
 				onClick={onRefresh}
 				size="icon"
-				title="Check again"
+				title={t("Check again")}
 				type="button"
 				variant="ghost"
 			>
@@ -69,6 +72,7 @@ function StatusLine({
 }
 
 function CopyableCommand({ command }: { command: string }) {
+	const t = useTranslation();
 	const [copied, setCopied] = useState(false);
 	return (
 		<div className="flex items-center gap-2 rounded-md border bg-muted/40 py-1 pr-1 pl-3">
@@ -76,7 +80,7 @@ function CopyableCommand({ command }: { command: string }) {
 				{command}
 			</code>
 			<Button
-				aria-label="Copy command"
+				aria-label={t("Copy command")}
 				onClick={() => {
 					void navigator.clipboard.writeText(command).then(() => {
 						setCopied(true);
@@ -88,20 +92,19 @@ function CopyableCommand({ command }: { command: string }) {
 				variant="ghost"
 			>
 				{copied ? <Check /> : <Copy />}
-				{copied ? "Copied" : "Copy"}
+				{copied ? t("Copied") : t("Copy")}
 			</Button>
 		</div>
 	);
 }
 
 function OllamaInstallSteps({ platform }: { platform: string }) {
+	const t = useTranslation();
 	const download = DOWNLOADS[platform];
 	return (
 		<ol className="flex list-decimal flex-col gap-3 pl-5 text-sm text-muted-foreground marker:text-muted-foreground">
 			<li>
-				<span className="text-foreground">Install Ollama.</span> It's free, open
-				source, and runs models on your own hardware.
-				<div className="mt-2 flex flex-col gap-2">
+				<span className="text-foreground">{t("Install Ollama.")}</span> {t(" It's free, open source, and runs models on your own hardware.")}<div className="mt-2 flex flex-col gap-2">
 					{download ? (
 						<div>
 							<Button
@@ -118,32 +121,29 @@ function OllamaInstallSteps({ platform }: { platform: string }) {
 					)}
 					{platform === "darwin" ? (
 						<span className="text-xs">
-							Or with Homebrew: <code>brew install ollama</code>
+							{t("Or with Homebrew: ")}<code>brew install ollama</code>
 						</span>
 					) : null}
 				</div>
 			</li>
 			<li>
-				<span className="text-foreground">Open Ollama.</span>{" "}
+				<span className="text-foreground">{t("Open Ollama.")}</span>{" "}
 				{platform === "linux"
-					? "The installer starts it as a background service."
-					: "It runs in the background from the menu bar or system tray."}
+					? t("The installer starts it as a background service.")
+					: t("It runs in the background from the menu bar or system tray.")}
 			</li>
 			<li>
-				<span className="text-foreground">Come back here.</span> This page
-				notices Ollama on its own, then you can download a model.
-			</li>
+				<span className="text-foreground">{t("Come back here.")}</span> {t(" This page notices Ollama on its own, then you can download a model.")}</li>
 		</ol>
 	);
 }
 
 function LmStudioInstallSteps({ platform }: { platform: string }) {
+	const t = useTranslation();
 	return (
 		<ol className="flex list-decimal flex-col gap-3 pl-5 text-sm text-muted-foreground marker:text-muted-foreground">
 			<li>
-				<span className="text-foreground">Install LM Studio.</span> It's free,
-				with its own model browser and chat app.
-				<div className="mt-2 flex flex-col gap-2">
+				<span className="text-foreground">{t("Install LM Studio.")}</span> {t(" It's free, with its own model browser and chat app.")}<div className="mt-2 flex flex-col gap-2">
 					<div>
 						<Button
 							onClick={() => void openExternalUrl(LMSTUDIO_DOWNLOAD_URL)}
@@ -151,12 +151,10 @@ function LmStudioInstallSteps({ platform }: { platform: string }) {
 							type="button"
 						>
 							<Download />
-							Download LM Studio
-						</Button>
+							{t("Download LM Studio")}</Button>
 					</div>
 					<span className="text-xs">
-						Or install just the background service, without the app:
-					</span>
+						{t("Or install just the background service, without the app:")}</span>
 					<CopyableCommand
 						command={
 							platform === "win32"
@@ -167,13 +165,9 @@ function LmStudioInstallSteps({ platform }: { platform: string }) {
 				</div>
 			</li>
 			<li>
-				<span className="text-foreground">Open LM Studio once.</span> After
-				that, Cline can start it for you.
-			</li>
+				<span className="text-foreground">{t("Open LM Studio once.")}</span> {t(" After that, Cline can start it for you.")}</li>
 			<li>
-				<span className="text-foreground">Come back here.</span> This page
-				notices LM Studio on its own, then you can download a model.
-			</li>
+				<span className="text-foreground">{t("Come back here.")}</span> {t(" This page notices LM Studio on its own, then you can download a model.")}</li>
 		</ol>
 	);
 }
@@ -191,6 +185,7 @@ export function LocalRuntimeSetup({
 	onRefresh: () => void;
 	onStart: () => Promise<void>;
 }) {
+	const t = useTranslation();
 	const [starting, setStarting] = useState(false);
 	const [startError, setStartError] = useState<string>();
 	const { name, defaultBaseUrl } = LOCAL_RUNTIMES[runtime];
@@ -198,7 +193,7 @@ export function LocalRuntimeSetup({
 	if (!status) {
 		return (
 			<StatusLine onRefresh={onRefresh} refreshing={refreshing} tone="pending">
-				Checking for {name}…
+				{t("Checking for ")}{name}…
 			</StatusLine>
 		);
 	}
@@ -211,11 +206,10 @@ export function LocalRuntimeSetup({
 		return (
 			<div className="flex flex-col gap-2">
 				<StatusLine onRefresh={onRefresh} refreshing={refreshing} tone="error">
-					Can't reach {name} at {url}
+					{t("Can't reach ")}{name} {t(" at ")}{url}
 				</StatusLine>
 				<p className="text-sm text-muted-foreground">
-					Make sure the server is running and reachable from this computer, or
-					change the URL under Provider → BYOK → {name}.
+					{t("Make sure the server is running and reachable from this computer, or change the URL under Provider → BYOK → ")}{name}.
 				</p>
 			</div>
 		);
@@ -236,12 +230,9 @@ export function LocalRuntimeSetup({
 		return (
 			<div className="flex flex-col gap-3 rounded-lg border bg-card px-4 py-3">
 				<StatusLine onRefresh={onRefresh} refreshing={refreshing} tone="error">
-					{name} is installed but not running
-				</StatusLine>
+					{name} {t(" is installed but not running")}</StatusLine>
 				<p className="text-sm text-muted-foreground">
-					Start it to download and run models. It keeps running in the
-					background after you close Cline.
-				</p>
+					{t("Start it to download and run models. It keeps running in the background after you close Cline.")}</p>
 				<div>
 					<Button
 						disabled={starting}
@@ -265,8 +256,7 @@ export function LocalRuntimeSetup({
 	return (
 		<div className="flex flex-col gap-3 rounded-lg border bg-card px-4 py-3">
 			<StatusLine onRefresh={onRefresh} refreshing={refreshing} tone="error">
-				{name} isn't installed
-			</StatusLine>
+				{name} {t(" isn't installed")}</StatusLine>
 			{runtime === "ollama" ? (
 				<OllamaInstallSteps platform={status.hardware.platform} />
 			) : (

@@ -96,7 +96,8 @@ export function resolveProviderMaxInputTokens(
 	const modelInfoLimit = resolveEffectiveMaxInputTokens({
 		maxInputTokens:
 			providerConfig.maxInputTokens ?? providerConfig.modelInfo?.maxInputTokens,
-		contextWindow: providerConfig.modelInfo?.contextWindow,
+		contextWindow:
+			providerConfig.contextWindow ?? providerConfig.modelInfo?.contextWindow,
 	});
 	if (modelInfoLimit !== undefined) return modelInfoLimit;
 	const knownModelInfo = providerConfig.knownModels?.[providerConfig.modelId];
@@ -369,6 +370,7 @@ export function findCutIndex(
 	messages: MessageWithMetadata[],
 	preserveRecentTokens: number,
 	estimateMessageTokens: EstimateMessageTokens,
+	preserveRecentMessages?: number,
 ): number {
 	let total = 0;
 	let candidate = messages.length;
@@ -379,6 +381,12 @@ export function findCutIndex(
 			break;
 		}
 	}
+
+	if (preserveRecentMessages !== undefined)
+		candidate = Math.max(
+			0,
+			messages.length - Math.max(0, Math.floor(preserveRecentMessages)),
+		);
 
 	if (candidate <= 0) {
 		return 0;

@@ -1,4 +1,5 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
 
 import { Store } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -64,6 +65,7 @@ export function CustomizeView({
 	onOpenMarketplace?: (filter?: "connector") => void;
 	onOpenModelProviders?: () => void;
 }) {
+	const t = useTranslation();
 	// Connectors is always the first tab; when the account cannot use them
 	// the tab itself explains why and offers sign-in.
 	const [tab, setTab] = useState<CustomizeTab>("integrations");
@@ -133,12 +135,14 @@ export function CustomizeView({
 							variant="outline"
 						>
 							<Store className="size-4" />
-							Marketplace
+							{t("Marketplace")}
 						</Button>
 					) : undefined
 				}
-				description="Extend what Cline can do and how it works. Explore the marketplace for more options."
-				title="Customize"
+				description={t(
+					"Extend what Cline can do and how it works. Explore the marketplace for more options.",
+				)}
+				title={t("Customize")}
 			/>
 
 			<div className="mb-6 flex items-center gap-0 border-b border-border">
@@ -160,7 +164,9 @@ export function CustomizeView({
 							variant="ghost"
 						>
 							{customizeTab.label}
-							{customizeTab.id === "integrations" ? <Badge>Beta</Badge> : null}
+							{customizeTab.id === "integrations" ? (
+								<Badge>{t("Beta")}</Badge>
+							) : null}
 							{typeof count === "number" ? (
 								<span
 									className={cn(

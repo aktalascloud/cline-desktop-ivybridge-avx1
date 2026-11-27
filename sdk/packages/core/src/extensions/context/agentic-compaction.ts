@@ -54,6 +54,7 @@ export async function runAgenticCompaction(options: {
 	providerConfig: ProviderConfig;
 	summarizer?: CoreCompactionSummarizerConfig;
 	preserveRecentTokens: number;
+	preserveRecentMessages?: number;
 	estimateMessageTokens: EstimateMessageTokens;
 	logger?: BasicLogger;
 }): Promise<CoreCompactionResult | undefined> {
@@ -66,6 +67,7 @@ export async function runAgenticCompaction(options: {
 		messages,
 		options.preserveRecentTokens,
 		options.estimateMessageTokens,
+		options.preserveRecentMessages,
 	);
 	if (cutIndex <= 0 || cutIndex >= messages.length) {
 		return undefined;

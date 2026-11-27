@@ -108,6 +108,8 @@ export interface EndpointConfig {
  * Model configuration
  */
 export interface ModelConfig {
+	/** Explicit context window from the provider configuration. */
+	contextWindow?: number;
 	/** Model identifier */
 	modelId: string;
 	/** Pre-fetched model info (optional - will use defaults if not provided) */

@@ -52,6 +52,8 @@ import {
 	persistClineAccountTelemetryIdentity,
 	RemoteEnvironmentService,
 	readGlobalSettings,
+	readCompactionPreferencesGlobally,
+	setCompactionPreferencesGlobally,
 	readSessionCheckpointHistory,
 	resolveClineAccountTelemetryIdentity,
 	resolveSessionBackend,
@@ -2338,7 +2340,7 @@ export async function handleCommand(
 			taskWorktreeRoot:
 				binding.kind === "local" ? taskWorktreesRoot() : undefined,
 			platform: binding.remote?.platform ?? process.platform,
-			appVersion: packageJson.version,
+			appVersion: process.env.CLINE_LEGACY_APP_VERSION || packageJson.version,
 			runningSessionCount,
 			activeEnvironmentId: ctx.activeEnvironmentId,
 			remoteEnvironment:
@@ -3334,6 +3336,15 @@ export async function handleCommand(
 	}
 
 	// ── Global settings ────────────────────────────────────────────────
+	if (command === "get_compaction_settings") {
+		return readCompactionPreferencesGlobally();
+	}
+	if (command === "set_compaction_settings") {
+		if (!options?.connection?.data?.canApproveTools) {
+			throw new Error("Compaction settings require a trusted connection");
+		}
+		return setCompactionPreferencesGlobally(args?.settings);
+	}
 	if (command === "get_global_settings") {
 		return readGlobalSettings();
 	}

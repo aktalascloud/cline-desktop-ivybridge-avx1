@@ -1,4 +1,6 @@
 "use client";
+import { t, useTranslation } from "@/lib/i18n";
+
 
 import { Check, Copy, ExternalLink, GitBranch, Loader2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -68,6 +70,7 @@ export function ChangesPanel({
 	onOpenGit,
 	onClose,
 }: ChangesPanelProps) {
+	const t = useTranslation();
 	const [contents, setContents] = useState<Map<string, ContentsState>>(
 		() => new Map(),
 	);
@@ -136,8 +139,8 @@ export function ChangesPanel({
 		} catch {
 			toast({
 				variant: "destructive",
-				title: "Copy failed",
-				description: "The file path could not be copied to the clipboard.",
+				title: t("Copy failed"),
+				description: t("The file path could not be copied to the clipboard."),
 			});
 		}
 	}, []);
@@ -152,11 +155,11 @@ export function ChangesPanel({
 			} catch (error) {
 				toast({
 					variant: "destructive",
-					title: "Could not open file",
+					title: t("Could not open file"),
 					description:
 						error instanceof Error
 							? error.message
-							: "The file could not be opened in an editor.",
+							: t("The file could not be opened in an editor."),
 				});
 			}
 		},
@@ -174,8 +177,8 @@ export function ChangesPanel({
 			: null;
 	const description =
 		activeScope === "session"
-			? "since the session started"
-			: "in the last turn";
+			? t("since the session started")
+			: t("in the last turn");
 
 	return (
 		<WorkspacePanelFrame id="changes-panel">
@@ -185,7 +188,7 @@ export function ChangesPanel({
 			>
 				<div className="shrink-0 border-b border-border/70 p-2">
 					<div
-						aria-label="Change scope"
+						aria-label={t("Change scope")}
 						className="flex h-7 items-center rounded-md bg-secondary p-0.5 text-[11px]"
 						role="tablist"
 					>
@@ -204,7 +207,7 @@ export function ChangesPanel({
 								role="tab"
 								type="button"
 							>
-								{option.label}
+								{t(option.label)}
 							</button>
 						))}
 					</div>
@@ -215,7 +218,7 @@ export function ChangesPanel({
 						<span className="text-destructive">-{totals.deletions}</span>
 					</span>
 					<span className="truncate">
-						· {files.length} file{files.length === 1 ? "" : "s"}
+						· {t("{count} files", { count: files.length })}
 						{description ? ` ${description}` : ""}
 					</span>
 				</div>
@@ -231,7 +234,7 @@ export function ChangesPanel({
 						</div>
 					) : files.length === 0 ? (
 						<p className="px-2 py-3 text-[11px] text-muted-foreground/80">
-							No files changed {description}.
+							{t("No files changed ")}{description}.
 						</p>
 					) : (
 						files.map((file) => (
@@ -250,8 +253,7 @@ export function ChangesPanel({
 					type="button"
 				>
 					<GitBranch className="size-3" />
-					All uncommitted changes
-				</button>
+					{t("All uncommitted changes")}</button>
 			</div>
 			<div className="flex min-w-0 flex-1 flex-col">
 				<div className="flex h-9 shrink-0 items-center gap-2 border-b border-border bg-card px-3 text-[11px] text-muted-foreground">
@@ -272,13 +274,13 @@ export function ChangesPanel({
 							</span>
 							<span className="ml-auto flex shrink-0 items-center gap-0.5">
 								<Button
-									aria-label="Copy file path"
+									aria-label={t("Copy file path")}
 									className="text-muted-foreground"
 									onClick={() =>
 										void handleCopyPath(absolutePath(selected.path))
 									}
 									size="icon-sm"
-									title="Copy file path"
+									title={t("Copy file path")}
 									variant="ghost"
 								>
 									{copied ? (
@@ -289,13 +291,13 @@ export function ChangesPanel({
 								</Button>
 								{selected.status !== "D" ? (
 									<Button
-										aria-label="Open in editor"
+										aria-label={t("Open in editor")}
 										className="text-muted-foreground"
 										onClick={() =>
 											void handleOpenInEditor(absolutePath(selected.path))
 										}
 										size="icon-sm"
-										title="Open in editor"
+										title={t("Open in editor")}
 										variant="ghost"
 									>
 										<ExternalLink className="size-3" />
@@ -307,7 +309,7 @@ export function ChangesPanel({
 						<span className="ml-auto" />
 					)}
 					<Button
-						aria-label="Hide changes"
+						aria-label={t("Hide changes")}
 						className="size-6 shrink-0 text-muted-foreground"
 						onClick={onClose}
 						size="icon-sm"
@@ -318,7 +320,7 @@ export function ChangesPanel({
 				</div>
 				<div className="min-h-0 flex-1 overflow-auto">
 					{!selected ? (
-						<Placeholder>Select a file to see its changes.</Placeholder>
+						<Placeholder>{t("Select a file to see its changes.")}</Placeholder>
 					) : selected.hunks ? (
 						<div className="flex flex-col gap-2">
 							{selected.hunks.map((hunk, index) => {
@@ -348,9 +350,9 @@ export function ChangesPanel({
 							{selectedContents.error}
 						</p>
 					) : selectedContents.binary ? (
-						<Placeholder>Binary file; no text diff to show.</Placeholder>
+						<Placeholder>{t("Binary file; no text diff to show.")}</Placeholder>
 					) : selectedContents.truncated ? (
-						<Placeholder>This file is too large to show inline.</Placeholder>
+						<Placeholder>{t("This file is too large to show inline.")}</Placeholder>
 					) : (
 						<CodeDiff
 							newText={selectedContents.newText}
@@ -365,5 +367,6 @@ export function ChangesPanel({
 }
 
 function Placeholder({ children }: { children: string }) {
+	const t = useTranslation();
 	return <p className="p-4 text-xs text-muted-foreground">{children}</p>;
 }
