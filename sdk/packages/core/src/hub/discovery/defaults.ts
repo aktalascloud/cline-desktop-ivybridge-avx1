@@ -40,7 +40,8 @@ export function resolveDefaultHubPort(
 	options: ResolveHubDefaultsOptions = {},
 ): number {
 	const env = options.env ?? process.env;
-	const raw = env[HUB_PORT_ENV]?.trim();
+	// The legacy desktop has its own default port and still uses managed Hub discovery.
+	const raw = env[HUB_PORT_ENV]?.trim() || env.CLINE_LEGACY_HUB_PORT?.trim();
 	if (!raw) {
 		return fallbackHubPort(options);
 	}

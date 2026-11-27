@@ -110,6 +110,12 @@ function freeLoopbackPort() {
 
 async function startBackend() {
 	const profile = app.getPath("userData");
+	const documents = app.getPath("documents");
+	const workspace =
+		smokeOutput || !existsSync(documents)
+			? join(profile, "workspace")
+			: documents;
+	mkdirSync(workspace, { recursive: true });
 	const hubPort = smokeOutput
 		? await freeLoopbackPort()
 		: process.env.CLINE_LEGACY_HUB_PORT || "25473";
@@ -126,14 +132,15 @@ async function startBackend() {
 			CLINE_DATA_DIR: join(profile, "cline", "data"),
 			CLINE_HUB_DISCOVERY_PATH: join(profile, "hub-discovery.json"),
 			CLINE_HUB_HOST: "127.0.0.1",
-			CLINE_HUB_PORT: String(hubPort),
+			CLINE_HUB_PORT: "",
+			CLINE_LEGACY_HUB_PORT: String(hubPort),
 			CLINE_HUB_PATHNAME: "/hub",
 			CLINE_SIDECAR_HOST: "127.0.0.1",
 			CLINE_LEGACY_APP_ORIGIN: origin,
 			CLINE_LEGACY_RUNTIME_ROOT: join(runtimeRoot, "legacy"),
 			CLINE_PLUGIN_RUNTIME_DIR: join(runtimeRoot, "plugin-runtime"),
 			CLINE_SIDECAR_TRUSTED_ORIGINS: origin,
-			CLINE_DESKTOP_WORKSPACE_ROOT: app.getPath("documents"),
+			CLINE_DESKTOP_WORKSPACE_ROOT: workspace,
 			CLINE_NO_AUTO_UPDATE: "1",
 			UV_THREADPOOL_SIZE: "2",
 		},

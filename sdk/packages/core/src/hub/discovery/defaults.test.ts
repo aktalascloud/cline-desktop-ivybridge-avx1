@@ -9,6 +9,14 @@ import {
 const DEV_HUB_PORT = 25466;
 
 describe("resolveDefaultHubPort", () => {
+	it("uses the legacy desktop port for managed discovery", () => {
+		expect(
+			resolveDefaultHubPort({
+				env: { CLINE_HUB_PORT: "", CLINE_LEGACY_HUB_PORT: "25473" },
+			}),
+		).toBe(25473);
+	});
+
 	it("returns the dev hub port when CLINE_BUILD_ENV is development and CLINE_HUB_PORT is unset", () => {
 		expect(
 			resolveDefaultHubPort({
