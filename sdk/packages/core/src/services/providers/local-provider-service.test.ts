@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import * as LlmsModels from "@cline/llms";
 import { CLINE_DEFAULT_MODEL_ID } from "@cline/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -76,6 +77,23 @@ afterEach(() => {
 });
 
 describe("live provider model loading", () => {
+	it("validates the shipped three-model FreeLLM catalog", async () => {
+		const catalog = await readModelsFile(
+			fileURLToPath(
+				new URL("../../../../../../fork/defaults/freellm.json", import.meta.url),
+			),
+		);
+		const provider = catalog.providers.freellm;
+		expect(Object.keys(provider?.models ?? {})).toEqual([
+			"baidu/ernie-5.5-flash-preview:free",
+			"reflection/beam-free",
+			"nvidia/nemotron-3.5-super-vl:free",
+		]);
+		expect(provider?.provider?.defaultModelId).toBe(
+			"baidu/ernie-5.5-flash-preview:free",
+		);
+	});
+
 	it("replaces a retired default only in the managed FreeLLM catalog", async () => {
 		const dir = mkdtempSync(path.join(os.tmpdir(), "freellm-managed-test-"));
 		const baseUrl = "https://gateway.example/v1";
