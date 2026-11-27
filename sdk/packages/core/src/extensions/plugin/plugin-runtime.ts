@@ -57,7 +57,11 @@ export function setPluginSandboxLauncher(
 	launcher: SubprocessSandboxLauncher | undefined,
 ): void {
 	sandboxLauncher = launcher
-		? { command: launcher.command, argsPrefix: [...launcher.argsPrefix] }
+		? {
+				command: launcher.command,
+				argsPrefix: [...launcher.argsPrefix],
+				...(launcher.env && { env: { ...launcher.env } }),
+			}
 		: undefined;
 }
 

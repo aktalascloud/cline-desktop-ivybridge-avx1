@@ -109,6 +109,7 @@
 		"streamdown": "^2.5.0",
 		"tailwind-merge": "^3.3.1",
 		"vaul": "^1.1.2",
+		"ws": "8.21.3",
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {
@@ -118,6 +119,7 @@
 		"@types/bun": "^1.4.2",
 		"@types/react": "19.2.14",
 		"@types/react-dom": "19.2.3",
+		"@types/ws": "8.18.1",
 		"jsdom": "^26.0.0",
 		"postcss": "^8.5",
 		"tailwindcss": "^4.2.0",

@@ -1,11 +1,15 @@
+import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
+import { join } from "node:path";
 import {
 	checkManagedHubBuildMismatch,
 	createClineTelemetryServiceConfig,
 	ensureLoginShellPath,
 	readGlobalSettings,
 	setHomeDirIfUnset,
+	setHubDaemonLauncher,
 	setModelToolEnabledGlobally,
+	setPluginSandboxLauncher,
 	watchManagedHubBuildMismatch,
 } from "@cline/core";
 import {
@@ -28,7 +32,7 @@ import {
 import { HubStartup } from "./hub-startup";
 import { createDesktopObservability } from "./observability";
 import { resolveWorkspaceRoot } from "./paths";
-import { startServer } from "./server";
+import { startLegacyServer, startServer } from "./server";
 import { BunRuntime, SIDECAR_HOST, SIDECAR_MODE, SIDECAR_PORT } from "./types";
 
 const SHUTDOWN_TIMEOUT_MS = 5_000;
@@ -54,7 +58,8 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 }
 
 async function main(desktopCliPath?: string) {
-	if (!BunRuntime) {
+	const legacyOrigin = process.env.CLINE_LEGACY_APP_ORIGIN;
+	if (!BunRuntime && !legacyOrigin) {
 		throw new Error("sidecar must be run with Bun");
 	}
 
@@ -157,6 +162,9 @@ async function main(desktopCliPath?: string) {
 
 	process.once("SIGINT", () => shutdownAndExit("SIGINT"));
 	process.once("SIGTERM", () => shutdownAndExit("SIGTERM"));
+	if (legacyOrigin && process.connected) {
+		process.once("disconnect", () => shutdownAndExit("SIGTERM"));
+	}
 	const handleFatalError = (kind: string, error: unknown): void => {
 		if (handlingFatalError) {
 			process.exit(1);
@@ -185,7 +193,9 @@ async function main(desktopCliPath?: string) {
 		void shutdown("code_sidecar_before_exit");
 	});
 
-	const { port, approvalToken } = startServer(ctx, SIDECAR_PORT, shutdown);
+	const { port, approvalToken } = legacyOrigin
+		? await startLegacyServer(ctx, randomUUID(), legacyOrigin)
+		: startServer(ctx, SIDECAR_PORT, shutdown);
 	observability.logger.log("Desktop sidecar ready", {
 		port,
 		mode: SIDECAR_MODE,
@@ -210,15 +220,15 @@ async function main(desktopCliPath?: string) {
 	const endpoint = `http://${dialHost}:${port}`;
 	const wsEndpoint = new URL(`ws://${dialHost}:${port}/transport`);
 	wsEndpoint.searchParams.set("approval_token", approvalToken);
-	process.stdout.write(
-		`${JSON.stringify({
-			type: "ready",
-			endpoint,
-			wsEndpoint: wsEndpoint.toString(),
-			pid: process.pid,
-			mode: SIDECAR_MODE,
-		})}\n`,
-	);
+	const ready = {
+		type: "ready",
+		endpoint,
+		wsEndpoint: wsEndpoint.toString(),
+		pid: process.pid,
+		mode: SIDECAR_MODE,
+	};
+	if (legacyOrigin && process.send) process.send(ready);
+	else process.stdout.write(`${JSON.stringify(ready)}\n`);
 	// The webview is reachable now, so it can show Hub startup progress and
 	// failures instead of commands timing out against an unpublished backend.
 	ctx.hubStartup.start();
@@ -277,6 +287,20 @@ async function runEntrypoint(): Promise<void> {
 	}
 	const { cliPath } = adoptDesktopCliRuntime();
 	setClineClientIdentity(DESKTOP_CLIENT_CONTEXT);
+	const legacyRoot = process.env.CLINE_LEGACY_RUNTIME_ROOT;
+	if (legacyRoot) {
+		delete process.env.ELECTRON_RUN_AS_NODE;
+		setHubDaemonLauncher({
+			command: process.execPath,
+			args: [join(legacyRoot, "hub.mjs")],
+			env: { ELECTRON_RUN_AS_NODE: "1" },
+		});
+		setPluginSandboxLauncher({
+			command: process.execPath,
+			argsPrefix: [],
+			env: { ELECTRON_RUN_AS_NODE: "1" },
+		});
+	}
 
 	disableCurrentDirectoryExecutableSearch();
 	// Before the Hub daemon and agent-spawned processes inherit this env.

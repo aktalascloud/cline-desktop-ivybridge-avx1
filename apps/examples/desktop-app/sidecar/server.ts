@@ -3,13 +3,13 @@ import { captureSdkError } from "@cline/shared";
 import type { DesktopTransportRequest } from "../webview/lib/desktop-transport";
 import { MAX_DESKTOP_TRANSPORT_PAYLOAD_BYTES } from "../webview/lib/voice-input-limits";
 import { handleCommand } from "./commands";
+import { abandonComposioConnectsForOwner } from "./composio";
 import {
 	cancelSidecarToolApprovalsForOwner,
 	encodeSidecarEvent,
 	sendEvent,
 	syncSidecarApprovalReadiness,
 } from "./context";
-import { abandonComposioConnectsForOwner } from "./composio";
 import { fetchMarketplaceCatalog } from "./marketplace";
 import { cancelMcpOAuthAuthorizationsForOwner } from "./mcp-oauth";
 import { cancelProviderOAuthLoginsForOwner } from "./oauth-login";
@@ -205,12 +205,39 @@ export function startServer(
 	return { port: server.port, approvalToken };
 }
 
+export async function startLegacyServer(
+	ctx: SidecarContext,
+	approvalToken: string,
+	appOrigin: string,
+): Promise<{ port: number; approvalToken: string }> {
+	const { startNodeServer } = await import("./node-server");
+	const handler = createFetchHandler(ctx, undefined, approvalToken);
+	const { port } = await startNodeServer(
+		"127.0.0.1",
+		0,
+		(request, server) => {
+			const url = new URL(request.url);
+			if (
+				readOrigin(request) !== appOrigin ||
+				url.pathname === "/shutdown" ||
+				(url.pathname === "/transport" &&
+					!hasValidApprovalToken(url, approvalToken))
+			) {
+				return Promise.resolve(new Response("Forbidden", { status: 403 }));
+			}
+			return handler(request, server);
+		},
+		createWebSocketHandler(ctx),
+	);
+	return { port, approvalToken };
+}
+
 export function createFetchHandler(
 	ctx: SidecarContext,
 	onShutdown?: (reason?: string) => Promise<void>,
 	approvalToken = "",
 ) {
-	return async (req: Request, server: SidecarServer) => {
+	return async (req: Request, server: Pick<SidecarServer, "upgrade">) => {
 		const url = new URL(req.url);
 
 		if (req.method === "OPTIONS") {

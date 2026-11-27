@@ -34,6 +34,7 @@ export interface SubprocessSandboxLauncher {
 	command: string;
 	/** Host-specific arguments placed before the bootstrap file path. */
 	argsPrefix: string[];
+	env?: NodeJS.ProcessEnv;
 }
 
 export interface SubprocessSandboxOptions {
@@ -305,7 +306,10 @@ export class SubprocessSandbox {
 		});
 		const executable =
 			command[0] ?? resolveSubprocessRuntimeExecutable(this.options);
-		const env = { ...withResolvedClineBuildEnv(process.env) };
+		const env = {
+			...withResolvedClineBuildEnv(process.env),
+			...this.options.launcher?.env,
+		};
 		if (this.options.launcher) delete env.BUN_BE_BUN;
 		else if (isCompiledBunExecutable(executable)) env.BUN_BE_BUN = "1";
 		const child = spawn(executable, command.slice(1), {

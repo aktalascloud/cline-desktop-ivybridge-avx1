@@ -285,6 +285,25 @@ const NATIVE_COMMANDS = new Set([
 	"set_quit_shortcut_native",
 ]);
 
+function legacyNativeBridge() {
+	if (typeof window === "undefined") return undefined;
+	return (
+		window as Window & {
+			clineLegacy?: {
+				invoke<T>(command: string, args?: Record<string, unknown>): Promise<T>;
+			};
+		}
+	).clineLegacy;
+}
+
+const LEGACY_NATIVE_COMMANDS = new Set([
+	"pick_workspace_directory",
+	"open_third_party_notices",
+	"open_external_url",
+	"relaunch_app",
+	"quit_app",
+]);
+
 class DesktopClient {
 	private socket: WebSocket | null = null;
 	private connectPromise: Promise<void> | null = null;
@@ -632,6 +651,11 @@ class DesktopClient {
 		args?: Record<string, unknown>,
 		options?: DesktopInvokeOptions,
 	): Promise<T> {
+		const legacy = legacyNativeBridge();
+		if (legacy && LEGACY_NATIVE_COMMANDS.has(command)) {
+			options?.signal?.throwIfAborted();
+			return legacy.invoke<T>(command, args);
+		}
 		// Route native OS commands (directory picker, file opener) through Tauri
 		// only when running inside the full Tauri app shell. In sidecar/web mode
 		// these are handled by the sidecar over WebSocket.
@@ -850,7 +874,7 @@ export const desktopClient = new DesktopClient();
  * browser handles it directly.
  */
 export async function openExternalUrl(url: string): Promise<void> {
-	if (isTauriAvailable()) {
+	if (isTauriAvailable() || legacyNativeBridge()) {
 		await desktopClient.invoke("open_external_url", { url });
 		return;
 	}

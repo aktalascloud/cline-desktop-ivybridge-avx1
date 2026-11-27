@@ -1,0 +1,6 @@
+{
+	"name": "cline-desktop-legacy",
+	"version": "0.0.51",
+	"private": true,
+	"main": "main.cjs"
+}
