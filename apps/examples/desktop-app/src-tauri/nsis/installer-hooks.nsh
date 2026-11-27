@@ -1,4 +1,41 @@
 !include "Win\RestartManager.nsh"
+!include WinVer.nsh
+!include x64.nsh
+
+; Match the bundled Bun backend's Windows 10 1809 and x64 SSE4.2 minimums.
+; Older Windows builds cannot use PF_SSE4_2_INSTRUCTIONS_AVAILABLE reliably.
+!define CLINE_MIN_WINDOWS_BUILD 17763
+!define CLINE_PF_SSE4_2_INSTRUCTIONS_AVAILABLE 38
+!define CLINE_SSE4_2_QUERY_MIN_BUILD 19041
+
+!macro CheckDesktopRequirements
+  ${IfNot} ${AtLeastWin10}
+  ${OrIfNot} ${AtLeastBuild} ${CLINE_MIN_WINDOWS_BUILD}
+    DetailPrint "Cline requires Windows 10 version 1809 (build 17763) or later."
+    MessageBox MB_OK|MB_ICONSTOP "Cline requires Windows 10 version 1809 (build 17763) or later." /SD IDOK
+    SetErrorLevel 2
+    Abort
+  ${EndIf}
+
+  !if "${ARCH}" == "x64"
+    Push $0
+    System::Call 'kernel32::IsProcessorFeaturePresent(i ${CLINE_PF_SSE4_2_INSTRUCTIONS_AVAILABLE}) i .r0'
+    ${If} $0 == 0
+      Pop $0
+      ${If} ${AtLeastBuild} ${CLINE_SSE4_2_QUERY_MIN_BUILD}
+        DetailPrint "Cline requires an x64 processor with SSE4.2."
+        MessageBox MB_OK|MB_ICONSTOP "Cline requires an x64 processor with SSE4.2. This processor does not report SSE4.2 support." /SD IDOK
+      ${Else}
+        DetailPrint "Cline requires SSE4.2. This Windows build could not verify CPU support."
+        MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "Cline requires SSE4.2. This version of Windows could not verify that your processor supports it. Continue only if you have confirmed SSE4.2 support." /SD IDOK IDOK requirements_done
+      ${EndIf}
+      SetErrorLevel 2
+      Abort
+    ${EndIf}
+    Pop $0
+    requirements_done:
+  !endif
+!macroend
 
 ; The bundled cline-cli.exe runs the desktop backend and, as a detached
 ; daemon, the Hub, which outlives the desktop. Stop users of every installed
@@ -81,6 +118,7 @@
 !macroend
 
 !macro NSIS_HOOK_PREINSTALL
+  !insertmacro CallArtificialFunction CheckDesktopRequirements
   !insertmacro CallArtificialFunction StopDesktopProcesses
 !macroend
 

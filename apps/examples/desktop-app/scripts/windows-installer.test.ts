@@ -137,6 +137,7 @@ RequestExecutionLevel user
 !include FileFunc.nsh
 !include "${nsisString(hook)}"
 !define MAINBINARYNAME "cline-app"
+!define ARCH "x64"
 Name "Cline cleanup test"
 OutFile "${nsisString(installer)}"
 Page instfiles
