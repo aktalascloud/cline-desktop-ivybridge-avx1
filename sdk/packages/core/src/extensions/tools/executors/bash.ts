@@ -443,6 +443,7 @@ export interface ShellExecutorOptions {
 }
 
 interface SpawnConfig {
+	windowsVerbatimArguments?: boolean;
 	executable: string;
 	args: string[];
 	cwd: string;
@@ -739,6 +740,7 @@ function spawnAndCollect(
 			// parent process has no console (or a different console).
 			// No-op on non-Windows platforms.
 			windowsHide: true,
+			windowsVerbatimArguments: config.windowsVerbatimArguments,
 		});
 		const childPid = child.pid;
 
@@ -1169,6 +1171,7 @@ export function createShellExecutor(
 				cwd,
 				env,
 				input: invocation.input,
+				windowsVerbatimArguments: invocation.windowsVerbatimArguments,
 			},
 			context,
 			timeoutMs,

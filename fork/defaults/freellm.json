@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "reviewed_date": "2026-11-27",
+  "reviewed_date": "2026-11-28",
   "source": "https://ai-gateway.kilo.ai/api/v1/models",
   "shared_hourly_limit": 200,
   "user_key_required": false,

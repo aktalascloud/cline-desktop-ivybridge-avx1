@@ -72,3 +72,22 @@ for (const shell of shells) {
 		});
 	});
 }
+
+it.runIf(process.platform === "win32")(
+	"keeps cmd quotes, ampersands, and exit codes",
+	() => {
+		const invocation = getShellInvocation(
+			"cmd.exe",
+			'echo "left & right" & exit /b 7',
+		);
+		const result = spawnSync(invocation.executable, invocation.args, {
+			windowsVerbatimArguments: invocation.windowsVerbatimArguments,
+			encoding: "utf8",
+			windowsHide: true,
+			timeout: 10_000,
+		});
+		expect(result.error).toBeUndefined();
+		expect(result.stdout.trim()).toBe('"left & right"');
+		expect(result.status).toBe(7);
+	},
+);

@@ -13,12 +13,21 @@ const { createServer } = require("node:net");
 const { dirname, join, resolve, sep } = require("node:path");
 const { pathToFileURL } = require("node:url");
 
+const startedAt = performance.now();
+const timings = {};
 const origin = "cline://desktop";
 const webRoot = join(__dirname, "web");
 const runtimeRoot = join(__dirname, "runtime");
 const stateRoot = join(app.getPath("appData"), "Cline Desktop Legacy");
 const smokeFlag = process.argv.find((arg) => arg.startsWith("--smoke-test="));
 const smokeOutput = smokeFlag?.slice("--smoke-test=".length);
+const serialSmoke = Boolean(
+	smokeOutput && process.argv.includes("--serial-startup"),
+);
+const profileSwitch = Boolean(
+	smokeOutput && process.argv.includes("--profile-switch"),
+);
+let backendEndpoint;
 app.setPath(
 	"userData",
 	smokeOutput ? join(dirname(resolve(smokeOutput)), "profile") : stateRoot,
@@ -190,6 +199,8 @@ ipcMain.handle("cline:native", async (event, command, args) => {
 		throw new Error("Invalid Cline window");
 	}
 	switch (command) {
+		case "get_desktop_backend_endpoint":
+			return backendEndpoint;
 		case "pick_workspace_directory": {
 			const { filePaths } = await dialog.showOpenDialog(window, {
 				defaultPath:
@@ -215,8 +226,8 @@ ipcMain.handle("cline:native", async (event, command, args) => {
 });
 
 async function runSmokeTest() {
-	return window.webContents.executeJavaScript(`new Promise((resolve, reject) => {
-		const socket = new WebSocket(window.__SIDECAR_WS_ENDPOINT__);
+	return window.webContents.executeJavaScript(`window.clineLegacy.invoke("get_desktop_backend_endpoint").then(endpoint => new Promise((resolve, reject) => {
+		const socket = new WebSocket(endpoint);
 		const timer = setTimeout(() => { socket.close(); reject(Error("Hub smoke test timed out")); }, 60000);
 		const replies = new Map();
 		const request = (id, command, args) => socket.send(JSON.stringify({ type: "command", id, command, args }));
@@ -232,6 +243,7 @@ async function runSmokeTest() {
 				}
 				if (message.event.payload.state === "ready" && !started) {
 					started = true;
+					request("codexUsage", "get_codex_usage");
 					request("version", "get_process_context");
 					request("compaction", "get_compaction_settings");
 					request("models", "list_provider_models", { provider: "freellm" });
@@ -245,7 +257,7 @@ async function runSmokeTest() {
 				return;
 			}
 			replies.set(message.id, message.result);
-			if (replies.size === 3) {
+			if (replies.size === 4) {
 				clearTimeout(timer);
 				socket.close();
 				resolve({
@@ -256,16 +268,75 @@ async function runSmokeTest() {
 					renderer: Boolean(document.querySelector("main,button")),
 					version: replies.get("version")?.appVersion,
 					compaction: replies.get("compaction"),
+					codexSignedOut: replies.get("codexUsage") === null,
 					models: replies.get("models")?.models?.map(model => model.id),
 				});
 			}
 		};
-	})`);
+	}))`);
+}
+
+async function measureSettingsSwitch(webContents) {
+	await webContents.executeJavaScript(`localStorage.setItem(
+		"cline.code.onboarding.v1", JSON.stringify({ completedAt: new Date().toISOString() })
+	)`);
+	await window.loadURL(origin + "/");
+	const withIntent = process.argv.includes("--settings-intent");
+	return webContents.executeJavaScript(`(async () => {
+		const selector = '[data-legacy-settings-button]';
+		const deadline = performance.now() + 5000;
+		let button;
+		while (!(button = document.querySelector(selector)) && performance.now() < deadline) {
+			await new Promise((resolve) => setTimeout(resolve, 25));
+		}
+		if (!button) return null;
+		if (${withIntent}) {
+			button.focus();
+			await new Promise((resolve) => setTimeout(resolve, 300));
+		}
+		const started = performance.now();
+		const frames = [];
+		let previous = started;
+		let mountedAt;
+		const observer = new MutationObserver(() => {
+			if (document.querySelector('.cline-settings-content')) {
+				mountedAt = performance.now() - started;
+				observer.disconnect();
+			}
+		});
+		observer.observe(document.body, { childList: true, subtree: true });
+		let frameId;
+		function recordFrame() {
+			const now = performance.now();
+			frames.push(now - previous);
+			previous = now;
+			frameId = requestAnimationFrame(recordFrame);
+		}
+		frameId = requestAnimationFrame(recordFrame);
+		button.click();
+		await new Promise((resolve) => setTimeout(resolve, 1500));
+		cancelAnimationFrame(frameId);
+		observer.disconnect();
+		return {
+			withIntent: ${withIntent},
+			mountedMs: mountedAt ?? null,
+			frameCount: frames.length,
+			over34ms: frames.filter((ms) => ms > 34).length,
+			maxFrameMs: frames.length ? Math.max(...frames) : null,
+		};
+	})()`);
 }
 
 async function start() {
 	protocol.handle("cline", serveWeb);
-	const endpoint = await startBackend();
+	timings.electronReady = performance.now() - startedAt;
+	backendEndpoint = startBackend().then((endpoint) => {
+		timings.sidecarReady = performance.now() - startedAt;
+		return endpoint;
+	});
+	// Observe early startup failures even when the renderer fails independently.
+	void backendEndpoint.catch(() => {});
+	if (serialSmoke) await backendEndpoint;
 	window = new BrowserWindow({
 		width: 1080,
 		height: 700,
@@ -280,7 +351,8 @@ async function start() {
 			sandbox: true,
 			contextIsolation: true,
 			nodeIntegration: false,
-			additionalArguments: [`--cline-sidecar=${endpoint}`],
+			backgroundThrottling: !profileSwitch,
+			offscreen: profileSwitch,
 		},
 	});
 	window.webContents.on("will-navigate", (event, url) => {
@@ -293,12 +365,23 @@ async function start() {
 		if (!isAppUrl(url)) void openExternal(url).catch(() => {});
 		return { action: "deny" };
 	});
-	await window.loadURL(origin + "/");
+	const pageLoaded = window.loadURL(origin + "/").then(() => {
+		timings.pageLoaded = performance.now() - startedAt;
+	});
+	await Promise.all([pageLoaded, backendEndpoint]);
 	if (smokeOutput) {
 		const result = await runSmokeTest();
+		timings.hubChecked = performance.now() - startedAt;
+		const switchTiming = profileSwitch
+			? await measureSettingsSwitch(window.webContents)
+			: undefined;
 		writeFileSync(
 			smokeOutput,
-			JSON.stringify({ ...result, versions: process.versions }, null, 2),
+			JSON.stringify(
+				{ ...result, timings, switchTiming, versions: process.versions },
+				null,
+				2,
+			),
 		);
 		app.quit();
 	}

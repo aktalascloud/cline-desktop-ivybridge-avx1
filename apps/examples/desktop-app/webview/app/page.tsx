@@ -217,13 +217,18 @@ const viewLoading = () => (
 	</div>
 );
 
-const SettingsView = dynamic(
-	() =>
-		import("@/components/views/settings/settings-view").then(
-			(module) => module.SettingsView,
-		),
-	{ loading: viewLoading, ssr: false },
-);
+const loadSettingsView = () =>
+	import("@/components/views/settings/settings-view").then(
+		(module) => module.SettingsView,
+	);
+const SettingsView = dynamic(loadSettingsView, {
+	loading: viewLoading,
+	ssr: false,
+});
+
+function preloadSettingsView() {
+	void loadSettingsView().catch(() => {});
+}
 
 const SessionsView = dynamic(
 	() =>
@@ -1285,6 +1290,7 @@ function App() {
 								onSettingsSectionChange={handleSettingsSectionChange}
 								sessionHistory={sessionHistory}
 								setView={handleViewChange}
+								onSettingsIntent={preloadSettingsView}
 								settingsSection={settingsSection}
 								view={view}
 								canNavigateBack={navigation.back.length > 0}

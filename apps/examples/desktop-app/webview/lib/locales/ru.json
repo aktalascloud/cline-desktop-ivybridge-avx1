@@ -1,4 +1,13 @@
 {
+  "Codex subscription limits": "Лимиты подписки Codex",
+  "Loading subscription limits...": "Загрузка лимитов подписки…",
+  "Could not load Codex subscription limits.": "Не удалось загрузить лимиты подписки Codex.",
+  "No Codex limits reported for this account.": "Для этого аккаунта Codex не вернул лимиты.",
+  "{hours} h window": "Окно {hours} ч",
+  "Primary window": "Основное окно",
+  "Secondary window": "Дополнительное окно",
+  "{percent}% remaining": "Осталось {percent}%",
+  "Resets {time}": "Сброс {time}",
 	"Hide terminal": "Скрыть терминал",
 	"Show terminal": "Показать терминал",
 	"Terminal": "Терминал",

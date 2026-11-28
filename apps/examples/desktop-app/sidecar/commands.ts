@@ -3336,6 +3336,13 @@ export async function handleCommand(
 	}
 
 	// ── Global settings ────────────────────────────────────────────────
+	if (command === "get_codex_usage") {
+		if (!options?.connection?.data?.canApproveTools) {
+			throw new Error("Codex usage requires a trusted connection");
+		}
+		const { getCodexUsage } = await import("./codex-usage");
+		return getCodexUsage();
+	}
 	if (command === "get_compaction_settings") {
 		return readCompactionPreferencesGlobally();
 	}

@@ -61,6 +61,14 @@ export async function resolveDesktopBackendWsEndpoint(): Promise<string> {
 		return resolvedEndpointCache;
 	}
 
+	const legacy = legacyNativeBridge();
+	if (legacy) {
+		const endpoint = await legacy.invoke<string>("get_desktop_backend_endpoint");
+		if (!endpoint.trim()) throw new Error("Legacy backend endpoint is empty");
+		resolvedEndpointCache = endpoint.trim();
+		return resolvedEndpointCache;
+	}
+
 	// 2. Tauri command (full desktop app).
 	if (isTauriAvailable()) {
 		const endpoint = await tryTauriInvoke<string>(

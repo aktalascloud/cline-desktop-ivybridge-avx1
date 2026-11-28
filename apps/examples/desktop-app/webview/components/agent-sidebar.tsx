@@ -335,6 +335,7 @@ export function AgentSidebar({
 	onNavigateForward,
 	onOpenSearch,
 	onSettingsSectionChange,
+	onSettingsIntent,
 	setView,
 	settingsSection,
 	view,
@@ -351,6 +352,7 @@ export function AgentSidebar({
 	/** Opens the global session search command bar. */
 	onOpenSearch?: () => void;
 	onSettingsSectionChange: (section: SettingsSection) => void;
+	onSettingsIntent?: () => void;
 	setView: (view: AppView) => void;
 	settingsSection: SettingsSection;
 	view: AppView;
@@ -1337,6 +1339,9 @@ export function AgentSidebar({
 										settingsSection !== "Account" &&
 										"bg-surface-hover text-sidebar-foreground",
 								)}
+								data-legacy-settings-button
+								onFocus={onSettingsIntent}
+								onPointerEnter={onSettingsIntent}
 								onClick={openSettings}
 								title={t("Settings")}
 								type="button"
@@ -1354,6 +1359,9 @@ export function AgentSidebar({
 								view === "settings" &&
 									"bg-surface-hover text-sidebar-foreground",
 							)}
+							data-legacy-settings-button
+							onFocus={onSettingsIntent}
+							onPointerEnter={onSettingsIntent}
 							onClick={openSettings}
 							title={t("Settings")}
 							type="button"

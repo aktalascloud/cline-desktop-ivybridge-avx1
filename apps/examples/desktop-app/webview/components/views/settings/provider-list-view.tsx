@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { CodexUsagePanel } from "./codex-usage-panel";
 import { Input } from "@/components/ui/input";
 import { useOAuthUserCode } from "@/hooks/use-oauth-user-code";
 import { openExternalUrl } from "@/lib/desktop-client";
@@ -914,6 +915,9 @@ export function ProviderDetailContent({
 							</div>
 						) : null}
 					</div>
+				)}
+				{oauthConnected && provider.id === "openai-codex" && (
+					<CodexUsagePanel />
 				)}
 			</section>
 		) : authKind === "local" ? (

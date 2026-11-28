@@ -9,7 +9,11 @@ function normalizeShellName(shell: string): string {
 }
 
 export function getDefaultShell(platform: string): string {
-	return platform === "win32" ? "powershell" : "/bin/bash";
+	if (platform !== "win32") return "/bin/bash";
+	return typeof process !== "undefined" &&
+		process.env.CLINE_LEGACY_SHELL?.toLowerCase() === "cmd"
+		? "cmd.exe"
+		: "powershell";
 }
 
 /**
@@ -49,6 +53,7 @@ export interface ShellInvocation {
 	executable: string;
 	args: string[];
 	input?: string;
+	windowsVerbatimArguments?: boolean;
 }
 
 /**
@@ -396,8 +401,8 @@ export function getShellInvocation(
 					"-NoProfile",
 					"-NonInteractive",
 					"-Command",
-					"[Console]::InputEncoding=[Text.UTF8Encoding]::new();" +
-						"[Console]::OutputEncoding=[Text.UTF8Encoding]::new();" +
+					"$e=New-Object System.Text.UTF8Encoding;" +
+						"[Console]::InputEncoding=$e;[Console]::OutputEncoding=$e;" +
 						"$ErrorActionPreference='Stop';" +
 						"$c=[Console]::In.ReadToEnd();" +
 						"$c+=[Environment]::NewLine+'if(-not $?){exit 1}';" +
@@ -407,7 +412,13 @@ export function getShellInvocation(
 			};
 		}
 		case "cmd":
-			return { executable: shell, args: ["/d", "/s", "/c", command] };
+			// cmd /s strips the outer quote pair. Pass its script verbatim so
+			// Node does not turn embedded quotes into literal backslashes.
+			return {
+				executable: shell,
+				args: ["/d", "/s", "/c", `"${command}"`],
+				windowsVerbatimArguments: true,
+			};
 		// wsl.exe is the Windows launcher for the default WSL distro, not a shell
 		// itself. Run the command through the guest's bash so operators like `|`
 		// and `;` are handled by bash rather than treated as wsl.exe arguments.
@@ -430,5 +441,6 @@ export function getShellArgs(shell: string, command: string): string[] {
 		// commands beyond Windows' process command-line limit.
 		return ["-NoProfile", "-NonInteractive", "-Command", command];
 	}
+	if (getShellKind(shell) === "cmd") return ["/d", "/s", "/c", command];
 	return getShellInvocation(shell, command).args;
 }

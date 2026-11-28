@@ -137,6 +137,7 @@ try {
 		`/DCLINE_STAGE=${stage}`,
 		`/DCLINE_INSTALLER=${target}`,
 		`/DCLINE_DISPLAY_VERSION=${version}`,
+		`/DCLINE_NUMERIC_VERSION=${version.replace("-legacy.", ".")}`,
 		`/DCLINE_UNINSTALL_FILES=${uninstall}`,
 		join(legacy, "installer.nsi"),
 	]);
