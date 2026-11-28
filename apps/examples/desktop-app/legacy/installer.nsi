@@ -39,6 +39,12 @@ LangString ShortcutLabel ${LANG_ENGLISH} "Create a desktop shortcut"
 LangString ShortcutLabel ${LANG_RUSSIAN} "Создать ярлык на рабочем столе"
 LangString MissingSse3 ${LANG_ENGLISH} "Cline Desktop Legacy requires a processor with SSE3 support."
 LangString MissingSse3 ${LANG_RUSSIAN} "Для Cline Desktop Legacy требуется процессор с поддержкой SSE3."
+!ifdef CLINE_PENRYN_PROBE
+LangString MissingSse41 ${LANG_ENGLISH} "This Penryn build requires a processor with SSE4.1 support."
+LangString MissingSse41 ${LANG_RUSSIAN} "Для сборки Penryn требуется процессор с поддержкой SSE4.1."
+LangString ProbeFailed ${LANG_ENGLISH} "The installer could not check CPU support for SSE4.1."
+LangString ProbeFailed ${LANG_RUSSIAN} "Установщик не смог проверить поддержку SSE4.1."
+!endif
 
 Function CheckRequirements
   ${IfNot} ${RunningX64}
@@ -53,6 +59,22 @@ Function CheckRequirements
     SetErrorLevel 2
     Abort
   ${EndIf}
+!ifdef CLINE_PENRYN_PROBE
+  InitPluginsDir
+  SetOutPath "$PLUGINSDIR"
+  File "/oname=penryn-cpu-check.exe" "${CLINE_PENRYN_PROBE}"
+  ClearErrors
+  ExecWait '"$PLUGINSDIR\penryn-cpu-check.exe"' $0
+  ${If} ${Errors}
+    MessageBox MB_OK|MB_ICONSTOP "$(ProbeFailed)" /SD IDOK
+    SetErrorLevel 2
+    Abort
+  ${ElseIf} $0 != 0
+    MessageBox MB_OK|MB_ICONSTOP "$(MissingSse41)" /SD IDOK
+    SetErrorLevel 2
+    Abort
+  ${EndIf}
+!else
   ; PF_SSE3_INSTRUCTIONS_AVAILABLE is supported on Windows 7.
   System::Call 'kernel32::IsProcessorFeaturePresent(i 13) i .r0'
   ${If} $0 == 0
@@ -60,6 +82,7 @@ Function CheckRequirements
     SetErrorLevel 2
     Abort
   ${EndIf}
+!endif
 FunctionEnd
 
 !macro ReleaseExecutable PREFIX

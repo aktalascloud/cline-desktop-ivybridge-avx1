@@ -20,13 +20,21 @@ import {
 const legacy = import.meta.dir;
 const desktop = resolve(legacy, "..");
 const root = resolve(desktop, "../../..");
-const [electronDir, makensisExe, outputDir] = process.argv
+const [electronDir, makensisExe, outputDir, penrynCpuProbe] = process.argv
 	.slice(2)
 	.map((arg) => resolve(arg));
 if (!electronDir || !makensisExe || !outputDir) {
 	throw new Error(
-		"Usage: bun package.mts <Electron Legacy folder> <makensis.exe> <output folder>",
+		"Usage: bun package.mts <Electron Legacy folder> <makensis.exe> <output folder> [x86 Penryn CPU probe]",
 	);
+}
+if (
+	penrynCpuProbe &&
+	!readFileSync(penrynCpuProbe)
+		.subarray(0, 4096)
+		.includes(Buffer.from([0x50, 0x45, 0, 0, 0x4c, 0x01]))
+) {
+	throw new Error("Expected an x86 Penryn CPU probe");
 }
 const electronVersion = readFileSync(join(electronDir, "version"), "utf8")
 	.trim()
@@ -89,7 +97,10 @@ try {
 	const defaults = join(stage, "bin", "defaults");
 	mkdirSync(app, { recursive: true });
 	mkdirSync(defaults, { recursive: true });
-	cpSync(join(root, "fork/defaults/freellm.json"), join(defaults, "freellm.json"));
+	cpSync(
+		join(root, "fork/defaults/freellm.json"),
+		join(defaults, "freellm.json"),
+	);
 	for (const name of ["main.cjs", "preload.cjs", "package.json"]) {
 		cpSync(join(legacy, name), join(app, name));
 	}
@@ -129,7 +140,9 @@ try {
 	});
 	const uninstall = join(scratch, "uninstall.nsh");
 	writeFileSync(uninstall, uninstallPlan(stage, stage).join("\r\n") + "\r\n");
-	const { version } = JSON.parse(readFileSync(join(legacy, "package.json"), "utf8"));
+	const { version } = JSON.parse(
+		readFileSync(join(legacy, "package.json"), "utf8"),
+	);
 	const target = join(scratch, `Cline_${version}_x64-setup.exe`);
 	run([
 		makensisExe,
@@ -139,6 +152,7 @@ try {
 		`/DCLINE_DISPLAY_VERSION=${version}`,
 		`/DCLINE_NUMERIC_VERSION=${version.replace("-legacy.", ".")}`,
 		`/DCLINE_UNINSTALL_FILES=${uninstall}`,
+		...(penrynCpuProbe ? [`/DCLINE_PENRYN_PROBE=${penrynCpuProbe}`] : []),
 		join(legacy, "installer.nsi"),
 	]);
 	mkdirSync(outputDir, { recursive: true });

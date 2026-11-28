@@ -38,4 +38,13 @@ bun apps/examples/desktop-app/legacy/package.mts C:\Build\ElectronLegacy C:\Buil
 
 Результат — `Cline_0.0.51-legacy.2_x64-setup.exe`. После упаковки для повторной сборки заново выполните `build:web`, чтобы восстановить карты исходников для списка лицензий.
 
+Для нативного Electron с профилем Penryn соберите x86-проверку SSE4.1 из `penryn-cpu-check.c`. Из x86 Native Tools Prompt выполните в этой папке:
+
+```cmd
+cl /nologo /c /O1 /GS- /Zl /W4 /WX penryn-cpu-check.c
+link /nologo /nodefaultlib /subsystem:windows,6.01 /entry:CheckCpu@0 /machine:x86 /out:penryn-cpu-check.exe penryn-cpu-check.obj kernel32.lib
+```
+
+В вызове `package.mts` укажите путь к этому EXE четвёртым аргументом. Установщик выполнит проверку до распаковки приложения. Используйте этот аргумент для Electron, собранного с `cline_enable_penryn=true`. [Патчи и профиль Electron](../../../../patches/README.md)
+
 После установки для проверки запуска выполните `ClineLegacy.exe --smoke-test=C:\Temp\cline-qa\result.json`. Каталог результата служит изолированным профилем проверки. Отчёт содержит язык интерфейса, версию, настройки автокомпакта, список моделей FreeLLM, состояние подключения к Hub и отметки времени запуска. `--profile-switch` дополнительно измеряет первый переход к настройкам.
