@@ -19,7 +19,7 @@
 
 ## Нативная сборка Electron для Penryn
 
-[electron-penryn-codegen.patch](electron-penryn-codegen.patch) добавляет профиль GN `electron_x86_profile="penryn"` для Windows x64. Профиль наследует набор инструкций SSE4.1 из Electron Legacy, добавляет `-march=penryn` и `-mtune=penryn` для clang-cl и настраивает планирование инструкций Rust на Penryn. Релизная конфигурация Electron Legacy использует ThinLTO и PGO. Специализированные SIMD-пути сохраняют собственные параметры компиляции и проверку возможностей CPU при запуске.
+[electron-penryn-codegen.patch](electron-penryn-codegen.patch) добавляет профиль GN `electron_x86_profile="penryn"` для Windows x64. Профиль наследует набор инструкций SSE4.1 из Electron Legacy и настраивает планирование инструкций на Penryn в clang-cl (`-mtune=penryn`) и Rust. Релизная конфигурация Electron Legacy использует `-O3`, ThinLTO и PGO. Встроенные пути Skia с AVX2 и AVX-512 сохраняют свои флаги `/arch` и проверку CPU при запуске. Явный `-march` в clang-cl перекрывает `/arch` и ломает сборку этих путей.
 
 Патч проверен через `git apply --check` на Chromium `152.0.7977.169` после применения штатных патчей Electron Legacy. Его цель — следующая нативная сборка. Бинарник в теге `legacy-v0.0.51.2` был собран без этого патча.
 

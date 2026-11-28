@@ -21,7 +21,7 @@ diff --git a/build/config/compiler_opt.gni b/build/config/compiler_opt.gni
  
  if (is_debug) {
    assert(!is_full_optimization_build,
-@@ -76,15 +80,24 @@
+@@ -76,15 +80,22 @@
    } else if (electron_x86_profile == "sse3") {
      electron_x86_isa_cflags = [ "-msse3" ]
      electron_x86_isa_rustflags = [ "-Ctarget-feature=+sse3" ]
@@ -37,10 +37,8 @@ diff --git a/build/config/compiler_opt.gni b/build/config/compiler_opt.gni
 -    electron_x86_tune_cflags = [ "-mtune=core2" ]
 -    electron_x86_tune_rustflags = [ "-Ztune-cpu=core2" ]
 +    if (electron_x86_profile == "penryn") {
-+      electron_x86_tune_cflags = [
-+        "/clang:-march=penryn",
-+        "/clang:-mtune=penryn",
-+      ]
++      # clang-cl's -march overrides /arch on runtime-dispatched SIMD targets.
++      electron_x86_tune_cflags = [ "/clang:-mtune=penryn" ]
 +      electron_x86_tune_rustflags = [ "-Ztune-cpu=penryn" ]
 +    } else {
 +      electron_x86_tune_cflags = [ "-mtune=core2" ]
