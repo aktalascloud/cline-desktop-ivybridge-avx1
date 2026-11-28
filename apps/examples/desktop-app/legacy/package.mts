@@ -39,8 +39,8 @@ if (
 const electronVersion = readFileSync(join(electronDir, "version"), "utf8")
 	.trim()
 	.replace(/^v/, "");
-if (electronVersion !== "44.11.5")
-	throw new Error("Expected Electron Legacy 44.11.5 x64");
+if (electronVersion !== "44.11.6")
+	throw new Error("Expected Electron Legacy 44.11.6 x64");
 for (const file of ["electron.exe", "winwrap.dll"]) {
 	if (!existsSync(join(electronDir, file)))
 		throw new Error(`Missing Electron Legacy file: ${file}`);

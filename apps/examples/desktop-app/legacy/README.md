@@ -1,10 +1,10 @@
-# Cline Desktop Legacy RU 0.0.51-legacy.2
+# Cline Desktop Legacy RU 0.0.51-legacy.3
 
 Неофициальная сборка Cline Desktop для 64-битных Windows 7 SP1, 8 и 8.1. Целевой процессор — Intel Core 2 Duo P9700 (Penryn, 2 ядра, SSE4.1). Интерфейс и SDK взяты из тега `desktop-v0.0.51`.
 
 NSIS устанавливает приложение для текущего пользователя и добавляет ярлык в «Пуск». На странице компонентов можно отметить «Создать ярлык на рабочем столе». При тихой установке для этого предусмотрен параметр `/DESKTOPSHORTCUT`. WebView2 и Bun на компьютере пользователя не нужны. Настройки, история и ключи этого порта хранятся в `%APPDATA%\Cline Desktop Legacy`, отдельно от стандартного клиента. Удаление через «Программы и компоненты» сохраняет их. Установщик не подписан.
 
-Вместо Tauri и Bun используется [Electron Legacy 44.11.5](https://github.com/Alex313031/electron-legacy/releases/tag/v44.11.5) с Node.js 24.22.3. Интерфейс открывается из локальной сборки, управление идёт через WebSocket на loopback с проверкой origin и токена. Лимит дискового кэша Chromium — 32 МиБ. Пул ввода-вывода Node ограничен двумя потоками, WebSocket передаёт локальные сообщения без сжатия. В инсталляторе оставлены ресурсы Chromium для en-US и ru.
+Вместо Tauri и Bun используется [Electron Legacy 44.11.6](https://github.com/Alex313031/electron-legacy/releases/tag/v44.11.6) с Node.js 24.22.3. Интерфейс открывается из локальной сборки, управление идёт через WebSocket на loopback с проверкой origin и токена. Лимит дискового кэша Chromium — 32 МиБ. Пул ввода-вывода Node ограничен двумя потоками, WebSocket передаёт локальные сообщения без сжатия. В инсталляторе оставлены ресурсы Chromium для en-US и ru.
 
 Доступны отдельный профиль, выбор папки и штатный локальный Hub. Встроенный терминал, нативный трей, автоматическое обновление и внешние SSH-помощники требуют дополнительной адаптации. Для генерации настройте модель в Cline.
 
@@ -24,7 +24,7 @@ NSIS устанавливает приложение для текущего п�
 
 ## Сборка
 
-На современной Windows установите Bun 1.4.2 и Node.js 24. Скачайте [архив Electron Legacy x64](https://github.com/Alex313031/electron-legacy/releases/download/v44.11.5/electron-v44.11.5-win32-x64.zip), проверьте SHA-256 и распакуйте его. SHA-256 архива — `c59130291c70dfbd3dedcc2663a64bed82475898be4a6c050a835586a9227ea6`. Для упаковки используется [NSIS 3.13](https://github.com/tauri-apps/binary-releases/releases/download/nsis-3.13/nsis-3.13.zip).
+На современной Windows установите Bun 1.4.2 и Node.js 24. Скачайте [архив Electron Legacy x64](https://github.com/Alex313031/electron-legacy/releases/download/v44.11.6/electron-v44.11.6-win32-x64.zip), проверьте SHA-256 и распакуйте его. SHA-256 архива — `c324827bdb9b9b23aa9cffa4891eea7422c0f43e3949800ae624696e3cb68a34`. Для упаковки используется [NSIS 3.13](https://github.com/tauri-apps/binary-releases/releases/download/nsis-3.13/nsis-3.13.zip).
 
 Из корня репозитория выполните:
 
@@ -36,7 +36,7 @@ bun -F @cline/code build:web
 bun apps/examples/desktop-app/legacy/package.mts C:\Build\ElectronLegacy C:\Build\NSIS\makensis.exe ..\dist
 ```
 
-Результат — `Cline_0.0.51-legacy.2_x64-setup.exe`. После упаковки для повторной сборки заново выполните `build:web`, чтобы восстановить карты исходников для списка лицензий.
+Результат — `Cline_0.0.51-legacy.3_x64-setup.exe`. После упаковки для повторной сборки заново выполните `build:web`, чтобы восстановить карты исходников для списка лицензий.
 
 Для нативного Electron с профилем Penryn соберите x86-проверку SSE4.1 из `penryn-cpu-check.c`. Из x86 Native Tools Prompt выполните в этой папке:
 
