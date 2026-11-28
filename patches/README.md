@@ -15,13 +15,15 @@
 
 В рабочей ветке дополнительно применяется [0007](0007-penryn-sse41-installer-check.patch) (`b95152751`). Он добавляет x86-проверку SSE4.1 через CPUID перед установкой нативной сборки Penryn. Воспроизведение семи патчей проверено на том же базовом теге. На Windows 11 отдельно проверены старый путь SSE3, успешная проверка SSE4.1 и отказ при тестовом отрицательном результате.
 
+[0008](0008-use-published-electron-44.11.6.patch) (`30c8c974a`) переключает Cline `0.0.51-legacy.3` на опубликованный Electron Legacy `44.11.6`. Примените патчи 0001–0008 по порядку. Для обновлений Cline повторно используйте скачанный архив с проверенной SHA‑256. Установщик с опубликованным рантаймом использует проверку SSE3.
+
 Три файла с именами зависимостей (`@opentui-ui/dialog`, `@shadcn/react`, `ollama-ai-provider-v2`) уже входят в официальный тег и используются Bun. [Патч для официального NSIS](upstream-windows-installer-requirements.patch) предназначен для ветки `main` официального Cline. В Legacy используется собственный установщик из 0001 и 0006. [Сравнение ветки официального патча](https://github.com/cline/cline/compare/main...aktalascloud:fix/windows-desktop-installer-requirements)
 
-## Нативная сборка Electron для Penryn
+## Экспериментальные патчи Electron для Penryn
 
 [electron-penryn-codegen.patch](electron-penryn-codegen.patch) добавляет профиль GN `electron_x86_profile="penryn"` для Windows x64. Профиль наследует набор инструкций SSE4.1 из Electron Legacy и настраивает планирование инструкций на Penryn в clang-cl (`-mtune=penryn`) и Rust. Релизная конфигурация Electron Legacy использует `-O3`, ThinLTO и PGO. Встроенные пути Skia с AVX2 и AVX-512 сохраняют свои флаги `/arch` и проверку CPU при запуске. Явный `-march` в clang-cl перекрывает `/arch` и ломает сборку этих путей.
 
-Патч проверен через `git apply --check` на Chromium `152.0.7977.169` после применения штатных патчей Electron Legacy. Его цель — следующая нативная сборка. Бинарник в теге `legacy-v0.0.51.2` был собран без этого патча.
+Патч проверен через `git apply --check` на Chromium `152.0.7977.169` после применения штатных патчей Electron Legacy. Нативную сборку остановили. Установщики Cline `legacy.2` и `legacy.3` используют опубликованные рантаймы Electron Legacy.
 
 Исходники Electron Legacy закреплены на `cc856cee9aa412ceb758bc6fe4d93e7243bd7edc` (`v44.11.5-src`). Из их корня примените [electron-legacy-runtime-only.patch](electron-legacy-runtime-only.patch). В режиме Penryn он собирает архив рантайма с SHA-256 и экономит время на дополнительных целях сборки.
 
