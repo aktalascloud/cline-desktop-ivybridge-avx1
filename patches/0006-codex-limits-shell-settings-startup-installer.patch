@@ -1,0 +1,1290 @@
+From cc661917e60ce4e04878dda2f8404c00beee399e Mon Sep 17 00:00:00 2001
+From: aktalascloud <294130337+aktalascloud@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 11:39:50 +0600
+Subject: [PATCH] Release Cline Desktop Legacy 0.0.51.2 for Penryn
+
+---
+ README.md                                     | 240 +-----------------
+ .../desktop-app/legacy/PERFORMANCE.md         |  51 ++++
+ apps/examples/desktop-app/legacy/README.md    |  22 +-
+ .../examples/desktop-app/legacy/installer.nsi |  41 ++-
+ apps/examples/desktop-app/legacy/main.cjs     |  99 +++++++-
+ apps/examples/desktop-app/legacy/package.json |   2 +-
+ apps/examples/desktop-app/legacy/package.mts  |   1 +
+ apps/examples/desktop-app/legacy/preload.cjs  |   8 -
+ .../desktop-app/sidecar/codex-usage.test.ts   |  95 +++++++
+ .../desktop-app/sidecar/codex-usage.ts        |  86 +++++++
+ apps/examples/desktop-app/sidecar/commands.ts |   7 +
+ .../examples/desktop-app/webview/app/page.tsx |  20 +-
+ .../webview/components/agent-sidebar.tsx      |   8 +
+ .../views/settings/codex-usage-panel.tsx      | 105 ++++++++
+ .../views/settings/provider-list-view.tsx     |   4 +
+ .../desktop-app/webview/lib/desktop-client.ts |   8 +
+ .../desktop-app/webview/lib/locales/ru.json   |   9 +
+ fork/defaults/freellm.json                    |   2 +-
+ .../src/extensions/tools/executors/bash.ts    |   3 +
+ .../shared/src/parse/shell.invocation.test.ts |  19 ++
+ sdk/packages/shared/src/parse/shell.ts        |  20 +-
+ 21 files changed, 583 insertions(+), 267 deletions(-)
+ create mode 100644 apps/examples/desktop-app/legacy/PERFORMANCE.md
+ create mode 100644 apps/examples/desktop-app/sidecar/codex-usage.test.ts
+ create mode 100644 apps/examples/desktop-app/sidecar/codex-usage.ts
+ create mode 100644 apps/examples/desktop-app/webview/components/views/settings/codex-usage-panel.tsx
+
+diff --git a/README.md b/README.md
+index 1b870599c7e12943b5a71b69c975744d61cbc25a..5829c5af573a7c877241940d5449da08358d2572 100644
+--- a/README.md
++++ b/README.md
+@@ -1,235 +1,19 @@
+-<p align="center">
+-  <img src="assets/icons/icon.png" width="80" alt="Cline" />
+-</p>
++# Cline Desktop Legacy
+ 
+-<h1 align="center">Cline</h1>
++Неофициальный Cline Desktop для **Windows 7 SP1, 8 и 8.1 x64** с русским интерфейсом. Целевой процессор — Intel Core 2 Duo P9700 (Penryn, SSE4.1). Основан на Cline Desktop 0.0.51.
+ 
+-<p align="center">
+-The open source coding agent in your IDE, terminal, & desktop!
+-</p>
++[Скачать установщик](https://github.com/aktalascloud/cline-desktop-legacy/releases/tag/legacy-v0.0.51.2) · [Все релизы](https://github.com/aktalascloud/cline-desktop-legacy/releases) · [Сборка](apps/examples/desktop-app/legacy/README.md) · [Замеры](apps/examples/desktop-app/legacy/PERFORMANCE.md)
+ 
+-<div align="center">
++- **ChatGPT Subscription (Codex)** — вход через браузер и оставшийся процент лимита с временем сброса в настройках провайдера. Доступ зависит от плана ChatGPT.
++- **FreeLLM** — ERNIE 5.5 Flash Preview, Beam 1.0 и Nemotron 3.5 Super VL через Kilo Gateway. Ключ не требуется, запросы обрабатываются в облаке.
++- **Автокомпакт** — по умолчанию 90 000 токенов до компакта, лимит ввода 120 000, до 40 последних сообщений.
++- **Команды агента** — Windows PowerShell по умолчанию, CMD через `CLINE_LEGACY_SHELL=cmd`.
++- **Установка** для текущего пользователя, с опциональным ярлыком на рабочем столе. Профиль — `%APPDATA%\Cline Desktop Legacy`.
+ 
+-<div align="center">
+-<table>
+-<tbody>
+-<td align="center">
+-<a href="https://docs.cline.bot" target="_blank"><strong>Docs</strong></a>
+-</td>
+-<td align="center">
+-<a href="https://discord.gg/cline" target="_blank"><strong>Discord</strong></a>
+-</td>
+-<td align="center">
+-<a href="https://www.reddit.com/r/cline/" target="_blank"><strong>r/cline</strong></a>
+-</td>
+-<td align="center">
+-<a href="https://github.com/cline/cline/discussions/categories/feature-requests?discussions_q=is%3Aopen+category%3A%22Feature+Requests%22+sort%3Atop" target="_blank"><strong>Feature Requests</strong></a>
+-</td>
+-<td align="center">
+-<a href="https://cline.bot/join-us" target="_blank"><strong>Join us!</strong></a>
+-</td>
+-</tbody>
+-</table>
+-</div>
++Релиз предварительный. Установку, обновление, запуск и удаление проверила на Windows 11. Для Windows 7 SP1 и 8.1 ранее проверили запуск Node.js и SQLite в WinPE на виртуальном Penryn. Подробности проверки находятся в описании релиза.
+ 
+-</div>
++## English
+ 
+-<br>
++Unofficial Cline Desktop for Windows 7 SP1, 8 and 8.1 x64, targeting Intel Core 2 Duo Penryn. Includes Russian and English UI, ChatGPT Codex subscription limits, context compaction, three free cloud models, and an optional desktop shortcut. See the release for verification scope.
+ 
+-<div align="center">
+-<table>
+-<tr>
+-<td align="center" width="50%">
+-
+-### CLI
+-
+-Run Cline in your terminal.
+-Interactive chat or fully headless 
+-for CI/CD and scripting.
+-
+-```
+-npm i -g cline
+-```
+-
+-<a href="./apps/cli/README.md">Learn more</a>
+-<br><br>
+-
+-</td>
+-<td align="center" width="50%">
+-
+-### Desktop App
+-
+-Cline as a native app for macOS and Windows.
+-Run agent sessions in any folder, schedule
+-routines, and manage models, plugins, and MCP servers.
+-
+-<a href="https://cline.bot/desktop">Download for macOS and Windows</a>
+-<br><br>
+-
+-</td>
+-</tr>
+-<tr>
+-<td align="center" width="50%">
+-
+-### VS Code Extension
+-
+-AI coding assistant in your editor.
+-Create files, run commands, browse the web,
+-and use tools with human-in-the-loop approval.
+-
+-<a href="https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev">Install from VS Marketplace</a>
+-<br><br>
+-
+-</td>
+-<td align="center" width="50%">
+-
+-### JetBrains Plugin
+-
+-The same Cline experience in IntelliJ IDEA,
+-PyCharm, WebStorm, GoLand, and the rest of
+-the JetBrains family.
+-
+-<a href="https://plugins.jetbrains.com/plugin/28247-cline">Install from JetBrains Marketplace</a>
+-<br><br>
+-
+-</td>
+-</tr>
+-</table>
+-</div>
+-
+-<div align="center">
+-<table>
+-<tr>
+-<td align="center">
+-
+-### SDK
+-
+-Build your own AI agents and integrations powered by the same engine that runs the CLI, desktop app, VS Code extension, and JetBrains plugin. Custom tools, multi-agent teams, connectors, scheduled automations, and more.
+-
+-```
+-npm install @cline/sdk
+-```
+-
+-<a href="https://docs.cline.bot/cline-sdk/overview">Documentation</a>
+-<br><br>
+-
+-</td>
+-</tr>
+-</table>
+-</div>
+-
+----
+-
+-## Index
+-
+-| Product | Description | Location | CHANGELOG |
+-|---------|------------|--------------|--------------|
+-| **SDK** | Node.js programmatic agent API and extension exports. | [`sdk/`](https://github.com/cline/cline/tree/main/sdk) | [CHANGELOG.md](https://github.com/cline/cline/blob/main/sdk/CHANGELOG.md) |
+-| **CLI** | Terminal UI, headless mode, shell commands, and CLI-specific flows. | [`apps/cli/`](https://github.com/cline/cline/tree/main/apps/cli) | [CHANGELOG.md](https://github.com/cline/cline/blob/main/apps/cli/CHANGELOG.md) |
+-| **VS Code Extension** | The Marketplace extension and extension host integration. | [`apps/vscode/`](https://github.com/cline/cline/tree/main/apps/vscode) | [CHANGELOG.md](https://github.com/cline/cline/blob/main/CHANGELOG.md) |
+-| **Desktop App** | Native macOS and Windows app (Tauri shell, Bun sidecar, Next.js UI). | [`apps/examples/desktop-app/`](https://github.com/cline/cline/tree/main/apps/examples/desktop-app) | [CHANGELOG.md](https://github.com/cline/cline/blob/main/apps/examples/desktop-app/CHANGELOG.md) |
+-| **JetBrains Plugin** | JetBrains-hosted client that talks to the shared agent core. | Currently we are not open-sourcing JetBrains plugins | - |
+-| **Docs site** | Public documentation pages. | [`docs/`](https://docs.cline.bot/) | - |
+-
+-## Edits Code Across Your Project
+-
+-Cline reads your project structure, understands the relationships between files, and makes coordinated changes across your codebase. It monitors linter and compiler errors as it works, fixing issues like missing imports, type mismatches, and syntax errors before you even see them. In VS Code and JetBrains, every edit shows up as a diff you can review, modify, or revert. All changes are tracked with checkpoints, so you can easily undo the agent's work.
+-
+-## Runs Bash Commands
+-
+-Cline executes commands directly in your terminal and watches the output in real time. Install packages, run build scripts, execute tests, deploy applications, manage databases. For long-running processes like dev servers, Cline continues working in the background and reacts to new output as it appears, catching compile errors, test failures, and server crashes as they happen.
+-
+-## Plan and Act
+-
+-Toggle between Plan mode and Act mode. In Plan mode, Cline explores your codebase, asks clarifying questions, and lays out a strategy. Once you're aligned, switch to Act mode and Cline executes the plan. Every file edit and terminal command requires your approval, so you stay in control of what actually changes. Or toggle auto-approve and let Cline run autonomously.
+-
+-## Rules and Skills
+-
+-Define project-specific rules in `.clinerules` files that guide how Cline works in your codebase: coding standards, architecture conventions, deployment procedures, testing requirements. Rules are picked up automatically by the CLI, VS Code extension, and JetBrains plugin. Use skills to let the model load specific rules when needed.
+-
+-## Works With Every Model
+-
+-Cline is not locked to a single AI provider. Use whichever model fits your workflow:
+-
+-| Provider | Models |
+-|----------|--------|
+-| Anthropic | Claude Opus, Sonnet, Haiku |
+-| OpenAI | GPT series models |
+-| Google | Gemini series models |
+-| OpenRouter | 200+ models from any provider |
+-| Vercel AI Gateway | Route to many providers through one gateway |
+-| AWS Bedrock | Claude, Llama, and more |
+-| Azure / GCP Vertex | All hosted models |
+-| Cerebras / Groq | Fast inference models |
+-| Ollama / LM Studio | Run local models on your machine |
+-| Any OpenAI-compatible API | Self-hosted or third-party endpoints |
+-
+-## Extend With Plugins or MCP Servers
+-
+-Extend Cline's capabilities with plugins. Using the SDK, register tools and lifecycle hooks programmatically through the plugin system for logging, auditing, policy enforcement, or adding domain-specific capabilities. Simple plugin example below.
+-
+-```typescript
+-import { Agent, createTool } from "@cline/sdk"
+-
+-const deployTool = createTool({
+-  name: "deploy",
+-  description: "Deploy the current branch to staging.",
+-  inputSchema: { type: "object", properties: { env: { type: "string" } }, required: ["env"] },
+-  execute: async (input) => {
+-    // your deployment logic
+-  },
+-})
+-
+-const agent = new Agent({ tools: [deployTool], /* ... */ })
+-```
+-...or use [MCPs](https://github.com/modelcontextprotocol) to connect to databases, query APIs, manage cloud infrastructure, and interact with external systems. Use [community-built servers](https://github.com/modelcontextprotocol/servers) or ask Cline to create custom tools on the fly. In the CLI, manage servers with `cline mcp`.
+-
+-## Multi-Agent Teams
+-
+-Coordinate multiple agents working together on complex tasks. A coordinator agent breaks the work into subtasks and delegates to specialist agents, each with their own tools and context. Team state persists across sessions so you can pick up where you left off.
+-
+-```bash
+-cline --team-name auth-sprint "Plan and implement user authentication with tests"
+-```
+-
+-## Scheduled Agents
+-
+-Run agents on cron schedules for recurring automations. Daily PR summaries, weekly dependency checks, codebase health reports. Schedules persist across restarts and run independently of any terminal session.
+-
+-```bash
+-cline schedule create "PR summary" \
+-  --cron "0 9 * * MON-FRI" \
+-  --prompt "List all open PRs and their review status" \
+-  --workspace /path/to/repo
+-```
+-
+-## Connect to Slack, Telegram, Discord, and More
+-
+-Chat with your agent from any messaging platform: Telegram, Slack, Discord, Google Chat, WhatsApp, and Linear. Each conversation thread maps to an agent session with full context. Set up access control to restrict who can interact with your agent.
+-
+-```bash
+-# Connect to Telegram
+-cline connect telegram -k $BOT_TOKEN
+-# Connect to Slack through webhook
+-cline connect slack --bot-token $SLACK_TOKEN --signing-secret $SECRET --base-url $URL
+-# Connect to Slack using socket mode
+-cline connect slack --bot-token $SLACK_TOKEN --app-token $SLACK_APP_TOKEN
+-```
+-
+-## Headless CLI for CI/CD
+-
+-Run Cline with zero interaction for scripting and automation. Pipe input, get JSON output, chain commands, integrate into CI/CD pipelines.
+-
+-```bash
+-cline "Run tests and fix any failures"
+-git diff origin/main | cline "Review these changes for issues"
+-cline --json "List all TODO comments" | jq -r 'select(.type == "agent_event" and .event.text) | .event.text'
+-```
+-
+-## Contributing
+-
+-Start with the [Contributing Guide](CONTRIBUTING.md). Join our [Discord](https://discord.gg/cline) and head to the `#contributors` channel to connect with other contributors. Check our [careers page](https://cline.bot/join-us) for full-time roles.
+-
+-## License
+-
+-[Apache 2.0 © 2026 Cline Bot Inc.](./LICENSE)
++[Upstream Cline](https://github.com/cline/cline) · [Previous Ivy Bridge AVX1 branch](https://github.com/aktalascloud/cline-desktop-legacy/tree/avx1)
+diff --git a/apps/examples/desktop-app/legacy/PERFORMANCE.md b/apps/examples/desktop-app/legacy/PERFORMANCE.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..878c97d468e52086bb12b752bf27b6b46243e351
+--- /dev/null
++++ b/apps/examples/desktop-app/legacy/PERFORMANCE.md
+@@ -0,0 +1,51 @@
++# Производительность Cline Desktop Legacy 0.0.51-legacy.2
++
++Целевой процессор — Core 2 Duo P9700 (Penryn), два ядра, x64 и SSE4.1. Установщик проверяет Windows 7 SP1 или новее и SSE3 до распаковки. В сборку входит готовый Electron Legacy 44.11.5. Флаги `-march=penryn`, `-mtune=penryn`, LTO и PGO требуют компиляции движка из исходников и здесь не применялись. Для такой сборки нужно отдельно проверить инструкции и рантайм Chromium, Node и SQLite на Windows 7 и 8.1. Для P9700 следует исключить SSE4.2, POPCNT и AVX из обязательного набора инструкций. [Исходники Electron Legacy](https://github.com/Alex313031/electron-legacy/tree/v44.11.5-src) · [Проверка SSE3 в Win32](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-isprocessorfeaturepresent)
++
++## Запуск и интерфейс
++
++- Создание окна и загрузка локального интерфейса начинаются одновременно с запуском sidecar. Первый запрос ждёт его адрес по IPC. Нативный обработчик проверяет окно и фрейм, затем интерфейс подключается к loopback WebSocket.
++- Настройки загружаются отдельным пакетом. Наведение на кнопку или перевод на неё фокуса начинает загрузку до клика. Панель терминала, список сессий и файловые панели по-прежнему загружаются по необходимости.
++- Чат использует сгруппированные и мемоизированные строки. Обработчик потока накапливает дельты и ограничивает обновления примерно до 20 коммитов React в секунду. Для оценки длительной сессии нужны отдельные замеры прокрутки, разметки Markdown и длинных кадров при локальном повторе потока. Виртуализация строк меняет геометрию и якоря прокрутки. Её нужно проверять на длинном тексте, свёрнутых инструментах и изображениях.
++- В установщик входят минифицированные пакеты SDK, статический интерфейс Next.js и ресурсы Chromium en-US/ru. Сохранены лимит дискового кэша в 32 МиБ, два потока libuv и локальный WebSocket без сжатия. В обычном запуске движок выбирает аппаратное ускорение и режим фоновой отрисовки.
++
++## Методика
++
++Параллельный и последовательный запуск сравниваются на одном бинарнике с новым профилем на каждый запуск. Поля `pageLoaded`, `sidecarReady` и `hubChecked` отсчитываются в миллисекундах от начала основного JavaScript. `pageLoaded` соответствует завершению загрузки документа, а `hubChecked` — ответам о готовности Hub, настройках и провайдерах. Загрузка EXE до выполнения JavaScript в эти числа не входит.
++
++Переключение — первый вход в настройки после обхода onboarding в тестовом профиле. Вариант `--settings-intent` даёт пакету 300 мс после фокуса и перед кликом. Временем переключения считается появление DOM настроек. Поля кадров показывают интервалы `requestAnimationFrame` за 1,5 с в offscreen-режиме. Они описывают тестовый рендер. Частота физического дисплея, драйвер и плавность длительного чата требуют отдельного замера.
++
++```powershell
++$profile = New-Item -ItemType Directory (Join-Path $env:TEMP ("cline-bench-" + [guid]::NewGuid()))
++$out = Join-Path $profile.FullName 'report.json'
++$p = Start-Process -WindowStyle Hidden -PassThru .\ClineLegacy.exe -ArgumentList @(
++  "--smoke-test=`"$out`"", '--profile-switch', '--settings-intent'
++)
++if (!$p.WaitForExit(95000)) { throw 'Smoke test timed out' }
++Get-Content -LiteralPath $out -Raw
++```
++
++Для контрольного запуска добавьте `--serial-startup`. Для замера переключения без предподгрузки опустите `--settings-intent`. Для измерения только запуска опустите `--profile-switch`. Новый путь к отчёту в новом каталоге даёт чистый профиль.
++
++## Результаты 28 ноября 2026 года
++
++Windows 11 Pro 26200, Xeon E5-2696 v3. Процесс запуска теста ограничен маской affinity `0x3`. На каждое сочетание режима запуска и предварительной загрузки выполнено по три прогона, всего 12 новых профилей. Часть прогонов шла при фоновой упаковке NSIS. Это замеры относительных задержек на тестовой машине. Частоты, кэш и GPU Penryn не моделировались.
++
++| Метрика, медиана | Контроль | Новый режим |
++| --- | ---: | ---: |
++| Завершение загрузки страницы, последовательный и параллельный запуск | 3 689 мс | 2 520 мс |
++| Hub и ответы контрольных запросов, последовательный и параллельный запуск | 5 546 мс | 5 926 мс |
++| Клик до DOM настроек, без и с предварительной загрузкой | 636 мс | 438 мс |
++| Максимальный интервал callback кадров в прогоне, без и с предварительной загрузкой | 852 мс | 705 мс |
++
++Интерфейс загружался раньше, а проверка готовности Hub заняла примерно на 380 мс больше. Предварительная загрузка сокращала задержку после клика при тестовом интервале фокуса 300 мс. В offscreen-режиме медиана количества callback кадров за прогон составила 4 и 28,5 соответственно. Разброс велик, поэтому эти значения не дают оценки FPS или подтверждения снижения джанка на физическом P9700.
++
++## Проверка исходников и PR
++
++Официальный Desktop оставался на `desktop-v0.0.51`. Коммит `main` после тега выпустил VS Code и не менял Desktop или SDK. Код повторного восстановления после переполнения из [PR 15676](https://github.com/cline/cline/pull/15676) уже присутствовал в ветке. Поля контекста при обнаружении моделей из [PR 15677](https://github.com/cline/cline/pull/15677) были адаптированы в существующем патче. [PR 15678](https://github.com/cline/cline/pull/15678) относится к Pino в бинарнике Bun. В Legacy запускается отдельный Node-процесс Electron.
++
++[PR 15886](https://github.com/cline/cline/pull/15886) исправляет разрешение путей входных файлов при упаковке бинарника CLI. Legacy собирает sidecar прямо из исходников на диске проекта и список лицензий формируется в его конвейере. [PR 14208](https://github.com/cline/cline/pull/14208) читает локальную историю использования разных клиентов. Квоту подписки в этой сборке запрашивает ChatGPT. [PR 11148](https://github.com/cline/cline/pull/11148) касается обновления OAuth, которым здесь управляет существующая блокировка SDK.
++
++Вход ChatGPT берётся из официального провайдера Cline. Панель лимитов запрашивает квоту по пути, который использует Codex. Данные OAuth остаются в sidecar. [Планы ChatGPT с Codex](https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan) · [Исходник клиента лимитов Codex](https://github.com/openai/codex/blob/main/codex-rs/backend-client/src/client/rate_limit_resets.rs)
++
++Модели FreeLLM сверены 28 ноября 2026 года. У всех трёх прошёл синтетический потоковый вызов инструмента через Kilo без ключа. Ранжирование учитывает действующие бесплатные модели с опубликованным сопоставимым баллом и инструментами. [Artificial Analysis](https://artificialanalysis.ai/models/releases) · [Kilo Gateway](https://kilo.ai/docs/gateway/models-and-providers)
+diff --git a/apps/examples/desktop-app/legacy/README.md b/apps/examples/desktop-app/legacy/README.md
+index 1e95987fc9166692cc3ba32540fd640207cc65b5..dabe8ce7add3581a8be401ac38cc10e5944c281c 100644
+--- a/apps/examples/desktop-app/legacy/README.md
++++ b/apps/examples/desktop-app/legacy/README.md
+@@ -1,18 +1,26 @@
+-# Cline Desktop Legacy RU 0.0.51-legacy.1
++# Cline Desktop Legacy RU 0.0.51-legacy.2
+ 
+ Неофициальная сборка Cline Desktop для 64-битных Windows 7 SP1, 8 и 8.1. Целевой процессор — Intel Core 2 Duo P9700 (Penryn, 2 ядра, SSE4.1). Интерфейс и SDK взяты из тега `desktop-v0.0.51`.
+ 
+-NSIS устанавливает приложение для текущего пользователя и добавляет ярлык в «Пуск». WebView2 и Bun на компьютере пользователя не нужны. Настройки, история и ключи этого порта хранятся в `%APPDATA%\Cline Desktop Legacy`, отдельно от стандартного клиента. Удаление через «Программы и компоненты» сохраняет их. Установщик не подписан.
++NSIS устанавливает приложение для текущего пользователя и добавляет ярлык в «Пуск». На странице компонентов можно отметить «Создать ярлык на рабочем столе». При тихой установке для этого предусмотрен параметр `/DESKTOPSHORTCUT`. WebView2 и Bun на компьютере пользователя не нужны. Настройки, история и ключи этого порта хранятся в `%APPDATA%\Cline Desktop Legacy`, отдельно от стандартного клиента. Удаление через «Программы и компоненты» сохраняет их. Установщик не подписан.
+ 
+ Вместо Tauri и Bun используется [Electron Legacy 44.11.5](https://github.com/Alex313031/electron-legacy/releases/tag/v44.11.5) с Node.js 24.22.3. Интерфейс открывается из локальной сборки, управление идёт через WebSocket на loopback с проверкой origin и токена. Лимит дискового кэша Chromium — 32 МиБ. Пул ввода-вывода Node ограничен двумя потоками, WebSocket передаёт локальные сообщения без сжатия. В инсталляторе оставлены ресурсы Chromium для en-US и ru.
+ 
+-Доступны отдельный профиль, выбор папки и штатный локальный Hub. Встроенный терминал, нативный трей, автоматическое обновление и внешние SSH-помощники требуют дополнительной адаптации. Для генерации настройте модель в Cline. Производительность модели зависит от машины, на которой она запущена.
++Доступны отдельный профиль, выбор папки и штатный локальный Hub. Встроенный терминал, нативный трей, автоматическое обновление и внешние SSH-помощники требуют дополнительной адаптации. Для генерации настройте модель в Cline.
+ 
+ Русский интерфейс включён по умолчанию. В настройках можно переключиться на English. Автокомпакт включён по умолчанию, порог составляет 90 000 токенов, лимит ввода — 120 000, сохраняется до 40 последних сообщений с учётом бюджета модели. Полная история остаётся на диске.
+ 
+-В списке провайдеров доступен FreeLLM через Kilo Gateway. Для него ключ не нужен. Каталог включает ERNIE 5.5 Flash Preview, Beam 1.0 и Nemotron 3.5 Super VL с баллами 31, 18 и 14 по Artificial Analysis Intelligence Index среди бесплатных моделей шлюза с подтверждённой оценкой и поддержкой инструментов. Доступность проверена 27 ноября 2026 года. У шлюза общий лимит 200 запросов в час на IP. Запросы уходят в облако и могут журналироваться. Бесплатный endpoint NVIDIA предназначен для пробного использования, без личных или конфиденциальных данных. [Методика и оценки](https://artificialanalysis.ai/models/releases) · [Условия доступа Kilo](https://kilo.ai/docs/gateway/models-and-providers)
++В списке провайдеров доступен FreeLLM через Kilo Gateway. Для него ключ не нужен. Каталог включает ERNIE 5.5 Flash Preview, Beam 1.0 и Nemotron 3.5 Super VL с баллами 31, 18 и 14 по Artificial Analysis Intelligence Index среди бесплатных моделей шлюза с подтверждённой оценкой и поддержкой инструментов. Потоковые вызовы инструментов у всех трёх проверены 28 ноября 2026 года. У шлюза общий лимит 200 запросов в час на IP. Запросы уходят в облако и могут журналироваться. Бесплатный endpoint NVIDIA предназначен для пробного использования, без личных или конфиденциальных данных. [Методика и оценки](https://artificialanalysis.ai/models/releases) · [Условия доступа Kilo](https://kilo.ai/docs/gateway/models-and-providers)
+ 
+-Перенесены патчи [02–04 из ветки AVX1](https://github.com/aktalascloud/cline-desktop-ivybridge-avx1/tree/292f1627d48d97f078dfd9f9de551dc9c1c387a0/patches/local). Legacy использует свой установщик и собственный рантайм для Penryn.
++Перенесены патчи [02–04 из ветки AVX1](https://github.com/aktalascloud/cline-desktop-legacy/tree/292f1627d48d97f078dfd9f9de551dc9c1c387a0/patches/local). Legacy использует свой установщик и собственный рантайм для Penryn.
++
++## Подписка ChatGPT и команды агента
++
++В настройках провайдеров выберите **ChatGPT Subscription (Codex)** и войдите через браузер. В карточке после входа появится оставшийся процент квоты по окнам и время сброса, если ChatGPT возвращает эти данные. Кнопка обновления запрашивает актуальные лимиты. Для такого входа достаточно подписки с доступом к Codex. Лимиты берутся из ответа ChatGPT, независимо от счётчика токенов Cline.
++
++Агент использует штатный Windows PowerShell без загрузки профиля. Команды передаются через UTF-8 stdin. Для CMD задайте `CLINE_LEGACY_SHELL=cmd` в окружении до запуска приложения и его Hub. При смене окружения завершите приложение и его Hub, чтобы новый сеанс получил настройку. Команду для CMD окружает внешняя пара кавычек, а внутренние кавычки передаются без экранирования Node. Для русскоязычного вывода на старых системах используйте PowerShell с UTF-8. Вывод внешних утилит в CMD зависит от их кодовой страницы.
++
++[Исследование производительности](PERFORMANCE.md) и сценарий замеров входят в исходники.
+ 
+ ## Сборка
+ 
+@@ -28,6 +36,6 @@ bun -F @cline/code build:web
+ bun apps/examples/desktop-app/legacy/package.mts C:\Build\ElectronLegacy C:\Build\NSIS\makensis.exe ..\dist
+ ```
+ 
+-Результат — `Cline_0.0.51-legacy.1_x64-setup.exe`. После упаковки для повторной сборки заново выполните `build:web`, чтобы восстановить карты исходников для списка лицензий.
++Результат — `Cline_0.0.51-legacy.2_x64-setup.exe`. После упаковки для повторной сборки заново выполните `build:web`, чтобы восстановить карты исходников для списка лицензий.
+ 
+-После установки для проверки запуска выполните `ClineLegacy.exe --smoke-test=C:\Temp\cline-qa\result.json`. Каталог результата служит изолированным профилем проверки. Отчёт содержит язык интерфейса, версию, настройки автокомпакта, список моделей FreeLLM и состояние подключения к Hub.
++После установки для проверки запуска выполните `ClineLegacy.exe --smoke-test=C:\Temp\cline-qa\result.json`. Каталог результата служит изолированным профилем проверки. Отчёт содержит язык интерфейса, версию, настройки автокомпакта, список моделей FreeLLM, состояние подключения к Hub и отметки времени запуска. `--profile-switch` дополнительно измеряет первый переход к настройкам.
+diff --git a/apps/examples/desktop-app/legacy/installer.nsi b/apps/examples/desktop-app/legacy/installer.nsi
+index bca334aecb3d01677f43f6c3dd84d993fc86e901..0ed22f34d7604b31bd9cdfe05307eb675ed3f360 100644
+--- a/apps/examples/desktop-app/legacy/installer.nsi
++++ b/apps/examples/desktop-app/legacy/installer.nsi
+@@ -5,6 +5,8 @@ SetCompressorDictSize 16
+ 
+ !include MUI2.nsh
+ !include LogicLib.nsh
++!include FileFunc.nsh
++!include Sections.nsh
+ !include WinVer.nsh
+ !include x64.nsh
+ !include "Win\RestartManager.nsh"
+@@ -15,7 +17,7 @@ Name "${PRODUCT}"
+ OutFile "${CLINE_INSTALLER}"
+ InstallDir "$LOCALAPPDATA\Programs\Cline Desktop Legacy"
+ InstallDirRegKey HKCU "${UNINSTALL_KEY}" InstallLocation
+-VIProductVersion "0.0.51.1"
++VIProductVersion "${CLINE_NUMERIC_VERSION}"
+ VIAddVersionKey "FileDescription" "Cline Desktop Legacy Setup"
+ VIAddVersionKey "ProductName" "${PRODUCT}"
+ VIAddVersionKey "FileVersion" "${CLINE_DISPLAY_VERSION}"
+@@ -23,13 +25,22 @@ VIAddVersionKey "LegalCopyright" "Cline contributors"
+ !define MUI_ICON "${CLINE_STAGE}\resources\app\icon.ico"
+ !define MUI_UNICON "${CLINE_STAGE}\resources\app\icon.ico"
+ 
++!define MUI_COMPONENTSPAGE_NODESC
++!insertmacro MUI_PAGE_COMPONENTS
+ !insertmacro MUI_PAGE_INSTFILES
+ !insertmacro MUI_UNPAGE_CONFIRM
+ !insertmacro MUI_UNPAGE_INSTFILES
+ !insertmacro MUI_LANGUAGE "English"
+ !insertmacro MUI_LANGUAGE "Russian"
+ 
+-Function .onInit
++LangString InstallLabel ${LANG_ENGLISH} "Cline Desktop Legacy"
++LangString InstallLabel ${LANG_RUSSIAN} "Cline Desktop Legacy"
++LangString ShortcutLabel ${LANG_ENGLISH} "Create a desktop shortcut"
++LangString ShortcutLabel ${LANG_RUSSIAN} "Создать ярлык на рабочем столе"
++LangString MissingSse3 ${LANG_ENGLISH} "Cline Desktop Legacy requires a processor with SSE3 support."
++LangString MissingSse3 ${LANG_RUSSIAN} "Для Cline Desktop Legacy требуется процессор с поддержкой SSE3."
++
++Function CheckRequirements
+   ${IfNot} ${RunningX64}
+   ${OrIfNot} ${AtLeastWin7}
+     MessageBox MB_OK|MB_ICONSTOP "Cline Desktop Legacy requires 64-bit Windows 7 SP1 or later." /SD IDOK
+@@ -42,6 +53,13 @@ Function .onInit
+     SetErrorLevel 2
+     Abort
+   ${EndIf}
++  ; PF_SSE3_INSTRUCTIONS_AVAILABLE is supported on Windows 7.
++  System::Call 'kernel32::IsProcessorFeaturePresent(i 13) i .r0'
++  ${If} $0 == 0
++    MessageBox MB_OK|MB_ICONSTOP "$(MissingSse3)" /SD IDOK
++    SetErrorLevel 2
++    Abort
++  ${EndIf}
+ FunctionEnd
+ 
+ !macro ReleaseExecutable PREFIX
+@@ -74,7 +92,8 @@ FunctionEnd
+ !insertmacro ReleaseExecutable ""
+ !insertmacro ReleaseExecutable "un."
+ 
+-Section "Install"
++Section "$(InstallLabel)"
++  SectionIn RO
+   Call ReleaseExecutable
+   SetOutPath "$INSTDIR"
+   File /r "${CLINE_STAGE}\*"
+@@ -89,10 +108,26 @@ Section "Install"
+   CreateShortCut "$SMPROGRAMS\Cline Desktop Legacy.lnk" "$INSTDIR\ClineLegacy.exe" "" "$INSTDIR\resources\app\icon.ico"
+ SectionEnd
+ 
++Section /o "$(ShortcutLabel)" SEC_SHORTCUT
++  SetOutPath "$INSTDIR"
++  CreateShortCut "$DESKTOP\Cline Desktop Legacy.lnk" "$INSTDIR\ClineLegacy.exe" "" "$INSTDIR\resources\app\icon.ico"
++SectionEnd
++
++Function .onInit
++  Call CheckRequirements
++  ${GetParameters} $0
++  ClearErrors
++  ${GetOptions} $0 "/DESKTOPSHORTCUT" $1
++  ${IfNot} ${Errors}
++    !insertmacro SelectSection ${SEC_SHORTCUT}
++  ${EndIf}
++FunctionEnd
++
+ Section "Uninstall"
+   Call un.ReleaseExecutable
+   !include "${CLINE_UNINSTALL_FILES}"
+   Delete "$INSTDIR\Uninstall.exe"
++  Delete "$DESKTOP\Cline Desktop Legacy.lnk"
+   Delete "$SMPROGRAMS\Cline Desktop Legacy.lnk"
+   DeleteRegKey HKCU "${UNINSTALL_KEY}"
+   RMDir "$INSTDIR"
+diff --git a/apps/examples/desktop-app/legacy/main.cjs b/apps/examples/desktop-app/legacy/main.cjs
+index feca33e628c175beeaadd8f8b0e7deddd2bebc81..26be9be053a5ed3b050a2b8091453ea0acac28a2 100644
+--- a/apps/examples/desktop-app/legacy/main.cjs
++++ b/apps/examples/desktop-app/legacy/main.cjs
+@@ -13,12 +13,21 @@ const { createServer } = require("node:net");
+ const { dirname, join, resolve, sep } = require("node:path");
+ const { pathToFileURL } = require("node:url");
+ 
++const startedAt = performance.now();
++const timings = {};
+ const origin = "cline://desktop";
+ const webRoot = join(__dirname, "web");
+ const runtimeRoot = join(__dirname, "runtime");
+ const stateRoot = join(app.getPath("appData"), "Cline Desktop Legacy");
+ const smokeFlag = process.argv.find((arg) => arg.startsWith("--smoke-test="));
+ const smokeOutput = smokeFlag?.slice("--smoke-test=".length);
++const serialSmoke = Boolean(
++	smokeOutput && process.argv.includes("--serial-startup"),
++);
++const profileSwitch = Boolean(
++	smokeOutput && process.argv.includes("--profile-switch"),
++);
++let backendEndpoint;
+ app.setPath(
+ 	"userData",
+ 	smokeOutput ? join(dirname(resolve(smokeOutput)), "profile") : stateRoot,
+@@ -190,6 +199,8 @@ ipcMain.handle("cline:native", async (event, command, args) => {
+ 		throw new Error("Invalid Cline window");
+ 	}
+ 	switch (command) {
++		case "get_desktop_backend_endpoint":
++			return backendEndpoint;
+ 		case "pick_workspace_directory": {
+ 			const { filePaths } = await dialog.showOpenDialog(window, {
+ 				defaultPath:
+@@ -215,8 +226,8 @@ ipcMain.handle("cline:native", async (event, command, args) => {
+ });
+ 
+ async function runSmokeTest() {
+-	return window.webContents.executeJavaScript(`new Promise((resolve, reject) => {
+-		const socket = new WebSocket(window.__SIDECAR_WS_ENDPOINT__);
++	return window.webContents.executeJavaScript(`window.clineLegacy.invoke("get_desktop_backend_endpoint").then(endpoint => new Promise((resolve, reject) => {
++		const socket = new WebSocket(endpoint);
+ 		const timer = setTimeout(() => { socket.close(); reject(Error("Hub smoke test timed out")); }, 60000);
+ 		const replies = new Map();
+ 		const request = (id, command, args) => socket.send(JSON.stringify({ type: "command", id, command, args }));
+@@ -232,6 +243,7 @@ async function runSmokeTest() {
+ 				}
+ 				if (message.event.payload.state === "ready" && !started) {
+ 					started = true;
++					request("codexUsage", "get_codex_usage");
+ 					request("version", "get_process_context");
+ 					request("compaction", "get_compaction_settings");
+ 					request("models", "list_provider_models", { provider: "freellm" });
+@@ -245,7 +257,7 @@ async function runSmokeTest() {
+ 				return;
+ 			}
+ 			replies.set(message.id, message.result);
+-			if (replies.size === 3) {
++			if (replies.size === 4) {
+ 				clearTimeout(timer);
+ 				socket.close();
+ 				resolve({
+@@ -256,16 +268,75 @@ async function runSmokeTest() {
+ 					renderer: Boolean(document.querySelector("main,button")),
+ 					version: replies.get("version")?.appVersion,
+ 					compaction: replies.get("compaction"),
++					codexSignedOut: replies.get("codexUsage") === null,
+ 					models: replies.get("models")?.models?.map(model => model.id),
+ 				});
+ 			}
+ 		};
+-	})`);
++	}))`);
++}
++
++async function measureSettingsSwitch(webContents) {
++	await webContents.executeJavaScript(`localStorage.setItem(
++		"cline.code.onboarding.v1", JSON.stringify({ completedAt: new Date().toISOString() })
++	)`);
++	await window.loadURL(origin + "/");
++	const withIntent = process.argv.includes("--settings-intent");
++	return webContents.executeJavaScript(`(async () => {
++		const selector = '[data-legacy-settings-button]';
++		const deadline = performance.now() + 5000;
++		let button;
++		while (!(button = document.querySelector(selector)) && performance.now() < deadline) {
++			await new Promise((resolve) => setTimeout(resolve, 25));
++		}
++		if (!button) return null;
++		if (${withIntent}) {
++			button.focus();
++			await new Promise((resolve) => setTimeout(resolve, 300));
++		}
++		const started = performance.now();
++		const frames = [];
++		let previous = started;
++		let mountedAt;
++		const observer = new MutationObserver(() => {
++			if (document.querySelector('.cline-settings-content')) {
++				mountedAt = performance.now() - started;
++				observer.disconnect();
++			}
++		});
++		observer.observe(document.body, { childList: true, subtree: true });
++		let frameId;
++		function recordFrame() {
++			const now = performance.now();
++			frames.push(now - previous);
++			previous = now;
++			frameId = requestAnimationFrame(recordFrame);
++		}
++		frameId = requestAnimationFrame(recordFrame);
++		button.click();
++		await new Promise((resolve) => setTimeout(resolve, 1500));
++		cancelAnimationFrame(frameId);
++		observer.disconnect();
++		return {
++			withIntent: ${withIntent},
++			mountedMs: mountedAt ?? null,
++			frameCount: frames.length,
++			over34ms: frames.filter((ms) => ms > 34).length,
++			maxFrameMs: frames.length ? Math.max(...frames) : null,
++		};
++	})()`);
+ }
+ 
+ async function start() {
+ 	protocol.handle("cline", serveWeb);
+-	const endpoint = await startBackend();
++	timings.electronReady = performance.now() - startedAt;
++	backendEndpoint = startBackend().then((endpoint) => {
++		timings.sidecarReady = performance.now() - startedAt;
++		return endpoint;
++	});
++	// Observe early startup failures even when the renderer fails independently.
++	void backendEndpoint.catch(() => {});
++	if (serialSmoke) await backendEndpoint;
+ 	window = new BrowserWindow({
+ 		width: 1080,
+ 		height: 700,
+@@ -280,7 +351,8 @@ async function start() {
+ 			sandbox: true,
+ 			contextIsolation: true,
+ 			nodeIntegration: false,
+-			additionalArguments: [`--cline-sidecar=${endpoint}`],
++			backgroundThrottling: !profileSwitch,
++			offscreen: profileSwitch,
+ 		},
+ 	});
+ 	window.webContents.on("will-navigate", (event, url) => {
+@@ -293,12 +365,23 @@ async function start() {
+ 		if (!isAppUrl(url)) void openExternal(url).catch(() => {});
+ 		return { action: "deny" };
+ 	});
+-	await window.loadURL(origin + "/");
++	const pageLoaded = window.loadURL(origin + "/").then(() => {
++		timings.pageLoaded = performance.now() - startedAt;
++	});
++	await Promise.all([pageLoaded, backendEndpoint]);
+ 	if (smokeOutput) {
+ 		const result = await runSmokeTest();
++		timings.hubChecked = performance.now() - startedAt;
++		const switchTiming = profileSwitch
++			? await measureSettingsSwitch(window.webContents)
++			: undefined;
+ 		writeFileSync(
+ 			smokeOutput,
+-			JSON.stringify({ ...result, versions: process.versions }, null, 2),
++			JSON.stringify(
++				{ ...result, timings, switchTiming, versions: process.versions },
++				null,
++				2,
++			),
+ 		);
+ 		app.quit();
+ 	}
+diff --git a/apps/examples/desktop-app/legacy/package.json b/apps/examples/desktop-app/legacy/package.json
+index 441708b95a9441706f80126a24ec05aff8140aa7..ec06b316e656d1dec0bb0b7b93359f90f5ec46f5 100644
+--- a/apps/examples/desktop-app/legacy/package.json
++++ b/apps/examples/desktop-app/legacy/package.json
+@@ -1,6 +1,6 @@
+ {
+ 	"name": "cline-desktop-legacy",
+-	"version": "0.0.51-legacy.1",
++	"version": "0.0.51-legacy.2",
+ 	"private": true,
+ 	"main": "main.cjs"
+ }
+diff --git a/apps/examples/desktop-app/legacy/package.mts b/apps/examples/desktop-app/legacy/package.mts
+index 9de8a47aa9f5f743d2f8f7ce23d1ae84eb0b42a0..af7421a2c1a9fdd99408368e794202e3e467d2b7 100644
+--- a/apps/examples/desktop-app/legacy/package.mts
++++ b/apps/examples/desktop-app/legacy/package.mts
+@@ -137,6 +137,7 @@ try {
+ 		`/DCLINE_STAGE=${stage}`,
+ 		`/DCLINE_INSTALLER=${target}`,
+ 		`/DCLINE_DISPLAY_VERSION=${version}`,
++		`/DCLINE_NUMERIC_VERSION=${version.replace("-legacy.", ".")}`,
+ 		`/DCLINE_UNINSTALL_FILES=${uninstall}`,
+ 		join(legacy, "installer.nsi"),
+ 	]);
+diff --git a/apps/examples/desktop-app/legacy/preload.cjs b/apps/examples/desktop-app/legacy/preload.cjs
+index 5da2a43a31f4790ec129cd0b9eff7a4439da570d..e29adba0887a0621b88a0b740e147aa073dee10f 100644
+--- a/apps/examples/desktop-app/legacy/preload.cjs
++++ b/apps/examples/desktop-app/legacy/preload.cjs
+@@ -1,13 +1,5 @@
+ const { contextBridge, ipcRenderer } = require("electron");
+ 
+-const prefix = "--cline-sidecar=";
+-const endpoint = process.argv.find((arg) => arg.startsWith(prefix));
+-if (endpoint) {
+-	contextBridge.exposeInMainWorld(
+-		"__SIDECAR_WS_ENDPOINT__",
+-		endpoint.slice(prefix.length),
+-	);
+-}
+ contextBridge.exposeInMainWorld("clineLegacy", {
+ 	invoke: (command, args) => ipcRenderer.invoke("cline:native", command, args),
+ });
+diff --git a/apps/examples/desktop-app/sidecar/codex-usage.test.ts b/apps/examples/desktop-app/sidecar/codex-usage.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..a9b601fa0cf849906c3f70ff23bef0373978fdc1
+--- /dev/null
++++ b/apps/examples/desktop-app/sidecar/codex-usage.test.ts
+@@ -0,0 +1,95 @@
++import { afterEach, expect, it, vi } from "vitest";
++import { getCodexUsage, parseCodexUsage } from "./codex-usage";
++
++const resolveProviderApiKey = vi.hoisted(() => vi.fn());
++vi.mock("@cline/core", () => ({
++	RuntimeOAuthTokenManager: class {
++		resolveProviderApiKey = resolveProviderApiKey;
++	},
++}));
++
++afterEach(() => {
++	vi.unstubAllGlobals();
++	resolveProviderApiKey.mockReset();
++});
++
++it("uses the signed-in account only against the ChatGPT usage endpoint", async () => {
++	resolveProviderApiKey.mockResolvedValue({
++		apiKey: "synthetic-access-token",
++		accountId: "synthetic-account-id",
++	});
++	const request = vi.fn().mockResolvedValue(
++		Response.json({
++			account_id: "synthetic-account-id",
++			rate_limit: { primary_window: { used_percent: 42 } },
++		}),
++	);
++	vi.stubGlobal("fetch", request);
++	expect(await getCodexUsage()).toEqual({
++		limits: [{ windows: [{ usedPercent: 42 }] }],
++	});
++	expect(resolveProviderApiKey).toHaveBeenCalledWith({
++		providerId: "openai-codex",
++	});
++	expect(request).toHaveBeenCalledTimes(1);
++	const [url, init] = request.mock.calls[0];
++	expect(url).toBe("https://chatgpt.com/backend-api/wham/usage");
++	expect(init.redirect).toBe("error");
++	expect(init.headers.get("Authorization")).toBe(
++		"Bearer synthetic-access-token",
++	);
++	expect(init.headers.get("ChatGPT-Account-Id")).toBe("synthetic-account-id");
++});
++
++it("skips the network without OAuth credentials", async () => {
++	resolveProviderApiKey.mockResolvedValue(null);
++	const request = vi.fn();
++	vi.stubGlobal("fetch", request);
++	expect(await getCodexUsage()).toBeNull();
++	expect(request).not.toHaveBeenCalled();
++});
++
++it("reads subscription and additional model limit windows", () => {
++	expect(
++		parseCodexUsage({
++			plan_type: "plus",
++			rate_limit: {
++				primary_window: {
++					used_percent: 23.5,
++					limit_window_seconds: 18000,
++					reset_at: 1795885200,
++				},
++				secondary_window: { used_percent: 100, limit_window_seconds: 604800 },
++			},
++			additional_rate_limits: [
++				{
++					limit_name: "Extra model",
++					rate_limit: { primary_window: { used_percent: 0 } },
++				},
++			],
++		}),
++	).toEqual({
++		plan: "plus",
++		limits: [
++			{
++				windows: [
++					{ usedPercent: 23.5, windowSeconds: 18000, resetsAt: 1795885200 },
++					{ usedPercent: 100, windowSeconds: 604800 },
++				],
++			},
++			{ label: "Extra model", windows: [{ usedPercent: 0 }] },
++		],
++	});
++});
++
++it("does not report missing or invalid limits as an unused quota", () => {
++	expect(parseCodexUsage(null).limits).toEqual([]);
++	expect(
++		parseCodexUsage({
++			rate_limit: {
++				primary_window: { used_percent: null },
++				secondary_window: { used_percent: -1 },
++			},
++		}).limits,
++	).toEqual([]);
++});
+diff --git a/apps/examples/desktop-app/sidecar/codex-usage.ts b/apps/examples/desktop-app/sidecar/codex-usage.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..941c1476017184dda8758db04e527847008b154d
+--- /dev/null
++++ b/apps/examples/desktop-app/sidecar/codex-usage.ts
+@@ -0,0 +1,86 @@
++import { RuntimeOAuthTokenManager } from "@cline/core";
++
++const tokenManager = new RuntimeOAuthTokenManager();
++
++type UsageWindow = {
++	usedPercent: number;
++	windowSeconds?: number;
++	resetsAt?: number;
++};
++export type CodexUsage = {
++	plan?: string;
++	limits: { label?: string; windows: UsageWindow[] }[];
++};
++
++function object(value: unknown): Record<string, unknown> {
++	return value !== null && typeof value === "object"
++		? (value as Record<string, unknown>)
++		: {};
++}
++
++function positive(value: unknown): number | undefined {
++	return typeof value === "number" && Number.isFinite(value) && value > 0
++		? value
++		: undefined;
++}
++
++function parseWindow(value: unknown): UsageWindow[] {
++	const window = object(value);
++	const used = window.used_percent;
++	if (typeof used !== "number" || !Number.isFinite(used) || used < 0) return [];
++	return [
++		{
++			usedPercent: Math.min(used, 100),
++			windowSeconds: positive(window.limit_window_seconds),
++			resetsAt: positive(window.reset_at),
++		},
++	];
++}
++
++export function parseCodexUsage(response: unknown): CodexUsage {
++	const data = object(response);
++	const extra = Array.isArray(data.additional_rate_limits)
++		? data.additional_rate_limits
++		: [];
++	const buckets = [
++		{ rate_limit: data.rate_limit },
++		...extra.slice(0, 20).map(object),
++	];
++	return {
++		plan: typeof data.plan_type === "string" ? data.plan_type : undefined,
++		limits: buckets.flatMap((bucket) => {
++			const limit = object(bucket.rate_limit);
++			const windows = [
++				...parseWindow(limit.primary_window),
++				...parseWindow(limit.secondary_window),
++			];
++			const label =
++				"limit_name" in bucket && typeof bucket.limit_name === "string"
++					? bucket.limit_name.slice(0, 100)
++					: undefined;
++			return windows.length ? [{ label, windows }] : [];
++		}),
++	};
++}
++
++export async function getCodexUsage(): Promise<CodexUsage | null> {
++	const credentials = await tokenManager.resolveProviderApiKey({
++		providerId: "openai-codex",
++	});
++	if (!credentials) return null;
++	const headers = new Headers({
++		Authorization: `Bearer ${credentials.apiKey}`,
++		Accept: "application/json",
++	});
++	if (credentials.accountId) {
++		headers.set("ChatGPT-Account-Id", credentials.accountId);
++	}
++	const response = await fetch("https://chatgpt.com/backend-api/wham/usage", {
++		headers,
++		redirect: "error",
++		signal: AbortSignal.timeout(10_000),
++	});
++	if (!response.ok)
++		throw new Error(`Codex usage request failed (${response.status})`);
++	return parseCodexUsage(await response.json());
++}
+diff --git a/apps/examples/desktop-app/sidecar/commands.ts b/apps/examples/desktop-app/sidecar/commands.ts
+index d57e9778a03aaeee773ce0730c4a3629f8421063..ac05cf4fe11c1a5738fab46db6f0e144d494dc40 100644
+--- a/apps/examples/desktop-app/sidecar/commands.ts
++++ b/apps/examples/desktop-app/sidecar/commands.ts
+@@ -3336,6 +3336,13 @@ export async function handleCommand(
+ 	}
+ 
+ 	// ── Global settings ────────────────────────────────────────────────
++	if (command === "get_codex_usage") {
++		if (!options?.connection?.data?.canApproveTools) {
++			throw new Error("Codex usage requires a trusted connection");
++		}
++		const { getCodexUsage } = await import("./codex-usage");
++		return getCodexUsage();
++	}
+ 	if (command === "get_compaction_settings") {
+ 		return readCompactionPreferencesGlobally();
+ 	}
+diff --git a/apps/examples/desktop-app/webview/app/page.tsx b/apps/examples/desktop-app/webview/app/page.tsx
+index aff42cff351ffb637c4b27965e3ba4c077b9acde..abf3c4a8d7244d7ec3676984ae7915424e61d214 100644
+--- a/apps/examples/desktop-app/webview/app/page.tsx
++++ b/apps/examples/desktop-app/webview/app/page.tsx
+@@ -217,13 +217,18 @@ const viewLoading = () => (
+ 	</div>
+ );
+ 
+-const SettingsView = dynamic(
+-	() =>
+-		import("@/components/views/settings/settings-view").then(
+-			(module) => module.SettingsView,
+-		),
+-	{ loading: viewLoading, ssr: false },
+-);
++const loadSettingsView = () =>
++	import("@/components/views/settings/settings-view").then(
++		(module) => module.SettingsView,
++	);
++const SettingsView = dynamic(loadSettingsView, {
++	loading: viewLoading,
++	ssr: false,
++});
++
++function preloadSettingsView() {
++	void loadSettingsView().catch(() => {});
++}
+ 
+ const SessionsView = dynamic(
+ 	() =>
+@@ -1285,6 +1290,7 @@ function App() {
+ 								onSettingsSectionChange={handleSettingsSectionChange}
+ 								sessionHistory={sessionHistory}
+ 								setView={handleViewChange}
++								onSettingsIntent={preloadSettingsView}
+ 								settingsSection={settingsSection}
+ 								view={view}
+ 								canNavigateBack={navigation.back.length > 0}
+diff --git a/apps/examples/desktop-app/webview/components/agent-sidebar.tsx b/apps/examples/desktop-app/webview/components/agent-sidebar.tsx
+index 9d762faba88e165cf36bd8786e626a5d17a543d2..9d71e4422f952b1313dd3069d89b2d4ba4469421 100644
+--- a/apps/examples/desktop-app/webview/components/agent-sidebar.tsx
++++ b/apps/examples/desktop-app/webview/components/agent-sidebar.tsx
+@@ -335,6 +335,7 @@ export function AgentSidebar({
+ 	onNavigateForward,
+ 	onOpenSearch,
+ 	onSettingsSectionChange,
++	onSettingsIntent,
+ 	setView,
+ 	settingsSection,
+ 	view,
+@@ -351,6 +352,7 @@ export function AgentSidebar({
+ 	/** Opens the global session search command bar. */
+ 	onOpenSearch?: () => void;
+ 	onSettingsSectionChange: (section: SettingsSection) => void;
++	onSettingsIntent?: () => void;
+ 	setView: (view: AppView) => void;
+ 	settingsSection: SettingsSection;
+ 	view: AppView;
+@@ -1337,6 +1339,9 @@ export function AgentSidebar({
+ 										settingsSection !== "Account" &&
+ 										"bg-surface-hover text-sidebar-foreground",
+ 								)}
++								data-legacy-settings-button
++								onFocus={onSettingsIntent}
++								onPointerEnter={onSettingsIntent}
+ 								onClick={openSettings}
+ 								title={t("Settings")}
+ 								type="button"
+@@ -1354,6 +1359,9 @@ export function AgentSidebar({
+ 								view === "settings" &&
+ 									"bg-surface-hover text-sidebar-foreground",
+ 							)}
++							data-legacy-settings-button
++							onFocus={onSettingsIntent}
++							onPointerEnter={onSettingsIntent}
+ 							onClick={openSettings}
+ 							title={t("Settings")}
+ 							type="button"
+diff --git a/apps/examples/desktop-app/webview/components/views/settings/codex-usage-panel.tsx b/apps/examples/desktop-app/webview/components/views/settings/codex-usage-panel.tsx
+new file mode 100644
+index 0000000000000000000000000000000000000000..f3b0d713d9a38a8f6f716238f4a203c9de6424e9
+--- /dev/null
++++ b/apps/examples/desktop-app/webview/components/views/settings/codex-usage-panel.tsx
+@@ -0,0 +1,105 @@
++"use client";
++
++import { useEffect, useState } from "react";
++import { Button } from "@/components/ui/button";
++import { desktopClient } from "@/lib/desktop-client";
++import { useTranslation } from "@/lib/i18n";
++import type { CodexUsage } from "../../../../sidecar/codex-usage";
++
++export function CodexUsagePanel() {
++	const t = useTranslation();
++	const [revision, setRevision] = useState(0);
++	const [result, setResult] = useState<CodexUsage | null>(null);
++	const [status, setStatus] = useState<"loading" | "ready" | "error">(
++		"loading",
++	);
++
++	useEffect(() => {
++		let active = true;
++		void desktopClient
++			.invoke<CodexUsage | null>("get_codex_usage")
++			.then((usage) => {
++				if (!active) return;
++				setResult(usage);
++				setStatus("ready");
++			})
++			.catch(() => {
++				if (!active) return;
++				setResult(null);
++				setStatus("error");
++			});
++		return () => {
++			active = false;
++		};
++	}, [revision]);
++
++	return (
++		<div className="mt-3 space-y-2 rounded-lg border px-4 py-3 text-sm">
++			<div className="flex items-center justify-between gap-2">
++				<span className="font-medium">{t("Codex subscription limits")}</span>
++				<Button
++					size="sm"
++					variant="ghost"
++					disabled={status === "loading"}
++					onClick={() => {
++						setStatus("loading");
++						setRevision((value) => value + 1);
++					}}
++				>
++					{t("Refresh")}
++				</Button>
++			</div>
++			{status === "loading" && (
++				<p role="status">{t("Loading subscription limits...")}</p>
++			)}
++			{status === "error" && (
++				<p role="status">{t("Could not load Codex subscription limits.")}</p>
++			)}
++			{status === "ready" && !result?.limits.length && (
++				<p role="status">{t("No Codex limits reported for this account.")}</p>
++			)}
++			{status === "ready" &&
++				result?.limits.map((limit, group) => (
++					<div key={group} className="space-y-2">
++						{limit.label && <p className="font-medium">{limit.label}</p>}
++						{limit.windows.map((window, index) => {
++							const hours = (window.windowSeconds ?? 0) / 3600;
++							const duration =
++								hours > 0
++									? t("{hours} h window").replace(
++											"{hours}",
++											String(Number(hours.toFixed(2))),
++										)
++									: t(index === 0 ? "Primary window" : "Secondary window");
++							const remaining = 100 - window.usedPercent;
++							return (
++								<div key={index}>
++									<p>
++										{duration} ·{" "}
++										{t("{percent}% remaining").replace(
++											"{percent}",
++											String(Number(remaining.toFixed(1))),
++										)}
++									</p>
++									<progress
++										className="w-full"
++										aria-label={duration}
++										value={remaining}
++										max={100}
++									/>
++									{window.resetsAt && (
++										<p className="text-xs text-muted-foreground">
++											{t("Resets {time}").replace(
++												"{time}",
++												new Date(window.resetsAt * 1000).toLocaleString(),
++											)}
++										</p>
++									)}
++								</div>
++							);
++						})}
++					</div>
++				))}
++		</div>
++	);
++}
+diff --git a/apps/examples/desktop-app/webview/components/views/settings/provider-list-view.tsx b/apps/examples/desktop-app/webview/components/views/settings/provider-list-view.tsx
+index a7b29d76dd29fe06db586d4bb45b8f852b9b02fb..bd4cabbd84a46de999f7843c9256572b3674a1a8 100644
+--- a/apps/examples/desktop-app/webview/components/views/settings/provider-list-view.tsx
++++ b/apps/examples/desktop-app/webview/components/views/settings/provider-list-view.tsx
+@@ -28,6 +28,7 @@ import {
+ } from "lucide-react";
+ import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+ import { Button } from "@/components/ui/button";
++import { CodexUsagePanel } from "./codex-usage-panel";
+ import { Input } from "@/components/ui/input";
+ import { useOAuthUserCode } from "@/hooks/use-oauth-user-code";
+ import { openExternalUrl } from "@/lib/desktop-client";
+@@ -915,6 +916,9 @@ export function ProviderDetailContent({
+ 						) : null}
+ 					</div>
+ 				)}
++				{oauthConnected && provider.id === "openai-codex" && (
++					<CodexUsagePanel />
++				)}
+ 			</section>
+ 		) : authKind === "local" ? (
+ 			<section className={cn("mb-8", isPanel ? "max-w-none" : "max-w-344")}>
+diff --git a/apps/examples/desktop-app/webview/lib/desktop-client.ts b/apps/examples/desktop-app/webview/lib/desktop-client.ts
+index f32831feaf69088dfed6c6135152393a60709e1e..2ec4e6cc1ab731ea2d62da87d2d2abbbef172d7e 100644
+--- a/apps/examples/desktop-app/webview/lib/desktop-client.ts
++++ b/apps/examples/desktop-app/webview/lib/desktop-client.ts
+@@ -61,6 +61,14 @@ export async function resolveDesktopBackendWsEndpoint(): Promise<string> {
+ 		return resolvedEndpointCache;
+ 	}
+ 
++	const legacy = legacyNativeBridge();
++	if (legacy) {
++		const endpoint = await legacy.invoke<string>("get_desktop_backend_endpoint");
++		if (!endpoint.trim()) throw new Error("Legacy backend endpoint is empty");
++		resolvedEndpointCache = endpoint.trim();
++		return resolvedEndpointCache;
++	}
++
+ 	// 2. Tauri command (full desktop app).
+ 	if (isTauriAvailable()) {
+ 		const endpoint = await tryTauriInvoke<string>(
+diff --git a/apps/examples/desktop-app/webview/lib/locales/ru.json b/apps/examples/desktop-app/webview/lib/locales/ru.json
+index 2b693f70b3825b411c4348e9b317a1c9f9302fe4..4ff9f246c739d5672eec8ecd9ca7346425b6b7f0 100644
+--- a/apps/examples/desktop-app/webview/lib/locales/ru.json
++++ b/apps/examples/desktop-app/webview/lib/locales/ru.json
+@@ -1,4 +1,13 @@
+ {
++  "Codex subscription limits": "Лимиты подписки Codex",
++  "Loading subscription limits...": "Загрузка лимитов подписки…",
++  "Could not load Codex subscription limits.": "Не удалось загрузить лимиты подписки Codex.",
++  "No Codex limits reported for this account.": "Для этого аккаунта Codex не вернул лимиты.",
++  "{hours} h window": "Окно {hours} ч",
++  "Primary window": "Основное окно",
++  "Secondary window": "Дополнительное окно",
++  "{percent}% remaining": "Осталось {percent}%",
++  "Resets {time}": "Сброс {time}",
+ 	"Hide terminal": "Скрыть терминал",
+ 	"Show terminal": "Показать терминал",
+ 	"Terminal": "Терминал",
+diff --git a/fork/defaults/freellm.json b/fork/defaults/freellm.json
+index f197ac2c642258eb6b6d4ab7f21ca9d5b8335e64..3a74089584c750458d038f0d7b60fbca6961ecdf 100644
+--- a/fork/defaults/freellm.json
++++ b/fork/defaults/freellm.json
+@@ -1,6 +1,6 @@
+ {
+   "version": 1,
+-  "reviewed_date": "2026-11-27",
++  "reviewed_date": "2026-11-28",
+   "source": "https://ai-gateway.kilo.ai/api/v1/models",
+   "shared_hourly_limit": 200,
+   "user_key_required": false,
+diff --git a/sdk/packages/core/src/extensions/tools/executors/bash.ts b/sdk/packages/core/src/extensions/tools/executors/bash.ts
+index bd0e71c64fc9130a859bce74cc87b2176c9700f3..e821b095b3def831f1a87bd94eb679eada745a0f 100644
+--- a/sdk/packages/core/src/extensions/tools/executors/bash.ts
++++ b/sdk/packages/core/src/extensions/tools/executors/bash.ts
+@@ -443,6 +443,7 @@ export interface ShellExecutorOptions {
+ }
+ 
+ interface SpawnConfig {
++	windowsVerbatimArguments?: boolean;
+ 	executable: string;
+ 	args: string[];
+ 	cwd: string;
+@@ -739,6 +740,7 @@ function spawnAndCollect(
+ 			// parent process has no console (or a different console).
+ 			// No-op on non-Windows platforms.
+ 			windowsHide: true,
++			windowsVerbatimArguments: config.windowsVerbatimArguments,
+ 		});
+ 		const childPid = child.pid;
+ 
+@@ -1169,6 +1171,7 @@ export function createShellExecutor(
+ 				cwd,
+ 				env,
+ 				input: invocation.input,
++				windowsVerbatimArguments: invocation.windowsVerbatimArguments,
+ 			},
+ 			context,
+ 			timeoutMs,
+diff --git a/sdk/packages/shared/src/parse/shell.invocation.test.ts b/sdk/packages/shared/src/parse/shell.invocation.test.ts
+index a01dc0fe02d39f9ad0c8177a7ab528e6ec392ff7..385014dc2fba1081d8994532cbf606a9278e864e 100644
+--- a/sdk/packages/shared/src/parse/shell.invocation.test.ts
++++ b/sdk/packages/shared/src/parse/shell.invocation.test.ts
+@@ -72,3 +72,22 @@ for (const shell of shells) {
+ 		});
+ 	});
+ }
++
++it.runIf(process.platform === "win32")(
++	"keeps cmd quotes, ampersands, and exit codes",
++	() => {
++		const invocation = getShellInvocation(
++			"cmd.exe",
++			'echo "left & right" & exit /b 7',
++		);
++		const result = spawnSync(invocation.executable, invocation.args, {
++			windowsVerbatimArguments: invocation.windowsVerbatimArguments,
++			encoding: "utf8",
++			windowsHide: true,
++			timeout: 10_000,
++		});
++		expect(result.error).toBeUndefined();
++		expect(result.stdout.trim()).toBe('"left & right"');
++		expect(result.status).toBe(7);
++	},
++);
+diff --git a/sdk/packages/shared/src/parse/shell.ts b/sdk/packages/shared/src/parse/shell.ts
+index 18edb8458a2ca05d07bbca643e6485f23414eb0b..13d144408e0b04e3064ec73df46db9133210c94c 100644
+--- a/sdk/packages/shared/src/parse/shell.ts
++++ b/sdk/packages/shared/src/parse/shell.ts
+@@ -9,7 +9,11 @@ function normalizeShellName(shell: string): string {
+ }
+ 
+ export function getDefaultShell(platform: string): string {
+-	return platform === "win32" ? "powershell" : "/bin/bash";
++	if (platform !== "win32") return "/bin/bash";
++	return typeof process !== "undefined" &&
++		process.env.CLINE_LEGACY_SHELL?.toLowerCase() === "cmd"
++		? "cmd.exe"
++		: "powershell";
+ }
+ 
+ /**
+@@ -49,6 +53,7 @@ export interface ShellInvocation {
+ 	executable: string;
+ 	args: string[];
+ 	input?: string;
++	windowsVerbatimArguments?: boolean;
+ }
+ 
+ /**
+@@ -396,8 +401,8 @@ export function getShellInvocation(
+ 					"-NoProfile",
+ 					"-NonInteractive",
+ 					"-Command",
+-					"[Console]::InputEncoding=[Text.UTF8Encoding]::new();" +
+-						"[Console]::OutputEncoding=[Text.UTF8Encoding]::new();" +
++					"$e=New-Object System.Text.UTF8Encoding;" +
++						"[Console]::InputEncoding=$e;[Console]::OutputEncoding=$e;" +
+ 						"$ErrorActionPreference='Stop';" +
+ 						"$c=[Console]::In.ReadToEnd();" +
+ 						"$c+=[Environment]::NewLine+'if(-not $?){exit 1}';" +
+@@ -407,7 +412,13 @@ export function getShellInvocation(
+ 			};
+ 		}
+ 		case "cmd":
+-			return { executable: shell, args: ["/d", "/s", "/c", command] };
++			// cmd /s strips the outer quote pair. Pass its script verbatim so
++			// Node does not turn embedded quotes into literal backslashes.
++			return {
++				executable: shell,
++				args: ["/d", "/s", "/c", `"${command}"`],
++				windowsVerbatimArguments: true,
++			};
+ 		// wsl.exe is the Windows launcher for the default WSL distro, not a shell
+ 		// itself. Run the command through the guest's bash so operators like `|`
+ 		// and `;` are handled by bash rather than treated as wsl.exe arguments.
+@@ -430,5 +441,6 @@ export function getShellArgs(shell: string, command: string): string[] {
+ 		// commands beyond Windows' process command-line limit.
+ 		return ["-NoProfile", "-NonInteractive", "-Command", command];
+ 	}
++	if (getShellKind(shell) === "cmd") return ["/d", "/s", "/c", command];
+ 	return getShellInvocation(shell, command).args;
+ }
+-- 
+2.54.0.windows.1
+

@@ -1,0 +1,82 @@
+From c33de75422053964104e5160e9e0dd39c95e21b8 Mon Sep 17 00:00:00 2001
+From: aktalascloud <294130337+aktalascloud@users.noreply.github.com>
+Date: Fri, 27 Nov 2026 17:20:14 +0600
+Subject: [PATCH] Keep the legacy Hub port under managed discovery
+
+---
+ apps/examples/desktop-app/legacy/main.cjs            | 11 +++++++++--
+ sdk/packages/core/src/hub/discovery/defaults.test.ts |  8 ++++++++
+ sdk/packages/core/src/hub/discovery/defaults.ts      |  3 ++-
+ 3 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/apps/examples/desktop-app/legacy/main.cjs b/apps/examples/desktop-app/legacy/main.cjs
+index 28b594ac91197812f8cfbbf78d0f046163012be8..8e7a9c44b0fbe28c599ca3ff659d5ee157d5854d 100644
+--- a/apps/examples/desktop-app/legacy/main.cjs
++++ b/apps/examples/desktop-app/legacy/main.cjs
+@@ -110,6 +110,12 @@ function freeLoopbackPort() {
+ 
+ async function startBackend() {
+ 	const profile = app.getPath("userData");
++	const documents = app.getPath("documents");
++	const workspace =
++		smokeOutput || !existsSync(documents)
++			? join(profile, "workspace")
++			: documents;
++	mkdirSync(workspace, { recursive: true });
+ 	const hubPort = smokeOutput
+ 		? await freeLoopbackPort()
+ 		: process.env.CLINE_LEGACY_HUB_PORT || "25473";
+@@ -126,14 +132,15 @@ async function startBackend() {
+ 			CLINE_DATA_DIR: join(profile, "cline", "data"),
+ 			CLINE_HUB_DISCOVERY_PATH: join(profile, "hub-discovery.json"),
+ 			CLINE_HUB_HOST: "127.0.0.1",
+-			CLINE_HUB_PORT: String(hubPort),
++			CLINE_HUB_PORT: "",
++			CLINE_LEGACY_HUB_PORT: String(hubPort),
+ 			CLINE_HUB_PATHNAME: "/hub",
+ 			CLINE_SIDECAR_HOST: "127.0.0.1",
+ 			CLINE_LEGACY_APP_ORIGIN: origin,
+ 			CLINE_LEGACY_RUNTIME_ROOT: join(runtimeRoot, "legacy"),
+ 			CLINE_PLUGIN_RUNTIME_DIR: join(runtimeRoot, "plugin-runtime"),
+ 			CLINE_SIDECAR_TRUSTED_ORIGINS: origin,
+-			CLINE_DESKTOP_WORKSPACE_ROOT: app.getPath("documents"),
++			CLINE_DESKTOP_WORKSPACE_ROOT: workspace,
+ 			CLINE_NO_AUTO_UPDATE: "1",
+ 			UV_THREADPOOL_SIZE: "2",
+ 		},
+diff --git a/sdk/packages/core/src/hub/discovery/defaults.test.ts b/sdk/packages/core/src/hub/discovery/defaults.test.ts
+index 6341477b01d6a89befd0abb20be36632bded7616..61a28597729b524037336c021cc95a742bbfb783 100644
+--- a/sdk/packages/core/src/hub/discovery/defaults.test.ts
++++ b/sdk/packages/core/src/hub/discovery/defaults.test.ts
+@@ -9,6 +9,14 @@ import {
+ const DEV_HUB_PORT = 25466;
+ 
+ describe("resolveDefaultHubPort", () => {
++	it("uses the legacy desktop port for managed discovery", () => {
++		expect(
++			resolveDefaultHubPort({
++				env: { CLINE_HUB_PORT: "", CLINE_LEGACY_HUB_PORT: "25473" },
++			}),
++		).toBe(25473);
++	});
++
+ 	it("returns the dev hub port when CLINE_BUILD_ENV is development and CLINE_HUB_PORT is unset", () => {
+ 		expect(
+ 			resolveDefaultHubPort({
+diff --git a/sdk/packages/core/src/hub/discovery/defaults.ts b/sdk/packages/core/src/hub/discovery/defaults.ts
+index a3edb563bcd353ac68fbfadf594ab2234eed60fd..6fc5c1c7c304655d401344368bde76144e72c6c4 100644
+--- a/sdk/packages/core/src/hub/discovery/defaults.ts
++++ b/sdk/packages/core/src/hub/discovery/defaults.ts
+@@ -40,7 +40,8 @@ export function resolveDefaultHubPort(
+ 	options: ResolveHubDefaultsOptions = {},
+ ): number {
+ 	const env = options.env ?? process.env;
+-	const raw = env[HUB_PORT_ENV]?.trim();
++	// The legacy desktop has its own default port and still uses managed Hub discovery.
++	const raw = env[HUB_PORT_ENV]?.trim() || env.CLINE_LEGACY_HUB_PORT?.trim();
+ 	if (!raw) {
+ 		return fallbackHubPort(options);
+ 	}
+-- 
+2.54.0.windows.1
+

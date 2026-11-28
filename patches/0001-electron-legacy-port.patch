@@ -1,0 +1,1129 @@
+From b45ec16425c4ba95674f5d96cbdf044dc212bd83 Mon Sep 17 00:00:00 2001
+From: aktalascloud <294130337+aktalascloud@users.noreply.github.com>
+Date: Fri, 27 Nov 2026 17:16:34 +0600
+Subject: [PATCH] Port Cline Desktop 0.0.51 to Windows 7 and 8.1
+
+---
+ apps/examples/desktop-app/legacy/README.md    |  27 ++
+ apps/examples/desktop-app/legacy/hub.ts       |  11 +
+ .../examples/desktop-app/legacy/installer.nsi |  99 ++++++
+ apps/examples/desktop-app/legacy/main.cjs     | 315 ++++++++++++++++++
+ apps/examples/desktop-app/legacy/package.json |   6 +
+ apps/examples/desktop-app/legacy/package.mts  | 143 ++++++++
+ apps/examples/desktop-app/legacy/preload.cjs  |  13 +
+ apps/examples/desktop-app/package.json        |   2 +
+ apps/examples/desktop-app/sidecar/index.ts    |  48 ++-
+ .../desktop-app/sidecar/node-server.ts        | 135 ++++++++
+ apps/examples/desktop-app/sidecar/server.ts   |  31 +-
+ .../desktop-app/webview/lib/desktop-client.ts |  26 +-
+ bun.lock                                      |   2 +
+ .../src/extensions/plugin/plugin-runtime.ts   |   6 +-
+ .../src/runtime/tools/subprocess-sandbox.ts   |   6 +-
+ 15 files changed, 853 insertions(+), 17 deletions(-)
+ create mode 100644 apps/examples/desktop-app/legacy/README.md
+ create mode 100644 apps/examples/desktop-app/legacy/hub.ts
+ create mode 100644 apps/examples/desktop-app/legacy/installer.nsi
+ create mode 100644 apps/examples/desktop-app/legacy/main.cjs
+ create mode 100644 apps/examples/desktop-app/legacy/package.json
+ create mode 100644 apps/examples/desktop-app/legacy/package.mts
+ create mode 100644 apps/examples/desktop-app/legacy/preload.cjs
+ create mode 100644 apps/examples/desktop-app/sidecar/node-server.ts
+
+diff --git a/apps/examples/desktop-app/legacy/README.md b/apps/examples/desktop-app/legacy/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ea31f2bc23196c648b4f18fec8370e02a01e83a
+--- /dev/null
++++ b/apps/examples/desktop-app/legacy/README.md
+@@ -0,0 +1,27 @@
++# Cline Desktop Legacy 0.0.51
++
++Неофициальная сборка Cline Desktop для 64-битных Windows 7 SP1, 8 и 8.1. Целевой процессор — Intel Core 2 Duo P9700 (Penryn, 2 ядра, SSE4.1). Интерфейс и SDK взяты из тега `desktop-v0.0.51`.
++
++NSIS устанавливает приложение для текущего пользователя и добавляет ярлык в «Пуск». WebView2 и Bun на компьютере пользователя не нужны. Настройки, история и ключи этого порта хранятся в `%APPDATA%\Cline Desktop Legacy`, отдельно от стандартного клиента. Удаление через «Программы и компоненты» сохраняет их. Установщик не подписан.
++
++Вместо Tauri и Bun используется [Electron Legacy 44.11.5](https://github.com/Alex313031/electron-legacy/releases/tag/v44.11.5) с Node.js 24.22.3. Интерфейс открывается из локальной сборки, управление идёт через WebSocket на loopback с проверкой origin и токена. Лимит дискового кэша Chromium — 32 МиБ. Пул ввода-вывода Node ограничен двумя потоками, WebSocket передаёт локальные сообщения без сжатия. В инсталляторе оставлены ресурсы Chromium для en-US и ru.
++
++Доступны отдельный профиль, выбор папки и штатный локальный Hub. Встроенный терминал, нативный трей, автоматическое обновление и внешние SSH-помощники требуют дополнительной адаптации. Для генерации настройте модель в Cline. Производительность модели зависит от машины, на которой она запущена.
++
++## Сборка
++
++На современной Windows установите Bun 1.4.2 и Node.js 24. Скачайте [архив Electron Legacy x64](https://github.com/Alex313031/electron-legacy/releases/download/v44.11.5/electron-v44.11.5-win32-x64.zip), проверьте SHA-256 и распакуйте его. SHA-256 архива — `c59130291c70dfbd3dedcc2663a64bed82475898be4a6c050a835586a9227ea6`. Для упаковки используется [NSIS 3.13](https://github.com/tauri-apps/binary-releases/releases/download/nsis-3.13/nsis-3.13.zip).
++
++Из корня репозитория выполните:
++
++```powershell
++bun install --frozen-lockfile
++bun run build:sdk
++$env:NEXT_TELEMETRY_DISABLED = '1'
++bun -F @cline/code build:web
++bun apps/examples/desktop-app/legacy/package.mts C:\Build\ElectronLegacy C:\Build\NSIS\makensis.exe ..\dist
++```
++
++Результат — `Cline_0.0.51_legacy_x64-setup.exe`. После упаковки для повторной сборки заново выполните `build:web`, чтобы восстановить карты исходников для списка лицензий.
++
++После установки для проверки запуска выполните `ClineLegacy.exe --smoke-test=C:\Temp\cline-qa\result.json`. Каталог результата служит изолированным профилем проверки. Отчёт подтверждает загрузку интерфейса, подключение к локальному бэкенду и готовность Hub.
+diff --git a/apps/examples/desktop-app/legacy/hub.ts b/apps/examples/desktop-app/legacy/hub.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..ed10c8a1d3c17dcedcf943e6d1a386c9f7f0a35c
+--- /dev/null
++++ b/apps/examples/desktop-app/legacy/hub.ts
+@@ -0,0 +1,11 @@
++import { setPluginSandboxLauncher } from "@cline/core";
++import { claimHubDaemonProcess } from "@cline/shared";
++
++claimHubDaemonProcess();
++delete process.env.ELECTRON_RUN_AS_NODE;
++setPluginSandboxLauncher({
++	command: process.execPath,
++	argsPrefix: [],
++	env: { ELECTRON_RUN_AS_NODE: "1" },
++});
++await import("@cline/core/hub/daemon-entry");
+diff --git a/apps/examples/desktop-app/legacy/installer.nsi b/apps/examples/desktop-app/legacy/installer.nsi
+new file mode 100644
+index 0000000000000000000000000000000000000000..f2bf58eb6b821abb82a3e2edd8ceb52bf5654097
+--- /dev/null
++++ b/apps/examples/desktop-app/legacy/installer.nsi
+@@ -0,0 +1,99 @@
++Unicode true
++RequestExecutionLevel user
++SetCompressor /SOLID lzma
++SetCompressorDictSize 16
++
++!include MUI2.nsh
++!include LogicLib.nsh
++!include WinVer.nsh
++!include x64.nsh
++!include "Win\RestartManager.nsh"
++
++!define PRODUCT "Cline Desktop Legacy"
++!define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\ClineDesktopLegacy"
++Name "${PRODUCT}"
++OutFile "${CLINE_INSTALLER}"
++InstallDir "$LOCALAPPDATA\Programs\Cline Desktop Legacy"
++InstallDirRegKey HKCU "${UNINSTALL_KEY}" InstallLocation
++VIProductVersion "0.0.51.0"
++VIAddVersionKey "FileDescription" "Cline Desktop Legacy Setup"
++VIAddVersionKey "ProductName" "${PRODUCT}"
++VIAddVersionKey "FileVersion" "0.0.51"
++VIAddVersionKey "LegalCopyright" "Cline contributors"
++!define MUI_ICON "${CLINE_STAGE}\resources\app\icon.ico"
++!define MUI_UNICON "${CLINE_STAGE}\resources\app\icon.ico"
++
++!insertmacro MUI_PAGE_INSTFILES
++!insertmacro MUI_UNPAGE_CONFIRM
++!insertmacro MUI_UNPAGE_INSTFILES
++!insertmacro MUI_LANGUAGE "English"
++!insertmacro MUI_LANGUAGE "Russian"
++
++Function .onInit
++  ${IfNot} ${RunningX64}
++  ${OrIfNot} ${AtLeastWin7}
++    MessageBox MB_OK|MB_ICONSTOP "Cline Desktop Legacy requires 64-bit Windows 7 SP1 or later." /SD IDOK
++    SetErrorLevel 2
++    Abort
++  ${EndIf}
++  ${If} ${IsWin7}
++  ${AndIfNot} ${AtLeastServicePack} 1
++    MessageBox MB_OK|MB_ICONSTOP "Install Service Pack 1 for Windows 7 before running Cline Desktop Legacy." /SD IDOK
++    SetErrorLevel 2
++    Abort
++  ${EndIf}
++FunctionEnd
++
++!macro ReleaseExecutable PREFIX
++Function ${PREFIX}ReleaseExecutable
++  IfFileExists "$INSTDIR\ClineLegacy.exe" 0 done
++  System::Call 'rstrtmgr::RmStartSession(*i .r1, i 0, w .r2) i .r0'
++  ${If} $0 != 0
++    Goto failed
++  ${EndIf}
++  !insertmacro RestartManager_RegisterFile $1 "$INSTDIR\ClineLegacy.exe"
++  ${If} $0 == 0
++    StrCpy $3 0
++    System::Call 'rstrtmgr::RmGetList(i r1, *i .r2, *i r3, p 0, *i .r4) i .r0'
++    ${If} $0 == 234
++      System::Call 'rstrtmgr::RmShutdown(i r1, i ${RmForceShutdown}, p 0) i .r0'
++    ${EndIf}
++  ${EndIf}
++  System::Call 'rstrtmgr::RmEndSession(i r1)'
++  ${If} $0 == 0
++    Goto done
++  ${EndIf}
++  failed:
++    MessageBox MB_OK|MB_ICONSTOP "Close Cline Desktop Legacy and its background processes, then retry." /SD IDOK
++    SetErrorLevel 2
++    Abort
++  done:
++FunctionEnd
++!macroend
++
++!insertmacro ReleaseExecutable ""
++!insertmacro ReleaseExecutable "un."
++
++Section "Install"
++  Call ReleaseExecutable
++  SetOutPath "$INSTDIR"
++  File /r "${CLINE_STAGE}\*"
++  WriteUninstaller "$INSTDIR\Uninstall.exe"
++  WriteRegStr HKCU "${UNINSTALL_KEY}" DisplayName "${PRODUCT}"
++  WriteRegStr HKCU "${UNINSTALL_KEY}" DisplayVersion "0.0.51"
++  WriteRegStr HKCU "${UNINSTALL_KEY}" InstallLocation "$INSTDIR"
++  WriteRegStr HKCU "${UNINSTALL_KEY}" DisplayIcon "$INSTDIR\ClineLegacy.exe"
++  WriteRegStr HKCU "${UNINSTALL_KEY}" UninstallString '$\"$INSTDIR\Uninstall.exe$\"'
++  WriteRegDWORD HKCU "${UNINSTALL_KEY}" NoModify 1
++  WriteRegDWORD HKCU "${UNINSTALL_KEY}" NoRepair 1
++  CreateShortCut "$SMPROGRAMS\Cline Desktop Legacy.lnk" "$INSTDIR\ClineLegacy.exe" "" "$INSTDIR\resources\app\icon.ico"
++SectionEnd
++
++Section "Uninstall"
++  Call un.ReleaseExecutable
++  !include "${CLINE_UNINSTALL_FILES}"
++  Delete "$INSTDIR\Uninstall.exe"
++  Delete "$SMPROGRAMS\Cline Desktop Legacy.lnk"
++  DeleteRegKey HKCU "${UNINSTALL_KEY}"
++  RMDir "$INSTDIR"
++SectionEnd
+diff --git a/apps/examples/desktop-app/legacy/main.cjs b/apps/examples/desktop-app/legacy/main.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..28b594ac91197812f8cfbbf78d0f046163012be8
+--- /dev/null
++++ b/apps/examples/desktop-app/legacy/main.cjs
+@@ -0,0 +1,315 @@
++const {
++	app,
++	BrowserWindow,
++	dialog,
++	ipcMain,
++	net,
++	protocol,
++	shell,
++} = require("electron");
++const { fork } = require("node:child_process");
++const { existsSync, mkdirSync, writeFileSync } = require("node:fs");
++const { createServer } = require("node:net");
++const { dirname, join, resolve, sep } = require("node:path");
++const { pathToFileURL } = require("node:url");
++
++const origin = "cline://desktop";
++const webRoot = join(__dirname, "web");
++const runtimeRoot = join(__dirname, "runtime");
++const stateRoot = join(app.getPath("appData"), "Cline Desktop Legacy");
++const smokeFlag = process.argv.find((arg) => arg.startsWith("--smoke-test="));
++const smokeOutput = smokeFlag?.slice("--smoke-test=".length);
++app.setPath(
++	"userData",
++	smokeOutput ? join(dirname(resolve(smokeOutput)), "profile") : stateRoot,
++);
++app.setAppUserModelId("bot.cline.app.legacy");
++app.commandLine.appendSwitch("disk-cache-size", "33554432");
++protocol.registerSchemesAsPrivileged([
++	{
++		scheme: "cline",
++		privileges: {
++			standard: true,
++			secure: true,
++			supportFetchAPI: true,
++			corsEnabled: true,
++			codeCache: true,
++		},
++	},
++]);
++
++let window;
++let backend;
++let quitting = false;
++
++function isAppUrl(rawUrl) {
++	try {
++		const url = new URL(rawUrl);
++		return (
++			url.protocol === "cline:" &&
++			url.host === "desktop" &&
++			!url.username &&
++			!url.password
++		);
++	} catch {
++		return false;
++	}
++}
++
++function openExternal(rawUrl) {
++	const url = new URL(rawUrl);
++	if (!["https:", "http:", "mailto:"].includes(url.protocol)) {
++		throw new Error("Unsupported external URL");
++	}
++	return shell.openExternal(url.href);
++}
++
++function serveWeb(request) {
++	if (!isAppUrl(request.url) || request.method !== "GET") {
++		return new Response("Forbidden", { status: 403 });
++	}
++	try {
++		const url = new URL(request.url);
++		const path = decodeURIComponent(url.pathname);
++		if (path.includes("\\") || path.includes("\0") || path.includes(":")) {
++			return new Response("Forbidden", { status: 403 });
++		}
++		const candidate = resolve(webRoot, "." + path);
++		if (candidate !== webRoot && !candidate.startsWith(webRoot + sep)) {
++			return new Response("Forbidden", { status: 403 });
++		}
++		const candidates = path.endsWith("/")
++			? [join(candidate, "index.html"), candidate + ".html"]
++			: [candidate, candidate + ".html", join(candidate, "index.html")];
++		return (async () => {
++			for (const file of candidates) {
++				if (!existsSync(file)) continue;
++				try {
++					return await net.fetch(pathToFileURL(file).href);
++				} catch {
++					// Try the exported .html entry when the matching path is a directory.
++				}
++			}
++			return new Response("Not found", { status: 404 });
++		})();
++	} catch {
++		return new Response("Invalid URL", { status: 400 });
++	}
++}
++
++function freeLoopbackPort() {
++	return new Promise((resolvePort, reject) => {
++		const server = createServer();
++		server.once("error", reject);
++		server.listen(0, "127.0.0.1", () => {
++			const { port } = server.address();
++			server.close((error) => (error ? reject(error) : resolvePort(port)));
++		});
++	});
++}
++
++async function startBackend() {
++	const profile = app.getPath("userData");
++	const hubPort = smokeOutput
++		? await freeLoopbackPort()
++		: process.env.CLINE_LEGACY_HUB_PORT || "25473";
++	const sidecar = fork(join(runtimeRoot, "sidecar", "index.mjs"), [], {
++		execPath: process.execPath,
++		cwd: runtimeRoot,
++		execArgv: [],
++		windowsHide: true,
++		stdio: ["ignore", "ignore", "pipe", "ipc"],
++		env: {
++			...process.env,
++			ELECTRON_RUN_AS_NODE: "1",
++			CLINE_DIR: join(profile, "cline"),
++			CLINE_DATA_DIR: join(profile, "cline", "data"),
++			CLINE_HUB_DISCOVERY_PATH: join(profile, "hub-discovery.json"),
++			CLINE_HUB_HOST: "127.0.0.1",
++			CLINE_HUB_PORT: String(hubPort),
++			CLINE_HUB_PATHNAME: "/hub",
++			CLINE_SIDECAR_HOST: "127.0.0.1",
++			CLINE_LEGACY_APP_ORIGIN: origin,
++			CLINE_LEGACY_RUNTIME_ROOT: join(runtimeRoot, "legacy"),
++			CLINE_PLUGIN_RUNTIME_DIR: join(runtimeRoot, "plugin-runtime"),
++			CLINE_SIDECAR_TRUSTED_ORIGINS: origin,
++			CLINE_DESKTOP_WORKSPACE_ROOT: app.getPath("documents"),
++			CLINE_NO_AUTO_UPDATE: "1",
++			UV_THREADPOOL_SIZE: "2",
++		},
++	});
++	backend = sidecar;
++	let stderr = "";
++	sidecar.stderr.on("data", (data) => {
++		stderr = (stderr + data).slice(-4096);
++	});
++	return new Promise((resolveReady, reject) => {
++		const timer = setTimeout(() => {
++			sidecar.kill();
++			reject(new Error("The Cline backend did not start in 90 seconds."));
++		}, 90_000);
++		sidecar.once("error", (error) => {
++			clearTimeout(timer);
++			reject(error);
++		});
++		sidecar.once("exit", (code) => {
++			clearTimeout(timer);
++			const error = new Error(
++				`Cline backend exited (${code}). ${stderr.trim()}`,
++			);
++			reject(error);
++			if (window && !quitting && !smokeOutput) {
++				dialog.showErrorBox("Cline Desktop Legacy", error.message);
++				app.quit();
++			}
++		});
++		sidecar.on("message", (message) => {
++			if (message?.type !== "ready" || typeof message.wsEndpoint !== "string")
++				return;
++			clearTimeout(timer);
++			resolveReady(message.wsEndpoint);
++		});
++	});
++}
++
++ipcMain.handle("cline:native", async (event, command, args) => {
++	if (
++		event.sender !== window?.webContents ||
++		!event.senderFrame ||
++		event.senderFrame.parent ||
++		!isAppUrl(event.senderFrame.url)
++	) {
++		throw new Error("Invalid Cline window");
++	}
++	switch (command) {
++		case "pick_workspace_directory": {
++			const { filePaths } = await dialog.showOpenDialog(window, {
++				defaultPath:
++					typeof args?.initialPath === "string" ? args.initialPath : undefined,
++				properties: ["openDirectory"],
++			});
++			return filePaths[0] ?? null;
++		}
++		case "open_third_party_notices":
++			return shell.openPath(join(__dirname, "THIRD_PARTY_NOTICES.txt"));
++		case "open_external_url":
++			return openExternal(args?.url);
++		case "relaunch_app":
++			app.relaunch();
++			app.quit();
++			return;
++		case "quit_app":
++			app.quit();
++			return;
++		default:
++			throw new Error("Unsupported native command");
++	}
++});
++
++async function runSmokeTest() {
++	return window.webContents.executeJavaScript(`new Promise((resolve, reject) => {
++		const socket = new WebSocket(window.__SIDECAR_WS_ENDPOINT__);
++		const timer = setTimeout(() => { socket.close(); reject(Error("Hub smoke test timed out")); }, 60000);
++		socket.onerror = () => { clearTimeout(timer); reject(Error("Could not connect to backend")); };
++		socket.onmessage = ({data}) => {
++			const message = JSON.parse(data);
++			if (message.event?.name === "hub_status") {
++				if (message.event.payload.state === "failed") {
++					clearTimeout(timer);
++					socket.close();
++					reject(Error(message.event.payload.error ?? "Hub startup failed"));
++				}
++				if (message.event.payload.state === "ready") {
++					socket.send(JSON.stringify({ type: "command", id: "smoke", command: "get_process_context" }));
++				}
++			}
++			if (message.id === "smoke") {
++				clearTimeout(timer);
++				socket.close();
++				if (message.ok) resolve({ title: document.title, sidecar: true, hub: true, renderer: Boolean(document.querySelector("main,button")) });
++				else reject(Error(message.error));
++			}
++		};
++	})`);
++}
++
++async function start() {
++	protocol.handle("cline", serveWeb);
++	const endpoint = await startBackend();
++	window = new BrowserWindow({
++		width: 1080,
++		height: 700,
++		minWidth: 640,
++		minHeight: 440,
++		show: !smokeOutput,
++		title: "Cline Desktop Legacy",
++		autoHideMenuBar: true,
++		icon: join(__dirname, "icon.ico"),
++		webPreferences: {
++			preload: join(__dirname, "preload.cjs"),
++			sandbox: true,
++			contextIsolation: true,
++			nodeIntegration: false,
++			additionalArguments: [`--cline-sidecar=${endpoint}`],
++		},
++	});
++	window.webContents.on("will-navigate", (event, url) => {
++		if (!isAppUrl(url)) event.preventDefault();
++	});
++	window.webContents.on("will-attach-webview", (event) =>
++		event.preventDefault(),
++	);
++	window.webContents.setWindowOpenHandler(({ url }) => {
++		if (!isAppUrl(url)) void openExternal(url).catch(() => {});
++		return { action: "deny" };
++	});
++	await window.loadURL(origin + "/");
++	if (smokeOutput) {
++		const result = await runSmokeTest();
++		writeFileSync(
++			smokeOutput,
++			JSON.stringify({ ...result, versions: process.versions }, null, 2),
++		);
++		app.quit();
++	}
++}
++
++if (!app.requestSingleInstanceLock()) {
++	app.quit();
++} else {
++	mkdirSync(app.getPath("userData"), { recursive: true });
++	app.on("second-instance", () => {
++		if (!window) return;
++		if (window.isMinimized()) window.restore();
++		window.focus();
++	});
++	app.on("before-quit", (event) => {
++		if (quitting || !backend?.connected) return;
++		event.preventDefault();
++		quitting = true;
++		const grace = setTimeout(() => {
++			backend.kill();
++			app.quit();
++		}, 6_000);
++		backend.once("exit", () => {
++			clearTimeout(grace);
++			app.quit();
++		});
++		backend.disconnect();
++	});
++	app.on("window-all-closed", () => app.quit());
++	app
++		.whenReady()
++		.then(start)
++		.catch((error) => {
++			if (smokeOutput) {
++				writeFileSync(
++					smokeOutput,
++					JSON.stringify({ error: error.message }, null, 2),
++				);
++			} else {
++				dialog.showErrorBox("Cline Desktop Legacy", error.message);
++			}
++			app.quit();
++		});
++}
+diff --git a/apps/examples/desktop-app/legacy/package.json b/apps/examples/desktop-app/legacy/package.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..a7e09cf3be8771477f633f0a17979d7afe764e47
+--- /dev/null
++++ b/apps/examples/desktop-app/legacy/package.json
+@@ -0,0 +1,6 @@
++{
++	"name": "cline-desktop-legacy",
++	"version": "0.0.51",
++	"private": true,
++	"main": "main.cjs"
++}
+diff --git a/apps/examples/desktop-app/legacy/package.mts b/apps/examples/desktop-app/legacy/package.mts
+new file mode 100644
+index 0000000000000000000000000000000000000000..56c9b3b1c16096a93766c6da4e95b832312fa14b
+--- /dev/null
++++ b/apps/examples/desktop-app/legacy/package.mts
+@@ -0,0 +1,143 @@
++import {
++	cpSync,
++	existsSync,
++	mkdirSync,
++	mkdtempSync,
++	readdirSync,
++	readFileSync,
++	renameSync,
++	rmSync,
++	writeFileSync,
++} from "node:fs";
++import { tmpdir } from "node:os";
++import { basename, join, relative, resolve } from "node:path";
++import { generateNotices } from "../../../../scripts/third-party-notices/index";
++import {
++	inputListPath,
++	recordWebviewInputs,
++} from "../scripts/third-party-notices";
++
++const legacy = import.meta.dir;
++const desktop = resolve(legacy, "..");
++const root = resolve(desktop, "../../..");
++const [electronDir, makensisExe, outputDir] = process.argv
++	.slice(2)
++	.map((arg) => resolve(arg));
++if (!electronDir || !makensisExe || !outputDir) {
++	throw new Error(
++		"Usage: bun package.mts <Electron Legacy folder> <makensis.exe> <output folder>",
++	);
++}
++const electronVersion = readFileSync(join(electronDir, "version"), "utf8")
++	.trim()
++	.replace(/^v/, "");
++if (electronVersion !== "44.11.5")
++	throw new Error("Expected Electron Legacy 44.11.5 x64");
++for (const file of ["electron.exe", "winwrap.dll"]) {
++	if (!existsSync(join(electronDir, file)))
++		throw new Error(`Missing Electron Legacy file: ${file}`);
++}
++if (
++	!readFileSync(join(electronDir, "electron.exe"))
++		.subarray(0, 4096)
++		.includes(Buffer.from([0x50, 0x45, 0, 0, 0x64, 0x86]))
++) {
++	throw new Error("Expected an x64 Electron executable");
++}
++
++const scratch = mkdtempSync(join(tmpdir(), "cline-legacy-"));
++function run(args: string[]) {
++	const result = Bun.spawnSync(args, {
++		cwd: root,
++		stdio: ["ignore", "inherit", "inherit"],
++	});
++	if (!result.success)
++		throw new Error(`Failed: ${args[0]} (${result.exitCode})`);
++}
++
++function uninstallPlan(directory: string, stage: string): string[] {
++	const relativePath = relative(stage, directory);
++	const commands = readdirSync(directory, { withFileTypes: true }).flatMap(
++		(item) => {
++			const path = join(directory, item.name);
++			if (item.isDirectory()) return uninstallPlan(path, stage);
++			const escaped = relative(stage, path).replaceAll("$", "$$");
++			return [`Delete "$INSTDIR\\${escaped}"`];
++		},
++	);
++	if (relativePath)
++		commands.push(`RMDir "$INSTDIR\\${relativePath.replaceAll("$", "$$")}"`);
++	return commands;
++}
++
++try {
++	const stage = join(scratch, "stage");
++	cpSync(electronDir, stage, {
++		recursive: true,
++		filter: (source) => {
++			const path = relative(electronDir, source).replaceAll("\\", "/");
++			return (
++				path !== "resources/app" &&
++				(!path.startsWith("locales/") ||
++					/^locales\/(en-US|ru)\.pak$/.test(path))
++			);
++		},
++	});
++	renameSync(join(stage, "electron.exe"), join(stage, "ClineLegacy.exe"));
++	const app = join(stage, "resources", "app");
++	const runtime = join(app, "runtime");
++	mkdirSync(app, { recursive: true });
++	for (const name of ["main.cjs", "preload.cjs", "package.json"]) {
++		cpSync(join(legacy, name), join(app, name));
++	}
++	cpSync(join(desktop, "src-tauri/icons/icon.ico"), join(app, "icon.ico"));
++	cpSync(join(root, "LICENSE"), join(app, "LICENSE.Cline"));
++	recordWebviewInputs();
++	cpSync(join(desktop, "webview/out"), join(app, "web"), { recursive: true });
++	const bundle = await Bun.build({
++		entrypoints: [join(desktop, "sidecar/index.ts"), join(legacy, "hub.ts")],
++		root: desktop,
++		outdir: runtime,
++		target: "node",
++		format: "esm",
++		minify: true,
++		splitting: true,
++		naming: { entry: "[dir]/[name].mjs", chunk: "chunks/[name]-[hash].mjs" },
++		define: { "process.env.NODE_ENV": '"production"' },
++		external: ["@anthropic-ai/vertex-sdk"],
++		metafile: true,
++	});
++	if (!bundle.success)
++		throw new AggregateError(bundle.logs, "Cline runtime build failed");
++	const core = join(root, "sdk/packages/core/dist");
++	cpSync(join(core, "plugin-runtime"), join(runtime, "plugin-runtime"), {
++		recursive: true,
++	});
++	// License texts for Electron and Chromium stay beside ClineLegacy.exe.
++	generateNotices({
++		product: "Cline Desktop Legacy",
++		baseDir: root,
++		inputs: Object.keys(bundle.metafile?.inputs ?? {}),
++		inputLists: {
++			webview: inputListPath("webview"),
++			"plugin runtime": join(core, "plugin-runtime-inputs.json"),
++		},
++		outFile: join(app, "THIRD_PARTY_NOTICES.txt"),
++	});
++	const uninstall = join(scratch, "uninstall.nsh");
++	writeFileSync(uninstall, uninstallPlan(stage, stage).join("\r\n") + "\r\n");
++	const target = join(scratch, "Cline_0.0.51_legacy_x64-setup.exe");
++	run([
++		makensisExe,
++		"/V2",
++		`/DCLINE_STAGE=${stage}`,
++		`/DCLINE_INSTALLER=${target}`,
++		`/DCLINE_UNINSTALL_FILES=${uninstall}`,
++		join(legacy, "installer.nsi"),
++	]);
++	mkdirSync(outputDir, { recursive: true });
++	cpSync(target, join(outputDir, basename(target)));
++	console.log(join(outputDir, basename(target)));
++} finally {
++	rmSync(scratch, { recursive: true, force: true });
++}
+diff --git a/apps/examples/desktop-app/legacy/preload.cjs b/apps/examples/desktop-app/legacy/preload.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..5da2a43a31f4790ec129cd0b9eff7a4439da570d
+--- /dev/null
++++ b/apps/examples/desktop-app/legacy/preload.cjs
+@@ -0,0 +1,13 @@
++const { contextBridge, ipcRenderer } = require("electron");
++
++const prefix = "--cline-sidecar=";
++const endpoint = process.argv.find((arg) => arg.startsWith(prefix));
++if (endpoint) {
++	contextBridge.exposeInMainWorld(
++		"__SIDECAR_WS_ENDPOINT__",
++		endpoint.slice(prefix.length),
++	);
++}
++contextBridge.exposeInMainWorld("clineLegacy", {
++	invoke: (command, args) => ipcRenderer.invoke("cline:native", command, args),
++});
+diff --git a/apps/examples/desktop-app/package.json b/apps/examples/desktop-app/package.json
+index 2269f5b4695a8688e08286d593cc0a5c8cf2c7cc..6f472d4208d7ba7c17c232aa43e81fd3d7cbe18c 100644
+--- a/apps/examples/desktop-app/package.json
++++ b/apps/examples/desktop-app/package.json
+@@ -109,6 +109,7 @@
+ 		"streamdown": "^2.5.0",
+ 		"tailwind-merge": "^3.3.1",
+ 		"vaul": "^1.1.2",
++		"ws": "8.21.3",
+ 		"zod": "^3.24.1"
+ 	},
+ 	"devDependencies": {
+@@ -118,6 +119,7 @@
+ 		"@types/bun": "^1.4.2",
+ 		"@types/react": "19.2.14",
+ 		"@types/react-dom": "19.2.3",
++		"@types/ws": "8.18.1",
+ 		"jsdom": "^26.0.0",
+ 		"postcss": "^8.5",
+ 		"tailwindcss": "^4.2.0",
+diff --git a/apps/examples/desktop-app/sidecar/index.ts b/apps/examples/desktop-app/sidecar/index.ts
+index 4ff4b9a993d8c91fe560f2f0d54aa38771e97779..6515cd3cedc0bd5729f9c0223d623fc3d22cbc67 100644
+--- a/apps/examples/desktop-app/sidecar/index.ts
++++ b/apps/examples/desktop-app/sidecar/index.ts
+@@ -1,11 +1,15 @@
++import { randomUUID } from "node:crypto";
+ import { homedir } from "node:os";
++import { join } from "node:path";
+ import {
+ 	checkManagedHubBuildMismatch,
+ 	createClineTelemetryServiceConfig,
+ 	ensureLoginShellPath,
+ 	readGlobalSettings,
+ 	setHomeDirIfUnset,
++	setHubDaemonLauncher,
+ 	setModelToolEnabledGlobally,
++	setPluginSandboxLauncher,
+ 	watchManagedHubBuildMismatch,
+ } from "@cline/core";
+ import {
+@@ -28,7 +32,7 @@ import {
+ import { HubStartup } from "./hub-startup";
+ import { createDesktopObservability } from "./observability";
+ import { resolveWorkspaceRoot } from "./paths";
+-import { startServer } from "./server";
++import { startLegacyServer, startServer } from "./server";
+ import { BunRuntime, SIDECAR_HOST, SIDECAR_MODE, SIDECAR_PORT } from "./types";
+ 
+ const SHUTDOWN_TIMEOUT_MS = 5_000;
+@@ -54,7 +58,8 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+ }
+ 
+ async function main(desktopCliPath?: string) {
+-	if (!BunRuntime) {
++	const legacyOrigin = process.env.CLINE_LEGACY_APP_ORIGIN;
++	if (!BunRuntime && !legacyOrigin) {
+ 		throw new Error("sidecar must be run with Bun");
+ 	}
+ 
+@@ -157,6 +162,9 @@ async function main(desktopCliPath?: string) {
+ 
+ 	process.once("SIGINT", () => shutdownAndExit("SIGINT"));
+ 	process.once("SIGTERM", () => shutdownAndExit("SIGTERM"));
++	if (legacyOrigin && process.connected) {
++		process.once("disconnect", () => shutdownAndExit("SIGTERM"));
++	}
+ 	const handleFatalError = (kind: string, error: unknown): void => {
+ 		if (handlingFatalError) {
+ 			process.exit(1);
+@@ -185,7 +193,9 @@ async function main(desktopCliPath?: string) {
+ 		void shutdown("code_sidecar_before_exit");
+ 	});
+ 
+-	const { port, approvalToken } = startServer(ctx, SIDECAR_PORT, shutdown);
++	const { port, approvalToken } = legacyOrigin
++		? await startLegacyServer(ctx, randomUUID(), legacyOrigin)
++		: startServer(ctx, SIDECAR_PORT, shutdown);
+ 	observability.logger.log("Desktop sidecar ready", {
+ 		port,
+ 		mode: SIDECAR_MODE,
+@@ -210,15 +220,15 @@ async function main(desktopCliPath?: string) {
+ 	const endpoint = `http://${dialHost}:${port}`;
+ 	const wsEndpoint = new URL(`ws://${dialHost}:${port}/transport`);
+ 	wsEndpoint.searchParams.set("approval_token", approvalToken);
+-	process.stdout.write(
+-		`${JSON.stringify({
+-			type: "ready",
+-			endpoint,
+-			wsEndpoint: wsEndpoint.toString(),
+-			pid: process.pid,
+-			mode: SIDECAR_MODE,
+-		})}\n`,
+-	);
++	const ready = {
++		type: "ready",
++		endpoint,
++		wsEndpoint: wsEndpoint.toString(),
++		pid: process.pid,
++		mode: SIDECAR_MODE,
++	};
++	if (legacyOrigin && process.send) process.send(ready);
++	else process.stdout.write(`${JSON.stringify(ready)}\n`);
+ 	// The webview is reachable now, so it can show Hub startup progress and
+ 	// failures instead of commands timing out against an unpublished backend.
+ 	ctx.hubStartup.start();
+@@ -277,6 +287,20 @@ async function runEntrypoint(): Promise<void> {
+ 	}
+ 	const { cliPath } = adoptDesktopCliRuntime();
+ 	setClineClientIdentity(DESKTOP_CLIENT_CONTEXT);
++	const legacyRoot = process.env.CLINE_LEGACY_RUNTIME_ROOT;
++	if (legacyRoot) {
++		delete process.env.ELECTRON_RUN_AS_NODE;
++		setHubDaemonLauncher({
++			command: process.execPath,
++			args: [join(legacyRoot, "hub.mjs")],
++			env: { ELECTRON_RUN_AS_NODE: "1" },
++		});
++		setPluginSandboxLauncher({
++			command: process.execPath,
++			argsPrefix: [],
++			env: { ELECTRON_RUN_AS_NODE: "1" },
++		});
++	}
+ 
+ 	disableCurrentDirectoryExecutableSearch();
+ 	// Before the Hub daemon and agent-spawned processes inherit this env.
+diff --git a/apps/examples/desktop-app/sidecar/node-server.ts b/apps/examples/desktop-app/sidecar/node-server.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e7b66076ec20e3251de2e73e34f357db7b5da72
+--- /dev/null
++++ b/apps/examples/desktop-app/sidecar/node-server.ts
+@@ -0,0 +1,135 @@
++import {
++	createServer,
++	type IncomingMessage,
++	type ServerResponse,
++} from "node:http";
++import type { Duplex } from "node:stream";
++import { Readable } from "node:stream";
++import { pipeline } from "node:stream/promises";
++import { WebSocket, WebSocketServer } from "ws";
++import type { SidecarWebSocketClient } from "./types";
++
++type UpgradeOptions = { data?: SidecarWebSocketClient["data"] };
++type UpgradeServer = {
++	upgrade(request: Request, options?: UpgradeOptions): boolean;
++};
++type FetchHandler = (
++	request: Request,
++	server: UpgradeServer,
++) => Promise<Response | undefined>;
++type WebSocketHandler = {
++	maxPayloadLength: number;
++	open(client: SidecarWebSocketClient): void;
++	message(client: SidecarWebSocketClient, message: string): Promise<void>;
++	close(client: SidecarWebSocketClient): void;
++};
++
++function toRequest(req: IncomingMessage, port: number): Request {
++	const method = req.method ?? "GET";
++	const headers = new Headers();
++	for (let index = 0; index < req.rawHeaders.length; index += 2) {
++		headers.append(req.rawHeaders[index], req.rawHeaders[index + 1]);
++	}
++	const init: RequestInit & { duplex?: "half" } = { method, headers };
++	if (method !== "GET" && method !== "HEAD") {
++		init.body = Readable.toWeb(req) as unknown as ReadableStream;
++		init.duplex = "half";
++	}
++	const path = req.url?.startsWith("/") ? req.url : "/";
++	return new Request(`http://127.0.0.1:${port}${path}`, init);
++}
++
++async function reply(res: ServerResponse, response: Response): Promise<void> {
++	res.writeHead(response.status, Object.fromEntries(response.headers));
++	if (response.body) {
++		await pipeline(
++			Readable.fromWeb(
++				response.body as unknown as Parameters<typeof Readable.fromWeb>[0],
++			),
++			res,
++		);
++	} else {
++		res.end();
++	}
++}
++
++export async function startNodeServer(
++	hostname: string,
++	requestedPort: number,
++	fetch: FetchHandler,
++	websocket: WebSocketHandler,
++): Promise<{ port: number }> {
++	const sockets = new WebSocketServer({
++		noServer: true,
++		maxPayload: websocket.maxPayloadLength,
++		perMessageDeflate: false,
++	});
++	const server = createServer((req, res) => {
++		void Promise.resolve()
++			.then(async () => {
++				const response = await fetch(toRequest(req, port), {
++					upgrade: () => false,
++				});
++				await reply(
++					res,
++					response ?? new Response("Not found", { status: 404 }),
++				);
++			})
++			.catch(() => {
++				if (!res.headersSent) res.writeHead(500).end();
++				else res.destroy();
++			});
++	});
++	let port: number;
++	server.on("upgrade", (req: IncomingMessage, socket: Duplex, head: Buffer) => {
++		const onError = () => socket.destroy();
++		socket.on("error", onError);
++		void Promise.resolve()
++			.then(async () => {
++				const request = toRequest(req, port);
++				let upgraded = false;
++				await fetch(request, {
++					upgrade(candidate, options) {
++						if (candidate !== request || upgraded || socket.destroyed)
++							return false;
++						upgraded = true;
++						socket.off("error", onError);
++						sockets.handleUpgrade(req, socket, head, (ws) => {
++							const client = {
++								data: options?.data,
++								send(message: string) {
++									if (ws.readyState === WebSocket.OPEN) ws.send(message);
++								},
++								close: () => ws.close(),
++							};
++							ws.on("error", () => ws.terminate());
++							ws.on("close", () => websocket.close(client));
++							ws.on("message", (message, binary) => {
++								if (binary) return ws.close(1003);
++								void websocket
++									.message(client, message.toString())
++									.catch(() => ws.close(1011));
++							});
++							websocket.open(client);
++						});
++						return true;
++					},
++				});
++				if (!upgraded)
++					socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
++			})
++			.catch(onError);
++	});
++	await new Promise<void>((resolve, reject) => {
++		server.once("error", reject);
++		server.listen(requestedPort, hostname, () => {
++			server.off("error", reject);
++			resolve();
++		});
++	});
++	const address = server.address();
++	if (!address || typeof address === "string")
++		throw new Error("Missing TCP address");
++	port = address.port;
++	return { port };
++}
+diff --git a/apps/examples/desktop-app/sidecar/server.ts b/apps/examples/desktop-app/sidecar/server.ts
+index 9330a601b3f723770c8ea490a8fd3af4c4f7020e..c4babe78dd7660137746fb7eae7840e3ecf2d76f 100644
+--- a/apps/examples/desktop-app/sidecar/server.ts
++++ b/apps/examples/desktop-app/sidecar/server.ts
+@@ -3,13 +3,13 @@ import { captureSdkError } from "@cline/shared";
+ import type { DesktopTransportRequest } from "../webview/lib/desktop-transport";
+ import { MAX_DESKTOP_TRANSPORT_PAYLOAD_BYTES } from "../webview/lib/voice-input-limits";
+ import { handleCommand } from "./commands";
++import { abandonComposioConnectsForOwner } from "./composio";
+ import {
+ 	cancelSidecarToolApprovalsForOwner,
+ 	encodeSidecarEvent,
+ 	sendEvent,
+ 	syncSidecarApprovalReadiness,
+ } from "./context";
+-import { abandonComposioConnectsForOwner } from "./composio";
+ import { fetchMarketplaceCatalog } from "./marketplace";
+ import { cancelMcpOAuthAuthorizationsForOwner } from "./mcp-oauth";
+ import { cancelProviderOAuthLoginsForOwner } from "./oauth-login";
+@@ -205,12 +205,39 @@ export function startServer(
+ 	return { port: server.port, approvalToken };
+ }
+ 
++export async function startLegacyServer(
++	ctx: SidecarContext,
++	approvalToken: string,
++	appOrigin: string,
++): Promise<{ port: number; approvalToken: string }> {
++	const { startNodeServer } = await import("./node-server");
++	const handler = createFetchHandler(ctx, undefined, approvalToken);
++	const { port } = await startNodeServer(
++		"127.0.0.1",
++		0,
++		(request, server) => {
++			const url = new URL(request.url);
++			if (
++				readOrigin(request) !== appOrigin ||
++				url.pathname === "/shutdown" ||
++				(url.pathname === "/transport" &&
++					!hasValidApprovalToken(url, approvalToken))
++			) {
++				return Promise.resolve(new Response("Forbidden", { status: 403 }));
++			}
++			return handler(request, server);
++		},
++		createWebSocketHandler(ctx),
++	);
++	return { port, approvalToken };
++}
++
+ export function createFetchHandler(
+ 	ctx: SidecarContext,
+ 	onShutdown?: (reason?: string) => Promise<void>,
+ 	approvalToken = "",
+ ) {
+-	return async (req: Request, server: SidecarServer) => {
++	return async (req: Request, server: Pick<SidecarServer, "upgrade">) => {
+ 		const url = new URL(req.url);
+ 
+ 		if (req.method === "OPTIONS") {
+diff --git a/apps/examples/desktop-app/webview/lib/desktop-client.ts b/apps/examples/desktop-app/webview/lib/desktop-client.ts
+index 46707189490a732335b33619864952fbfca19a57..127946d668efa4ab0884604b2e027cff3d3f8bec 100644
+--- a/apps/examples/desktop-app/webview/lib/desktop-client.ts
++++ b/apps/examples/desktop-app/webview/lib/desktop-client.ts
+@@ -285,6 +285,25 @@ const NATIVE_COMMANDS = new Set([
+ 	"set_quit_shortcut_native",
+ ]);
+ 
++function legacyNativeBridge() {
++	if (typeof window === "undefined") return undefined;
++	return (
++		window as Window & {
++			clineLegacy?: {
++				invoke<T>(command: string, args?: Record<string, unknown>): Promise<T>;
++			};
++		}
++	).clineLegacy;
++}
++
++const LEGACY_NATIVE_COMMANDS = new Set([
++	"pick_workspace_directory",
++	"open_third_party_notices",
++	"open_external_url",
++	"relaunch_app",
++	"quit_app",
++]);
++
+ class DesktopClient {
+ 	private socket: WebSocket | null = null;
+ 	private connectPromise: Promise<void> | null = null;
+@@ -632,6 +651,11 @@ class DesktopClient {
+ 		args?: Record<string, unknown>,
+ 		options?: DesktopInvokeOptions,
+ 	): Promise<T> {
++		const legacy = legacyNativeBridge();
++		if (legacy && LEGACY_NATIVE_COMMANDS.has(command)) {
++			options?.signal?.throwIfAborted();
++			return legacy.invoke<T>(command, args);
++		}
+ 		// Route native OS commands (directory picker, file opener) through Tauri
+ 		// only when running inside the full Tauri app shell. In sidecar/web mode
+ 		// these are handled by the sidecar over WebSocket.
+@@ -850,7 +874,7 @@ export const desktopClient = new DesktopClient();
+  * browser handles it directly.
+  */
+ export async function openExternalUrl(url: string): Promise<void> {
+-	if (isTauriAvailable()) {
++	if (isTauriAvailable() || legacyNativeBridge()) {
+ 		await desktopClient.invoke("open_external_url", { url });
+ 		return;
+ 	}
+diff --git a/bun.lock b/bun.lock
+index 11adcf6dfbe0d86d850fc6f3d7ce2dda47f0c306..52b33ce25cf782a82125e3aae7c03ace87fea236 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -237,6 +237,7 @@
+         "streamdown": "^2.5.0",
+         "tailwind-merge": "^3.3.1",
+         "vaul": "^1.1.2",
++        "ws": "8.21.3",
+         "zod": "^3.24.1",
+       },
+       "devDependencies": {
+@@ -246,6 +247,7 @@
+         "@types/bun": "^1.4.2",
+         "@types/react": "19.2.14",
+         "@types/react-dom": "19.2.3",
++        "@types/ws": "8.18.1",
+         "jsdom": "^26.0.0",
+         "postcss": "^8.5",
+         "tailwindcss": "^4.2.0",
+diff --git a/sdk/packages/core/src/extensions/plugin/plugin-runtime.ts b/sdk/packages/core/src/extensions/plugin/plugin-runtime.ts
+index b70c9387aae96f3792ae8d6e31b3aaa54dd9a03b..d50b5a604d6d543639f376fd459f100fc002286b 100644
+--- a/sdk/packages/core/src/extensions/plugin/plugin-runtime.ts
++++ b/sdk/packages/core/src/extensions/plugin/plugin-runtime.ts
+@@ -57,7 +57,11 @@ export function setPluginSandboxLauncher(
+ 	launcher: SubprocessSandboxLauncher | undefined,
+ ): void {
+ 	sandboxLauncher = launcher
+-		? { command: launcher.command, argsPrefix: [...launcher.argsPrefix] }
++		? {
++				command: launcher.command,
++				argsPrefix: [...launcher.argsPrefix],
++				...(launcher.env && { env: { ...launcher.env } }),
++			}
+ 		: undefined;
+ }
+ 
+diff --git a/sdk/packages/core/src/runtime/tools/subprocess-sandbox.ts b/sdk/packages/core/src/runtime/tools/subprocess-sandbox.ts
+index cdb2b7cee09b1a693ee6b458313eb17eef08f7f4..432dce2a8a464b263f28b51639d6c60d19a3088a 100644
+--- a/sdk/packages/core/src/runtime/tools/subprocess-sandbox.ts
++++ b/sdk/packages/core/src/runtime/tools/subprocess-sandbox.ts
+@@ -34,6 +34,7 @@ export interface SubprocessSandboxLauncher {
+ 	command: string;
+ 	/** Host-specific arguments placed before the bootstrap file path. */
+ 	argsPrefix: string[];
++	env?: NodeJS.ProcessEnv;
+ }
+ 
+ export interface SubprocessSandboxOptions {
+@@ -305,7 +306,10 @@ export class SubprocessSandbox {
+ 		});
+ 		const executable =
+ 			command[0] ?? resolveSubprocessRuntimeExecutable(this.options);
+-		const env = { ...withResolvedClineBuildEnv(process.env) };
++		const env = {
++			...withResolvedClineBuildEnv(process.env),
++			...this.options.launcher?.env,
++		};
+ 		if (this.options.launcher) delete env.BUN_BE_BUN;
+ 		else if (isCompiledBunExecutable(executable)) env.BUN_BE_BUN = "1";
+ 		const child = spawn(executable, command.slice(1), {
+-- 
+2.54.0.windows.1
+

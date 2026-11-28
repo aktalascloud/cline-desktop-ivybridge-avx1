@@ -1,0 +1,62 @@
+From 54a55e798a6115bce22e75e8c756431ec5599f4a Mon Sep 17 00:00:00 2001
+From: aktalascloud <294130337+aktalascloud@users.noreply.github.com>
+Date: Fri, 27 Nov 2026 17:37:25 +0600
+Subject: [PATCH] Validate the packaged FreeLLM model capabilities
+
+---
+ fork/defaults/freellm.json                     |  2 +-
+ .../providers/local-provider-service.test.ts   | 18 ++++++++++++++++++
+ 2 files changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/fork/defaults/freellm.json b/fork/defaults/freellm.json
+index 317b1e08d31a73d2fca3bb19b1155f2de60237e2..f197ac2c642258eb6b6d4ab7f21ca9d5b8335e64 100644
+--- a/fork/defaults/freellm.json
++++ b/fork/defaults/freellm.json
+@@ -66,7 +66,7 @@
+             "streaming",
+             "reasoning",
+             "temperature",
+-            "vision"
++            "images"
+           ],
+           "inputPrice": 0,
+           "outputPrice": 0,
+diff --git a/sdk/packages/core/src/services/providers/local-provider-service.test.ts b/sdk/packages/core/src/services/providers/local-provider-service.test.ts
+index 527632a8beb318249559c42e33d255e86e9bbec3..435923cfda3a1f8271b1b127f7738acc712ab171 100644
+--- a/sdk/packages/core/src/services/providers/local-provider-service.test.ts
++++ b/sdk/packages/core/src/services/providers/local-provider-service.test.ts
+@@ -1,6 +1,7 @@
+ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+ import os from "node:os";
+ import path from "node:path";
++import { fileURLToPath } from "node:url";
+ import * as LlmsModels from "@cline/llms";
+ import { CLINE_DEFAULT_MODEL_ID } from "@cline/shared";
+ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+@@ -76,6 +77,23 @@ afterEach(() => {
+ });
+ 
+ describe("live provider model loading", () => {
++	it("validates the shipped three-model FreeLLM catalog", async () => {
++		const catalog = await readModelsFile(
++			fileURLToPath(
++				new URL("../../../../../../fork/defaults/freellm.json", import.meta.url),
++			),
++		);
++		const provider = catalog.providers.freellm;
++		expect(Object.keys(provider?.models ?? {})).toEqual([
++			"baidu/ernie-5.5-flash-preview:free",
++			"reflection/beam-free",
++			"nvidia/nemotron-3.5-super-vl:free",
++		]);
++		expect(provider?.provider?.defaultModelId).toBe(
++			"baidu/ernie-5.5-flash-preview:free",
++		);
++	});
++
+ 	it("replaces a retired default only in the managed FreeLLM catalog", async () => {
+ 		const dir = mkdtempSync(path.join(os.tmpdir(), "freellm-managed-test-"));
+ 		const baseUrl = "https://gateway.example/v1";
+-- 
+2.54.0.windows.1
+
