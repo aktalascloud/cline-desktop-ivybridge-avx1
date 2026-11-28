@@ -1,0 +1,164 @@
+From b95152751019c80d545f7b52375b5b5365f58300 Mon Sep 17 00:00:00 2001
+From: aktalascloud <294130337+aktalascloud@users.noreply.github.com>
+Date: Sat, 28 Nov 2026 12:14:21 +0600
+Subject: [PATCH] Check SSE4.1 before installing a native Penryn build
+
+---
+ apps/examples/desktop-app/legacy/README.md    |  9 ++++++++
+ .../examples/desktop-app/legacy/installer.nsi | 23 +++++++++++++++++++
+ apps/examples/desktop-app/legacy/package.mts  | 22 ++++++++++++++----
+ .../desktop-app/legacy/penryn-cpu-check.c     | 16 +++++++++++++
+ 4 files changed, 66 insertions(+), 4 deletions(-)
+ create mode 100644 apps/examples/desktop-app/legacy/penryn-cpu-check.c
+
+diff --git a/apps/examples/desktop-app/legacy/README.md b/apps/examples/desktop-app/legacy/README.md
+index dabe8ce7add3581a8be401ac38cc10e5944c281c..8ae8af9b5d6f421b71c18024f8412fe0bb78ace9 100644
+--- a/apps/examples/desktop-app/legacy/README.md
++++ b/apps/examples/desktop-app/legacy/README.md
+@@ -38,4 +38,13 @@ bun apps/examples/desktop-app/legacy/package.mts C:\Build\ElectronLegacy C:\Buil
+ 
+ Результат — `Cline_0.0.51-legacy.2_x64-setup.exe`. После упаковки для повторной сборки заново выполните `build:web`, чтобы восстановить карты исходников для списка лицензий.
+ 
++Для нативного Electron с профилем Penryn соберите x86-проверку SSE4.1 из `penryn-cpu-check.c`. Из x86 Native Tools Prompt выполните в этой папке:
++
++```cmd
++cl /nologo /c /O1 /GS- /Zl /W4 /WX penryn-cpu-check.c
++link /nologo /nodefaultlib /subsystem:windows,6.01 /entry:CheckCpu@0 /machine:x86 /out:penryn-cpu-check.exe penryn-cpu-check.obj kernel32.lib
++```
++
++В вызове `package.mts` укажите путь к этому EXE четвёртым аргументом. Установщик выполнит проверку до распаковки приложения. Используйте этот аргумент для Electron, собранного с `cline_enable_penryn=true`. [Патчи и профиль Electron](../../../../patches/README.md)
++
+ После установки для проверки запуска выполните `ClineLegacy.exe --smoke-test=C:\Temp\cline-qa\result.json`. Каталог результата служит изолированным профилем проверки. Отчёт содержит язык интерфейса, версию, настройки автокомпакта, список моделей FreeLLM, состояние подключения к Hub и отметки времени запуска. `--profile-switch` дополнительно измеряет первый переход к настройкам.
+diff --git a/apps/examples/desktop-app/legacy/installer.nsi b/apps/examples/desktop-app/legacy/installer.nsi
+index 0ed22f34d7604b31bd9cdfe05307eb675ed3f360..027f83ff24bfb327f718f802239a66472532bec2 100644
+--- a/apps/examples/desktop-app/legacy/installer.nsi
++++ b/apps/examples/desktop-app/legacy/installer.nsi
+@@ -39,6 +39,12 @@ LangString ShortcutLabel ${LANG_ENGLISH} "Create a desktop shortcut"
+ LangString ShortcutLabel ${LANG_RUSSIAN} "Создать ярлык на рабочем столе"
+ LangString MissingSse3 ${LANG_ENGLISH} "Cline Desktop Legacy requires a processor with SSE3 support."
+ LangString MissingSse3 ${LANG_RUSSIAN} "Для Cline Desktop Legacy требуется процессор с поддержкой SSE3."
++!ifdef CLINE_PENRYN_PROBE
++LangString MissingSse41 ${LANG_ENGLISH} "This Penryn build requires a processor with SSE4.1 support."
++LangString MissingSse41 ${LANG_RUSSIAN} "Для сборки Penryn требуется процессор с поддержкой SSE4.1."
++LangString ProbeFailed ${LANG_ENGLISH} "The installer could not check CPU support for SSE4.1."
++LangString ProbeFailed ${LANG_RUSSIAN} "Установщик не смог проверить поддержку SSE4.1."
++!endif
+ 
+ Function CheckRequirements
+   ${IfNot} ${RunningX64}
+@@ -53,6 +59,22 @@ Function CheckRequirements
+     SetErrorLevel 2
+     Abort
+   ${EndIf}
++!ifdef CLINE_PENRYN_PROBE
++  InitPluginsDir
++  SetOutPath "$PLUGINSDIR"
++  File "/oname=penryn-cpu-check.exe" "${CLINE_PENRYN_PROBE}"
++  ClearErrors
++  ExecWait '"$PLUGINSDIR\penryn-cpu-check.exe"' $0
++  ${If} ${Errors}
++    MessageBox MB_OK|MB_ICONSTOP "$(ProbeFailed)" /SD IDOK
++    SetErrorLevel 2
++    Abort
++  ${ElseIf} $0 != 0
++    MessageBox MB_OK|MB_ICONSTOP "$(MissingSse41)" /SD IDOK
++    SetErrorLevel 2
++    Abort
++  ${EndIf}
++!else
+   ; PF_SSE3_INSTRUCTIONS_AVAILABLE is supported on Windows 7.
+   System::Call 'kernel32::IsProcessorFeaturePresent(i 13) i .r0'
+   ${If} $0 == 0
+@@ -60,6 +82,7 @@ Function CheckRequirements
+     SetErrorLevel 2
+     Abort
+   ${EndIf}
++!endif
+ FunctionEnd
+ 
+ !macro ReleaseExecutable PREFIX
+diff --git a/apps/examples/desktop-app/legacy/package.mts b/apps/examples/desktop-app/legacy/package.mts
+index af7421a2c1a9fdd99408368e794202e3e467d2b7..38f865872a437d98d730bdef7a31a2aa595471c9 100644
+--- a/apps/examples/desktop-app/legacy/package.mts
++++ b/apps/examples/desktop-app/legacy/package.mts
+@@ -20,14 +20,22 @@ import {
+ const legacy = import.meta.dir;
+ const desktop = resolve(legacy, "..");
+ const root = resolve(desktop, "../../..");
+-const [electronDir, makensisExe, outputDir] = process.argv
++const [electronDir, makensisExe, outputDir, penrynCpuProbe] = process.argv
+ 	.slice(2)
+ 	.map((arg) => resolve(arg));
+ if (!electronDir || !makensisExe || !outputDir) {
+ 	throw new Error(
+-		"Usage: bun package.mts <Electron Legacy folder> <makensis.exe> <output folder>",
++		"Usage: bun package.mts <Electron Legacy folder> <makensis.exe> <output folder> [x86 Penryn CPU probe]",
+ 	);
+ }
++if (
++	penrynCpuProbe &&
++	!readFileSync(penrynCpuProbe)
++		.subarray(0, 4096)
++		.includes(Buffer.from([0x50, 0x45, 0, 0, 0x4c, 0x01]))
++) {
++	throw new Error("Expected an x86 Penryn CPU probe");
++}
+ const electronVersion = readFileSync(join(electronDir, "version"), "utf8")
+ 	.trim()
+ 	.replace(/^v/, "");
+@@ -89,7 +97,10 @@ try {
+ 	const defaults = join(stage, "bin", "defaults");
+ 	mkdirSync(app, { recursive: true });
+ 	mkdirSync(defaults, { recursive: true });
+-	cpSync(join(root, "fork/defaults/freellm.json"), join(defaults, "freellm.json"));
++	cpSync(
++		join(root, "fork/defaults/freellm.json"),
++		join(defaults, "freellm.json"),
++	);
+ 	for (const name of ["main.cjs", "preload.cjs", "package.json"]) {
+ 		cpSync(join(legacy, name), join(app, name));
+ 	}
+@@ -129,7 +140,9 @@ try {
+ 	});
+ 	const uninstall = join(scratch, "uninstall.nsh");
+ 	writeFileSync(uninstall, uninstallPlan(stage, stage).join("\r\n") + "\r\n");
+-	const { version } = JSON.parse(readFileSync(join(legacy, "package.json"), "utf8"));
++	const { version } = JSON.parse(
++		readFileSync(join(legacy, "package.json"), "utf8"),
++	);
+ 	const target = join(scratch, `Cline_${version}_x64-setup.exe`);
+ 	run([
+ 		makensisExe,
+@@ -139,6 +152,7 @@ try {
+ 		`/DCLINE_DISPLAY_VERSION=${version}`,
+ 		`/DCLINE_NUMERIC_VERSION=${version.replace("-legacy.", ".")}`,
+ 		`/DCLINE_UNINSTALL_FILES=${uninstall}`,
++		...(penrynCpuProbe ? [`/DCLINE_PENRYN_PROBE=${penrynCpuProbe}`] : []),
+ 		join(legacy, "installer.nsi"),
+ 	]);
+ 	mkdirSync(outputDir, { recursive: true });
+diff --git a/apps/examples/desktop-app/legacy/penryn-cpu-check.c b/apps/examples/desktop-app/legacy/penryn-cpu-check.c
+new file mode 100644
+index 0000000000000000000000000000000000000000..b4d8c7947849ca727a4042cc6eb7c3f58d24637d
+--- /dev/null
++++ b/apps/examples/desktop-app/legacy/penryn-cpu-check.c
+@@ -0,0 +1,16 @@
++void __cpuid(int registers[4], int leaf);
++#pragma intrinsic(__cpuid)
++
++__declspec(dllimport) void __stdcall ExitProcess(unsigned int exit_code);
++
++void __stdcall CheckCpu(void) {
++	int registers[4];
++	__cpuid(registers, 0);
++	if (registers[0] < 1) {
++		ExitProcess(1);
++		return;
++	}
++	__cpuid(registers, 1);
++	/* CPUID leaf 1, ECX bit 19 is SSE4.1. */
++	ExitProcess((registers[2] & (1 << 19)) != 0 ? 0 : 1);
++}
+-- 
+2.54.0.windows.1
+
