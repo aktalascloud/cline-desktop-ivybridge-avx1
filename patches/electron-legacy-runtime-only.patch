@@ -1,0 +1,58 @@
+diff --git a/build.sh b/build.sh
+index 6a44b00d9e2eda8dd7dadd68cd0e9fb2efbdde9e..43b0ff3b758b108bf9939cb26a73400cb24fbc83 100755
+--- a/build.sh
++++ b/build.sh
+@@ -1529,6 +1529,14 @@ build_ffmpeg() {
+   autoninja -C "$ffout" electron:electron_ffmpeg_zip
+ }
+ 
++cline_packages_runtime_only() {
++  local arg
++  for arg in "${EXTRA_GN_ARGS[@]}"; do
++    [ "$arg" = "cline_enable_penryn=true" ] && return 0
++  done
++  return 1
++}
++
+ build_electron() {
+   # Build it!
+   local config=Release
+@@ -1537,14 +1545,20 @@ build_electron() {
+   log "${CYA} Building Electron (%s) for %s using %s jobs${c0}\n" "$config" "$ARCH" "$JOBS"
+   local targets=(electron)
+   if [ "$DO_PACKAGE" = true ]; then
+-    targets=(electron electron:electron_dist_zip electron:electron_mksnapshot_zip
+-             electron:electron_chromedriver_zip electron:node_headers)
++    if cline_packages_runtime_only; then
++      targets=(electron:electron_dist_zip)
++    else
++      targets=(electron electron:electron_dist_zip electron:electron_mksnapshot_zip
++               electron:electron_chromedriver_zip electron:node_headers)
++    fi
+   fi
+   autoninja -C "$(out_dir)" "${targets[@]}"
+   log "${GRE} Built Electron in %s${c0}\n" "$SRC_PATH/$(out_dir)"
+   # Built here rather than from package() so every compile happens in the
+   # build step and packaging only copies what is already built.
+-  [ "$DO_PACKAGE" = true ] && build_ffmpeg
++  if [ "$DO_PACKAGE" = true ] && ! cline_packages_runtime_only; then
++    build_ffmpeg
++  fi
+ }
+ 
+ package() {
+@@ -1570,6 +1584,14 @@ package() {
+   local dest="$DIST_PATH/$ver"
+   local headers="$DIST_PATH/headers/$ver"
+   create_dir "$dest"
++  if cline_packages_runtime_only; then
++    local runtime="electron-$suffix.zip"
++    execute "Packaging Electron runtime" "Unable to copy the runtime zip" \
++      cp "$out/dist.zip" "$dest/$runtime"
++    (cd "$dest" && sha256sum -b "$runtime" > SHASUMS256.txt) \
++      || error_exit "Unable to write the runtime SHA-256"
++    return 0
++  fi
+   create_dir "$headers"
+ 
+   execute "Packaging electron, chromedriver" "Unable to copy zips" \

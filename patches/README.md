@@ -23,4 +23,6 @@
 
 Патч проверен через `git apply --check` на Chromium `152.0.7977.169`. Его цель — следующая нативная сборка. Бинарник в теге `legacy-v0.0.51.2` был собран без этого патча.
 
-Исходники Electron Legacy закреплены на `cc856cee9aa412ceb758bc6fe4d93e7243bd7edc` (`v44.11.5-src`). После синхронизации и применения серии Electron Legacy примените этот файл из корня Chromium `checkout/src`. Затем запустите `build.sh x64 --xp --build-only --package --gn-args 'cline_enable_penryn=true'`. Режим `--xp` сохраняет вариант рантайма с `winwrap.dll` из предыдущего релиза. Для сравнения используйте одинаковое приложение и одну установку каждой ОС. [Инструкция сборки Electron Legacy](https://github.com/Alex313031/electron-legacy/blob/v44.11.5-src/docs/BUILDING.md)
+Исходники Electron Legacy закреплены на `cc856cee9aa412ceb758bc6fe4d93e7243bd7edc` (`v44.11.5-src`). Из их корня примените [electron-legacy-runtime-only.patch](electron-legacy-runtime-only.patch). В режиме Penryn он собирает архив рантайма с SHA-256 и экономит время на дополнительных целях сборки.
+
+После синхронизации и применения серии Electron Legacy примените `electron-penryn-codegen.patch` из корня Chromium `checkout/src`. Затем запустите `build.sh x64 --xp --build-only --package --gn-args 'cline_enable_penryn=true'`. Режим `--xp` сохраняет вариант рантайма с `winwrap.dll` из предыдущего релиза. Для сравнения используйте одинаковое приложение и одну установку каждой ОС. [Инструкция сборки Electron Legacy](https://github.com/Alex313031/electron-legacy/blob/v44.11.5-src/docs/BUILDING.md)
