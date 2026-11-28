@@ -25,7 +25,7 @@
 
 Исходники Electron Legacy закреплены на `cc856cee9aa412ceb758bc6fe4d93e7243bd7edc` (`v44.11.5-src`). Из их корня примените [electron-legacy-runtime-only.patch](electron-legacy-runtime-only.patch). В режиме Penryn он собирает архив рантайма с SHA-256 и экономит время на дополнительных целях сборки.
 
-Если Windows-версия depot_tools ещё не создала `python3.bat`, выполните `bootstrap\win_tools.bat` из папки depot_tools перед применением серии Electron Legacy. Для нестандартного размещения Visual Studio 2022 задайте `vs2022_install` и `GYP_MSVS_OVERRIDE_PATH` с путём к установленным Build Tools.
+Для сборки на Windows нужны Visual Studio 2022 Build Tools с компонентом C++ ATL для v143 и Windows SDK `10.0.26100.0` с Debugging Tools for Windows. При нестандартном размещении Visual Studio задайте `vs2022_install` и `GYP_MSVS_OVERRIDE_PATH` с путём к Build Tools. Если depot_tools ещё не создала `python3.bat`, выполните `bootstrap\win_tools.bat` из папки depot_tools перед применением серии Electron Legacy. [Установка Debugging Tools for Windows](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/debugger-download-tools)
 
 [chromium-windows-localized-acl-output.patch](chromium-windows-localized-acl-output.patch) читает вывод `icacls` в кодовой странице Windows OEM. Это позволяет выполнить штатную настройку прав AppContainer при сборке на русской Windows. Действие `set_appcontainer_acls.py` проверено на русской Windows с `PYTHONUTF8=1`.
 
