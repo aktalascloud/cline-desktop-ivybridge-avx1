@@ -19,10 +19,12 @@
 
 ## Нативная сборка Electron для Penryn
 
-[electron-penryn-codegen.patch](electron-penryn-codegen.patch) добавляет опцию GN `cline_enable_penryn`. При её включении clang-cl компилирует базовый код Windows x64 с `-march=penryn` и `-mtune=penryn`. В релизном профиле Electron Legacy уже включены ThinLTO и PGO. Специализированные SIMD-пути сохраняют собственные параметры компиляции и проверку возможностей CPU в рантайме.
+[electron-penryn-codegen.patch](electron-penryn-codegen.patch) добавляет профиль GN `electron_x86_profile="penryn"` для Windows x64. Профиль наследует набор инструкций SSE4.1 из Electron Legacy, добавляет `-march=penryn` и `-mtune=penryn` для clang-cl и настраивает планирование инструкций Rust на Penryn. Релизная конфигурация Electron Legacy использует ThinLTO и PGO. Специализированные SIMD-пути сохраняют собственные параметры компиляции и проверку возможностей CPU при запуске.
 
-Патч проверен через `git apply --check` на Chromium `152.0.7977.169`. Его цель — следующая нативная сборка. Бинарник в теге `legacy-v0.0.51.2` был собран без этого патча.
+Патч проверен через `git apply --check` на Chromium `152.0.7977.169` после применения штатных патчей Electron Legacy. Его цель — следующая нативная сборка. Бинарник в теге `legacy-v0.0.51.2` был собран без этого патча.
 
 Исходники Electron Legacy закреплены на `cc856cee9aa412ceb758bc6fe4d93e7243bd7edc` (`v44.11.5-src`). Из их корня примените [electron-legacy-runtime-only.patch](electron-legacy-runtime-only.patch). В режиме Penryn он собирает архив рантайма с SHA-256 и экономит время на дополнительных целях сборки.
 
-После синхронизации и применения серии Electron Legacy примените `electron-penryn-codegen.patch` из корня Chromium `checkout/src`. Затем запустите `build.sh x64 --xp --build-only --package --gn-args 'cline_enable_penryn=true'`. Режим `--xp` сохраняет вариант рантайма с `winwrap.dll` из предыдущего релиза. Для сравнения используйте одинаковое приложение и одну установку каждой ОС. [Инструкция сборки Electron Legacy](https://github.com/Alex313031/electron-legacy/blob/v44.11.5-src/docs/BUILDING.md)
+Если Windows-версия depot_tools ещё не создала `python3.bat`, выполните `bootstrap\win_tools.bat` из папки depot_tools перед применением серии Electron Legacy. Для нестандартного размещения Visual Studio 2022 задайте `vs2022_install` и `GYP_MSVS_OVERRIDE_PATH` с путём к установленным Build Tools.
+
+После синхронизации и применения серии Electron Legacy примените `electron-penryn-codegen.patch` из корня Chromium `checkout/src`. Затем запустите `build.sh x64 --xp --build-only --package --gn-args 'electron_x86_profile="penryn"'`. Режим `--xp` сохраняет вариант рантайма с `winwrap.dll` из предыдущего релиза. Для сравнения используйте одинаковое приложение и одну установку каждой ОС. [Инструкция сборки Electron Legacy](https://github.com/Alex313031/electron-legacy/blob/v44.11.5-src/docs/BUILDING.md)

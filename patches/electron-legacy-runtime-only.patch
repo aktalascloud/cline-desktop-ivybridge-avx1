@@ -1,5 +1,5 @@
 diff --git a/build.sh b/build.sh
-index 6a44b00d9e2eda8dd7dadd68cd0e9fb2efbdde9e..43b0ff3b758b108bf9939cb26a73400cb24fbc83 100755
+index 6a44b00d9e2eda8dd7dadd68cd0e9fb2efbdde9e..916626a267929ea88eae2ecd3f18ef3d49051019 100755
 --- a/build.sh
 +++ b/build.sh
 @@ -1529,6 +1529,14 @@ build_ffmpeg() {
@@ -9,7 +9,7 @@ index 6a44b00d9e2eda8dd7dadd68cd0e9fb2efbdde9e..43b0ff3b758b108bf9939cb26a73400c
 +cline_packages_runtime_only() {
 +  local arg
 +  for arg in "${EXTRA_GN_ARGS[@]}"; do
-+    [ "$arg" = "cline_enable_penryn=true" ] && return 0
++    [ "$arg" = 'electron_x86_profile="penryn"' ] && return 0
 +  done
 +  return 1
 +}

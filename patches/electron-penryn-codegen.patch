@@ -1,29 +1,51 @@
-diff --git a/build/config/compiler/BUILD.gn b/build/config/compiler/BUILD.gn
---- a/build/config/compiler/BUILD.gn
-+++ b/build/config/compiler/BUILD.gn
-@@ -1339,6 +1339,11 @@
-   asmflags = cflags
- }
+diff --git a/build/config/compiler_opt.gni b/build/config/compiler_opt.gni
+--- a/build/config/compiler_opt.gni
++++ b/build/config/compiler_opt.gni
+@@ -37,7 +37,8 @@
+ _x86_profile_is_valid =
+     electron_x86_profile == "none" || electron_x86_profile == "sse2" ||
+     electron_x86_profile == "sse3" || electron_x86_profile == "sse4_1" ||
+-    electron_x86_profile == "sse4_2" || electron_x86_profile == "avx" ||
++    electron_x86_profile == "penryn" || electron_x86_profile == "sse4_2" ||
++    electron_x86_profile == "avx" ||
+     electron_x86_profile == "avx_fma" || electron_x86_profile == "avx2" ||
+     electron_x86_profile == "avx2_fma" || electron_x86_profile == "avx512_skx"
+ assert(_x86_profile_is_valid,
+@@ -47,6 +48,9 @@
+ assert(electron_x86_profile == "none" || target_cpu == "x86" ||
+            target_cpu == "x64",
+        "electron_x86_profile requires an x86 or x64 target")
++assert(electron_x86_profile != "penryn" ||
++           (is_win && is_clang && target_cpu == "x64"),
++       "The Penryn profile requires Windows x64 and Clang")
  
-+declare_args() {
-+  # Optional for builds targeting the Core 2 Duo P9700 and compatible CPUs.
-+  cline_enable_penryn = false
-+}
-+
- # This provides options to tweak code generation that are necessary
- # for particular Chromium code or for working around particular
- # compiler bugs (or the combination of the two).
-@@ -1346,6 +1351,13 @@
-   configs = []
-   cflags = []
-   ldflags = []
-+
-+  if (cline_enable_penryn && is_win && is_clang && current_cpu == "x64") {
-+    cflags += [
-+      "/clang:-march=penryn",
-+      "/clang:-mtune=penryn",
-+    ]
-+  }
- 
-   if (current_cpu == "arm64" && !is_win && is_clang) {
-     # Disable outlining everywhere on arm64 except Win. For more information see
+ if (is_debug) {
+   assert(!is_full_optimization_build,
+@@ -76,15 +80,24 @@
+   } else if (electron_x86_profile == "sse3") {
+     electron_x86_isa_cflags = [ "-msse3" ]
+     electron_x86_isa_rustflags = [ "-Ctarget-feature=+sse3" ]
+-  } else if (electron_x86_profile == "sse4_1") {
++  } else if (electron_x86_profile == "sse4_1" ||
++             electron_x86_profile == "penryn") {
+     electron_x86_isa_cflags = [
+       "-msse3",
+       "-mssse3",
+       "-msse4.1",
+     ]
+     electron_x86_isa_rustflags = [ "-Ctarget-feature=+sse3,+ssse3,+sse4.1" ]
+-    electron_x86_tune_cflags = [ "-mtune=core2" ]
+-    electron_x86_tune_rustflags = [ "-Ztune-cpu=core2" ]
++    if (electron_x86_profile == "penryn") {
++      electron_x86_tune_cflags = [
++        "/clang:-march=penryn",
++        "/clang:-mtune=penryn",
++      ]
++      electron_x86_tune_rustflags = [ "-Ztune-cpu=penryn" ]
++    } else {
++      electron_x86_tune_cflags = [ "-mtune=core2" ]
++      electron_x86_tune_rustflags = [ "-Ztune-cpu=core2" ]
++    }
+   } else if (electron_x86_profile == "sse4_2") {
+     electron_x86_isa_cflags = [
+       "-msse3",
